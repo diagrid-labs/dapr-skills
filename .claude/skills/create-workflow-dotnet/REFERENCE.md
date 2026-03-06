@@ -1,62 +1,5 @@
 # Reference: Dapr Workflow .NET Application
 
-## .gitignore
-
-Create a `.gitignore` file in the project root with common Visual Studio / .NET ignore patterns:
-
-```gitignore
-## Build results
-[Dd]ebug/
-[Rr]elease/
-x64/
-x86/
-[Ww][Ii][Nn]32/
-[Aa][Rr][Mm]/
-[Aa][Rr][Mm]64/
-bld/
-[Bb]in/
-[Oo]bj/
-[Ll]og/
-[Ll]ogs/
-
-## Visual Studio files
-.vs/
-*.suo
-*.user
-*.userosscache
-*.sln.docstates
-
-## User-specific files
-*.rsuser
-*.suo
-*.user
-*.userosscache
-*.sln.docstates
-
-## Build logs
-*.log
-msbuild*.wrn
-msbuild*.err
-
-## NuGet
-**/[Pp]ackages/*
-*.nupkg
-*.snupkg
-.nuget/
-**/packages/*
-
-## dotnet tool
-.config/dotnet-tools.json
-
-## Project-level
-*.[Cc]ache
-**/Properties/launchSettings.json
-
-## OS files
-.DS_Store
-Thumbs.db
-```
-
 ## dapr.yaml
 
 Create a `dapr.yaml` multi-app run file in the project root. This file configures the Dapr sidecar and points to the resources folder.
@@ -140,7 +83,7 @@ The `.csproj` file should look like this:
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapr.Workflow" Version="1.16.1" />
+    <PackageReference Include="Dapr.Workflow" Version="1.17.3" />
   </ItemGroup>
 
 </Project>
@@ -437,6 +380,10 @@ internal sealed class MyActivity : WorkflowActivity<ActivityInput, ActivityOutpu
 - Activities are where non-deterministic and I/O operations should be performed (HTTP calls, database queries, file access, etc.).
 - If the exact functionality is unclear, add a `// TODO: implement actual functionality` statement inside the RunAsync method.
 
+## .gitignore
+
+Create a `.gitignore` file in the project root with common Visual Studio / .NET ignore patterns. Use this as the source: https://raw.githubusercontent.com/github/gitignore/refs/heads/main/VisualStudio.gitignore.
+
 ## Running Locally
 
 Start the application using the Dapr CLI from the project root:
@@ -465,5 +412,7 @@ Once the workflow app is completely built, run it with [Diagrid Catalyst](https:
 ```shell
 diagrid dev run --project <ProjectName> -f dapr.yaml --approve
 ```
+
+**Important:  <ProjectName> must be all lowercase when using the diagrid CLI.**
 
 This uses the same `dapr.yaml` multi-app run file but connects the local workflow application to Catalyst instead of using a local Dapr process, giving access to the Catalyst dashboard for monitoring and managing workflow executions.

@@ -19,7 +19,9 @@ This repository contains skill definitions that can be used with Claude Code to 
 - Depending on your access permissions, you need to approve the usage of some tools during the generation of the .NET project.
 - Inspect the README.md file in the new folder after creation of the project.
 
-## Prompt example
+## Prompt examples
+
+### Example 1: Onboarding process
 
 Create a plan to build a Dapr workflow app in .NET. The workflow automates the onboarding process of a new employee. The first activity is employee registration, which creates a new employeeId in a data store. Then 4 activities are called in parallel:
 
@@ -37,4 +39,12 @@ The input for the workflow contains the following fields:
   
 The input records for the 4 parallel activities include the employeeId. The workflow output should include the employeeId.
 
+### Example 2: StarTrek Enterprise Diagnostics
 
+Create a .NET Workflow application that performs a diagnostics scan for the spaceship Enterprise from  Star Trek. The diagnostics start with parallel activities for analyzing the hull, analyzing the warp core, ship security protocols, and weapon systems. Once all these analyses are done, data is combined and a call is made that returns recommendations and priorities. the final activity should be a notification to the bridge with the results.
+
+The input for the workflow contains the following fields:
+
+- Ship name
+- Date of diagnostics request
+- Name of the engineer who request the diagnostic
