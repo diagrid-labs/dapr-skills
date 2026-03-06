@@ -15,7 +15,7 @@ The following tools must be installed to use any skill in this repo:
 - [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download)
 - [C# LSP Plugin](https://claude.com/plugins/csharp-lsp)
 - [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation)
-- [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.16+)
+- [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.17+)
 
 ## Guidelines for skill files
 

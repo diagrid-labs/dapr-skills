@@ -29,7 +29,7 @@ The following must be installed by the user before this skill can run:
 
 Additional runtime dependencies (handled during project setup):
 
-- NuGet package: `Dapr.Workflow` version `1.16.1`
+- NuGet package: `Dapr.Workflow` version `1.17.3`
 - Start the [Diagrid Dev Dashboard](https://www.diagrid.io/blog/improving-the-local-dapr-workflow-experience-diagrid-dashboard): `docker run -p 8080:8080 ghcr.io/diagridio/diagrid-dashboard:latest`
 
 ## Prerequisite Checks
@@ -57,7 +57,7 @@ Run `docker info` (on Windows, retry with `powershell -Command "docker info"` if
 
 ### Step 5: Check Dapr CLI
 
-Run `dapr --version` (on Windows, retry with `powershell -Command "dapr --version"` if needed). Verify the output contains `1.16`. If not installed, inform the user they need to install the [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/).
+Run `dapr --version` (on Windows, retry with `powershell -Command "dapr --version"` if needed). Verify the output contains `1.17`. If not installed, inform the user they need to install the [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/).
 
 ## Project Setup
 
@@ -67,7 +67,7 @@ Create the project root folder, then create a new ASP.NET Core web application i
 mkdir <ProjectRoot>
 cd <ProjectRoot>
 dotnet new web -n <ProjectName>
-dotnet add <ProjectName> package Dapr.Workflow --version 1.16.1
+dotnet add <ProjectName> package Dapr.Workflow --version 1.17.3
 ```
 
 The <ProjectName> should start with the <ProjectRoot> and end with `App`: <ProjectRoot>App.
