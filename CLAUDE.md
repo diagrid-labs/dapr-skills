@@ -7,6 +7,8 @@ This repository contains Claude Code skill definitions for building Dapr Workflo
 - `.claude/skills/` — Skill files organized by language/framework
   - `create-workflow-dotnet/SKILL.md` — Skill for creating Dapr Workflow apps with .NET
   - `create-workflow-dotnet/REFERENCE.md` — Detailed reference examples for the .NET skill
+  - `create-workflow-aspire/SKILL.md` — Skill for creating Dapr Workflow apps with Aspire
+  - `create-workflow-aspire/REFERENCE.md` — Detailed reference examples for the Aspire skill
 
 ## Repository prerequisites
 

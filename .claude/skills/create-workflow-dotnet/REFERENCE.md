@@ -83,7 +83,7 @@ The `.csproj` file should look like this:
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapr.Workflow" Version="1.17.3" />
+    <PackageReference Include="Dapr.Workflow" Version="1.17.4" />
   </ItemGroup>
 
 </Project>
@@ -317,35 +317,6 @@ internal sealed class MonitorWorkflow : Workflow<int, string>
 }
 ```
 
-## local.http
-
-Create a `local.http` file in the project root to test the workflow endpoints:
-
-```http
-@host=http://localhost:<app-port>
-
-### Start the workflow
-# @name workflowStartRequest
-POST {{host}}/start
-Content-Type: application/json
-
-{
-    "id": "{{$guid}}",
-    "key1": "value1"
-}
-
-### Get the workflow status
-@instanceId={{workflowStartRequest.response.headers.location}}
-GET {{host}}/status?instanceId={{instanceId}}
-```
-
-### Key points
-
-- The `<app-port>` must match the port in `launchSettings.json` and `dapr.yaml`.
-- The `start` request matches the `MapPost("/start", ...)` endpoint in `Program.cs`. The json payload in the request should match the workflow input record type that uses the `[FromBody]` attribute in `Program.cs`.
-- The `status` request matches the `MapGet("/status", ...)` endpoint in `Program.cs`.
-- Use the VS Code REST Client extension or JetBrains HTTP Client to send requests directly from this file.
-
 ## Activity Class
 
 An activity class inherits from `WorkflowActivity<TInput, TOutput>` and overrides the `RunAsync` method. Activities contain the actual business logic. Use record types from the `Models` folder for input and output. Activity class names should have an `Activity` suffix.
@@ -379,6 +350,35 @@ internal sealed class MyActivity : WorkflowActivity<ActivityInput, ActivityOutpu
 - If the activity method body is synchronous, return `Task.FromResult()` instead of marking the method `async`.
 - Activities are where non-deterministic and I/O operations should be performed (HTTP calls, database queries, file access, etc.).
 - If the exact functionality is unclear, add a `// TODO: implement actual functionality` statement inside the RunAsync method.
+
+## local.http
+
+Create a `local.http` file in the project root to test the workflow endpoints:
+
+```http
+@host=http://localhost:<app-port>
+
+### Start the workflow
+# @name workflowStartRequest
+POST {{host}}/start
+Content-Type: application/json
+
+{
+    "id": "{{$guid}}",
+    "key1": "value1"
+}
+
+### Get the workflow status
+@instanceId={{workflowStartRequest.response.headers.location}}
+GET {{host}}/status?instanceId={{instanceId}}
+```
+
+### Key points
+
+- The `<app-port>` must match the port in `launchSettings.json` and `dapr.yaml`.
+- The `start` request matches the `MapPost("/start", ...)` endpoint in `Program.cs`. The json payload in the request should match the workflow input record type that uses the `[FromBody]` attribute in `Program.cs`.
+- The `status` request matches the `MapGet("/status", ...)` endpoint in `Program.cs`.
+- Use the VS Code REST Client extension or JetBrains HTTP Client to send requests directly from this file.
 
 ## .gitignore
 
