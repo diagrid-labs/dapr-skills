@@ -24,28 +24,7 @@ apps:
 
 ## resources/statestore.yaml
 
-Dapr Workflow requires a state store component. Create a `resources` folder in the project root with a `statestore.yaml` file:
-
-```yaml
-apiVersion: dapr.io/v1alpha1
-kind: Component
-metadata:
-  name: statestore
-spec:
-  type: state.redis
-  version: v1
-  metadata:
-  - name: redisHost
-    value: localhost:6379
-  - name: redisPassword
-    value: ""
-  - name: actorStateStore
-    value: "true"
-```
-
-- The state store is required for workflow state persistence.
-- `actorStateStore` must be set to `"true"` because Dapr Workflow uses the actor framework internally.
-- This example uses Redis, which is installed in a container when using the Dapr CLI (`dapr init`).
+See [`../shared/dapr-statestore.md`](../shared/dapr-statestore.md) for the full example and key points.
 
 ## pyproject.toml
 
@@ -303,33 +282,8 @@ Create a `.gitignore` file in the project root with common Python ignore pattern
 
 ## Running Locally
 
-Start the application using the Dapr CLI from the project root:
-
-```shell
-dapr run -f .
-```
-
-This reads the `dapr.yaml` multi-app run file and launches the app with its Dapr sidecar.
-
-To inspect workflow executions, run the Diagrid Dev Dashboard:
-
-```shell
-docker run -p 8080:8080 ghcr.io/diagridio/diagrid-dashboard:latest
-```
-
-Then open `http://localhost:8080` in a browser to view workflow instances, their status, and execution history.
+See [`../shared/running-locally-dapr.md`](../shared/running-locally-dapr.md) for instructions.
 
 ## Running with Diagrid Catalyst
 
-Once the workflow app is completely built, run it with [Diagrid Catalyst](https://catalyst.diagrid.io/) to visually inspect the workflow and perform workflow management operations.  
-
-1. Sign up at [catalyst.diagrid.io](https://catalyst.diagrid.io/) and install the [Diagrid CLI](https://docs.diagrid.io/references/catalyst-cli-reference/intro/).
-2. Run the application from the project root:
-
-```shell
-diagrid dev run --project <ProjectName> -f dapr.yaml --approve
-```
-
-**Important:  <ProjectName> must be all lowercase when using the diagrid CLI.**
-
-This uses the same `dapr.yaml` multi-app run file but connects the local workflow application to Catalyst instead of using a local Dapr process, giving access to the Catalyst dashboard for monitoring and managing workflow executions.
+See [`../shared/running-with-catalyst.md`](../shared/running-with-catalyst.md) for instructions.

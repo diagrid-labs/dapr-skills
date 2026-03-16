@@ -1,0 +1,33 @@
+# Activity Class
+
+An activity class inherits from `WorkflowActivity<TInput, TOutput>` and overrides the `RunAsync` method. Activities contain the actual business logic. Use record types from the `Models` folder for input and output. Activity class names should have an `Activity` suffix.
+
+```csharp
+using Dapr.Workflow;
+using <ProjectNamespace>.Models;
+
+namespace <ProjectNamespace>.Activities;
+
+internal sealed class MyActivity : WorkflowActivity<ActivityInput, ActivityOutput>
+{
+    public override Task<ActivityOutput> RunAsync(WorkflowActivityContext context, ActivityInput input)
+    {
+        Console.WriteLine($"{nameof(MyActivity)}: Received input: {input.Data}.");
+
+        // TODO: implement actual functionality
+
+        return Task.FromResult(new ActivityOutput($"Processed: {input.Data}"));
+    }
+}
+```
+
+### Key points
+
+- The first generic type parameter (`TInput`) is the activity input type (e.g., `ActivityInput`).
+- The second generic type parameter (`TOutput`) is the activity output type (e.g., `ActivityOutput`).
+- The `RunAsync` method receives a `WorkflowActivityContext` and the input.
+- Activities should be `internal sealed`.
+- Place activity classes in an `Activities` folder/namespace for organization.
+- If the activity method body is synchronous, return `Task.FromResult()` instead of marking the method `async`.
+- Activities are where non-deterministic and I/O operations should be performed (HTTP calls, database queries, file access, etc.).
+- If the exact functionality is unclear, add a `// TODO: implement actual functionality` statement inside the RunAsync method.

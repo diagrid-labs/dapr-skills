@@ -41,26 +41,23 @@ Additional runtime dependencies (handled during project setup):
 
 ### Step 1: Check the C# LSP plugin
 
-Check if the `csharp-lsp@claude-plugins-official` plugin is installed. Do not run `claude plugin` from the session since that is not allowed. Check by inspecting the claude settings. If the plugin is not installed, instruct the user to exit claude code, run `claude plugin install csharp-lsp@claude-plugins-official` to install the C# language server plugin, restart claude code and enter the prompt again.
+Read the file at [`../shared/prereq-check-csharp-lsp.md`](../shared/prereq-check-csharp-lsp.md) and follow those instructions.
 
 ### Step 2: Detect Operating System
 
-Run `uname -s 2>/dev/null || echo "Windows"` to determine the OS:
-- **macOS**: `uname -s` returns `Darwin`. All tools are expected to be available in bash.
-- **Linux**: `uname -s` returns `Linux`. All tools are expected to be available in bash.
-- **Windows**: returns `Windows`. Tools may only be on the Windows PATH and not available in the bash shell. For each subsequent check, if the direct bash command fails, retry via `powershell -Command "<cmd>"` (Windows PowerShell) or `pwsh -Command "<cmd>"` (PowerShell 7+).
+Read the file at [`../shared/prereq-detect-os.md`](../shared/prereq-detect-os.md) and follow those instructions.
 
 ### Step 3: Check .NET SDK
 
-Run `dotnet --version` (on Windows, retry with `powershell -Command "dotnet --version"` if needed). Verify the output starts with `10.`. If not installed or the version is below 10, inform the user they need to install the [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download).
+Read the file at [`../shared/prereq-check-dotnet-sdk.md`](../shared/prereq-check-dotnet-sdk.md) and follow those instructions.
 
 ### Step 4: Check Docker or Podman
 
-Run `docker info` (on Windows, retry with `powershell -Command "docker info"` if needed). If Docker is unavailable, try `podman info` (on Windows, retry with `powershell -Command "podman info"` if needed). At least one container runtime must be available and running. If neither is available, inform the user they need to install [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation).
+Read the file at [`../shared/prereq-check-docker-podman.md`](../shared/prereq-check-docker-podman.md) and follow those instructions.
 
 ### Step 5: Check Dapr CLI
 
-Run `dapr --version` (on Windows, retry with `powershell -Command "dapr --version"` if needed). Verify the output contains `1.17`. If not installed, inform the user they need to install the [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/).
+Read the file at [`../shared/prereq-check-dapr-cli.md`](../shared/prereq-check-dapr-cli.md) and follow those instructions.
 
 ### Step 6: Check Aspire CLI
 
@@ -68,7 +65,7 @@ Run `aspire --version` (on Windows, retry with `powershell -Command "aspire --ve
 
 ## Project Setup
 
-Scaffold the solution using the Aspire CLI, then customize it for Dapr Workflow:
+Scaffold the solution using the Aspire CLI inside the current location where the terminal is open, then customize it for Dapr Workflow:
 
 ```shell
 aspire new aspire-starter -n <SolutionRoot> -o <SolutionRoot>

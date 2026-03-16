@@ -43,10 +43,7 @@ Check if the `pyright-lsp@claude-plugins-official` plugin is installed. Do not r
 
 ### Step 2: Detect Operating System
 
-Run `uname -s 2>/dev/null || echo "Windows"` to determine the OS:
-- **macOS**: `uname -s` returns `Darwin`. All tools are expected to be available in bash.
-- **Linux**: `uname -s` returns `Linux`. All tools are expected to be available in bash.
-- **Windows**: returns `Windows`. Tools may only be on the Windows PATH and not available in the bash shell. For each subsequent check, if the direct bash command fails, retry via `powershell -Command "<cmd>"` (Windows PowerShell) or `pwsh -Command "<cmd>"` (PowerShell 7+).
+Read the file at [`../shared/prereq-detect-os.md`](../shared/prereq-detect-os.md) and follow those instructions.
 
 ### Step 3: Check uv
 
@@ -58,15 +55,15 @@ Run `python --version` (on Windows, retry with `powershell -Command "python --ve
 
 ### Step 5: Check Docker or Podman
 
-Run `docker info` (on Windows, retry with `powershell -Command "docker info"` if needed). If Docker is unavailable, try `podman info` (on Windows, retry with `powershell -Command "podman info"` if needed). At least one container runtime must be available and running. If neither is available, inform the user they need to install [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation).
+Read the file at [`../shared/prereq-check-docker-podman.md`](../shared/prereq-check-docker-podman.md) and follow those instructions.
 
 ### Step 6: Check Dapr CLI
 
-Run `dapr --version` (on Windows, retry with `powershell -Command "dapr --version"` if needed). Verify the output contains `1.17`. If not installed, inform the user they need to install the [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/).
+Read the file at [`../shared/prereq-check-dapr-cli.md`](../shared/prereq-check-dapr-cli.md) and follow those instructions.
 
 ## Project Setup
 
-Create the project root folder:
+Create the project root folder inside the current location where the terminal is open:
 
 ```shell
 mkdir <ProjectRoot>
