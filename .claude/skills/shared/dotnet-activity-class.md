@@ -8,16 +8,19 @@ using <ProjectNamespace>.Models;
 
 namespace <ProjectNamespace>.Activities;
 
-internal sealed class MyActivity : WorkflowActivity<ActivityInput, ActivityOutput>
+internal sealed partial class MyActivity(ILogger<MyActivity> logger) : WorkflowActivity<ActivityInput, ActivityOutput>
 {
     public override Task<ActivityOutput> RunAsync(WorkflowActivityContext context, ActivityInput input)
     {
-        Console.WriteLine($"{nameof(MyActivity)}: Received input: {input.Data}.");
+        LogInput(logger, input.Data);
 
         // TODO: implement actual functionality
 
         return Task.FromResult(new ActivityOutput($"Processed: {input.Data}"));
     }
+
+    [LoggerMessage(LogLevel.Information, $"{nameof(MyActivity)}: {Data}")]
+    partial void LogInput(ILogger logger, string Data);
 }
 ```
 
@@ -30,4 +33,4 @@ internal sealed class MyActivity : WorkflowActivity<ActivityInput, ActivityOutpu
 - Place activity classes in an `Activities` folder/namespace for organization.
 - If the activity method body is synchronous, return `Task.FromResult()` instead of marking the method `async`.
 - Activities are where non-deterministic and I/O operations should be performed (HTTP calls, database queries, file access, etc.).
-- If the exact functionality is unclear, add a `// TODO: implement actual functionality` statement inside the RunAsync method.
+- If the user has described the desired behavior, implement it inside the `RunAsync` method. If the exact functionality is unclear, add a `// TODO: implement actual functionality` statement inside the `RunAsync` method.

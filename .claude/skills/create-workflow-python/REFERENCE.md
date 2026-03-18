@@ -54,6 +54,7 @@ Define Pydantic types for workflow and activity input/output in a `models.py` fi
 from pydantic import BaseModel
 
 class WorkflowInput(BaseModel):
+    id: str
     message: str
 
 class WorkflowOutput(BaseModel):
@@ -79,7 +80,6 @@ Use FastAPI for HTTP endpoints, `WorkflowRuntime` to register workflows and acti
 ```python
 import uvicorn
 from fastapi import FastAPI
-from pydantic import BaseModel
 import dapr.ext.workflow as wf
 from workflow import wfr, <workflow_name>
 from models import WorkflowInput
@@ -91,14 +91,30 @@ dapr_client = wf.DaprWorkflowClient()
 async def start_workflow(input: WorkflowInput):
     instance_id = dapr_client.schedule_new_workflow(
         workflow=<workflow_name>,
+        instance_id=input.id,
         input=input.model_dump(),
     )
     return {"instance_id": instance_id}
 
-@app.get("/status")
+@app.get("/status/{instance_id}")
 async def get_status(instance_id: str):
     state = dapr_client.get_workflow_state(instance_id)
     return state.__dict__
+
+@app.post("/pause/{instance_id}")
+async def pause_workflow(instance_id: str):
+    dapr_client.pause_workflow(instance_id)
+    return {"status": "paused"}
+
+@app.post("/resume/{instance_id}")
+async def resume_workflow(instance_id: str):
+    dapr_client.resume_workflow(instance_id)
+    return {"status": "resumed"}
+
+@app.post("/terminate/{instance_id}")
+async def terminate_workflow(instance_id: str):
+    dapr_client.terminate_workflow(instance_id)
+    return {"status": "terminated"}
 
 if __name__ == "__main__":
     wfr.start()
@@ -109,16 +125,21 @@ if __name__ == "__main__":
 
 - `wfr = WorkflowRuntime()` initializes the workflow runtime and is used to register workflows/activities via decorators.
 - `DaprWorkflowClient()` is used to schedule and query workflow instances.
-- `schedule_new_workflow()` starts a new workflow instance and returns the instance ID.
+- `schedule_new_workflow()` starts a new workflow instance and returns the instance ID. Pass `instance_id` to use a user-provided ID.
 - `get_workflow_state()` retrieves the current status of a workflow instance.
+- `pause_workflow()`, `resume_workflow()`, and `terminate_workflow()` manage the lifecycle of a workflow instance.
 - `wfr.start()` must be called before the app begins serving requests.
 - Import workflow and activity definitions so they are registered with the runtime.
 
 ## Workflow definition
 
-A workflow definition uses the `@wfr.workflow(name='<WORKFLOWNAME>')` attribute. The workflow orchestrates one or more activities by calling `ctx.call_activity`. Use types from the `models.py` file for input and output. Workflow names should have a `-workflow` suffix.
+A workflow definition uses the `@wfr.workflow(name='<WORKFLOWNAME>')` attribute. The workflow orchestrates one or more activities by calling `ctx.call_activity`. Use types from the `models.py` file for input and output. Workflow names should have a `-workflow` suffix. The `wfr` instance is created in `workflow.py` and imported by `main.py`.
 
 ```python
+import dapr.ext.workflow as wf
+
+wfr = wf.WorkflowRuntime()
+
 @wfr.workflow(name='my_workflow')
 def task_chain_workflow(ctx: wf.DaprWorkflowContext, wf_input: int):
     try:
@@ -229,38 +250,15 @@ def monitor_workflow(ctx: wf.DaprWorkflowContext, wf_input):
 
 ## local.http
 
-Create a `local.http` file in the project root to test the workflow endpoints:
-
-```http
-@host=http://localhost:<app-port>
-
-### Start the workflow
-# @name workflowStartRequest
-POST {{host}}/start
-Content-Type: application/json
-
-{
-    "id": "{{$guid}}",
-    "key1": "value1"
-}
-
-### Get the workflow status
-@instanceId={{workflowStartRequest.response.headers.location}}
-GET {{host}}/status?instanceId={{instanceId}}
-```
-
-### Key points
-
-- The `<app-port>` must match the port in `dapr.yaml` and `main.py`.
-- The `start` request matches the `@app.post("/start")` endpoint in `main.py`. The JSON payload should match the workflow input model.
-- The `status` request matches the `@app.get("/status")` endpoint in `main.py`.
-- Use the VS Code REST Client extension or JetBrains HTTP Client to send requests directly from this file.
+See [`../shared/python-local-http.md`](../shared/python-local-http.md) for the full example and key points.
 
 ## Activity definition
 
-An activity definition is decorated using `@wfr.activity(name='<ACTIVITY_NAME>')`. Activities contain the actual business logic. Use Pydantic types from the `models.py` file for input and output. Activity definitions should have an `_activity` suffix.
+An activity definition is decorated using `@wfr.activity(name='<ACTIVITY_NAME>')`. Activities contain the actual business logic. Use Pydantic types from the `models.py` file for input and output. Activity definitions should have an `_activity` suffix. Activities use the same `wfr` instance from `workflow.py`.
 
 ```python
+from workflow import wfr
+
 @wfr.activity(name='activity1')
 def step1(ctx, activity_input):
     print(f'Step 1: Received input: {activity_input}.')

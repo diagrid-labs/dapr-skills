@@ -39,7 +39,7 @@ Additional runtime dependencies (handled during project setup):
 
 ### Step 1: Check the Python LSP plugin
 
-Check if the `pyright-lsp@claude-plugins-official` plugin is installed. Do not run `claude plugin` from the session since that is not allowed. Check by inspecting the claude settings. If the plugin is not installed, instruct the user to exit claude code, run `claude plugin install pyright-lsp@claude-plugins-official` to install the Python language server plugin, restart claude code and enter the prompt again.
+Read the file at [`../shared/prereq-check-python-lsp.md`](../shared/prereq-check-python-lsp.md) and follow those instructions.
 
 ### Step 2: Detect Operating System
 
@@ -47,11 +47,11 @@ Read the file at [`../shared/prereq-detect-os.md`](../shared/prereq-detect-os.md
 
 ### Step 3: Check uv
 
-Run `uv --version` (on Windows, retry with `powershell -Command "uv --version"` if needed). If not installed, inform the user they need to install [uv](https://docs.astral.sh/uv/getting-started/installation/).
+Read the file at [`../shared/prereq-check-uv.md`](../shared/prereq-check-uv.md) and follow those instructions.
 
 ### Step 4: Check Python SDK version
 
-Run `python --version` (on Windows, retry with `powershell -Command "python --version"` if needed). Verify the output starts with `3.12.`. If not installed or the version is below 3.12, inform the user they need to install the [Python 3.12 SDK](https://www.python.org/downloads/).
+Read the file at [`../shared/prereq-check-python-sdk.md`](../shared/prereq-check-python-sdk.md) and follow those instructions.
 
 ### Step 5: Check Docker or Podman
 
@@ -82,6 +82,7 @@ The <ProjectName> should start with the <ProjectRoot> and end with `-app`: <Proj
 ├── resources/
 │   └── statestore.yaml
 └── <ProjectName>/
+    ├── pyproject.toml
     ├── main.py
     ├── models.py
     ├── workflow.py
@@ -118,7 +119,7 @@ A workflow is defined using the @wfr.workflow(name="<NAME>") attribute. The work
 
 ### Activities file
 
-A workflow activity is defined using the @wfr.activity(name="<NAME>") attribute. The activity code is placed in a activity.py file See `REFERENCE.md` for full example and key points.
+A workflow activity is defined using the @wfr.activity(name="<NAME>") attribute. The activity code is placed in an `activities.py` file. See `REFERENCE.md` for full example and key points.
 
 ### local.http
 

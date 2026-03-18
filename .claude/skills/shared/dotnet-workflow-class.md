@@ -3,6 +3,7 @@
 A workflow class inherits from `Workflow<TInput, TOutput>` and overrides the `RunAsync` method. The workflow orchestrates one or more activities by calling `context.CallActivityAsync`. Use record types from the `Models` folder for input and output. Workflow class names should have a `Workflow` suffix.
 
 ```csharp
+using Microsoft.Extensions.Logging;
 using Dapr.Workflow;
 using <ProjectNamespace>.Activities;
 using <ProjectNamespace>.Models;
@@ -13,6 +14,9 @@ internal sealed class MyWorkflow : Workflow<WorkflowInput, WorkflowOutput>
 {
     public override async Task<WorkflowOutput> RunAsync(WorkflowContext context, WorkflowInput input)
     {
+        var logger = context.CreateReplaySafeLogger<MyWorkflow>();
+        LogStart(logger, context.InstanceId);
+        
         var activityInput = new ActivityInput(input.Message);
         var activityOutput = await context.CallActivityAsync<ActivityOutput>(
             nameof(MyActivity),
@@ -20,6 +24,9 @@ internal sealed class MyWorkflow : Workflow<WorkflowInput, WorkflowOutput>
 
         return new WorkflowOutput(activityOutput.ProcessedData);
     }
+
+    [LoggerMessage(LogLevel.Information, "Starting workflow with ID: {Id}")]
+    partial void LogStart(ILogger logger, string Id);
 }
 ```
 
@@ -30,6 +37,7 @@ internal sealed class MyWorkflow : Workflow<WorkflowInput, WorkflowOutput>
 - Use `context.CallActivityAsync<TOutput>(activityName, input)` to call an activity.
 - Use `nameof()` to reference activity names to avoid magic strings.
 - Place workflow classes in a `Workflows` folder/namespace for organization.
+- Use the `CreateReplaySafeLogger`method on the workflow context to create an ILogger that is safe to use in workflows.
 - Activities can be chained by passing the output of one activity as the input to the next.
 - Map between workflow and activity model types as needed.
 - The workflow class should be `internal sealed`.

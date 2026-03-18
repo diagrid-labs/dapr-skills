@@ -155,7 +155,7 @@ spec:
 
 ## ApiService Program.cs
 
-Use `AddDaprWorkflow` to register and activity types. Use `AddDaprWorkflowVersioning` to enable workflow versioning. Use `DaprWorkflowClient` to schedule workflow instances and query their status via HTTP endpoints. Use `AddServiceDefaults` to integrates with the Aspire ServiceDefaults:
+Use `AddDaprWorkflow` to register activity types. Use `AddDaprWorkflowVersioning` to enable workflow versioning and auto-register workflow types. Use `DaprWorkflowClient` to schedule workflow instances and query their status via HTTP endpoints. Use `AddServiceDefaults` to integrates with the Aspire ServiceDefaults:
 
 ```csharp
 using Microsoft.AspNetCore.Mvc;
@@ -171,7 +171,6 @@ builder.AddServiceDefaults();
 
 builder.Services.AddDaprWorkflow(options =>
 {
-    options.RegisterWorkflow<MyWorkflow>();
     options.RegisterActivity<MyActivity>();
 });
 builder.Services.AddDaprWorkflowVersioning();
@@ -187,12 +186,12 @@ app.MapPost("/start", async (
         instanceId: workflowInput.Id,
         input: workflowInput);
 
-    return Results.Accepted(instanceId);
+    return Results.Ok(new {instanceId});
 });
 
-app.MapGet("/status", async (
-    [FromServices] DaprWorkflowClient workflowClient,
-    string instanceId) =>
+app.MapGet("/status/{instanceId}", async (
+    [FromRoute] string instanceId,
+    [FromServices] DaprWorkflowClient workflowClient) =>
 {
     var state = await workflowClient.GetWorkflowStateAsync(instanceId);
     if (!state.Exists)
@@ -201,6 +200,30 @@ app.MapGet("/status", async (
     }
 
     return Results.Ok(state);
+});
+
+app.MapPost("pause/{instanceId}", async (
+    [FromRoute] string instanceId,
+    [FromServices] DaprWorkflowClient workflowClient) =>
+{
+    await workflowClient.SuspendWorkflowAsync(instanceId);
+    return Results.Accepted();
+});
+
+app.MapPost("resume/{instanceId}", async (
+    [FromRoute] string instanceId,
+    [FromServices] DaprWorkflowClient workflowClient) =>
+{
+    await workflowClient.ResumeWorkflowAsync(instanceId);
+    return Results.Accepted();
+});
+
+app.MapPost("terminate/{instanceId}", async (
+    [FromRoute] string instanceId,
+    [FromServices] DaprWorkflowClient workflowClient) =>
+{
+    await workflowClient.TerminateWorkflowAsync(instanceId);
+    return Results.Accepted();
 });
 
 app.MapDefaultEndpoints();
@@ -431,15 +454,15 @@ Content-Type: application/json
 }
 
 ### Get the workflow status
-@instanceId={{workflowStartRequest.response.headers.location}}
-GET {{host}}/status?instanceId={{instanceId}}
+@instanceId={{workflowStartRequest.response.body.$.instanceId}}
+GET {{host}}/status/{{instanceId}}
 ```
 
 ### Key points
 
 - The `<app-port>` must match the port in the ApiService `launchSettings.json`.
 - The `start` request matches the `MapPost("/start", ...)` endpoint in `Program.cs`. The json payload in the request should match the workflow input record type that uses the `[FromBody]` attribute in `Program.cs`.
-- The `status` request matches the `MapGet("/status", ...)` endpoint in `Program.cs`.
+- The `status` request matches the `MapGet("/status/{instanceId}", ...)` endpoint in `Program.cs`.
 - Use the VS Code REST Client extension or JetBrains HTTP Client to send requests directly from this file.
 
 ## .gitignore

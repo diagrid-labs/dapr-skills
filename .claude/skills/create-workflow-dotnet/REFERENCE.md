@@ -63,6 +63,7 @@ The `.csproj` file should look like this:
 
   <ItemGroup>
     <PackageReference Include="Dapr.Workflow" Version="1.17.4" />
+    <PackageReference Include="Dapr.Workflow.Versioning" Version="1.17.4" />
   </ItemGroup>
 
 </Project>
@@ -74,11 +75,12 @@ See [`../shared/dotnet-models.md`](../shared/dotnet-models.md) for the full exam
 
 ## Program.cs
 
-Use `AddDaprWorkflow` to register workflow and activity types. Use `DaprWorkflowClient` to schedule workflow instances and query their status via HTTP endpoints.
+Use `AddDaprWorkflow` to register activity types. Use `AddDaprWorkflowVersioning` to auto-register workflow types and enable workflow versioning. Use `DaprWorkflowClient` to manage workflow instances.
 
 ```csharp
 using Microsoft.AspNetCore.Mvc;
 using Dapr.Workflow;
+using Dapr.Workflow.Versioning;
 using <ProjectNamespace>;
 using <ProjectNamespace>.Activities;
 using <ProjectNamespace>.Models;
@@ -86,9 +88,10 @@ using <ProjectNamespace>.Models;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDaprWorkflow(options =>
 {
-    options.RegisterWorkflow<MyWorkflow>();
     options.RegisterActivity<MyActivity>();
 });
+builder.Services.AddDaprWorkflowVersioning();
+
 var app = builder.Build();
 
 app.MapPost("/start", async (
@@ -100,12 +103,12 @@ app.MapPost("/start", async (
         instanceId: workflowInput.Id,
         input: workflowInput);
 
-    return Results.Accepted(instanceId);
+    return Results.Ok(new {instanceId});
 });
 
-app.MapGet("/status", async (
-    [FromServices] DaprWorkflowClient workflowClient,
-    string instanceId) =>
+app.MapGet("/status/{instanceId}", async (
+    [FromRoute] string instanceId,
+    [FromServices] DaprWorkflowClient workflowClient) =>
 {
     var state = await workflowClient.GetWorkflowStateAsync(instanceId);
     if (!state.Exists)
@@ -116,13 +119,37 @@ app.MapGet("/status", async (
     return Results.Ok(state);
 });
 
+app.MapPost("pause/{instanceId}", async (
+    [FromRoute] string instanceId,
+    [FromServices] DaprWorkflowClient workflowClient) =>
+{
+    await workflowClient.SuspendWorkflowAsync(instanceId);
+    return Results.Accepted();
+});
+
+app.MapPost("resume/{instanceId}", async (
+    [FromRoute] string instanceId,
+    [FromServices] DaprWorkflowClient workflowClient) =>
+{
+    await workflowClient.ResumeWorkflowAsync(instanceId);
+    return Results.Accepted();
+});
+
+app.MapPost("terminate/{instanceId}", async (
+    [FromRoute] string instanceId,
+    [FromServices] DaprWorkflowClient workflowClient) =>
+{
+    await workflowClient.TerminateWorkflowAsync(instanceId);
+    return Results.Accepted();
+});
+
 app.Run();
 ```
 
 ### Key points
 
 - `AddDaprWorkflow` registers the Dapr Workflow services and the workflow/activity types with the DI container.
-- `RegisterWorkflow<T>()` registers a workflow class.
+- `AddDaprWorkflowVersioning` auto registers workflow classes and enables name based versioning.
 - `RegisterActivity<T>()` registers an activity class. Register each activity separately.
 - `DaprWorkflowClient` is injected via DI and used to schedule new workflow instances.
 - `ScheduleNewWorkflowAsync` starts a new workflow instance and returns the instance ID. Pass a model record as input.

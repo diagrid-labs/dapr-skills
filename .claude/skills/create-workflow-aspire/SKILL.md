@@ -142,7 +142,7 @@ State store component for the Diagrid Dashboard container. Uses `host.docker.int
 
 ### ApiService Program.cs
 
-Same pattern as the dotnet skill but adds `builder.AddServiceDefaults()` at the start and `app.MapDefaultEndpoints()` before `app.Run()`. Uses `AddDaprWorkflow` to register workflow and activity types. See `REFERENCE.md` for full example and key points.
+Same pattern as the dotnet skill but adds `builder.AddServiceDefaults()` at the start and `app.MapDefaultEndpoints()` before `app.Run()`. Uses `AddDaprWorkflow` to register workflow and activity types. Uses `DaprWorkflowClient` to schedule workflow instances and query status via HTTP endpoints. Includes start, status, pause, resume, and terminate endpoints. See `REFERENCE.md` for full example and key points.
 
 ### ApiService .csproj
 
