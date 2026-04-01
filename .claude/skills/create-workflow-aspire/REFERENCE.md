@@ -438,7 +438,7 @@ See [`../shared/dotnet-activity-class.md`](../shared/dotnet-activity-class.md) f
 
 ## <SolutionRoot>.ApiService.http
 
-Create or update the `<SolutionRoot>.ApiService.http` file in the `<SolutionRoot>.ApiService` folder and add endpoints to test the workflow:
+Update the existing `<SolutionRoot>.ApiService/<SolutionRoot>.ApiService.http` file and add endpoints to test the workflow:
 
 ```http
 @host=http://localhost:<app-port>

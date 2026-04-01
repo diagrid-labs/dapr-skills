@@ -91,9 +91,9 @@ After scaffolding:
 │   └── settings.json
 ├── .gitignore
 ├── <SolutionRoot>.sln
-├── local.http
 ├── <SolutionRoot>.ApiService/
 │   ├── <SolutionRoot>.ApiService.csproj
+│   ├── <SolutionRoot>.ApiService.http
 │   ├── Program.cs
 │   ├── appsettings.json
 │   ├── appsettings.Development.json
@@ -186,7 +186,7 @@ The README contains the following sections:
 2. Architecture description that explains the technology stack (Aspire, Dapr Workflow, Valkey, ServiceDefaults) and prerequisites to run it locally. **DO NOT suggest to run Redis or Valkey separately since Aspire manages it as a container resource.**
 3. A mermaid diagram that explains the workflow.
 4. How to start the application using `aspire run`.
-5. List the available endpoints in the ApiService `Program.cs` file and provide examples how to call these using curl. Also include a link to the `<SolutionRoot>.ApiService.http` file.
+5. List the available endpoints in the ApiService `Program.cs` file and provide examples how to call these using curl. Also include a link to the `<SolutionRoot>.ApiService/<SolutionRoot>.ApiService.http` file.
 6. How to inspect the workflow execution using the Diagrid Dev Dashboard (managed by Aspire, accessible via the Aspire dashboard resource links).
 
 ## Show final message
