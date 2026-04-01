@@ -68,7 +68,7 @@ Run `aspire --version` (on Windows, retry with `powershell -Command "aspire --ve
 Scaffold the solution using the Aspire CLI inside the current location where the terminal is open, then customize it for Dapr Workflow:
 
 ```shell
-aspire new aspire-starter -n <SolutionRoot> -o <SolutionRoot>
+aspire new aspire-starter -n <SolutionRoot> -o <SolutionRoot> --non-interactive
 ```
 
 After scaffolding:

@@ -6,7 +6,13 @@
       "Bash(dotnet:*)",
       "Bash(docker info:*)",
       "Bash(podman info:*)",
-      "Bash(powershell -Command:*)"
+      "Bash(powershell -Command:*)",
+      "Bash(uv venv:*)",
+      "Bash(uv sync:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(aspire --version)",
+      "Bash(~/.dotnet/tools/aspire --version)",
+      "Bash(~/.aspire/bin/aspire new:*)"
     ]
   }
 }
