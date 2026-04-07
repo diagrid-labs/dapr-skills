@@ -20,12 +20,13 @@ This repository contains skill definitions that can be used with Claude Code to 
 
 ## How to use this
 
-- Clone this repo
-- Open a terminal and navigate to the cloned repo
-- Start Claude Code
-- Use a prompt to build a Dapr workflow application (see the examples below)
-- Depending on your access permissions, you need to approve the usage of some tools during the generation of the project.
-- Inspect the README.md file in the new folder after creation of the project.
+1. Clone this repo
+2. Open a terminal and navigate to the cloned repo
+3. Start Claude Code
+4. Run the `check-prereq-xxx` skill to verify your environment (e.g., "check prerequisites for .NET", "check prerequisites for Aspire", or "check prerequisites for Python")
+5. Once all prerequisites pass, run the `create-workflow-xxx` skill to scaffold the project (see the prompt examples below)
+6. Depending on your access permissions, you need to approve the usage of some tools during the generation of the project.
+7. Inspect the README.md file in the new folder after creation of the project.
 
 ## Prompt examples
 

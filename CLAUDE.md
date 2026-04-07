@@ -6,12 +6,22 @@ This repository contains Claude Code skill definitions for building Dapr Workflo
 
 - `.claude/skills/` — Skill files organized by language/framework
   - `shared/` — Shared content referenced by multiple skills (prereq checks, common .NET sections, running instructions)
+  - `check-prereq-dotnet/SKILL.md` — Skill for checking .NET prerequisites
+  - `check-prereq-aspire/SKILL.md` — Skill for checking .NET Aspire prerequisites
+  - `check-prereq-python/SKILL.md` — Skill for checking Python prerequisites
   - `create-workflow-dotnet/SKILL.md` — Skill for creating Dapr Workflow apps with .NET
   - `create-workflow-dotnet/REFERENCE.md` — Detailed reference examples for the .NET skill
   - `create-workflow-python/SKILL.md` — Skill for creating Dapr Workflow apps with Python
   - `create-workflow-python/REFERENCE.md` — Detailed reference examples for the Python skill
   - `create-workflow-aspire/SKILL.md` — Skill for creating Dapr Workflow apps with Aspire
   - `create-workflow-aspire/REFERENCE.md` — Detailed reference examples for the Aspire skill
+
+## Usage
+
+Follow a two-step workflow when building Dapr Workflow applications:
+
+1. **Check prerequisites** — Run the appropriate `check-prereq-xxx` skill first to verify your environment (e.g., `check-prereq-dotnet`, `check-prereq-aspire`, or `check-prereq-python`).
+2. **Create the workflow** — Once all prerequisites pass, run the corresponding `create-workflow-xxx` skill to scaffold the project.
 
 ## Repository prerequisites
 

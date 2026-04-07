@@ -13,11 +13,10 @@ This skill describes how to create a Dapr Workflow application using Python.
 ## Execution Order
 
 You MUST follow these phases in strict order:
-1. **Prerequisite Checks** — Run ALL checks. Stop if any fail.
-2. **Project Setup** — Create all files and folders.
-3. **Verify** — Verify that the project builds.
-4. **Create README.md** — Create a readme that summarizes what is built and how to run & test the application. Do not provide instructions at the end of this phase.
-5. **Show final message** - Your LAST output MUST be EXACTLY the message defined in the `## Show final message` section. Do NOT add any other text, summary, or commentary after it.
+1. **Project Setup** — Create all files and folders.
+2. **Verify** — Verify that the project builds.
+3. **Create README.md** — Create a readme that summarizes what is built and how to run & test the application. Do not provide instructions at the end of this phase.
+4. **Show final message** - Your LAST output MUST be EXACTLY the message defined in the `## Show final message` section. Do NOT add any other text, summary, or commentary after it.
 
 ## Prerequisites
 
@@ -32,34 +31,6 @@ Additional runtime dependencies (handled during project setup):
 
 - Python package: `dapr-ext-workflow` version `1.17.0`
 - Start the [Diagrid Dev Dashboard](https://www.diagrid.io/blog/improving-the-local-dapr-workflow-experience-diagrid-dashboard): `docker run -p 8080:8080 ghcr.io/diagridio/diagrid-dashboard:latest`
-
-## Prerequisite Checks
-
-**IMPORTANT: Run ALL of these checks BEFORE creating any files or folders. If any check fails, stop and inform the user with the relevant install link from the Prerequisites section. Do NOT proceed to Project Setup until all checks pass.**
-
-### Step 1: Check the Python LSP plugin
-
-Read the file at [`../shared/prereq-check-python-lsp.md`](../shared/prereq-check-python-lsp.md) and follow those instructions.
-
-### Step 2: Detect Operating System
-
-Read the file at [`../shared/prereq-detect-os.md`](../shared/prereq-detect-os.md) and follow those instructions.
-
-### Step 3: Check uv
-
-Read the file at [`../shared/prereq-check-uv.md`](../shared/prereq-check-uv.md) and follow those instructions.
-
-### Step 4: Check Python SDK version
-
-Read the file at [`../shared/prereq-check-python-sdk.md`](../shared/prereq-check-python-sdk.md) and follow those instructions.
-
-### Step 5: Check Docker or Podman
-
-Read the file at [`../shared/prereq-check-docker-podman.md`](../shared/prereq-check-docker-podman.md) and follow those instructions.
-
-### Step 6: Check Dapr CLI
-
-Read the file at [`../shared/prereq-check-dapr-cli.md`](../shared/prereq-check-dapr-cli.md) and follow those instructions.
 
 ## Project Setup
 
