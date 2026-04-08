@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This repository contains Claude Code skill definitions for building Dapr Workflow applications. For other AI coding tools, see [AGENTS.md](AGENTS.md).
+This repository contains skill definitions for building Dapr Workflow applications. The skills follow the [Agent Skills specification](https://agentskills.io/home) and can be used with any compatible AI coding assistant.
 
 ## Repository structure
 
@@ -33,25 +33,25 @@ All skills require:
 ### .NET skills
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download)
-- [C# LSP Plugin](https://claude.com/plugins/csharp-lsp)
+- C# language server support (for code diagnostics)
 
 ### .NET Aspire skills
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download)
 - [Aspire CLI](https://aspire.dev/get-started/install-cli/)
-- [C# LSP Plugin](https://claude.com/plugins/csharp-lsp)
+- C# language server support (for code diagnostics)
 
 ### Python skills
 
 - [Python 3.12+](https://www.python.org/downloads/)
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
-- [Pyright LSP Plugin](https://claude.com/plugins/pyright-lsp)
+- Python language server support (for code diagnostics)
 
 ## Guidelines for skill files
 
 - Skill files are Markdown documents in `.claude/skills/<skill-name>/SKILL.md`
 - Each skill directory should also include a `REFERENCE.md` with full code examples and detailed explanations
-- Skill front-matter fields: `name`, `description`, `model` (e.g. `opus`)
+- Skill front-matter fields: `name`, `description`
 - Each skill should include sections for: prerequisite checks, project setup, folder structure, verify, and a final message
 - Use `<PlaceholderName>` syntax for values the user should replace (e.g., `<ProjectName>`, `<ProjectNamespace>`)
 - Code examples should be complete and runnable, not snippets
@@ -60,3 +60,14 @@ All skills require:
 - Skills must perform all prerequisite checks before creating any files
 - Skills must be able to work on MacOS, Linux, and Windows environments.
 - Shared content goes in `.claude/skills/shared/`; SKILL.md and REFERENCE.md files reference shared files to avoid duplication.
+
+## Supported tools
+
+These skills follow the [Agent Skills specification](https://agentskills.io/home) and are compatible with AI coding assistants that support it, including:
+
+- [Claude Code](https://claude.com/product/claude-code)
+- [OpenAI Codex](https://openai.com/index/introducing-codex/)
+- [GitHub Copilot](https://github.com/features/copilot)
+- [Google Gemini CLI](https://github.com/google-gemini/gemini-cli)
+- [Cursor](https://www.cursor.com/)
+- [Windsurf](https://windsurf.com/)
