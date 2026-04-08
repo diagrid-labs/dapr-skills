@@ -29,10 +29,10 @@ The following must be installed by the user before this skill can run:
 
 Additional runtime dependencies (handled during project setup):
 
-- NuGet package: `Dapr.Workflow` version `1.17.4` (ApiService)
-- NuGet package: `Dapr.Workflow.Versioning` version `1.17.4` (ApiService)
+- NuGet package: `Dapr.Workflow` version `1.17.8` (ApiService)
+- NuGet package: `Dapr.Workflow.Versioning` version `1.17.8` (ApiService)
 - NuGet package: `CommunityToolkit.Aspire.Hosting.Dapr` version `13.0.0` (AppHost)
-- NuGet package: `Aspire.Hosting.Valkey` version `13.1.2` (AppHost)
+- NuGet package: `Aspire.Hosting.Valkey` version `13.2.1` (AppHost)
 
 ## Project Setup
 
@@ -42,17 +42,21 @@ Scaffold the solution using the Aspire CLI inside the current location where the
 aspire new aspire-starter -n <SolutionRoot> -o <SolutionRoot> --non-interactive
 ```
 
+**IMPORTANT**
+The `--non-interactive` flag MUST be used otherwise it breaks running the command as a skill.
+
 After scaffolding:
 
 1. **Remove the Web project** — The generated `<SolutionRoot>.Web` project is not needed. Delete the `<SolutionRoot>.Web` folder and remove its project reference from `<SolutionRoot>.AppHost.csproj` and the `.sln` file.
-2. **Add NuGet packages**:
+2. **Fix AppHost launchSettings.json** — The scaffolded `<SolutionRoot>.AppHost/Properties/launchSettings.json` uses `http://` for all URLs. Change the `applicationUrl` and all `ASPIRE_*` environment variable URLs (`ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL`, `ASPIRE_DASHBOARD_MCP_ENDPOINT_URL`, `ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL`) from `http://` to `https://` to avoid the `ASPIRE_ALLOW_UNSECURED_TRANSPORT` validation error at startup.
+3. **Add NuGet packages**:
    ```shell
-   dotnet add <SolutionRoot>.ApiService package Dapr.Workflow --version 1.17.4
-   dotnet add <SolutionRoot>.ApiService package Dapr.Workflow.Versioning --version 1.17.4
+   dotnet add <SolutionRoot>.ApiService package Dapr.Workflow --version 1.17.8
+   dotnet add <SolutionRoot>.ApiService package Dapr.Workflow.Versioning --version 1.17.8
    dotnet add <SolutionRoot>.AppHost package CommunityToolkit.Aspire.Hosting.Dapr --version 13.0.0
-   dotnet add <SolutionRoot>.AppHost package Aspire.Hosting.Valkey --version 13.1.2
+   dotnet add <SolutionRoot>.AppHost package Aspire.Hosting.Valkey --version 13.2.1
    ```
-3. **Create/update source files** — Create all files described below, using `REFERENCE.md` for complete code.
+4. **Create/update source files** — Create all files described below, using `REFERENCE.md` for complete code.
 
 ### Folder structure
 

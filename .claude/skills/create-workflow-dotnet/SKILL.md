@@ -28,8 +28,8 @@ The following must be installed by the user before this skill can run:
 
 Additional runtime dependencies (handled during project setup):
 
-- NuGet package: `Dapr.Workflow` version `1.17.4`
-- NuGet package: `Dapr.Workflow.Versioning` version `1.17.4`
+- NuGet package: `Dapr.Workflow` version `1.17.8`
+- NuGet package: `Dapr.Workflow.Versioning` version `1.17.8`
 - Start the [Diagrid Dev Dashboard](https://www.diagrid.io/blog/improving-the-local-dapr-workflow-experience-diagrid-dashboard): `docker run -p 8080:8080 ghcr.io/diagridio/diagrid-dashboard:latest`
 
 ## Project Setup
@@ -40,8 +40,8 @@ Create the project root folder inside the current location where the terminal is
 mkdir <ProjectRoot>
 cd <ProjectRoot>
 dotnet new web -n <ProjectName>
-dotnet add <ProjectName> package Dapr.Workflow --version 1.17.4
-dotnet add <ProjectName> package Dapr.Workflow.Versioning --version 1.17.4
+dotnet add <ProjectName> package Dapr.Workflow --version 1.17.8
+dotnet add <ProjectName> package Dapr.Workflow.Versioning --version 1.17.8
 ```
 
 The <ProjectName> should start with the <ProjectRoot> and end with `App`: <ProjectRoot>App.

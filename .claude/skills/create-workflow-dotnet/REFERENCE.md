@@ -62,8 +62,8 @@ The `.csproj` file should look like this:
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapr.Workflow" Version="1.17.4" />
-    <PackageReference Include="Dapr.Workflow.Versioning" Version="1.17.4" />
+    <PackageReference Include="Dapr.Workflow" Version="1.17.8" />
+    <PackageReference Include="Dapr.Workflow.Versioning" Version="1.17.8" />
   </ItemGroup>
 
 </Project>

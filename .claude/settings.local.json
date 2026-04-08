@@ -12,7 +12,8 @@
       "mcp__ide__getDiagnostics",
       "Bash(aspire --version)",
       "Bash(~/.dotnet/tools/aspire --version)",
-      "Bash(~/.aspire/bin/aspire new:*)"
+      "Bash(~/.aspire/bin/aspire new:*)",
+      "Bash(aspire new:*)"
     ]
   }
 }

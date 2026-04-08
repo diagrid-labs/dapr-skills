@@ -59,7 +59,7 @@ builder.Build().Run();
 ## AppHost .csproj
 
 ```xml
-<Project Sdk="Aspire.AppHost.Sdk/13.1.2">
+<Project Sdk="Aspire.AppHost.Sdk/13.2.1">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -74,7 +74,7 @@ builder.Build().Run();
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.Valkey" Version="13.1.2" />
+    <PackageReference Include="Aspire.Hosting.Valkey" Version="13.2.1" />
     <PackageReference Include="CommunityToolkit.Aspire.Hosting.Dapr" Version="13.0.0" />
   </ItemGroup>
 
@@ -90,7 +90,7 @@ builder.Build().Run();
 
 ### Key points
 
-- Uses `Aspire.AppHost.Sdk/13.1.2` instead of the standard .NET SDK.
+- Uses `Aspire.AppHost.Sdk/13.2.1` instead of the standard .NET SDK.
 - `CommunityToolkit.Aspire.Hosting.Dapr` provides the `AddDapr()` and `WithDaprSidecar()` extension methods.
 - `Aspire.Hosting.Valkey` provides the `AddValkey()` extension method.
 - The `Content` item group copies the `Resources` folder (containing Dapr component YAML files) to the build output directory.
@@ -260,8 +260,8 @@ app.Run();
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapr.Workflow" Version="1.17.4" />
-    <PackageReference Include="Dapr.Workflow.Versioning" Version="1.17.4" />
+    <PackageReference Include="Dapr.Workflow" Version="1.17.8" />
+    <PackageReference Include="Dapr.Workflow.Versioning" Version="1.17.8" />
   </ItemGroup>
 
 </Project>
@@ -270,7 +270,7 @@ app.Run();
 ### Key points
 
 - References the ServiceDefaults project for shared Aspire configuration.
-- Uses `Dapr.Workflow` version `1.17.4` for workflow support.
+- Uses `Dapr.Workflow` version `1.17.8` for workflow support.
 - No `Microsoft.AspNetCore.OpenApi` package is needed unless the user explicitly requests OpenAPI support.
 
 ## ServiceDefaults .csproj
