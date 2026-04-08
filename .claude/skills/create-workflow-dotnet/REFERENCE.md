@@ -116,7 +116,8 @@ app.MapGet("/status/{instanceId}", async (
         return Results.NotFound($"Workflow instance '{instanceId}' not found.");
     }
 
-    return Results.Ok(state);
+    var output = state.ReadOutputAs<WorkflowOutput>();
+    return Results.Ok(new {state, output});
 });
 
 app.MapPost("pause/{instanceId}", async (
@@ -154,7 +155,7 @@ app.Run();
 - `DaprWorkflowClient` is injected via DI and used to schedule new workflow instances.
 - `ScheduleNewWorkflowAsync` starts a new workflow instance and returns the instance ID. Pass a model record as input.
 - `GetWorkflowStateAsync` retrieves the current status of a workflow instance by its instance ID. Check `state.Exists` to verify the instance was found.
-- Ensure the workflow output is included in the response when the `status` endpoint is called.
+- Use `state.ReadOutputAs<TOutput>()` to deserialize the workflow output from the state. The `TOutput` type must match the workflow's output type (e.g., `WorkflowOutput`). Return both `state` and `output` in the response.
 - Add `using` directives for the namespaces containing the workflow, activity, and model classes.
 
 ## Workflow Class
