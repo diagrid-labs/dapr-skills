@@ -1,7 +1,10 @@
 ---
 name: create-workflow-dotnet
 description: This skill creates a Dapr workflow application in .NET. Use this skill when the user asks to "create a workflow in .NET", "write a .NET workflow application" or "build a workflow app in C#".
-model: opus
+allowed-tools:
+  - Bash(dotnet:*)
+  - Bash(dapr:*)
+  - mcp__ide__getDiagnostics
 ---
 
 # Create Dapr Workflow .NET Application
@@ -13,10 +16,11 @@ This skill describes how to create a Dapr Workflow application using .NET.
 ## Execution Order
 
 You MUST follow these phases in strict order:
-1. **Project Setup** — Create all files and folders.
-2. **Verify** — Verify that the project builds.
-3. **Create README.md** — Create a readme that summarizes what is built and how to run & test the application. Do not provide instructions at the end of this phase.
-4. **Show final message** - Your LAST output MUST be EXACTLY the message defined in the `## Show final message` section. Do NOT add any other text, summary, or commentary after it.
+1. **Check specification** - Check if the user specified what needs to be built.
+2. **Project Setup** — Create all files and folders.
+3. **Verify** — Verify that the project builds.
+4. **Create README.md** — Create a readme that summarizes what is built and how to run & test the application. Do not provide instructions at the end of this phase.
+5. **Show final message** - Your LAST output MUST be EXACTLY the message defined in the `## Show final message` section. Do NOT add any other text, summary, or commentary after it.
 
 ## Prerequisites
 
@@ -31,6 +35,16 @@ Additional runtime dependencies (handled during project setup):
 - NuGet package: `Dapr.Workflow` version `1.17.8`
 - NuGet package: `Dapr.Workflow.Versioning` version `1.17.8`
 - Start the [Diagrid Dev Dashboard](https://www.diagrid.io/blog/improving-the-local-dapr-workflow-experience-diagrid-dashboard): `docker run -p 8080:8080 ghcr.io/diagridio/diagrid-dashboard:latest`
+
+## Check specification
+
+If you don't have enough context what to build, ask the user the following clarifying questions one by one using an interview style:
+
+1. What is the purpose of the workflow application?
+2. Describe how workflow should work. Which patterns should be used?
+3. Specify the input and output objects of the workflow.
+4. What's the name of this project? This will be used as the folder name and solution name. Don't use any spaces in this name.
+
 
 ## Project Setup
 

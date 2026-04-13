@@ -1,7 +1,14 @@
 ---
 name: check-prereq-python
 description: This skill checks prerequisites for building Dapr Workflow apps in Python. Use this skill when the user asks to "check prerequisites for Python", "verify Python environment", or "check Python setup".
-model: opus
+allowed-tools:
+  - Bash(uname -s)
+  - Bash(python --version)
+  - Bash(uv --version)
+  - Bash(dapr:*)
+  - Bash(docker info:*)
+  - Bash(podman info:*)
+  - mcp__ide__getDiagnostics
 ---
 
 # Check Prerequisites for Dapr Workflow Python

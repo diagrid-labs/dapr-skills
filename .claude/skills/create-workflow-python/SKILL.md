@@ -1,7 +1,11 @@
 ---
 name: create-workflow-python
 description: This skill creates a Dapr workflow application in Python. Use this skill when the user asks to "create a workflow in Python", "write a Python workflow application" or "build a workflow app in Python".
-model: opus
+allowed-tools:
+  - Bash(uv venv:*)
+  - Bash(uv sync:*)
+  - Bash(dapr:*)
+  - mcp__ide__getDiagnostics
 ---
 
 # Create Dapr Workflow Python Application
@@ -13,10 +17,20 @@ This skill describes how to create a Dapr Workflow application using Python.
 ## Execution Order
 
 You MUST follow these phases in strict order:
-1. **Project Setup** — Create all files and folders.
-2. **Verify** — Verify that the project builds.
-3. **Create README.md** — Create a readme that summarizes what is built and how to run & test the application. Do not provide instructions at the end of this phase.
-4. **Show final message** - Your LAST output MUST be EXACTLY the message defined in the `## Show final message` section. Do NOT add any other text, summary, or commentary after it.
+1. **Check specification** - Check if the user specified what needs to be built.
+2. **Project Setup** — Create all files and folders.
+3. **Verify** — Verify that the project builds.
+4. **Create README.md** — Create a readme that summarizes what is built and how to run & test the application. Do not provide instructions at the end of this phase.
+5. **Show final message** - Your LAST output MUST be EXACTLY the message defined in the `## Show final message` section. Do NOT add any other text, summary, or commentary after it.
+
+## Check specification
+
+If you don't have enough context what to build, ask the user the following clarifying questions one by one using an interview style:
+
+1. What is the purpose of the workflow application?
+2. Describe how workflow should work. Which patterns should be used?
+3. Specify the input and output objects of the workflow.
+4. What's the name of this project?
 
 ## Prerequisites
 
