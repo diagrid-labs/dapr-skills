@@ -154,3 +154,132 @@ internal sealed class MonitorWorkflow : Workflow<int, string>
     }
 }
 ```
+
+#### External system interaction (human-in-the-loop)
+
+Pause a workflow until an external event is raised (e.g., a human approval) and handle the timeout path via `TaskCanceledException`:
+
+```csharp
+using Microsoft.Extensions.Logging;
+using Dapr.Workflow;
+using <ProjectNamespace>.Activities;
+using <ProjectNamespace>.Models;
+
+namespace <ProjectNamespace>;
+
+internal sealed class ApprovalWorkflow : Workflow<Order, string>
+{
+    public const string ApprovalEventName = "approval-event";
+
+    public override async Task<string> RunAsync(WorkflowContext context, Order order)
+    {
+        var logger = context.CreateReplaySafeLogger<ApprovalWorkflow>();
+        var approvalStatus = new ApprovalStatus(order.Id, true);
+        string notificationMessage;
+
+        if (order.TotalPrice > 250)
+        {
+            try
+            {
+                approvalStatus = await context.WaitForExternalEventAsync<ApprovalStatus>(
+                    eventName: ApprovalEventName,
+                    timeout: TimeSpan.FromSeconds(120));
+            }
+            catch (TaskCanceledException)
+            {
+                notificationMessage = $"Approval request for order {order.Id} timed out.";
+                LogApprovalTimedOut(logger, order.Id);
+                await context.CallActivityAsync(
+                    nameof(SendNotification),
+                    notificationMessage);
+                return notificationMessage;
+            }
+        }
+
+        if (approvalStatus.IsApproved)
+        {
+            await context.CallActivityAsync(
+                nameof(ProcessOrder),
+                order);
+        }
+
+        notificationMessage = approvalStatus.IsApproved
+            ? $"Order {order.Id} has been approved."
+            : $"Order {order.Id} has been rejected.";
+        await context.CallActivityAsync(
+            nameof(SendNotification),
+            notificationMessage);
+
+        return notificationMessage;
+    }
+
+    [LoggerMessage(LogLevel.Warning, "Approval for order {Id} timed out")]
+    static partial void LogApprovalTimedOut(ILogger logger, string Id);
+}
+```
+
+##### Key points
+
+- Use `context.WaitForExternalEventAsync<T>(eventName, timeout)` to pause the workflow until an event is raised or the timeout elapses.
+- The timeout path surfaces as a `TaskCanceledException` — catch it to run a fallback branch (notification, compensation, etc.).
+- Event names should be declared as constants and referenced by both the workflow and the code that raises the event (via `DaprWorkflowClient.RaiseEventAsync`).
+- A workflow can wait for multiple events by calling `WaitForExternalEventAsync` multiple times or combining with `Task.WhenAny`.
+
+#### Saga / compensation
+
+Chain activities where a failure in a later step triggers a compensating activity to undo earlier successful steps. On failure the workflow logs the error, runs the compensation, and returns a failure result instead of rethrowing:
+
+```csharp
+using Microsoft.Extensions.Logging;
+using Dapr.Workflow;
+using <ProjectNamespace>.Activities;
+using <ProjectNamespace>.Models;
+
+namespace <ProjectNamespace>;
+
+internal sealed class OrderSagaWorkflow : Workflow<OrderInput, OrderResult>
+{
+    public override async Task<OrderResult> RunAsync(WorkflowContext context, OrderInput input)
+    {
+        var logger = context.CreateReplaySafeLogger<OrderSagaWorkflow>();
+
+        var reservation = await context.CallActivityAsync<ReservationResult>(
+            nameof(ReserveItemActivity),
+            input);
+
+        try
+        {
+            var payment = await context.CallActivityAsync<PaymentResult>(
+                nameof(PayItemActivity),
+                reservation);
+
+            return new OrderResult(
+                IsSuccess: true,
+                Message: $"Order {input.OrderId} completed. Payment: {payment.TransactionId}.");
+        }
+        catch (Exception ex)
+        {
+            LogPaymentFailed(logger, input.OrderId, ex.Message);
+
+            await context.CallActivityAsync(
+                nameof(UndoReserveItemActivity),
+                reservation);
+
+            return new OrderResult(
+                IsSuccess: false,
+                Message: $"Order {input.OrderId} failed during payment and the reservation was released.");
+        }
+    }
+
+    [LoggerMessage(LogLevel.Error, "Payment failed for order {Id}: {Reason}")]
+    static partial void LogPaymentFailed(ILogger logger, string Id, string Reason);
+}
+```
+
+##### Key points
+
+- Each forward step should have a dedicated compensating activity (e.g., `ReserveItemActivity` ↔ `UndoReserveItemActivity`).
+- Compensations should run in reverse order of the successful forward steps.
+- Do not rethrow after compensation — log the failure and return a typed result (e.g., `OrderResult` with an `IsSuccess` flag) so the workflow instance completes cleanly and callers can react to the outcome.
+- Compensation activities must be idempotent; the workflow runtime may replay them.
+- Workflow determinism rules still apply — perform all I/O in activities, never in the workflow body.
