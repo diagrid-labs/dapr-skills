@@ -111,7 +111,7 @@ app.MapGet("/status/{instanceId}", async (
     [FromServices] DaprWorkflowClient workflowClient) =>
 {
     var state = await workflowClient.GetWorkflowStateAsync(instanceId);
-    if (!state.Exists)
+    if (state is null || !state.Exists)
     {
         return Results.NotFound($"Workflow instance '{instanceId}' not found.");
     }

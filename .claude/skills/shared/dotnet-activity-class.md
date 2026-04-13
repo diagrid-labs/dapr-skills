@@ -20,7 +20,7 @@ internal sealed partial class MyActivity(ILogger<MyActivity> logger) : WorkflowA
     }
 
     [LoggerMessage(LogLevel.Information, $"{nameof(MyActivity)}: {Data}")]
-    partial void LogInput(ILogger logger, string Data);
+    static partial void LogInput(ILogger logger, string Data);
 }
 ```
 

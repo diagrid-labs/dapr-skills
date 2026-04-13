@@ -26,7 +26,7 @@ internal sealed class MyWorkflow : Workflow<WorkflowInput, WorkflowOutput>
     }
 
     [LoggerMessage(LogLevel.Information, "Starting workflow with ID: {Id}")]
-    partial void LogStart(ILogger logger, string Id);
+    static partial void LogStart(ILogger logger, string Id);
 }
 ```
 
