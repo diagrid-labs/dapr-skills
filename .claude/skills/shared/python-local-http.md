@@ -27,6 +27,15 @@ POST {{host}}/resume/{{instanceId}}
 
 ### Terminate the workflow
 POST {{host}}/terminate/{{instanceId}}
+
+### Raise an event on the workflow
+POST {{host}}/raise-event/{{instanceId}}
+Content-Type: application/json
+
+{
+    "event_name": "approval-event",
+    "data": {"is_approved": true}
+}
 ```
 
 ## Key points
@@ -35,5 +44,5 @@ POST {{host}}/terminate/{{instanceId}}
 - The `start` request matches the `@app.post("/start")` endpoint in `main.py`. The JSON payload should match the workflow input model.
 - The `instance_id` is extracted from the JSON response body of the `start` request.
 - The `status` request matches the `@app.get("/status/{instance_id}")` endpoint in `main.py`.
-- The `pause`, `resume`, and `terminate` requests match the corresponding `@app.post` endpoints in `main.py`.
+- The `pause`, `resume`, `terminate`, and `raise-event` requests match the corresponding `@app.post` endpoints in `main.py`.
 - Use the VS Code REST Client extension or JetBrains HTTP Client to send requests directly from this file.

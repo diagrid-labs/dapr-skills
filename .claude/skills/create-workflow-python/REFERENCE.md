@@ -116,6 +116,15 @@ async def terminate_workflow(instance_id: str):
     dapr_client.terminate_workflow(instance_id)
     return {"status": "terminated"}
 
+@app.post("/raise-event/{instance_id}")
+async def raise_event(instance_id: str, body: dict):
+    dapr_client.raise_workflow_event(
+        instance_id,
+        event_name=body["event_name"],
+        data=body.get("data"),
+    )
+    return {"status": "event_raised"}
+
 if __name__ == "__main__":
     wfr.start()
     uvicorn.run(app, host="0.0.0.0", port=<app-port>)
@@ -128,6 +137,7 @@ if __name__ == "__main__":
 - `schedule_new_workflow()` starts a new workflow instance and returns the instance ID. Pass `instance_id` to use a user-provided ID.
 - `get_workflow_state()` retrieves the current status of a workflow instance.
 - `pause_workflow()`, `resume_workflow()`, and `terminate_workflow()` manage the lifecycle of a workflow instance.
+- `raise_workflow_event()` sends a named event (with optional data payload) to a waiting workflow instance, resuming it from a `wait_for_external_event` call.
 - `wfr.start()` must be called before the app begins serving requests.
 - Import workflow and activity definitions so they are registered with the runtime.
 
@@ -160,6 +170,7 @@ def task_chain_workflow(ctx: wf.DaprWorkflowContext, wf_input: int):
 - Reference activity functions directly (no string names needed).
 - Place workflow functions in `workflow.py`.
 - Activities can be chained by passing the output of one as input to the next.
+- Guard log/print statements with `if not ctx.is_replaying:` to avoid duplicate output during workflow replay.
 
 ### Workflow determinism
 
@@ -221,19 +232,22 @@ def parent_workflow(ctx: wf.DaprWorkflowContext):
     try:
         instance_id = ctx.instance_id
         child_instance_id = instance_id + '-child'
-        print(f'*** Calling child workflow {child_instance_id}', flush=True)
+        if not ctx.is_replaying:
+            print(f'*** Calling child workflow {child_instance_id}', flush=True)
         yield ctx.call_child_workflow(
             workflow=child_workflow, input=None, instance_id=child_instance_id
         )
     except Exception as e:
-        print(f'*** Exception: {e}')
+        if not ctx.is_replaying:
+            print(f'*** Exception: {e}', flush=True)
 
     return
 
 @wfr.workflow(name='child_workflow')
 def child_workflow(ctx: wf.DaprWorkflowContext):
     instance_id = ctx.instance_id
-    print(f'*** Child workflow {instance_id} called', flush=True)
+    if not ctx.is_replaying:
+        print(f'*** Child workflow {instance_id} called', flush=True)
 ```
 
 #### Monitor pattern
@@ -247,6 +261,104 @@ def monitor_workflow(ctx: wf.DaprWorkflowContext, wf_input):
         ctx.continue_as_new(wf_input)
     return status
 ```
+
+#### External system interaction (human-in-the-loop)
+
+Pause the workflow until an external event arrives or a timeout elapses. This is useful for approval flows where a human or external system must respond before the workflow can continue.
+
+```python
+from datetime import timedelta
+
+@wfr.workflow(name='approval_workflow')
+def approval_workflow(ctx: wf.DaprWorkflowContext, order: dict):
+    approval_event_name = "approval-event"
+    is_approved = True
+
+    if order["total_price"] > 250:
+        try:
+            approval_status = yield ctx.wait_for_external_event(
+                approval_event_name,
+                timeout=timedelta(seconds=120),
+            )
+            is_approved = approval_status.get("is_approved", False)
+        except TimeoutError:
+            notification_message = f"Approval request for order {order['id']} timed out."
+            if not ctx.is_replaying:
+                print(f"*** Approval for order {order['id']} timed out", flush=True)
+            yield ctx.call_activity(
+                send_notification_activity,
+                input=notification_message,
+            )
+            return notification_message
+
+    if is_approved:
+        yield ctx.call_activity(process_order_activity, input=order)
+
+    notification_message = (
+        f"Order {order['id']} has been approved."
+        if is_approved
+        else f"Order {order['id']} has been rejected."
+    )
+    yield ctx.call_activity(
+        send_notification_activity,
+        input=notification_message,
+    )
+    return notification_message
+```
+
+##### Key points
+
+- Use `yield ctx.wait_for_external_event(name, timeout=timedelta(...))` to pause the workflow until an event is raised or the timeout elapses.
+- The timeout path raises a `TimeoutError` — catch it to run a fallback branch (notification, compensation, etc.).
+- Event names should be declared as constants and referenced by both the workflow and the code that raises the event (via `dapr_client.raise_workflow_event()`).
+- A workflow can wait for multiple events by calling `wait_for_external_event` multiple times.
+- Guard print/log statements with `if not ctx.is_replaying:` to avoid duplicate output during workflow replay.
+
+#### Saga / compensation
+
+Chain forward steps with compensating activities that undo completed work when a later step fails. Return a typed result instead of rethrowing so the workflow instance completes cleanly.
+
+```python
+@wfr.workflow(name='order_saga_workflow')
+def order_saga_workflow(ctx: wf.DaprWorkflowContext, order_input: dict):
+    reservation = yield ctx.call_activity(
+        reserve_item_activity,
+        input=order_input,
+    )
+
+    try:
+        payment = yield ctx.call_activity(
+            pay_item_activity,
+            input=reservation,
+        )
+
+        return {
+            "is_success": True,
+            "message": f"Order {order_input['order_id']} completed. Payment: {payment['transaction_id']}.",
+        }
+    except Exception as e:
+        if not ctx.is_replaying:
+            print(f"*** Payment failed for order {order_input['order_id']}: {e}", flush=True)
+
+        yield ctx.call_activity(
+            undo_reserve_item_activity,
+            input=reservation,
+        )
+
+        return {
+            "is_success": False,
+            "message": f"Order {order_input['order_id']} failed during payment and the reservation was released.",
+        }
+```
+
+##### Key points
+
+- Each forward step should have a dedicated compensating activity (e.g., `reserve_item_activity` ↔ `undo_reserve_item_activity`).
+- Compensations should run in reverse order of the successful forward steps.
+- Do not rethrow after compensation — log the failure and return a typed result (e.g., a dict with an `is_success` flag) so the workflow instance completes cleanly and callers can react to the outcome.
+- Compensation activities must be idempotent; the workflow runtime may replay them.
+- Workflow determinism rules still apply — perform all I/O in activities, never in the workflow body.
+- Guard print/log statements with `if not ctx.is_replaying:` to avoid duplicate output during workflow replay.
 
 ## local.http
 

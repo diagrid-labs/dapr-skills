@@ -30,7 +30,7 @@ If you don't have enough context what to build, ask the user the following clari
 1. What is the purpose of the workflow application?
 2. Describe how workflow should work. Which patterns should be used?
 3. Specify the input and output objects of the workflow.
-4. What's the name of this project?
+4. What's the name of this project? This will be used as the folder name. Don't use any spaces in this name.
 
 ## Prerequisites
 
