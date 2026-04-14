@@ -73,6 +73,22 @@ class ActivityOutput(BaseModel):
 - Use Pydantic types for built-in serialization support.
 - Define separate input and output types for workflows and activities to keep contracts clear.
 
+## runtime.py
+
+The `runtime.py` file creates the shared `WorkflowRuntime` instance. Both `workflow.py` and `activities.py` import `wfr` from this file. This prevents a circular import that would occur if `workflow.py` defined `wfr` and both files imported from each other.
+
+```python
+import dapr.ext.workflow as wf
+
+wfr = wf.WorkflowRuntime()
+```
+
+### Key points
+
+- `wfr` is the single `WorkflowRuntime` instance shared across the application.
+- Both `workflow.py` and `activities.py` import `wfr` from `runtime.py`, not from each other.
+- This breaks the circular dependency: `workflow.py` → `activities.py` → `runtime.py` (no cycle).
+
 ## main.py
 
 Use FastAPI for HTTP endpoints, `WorkflowRuntime` to register workflows and activities via decorators, and `DaprWorkflowClient` to schedule workflow instances and query their status.
@@ -81,7 +97,8 @@ Use FastAPI for HTTP endpoints, `WorkflowRuntime` to register workflows and acti
 import uvicorn
 from fastapi import FastAPI
 import dapr.ext.workflow as wf
-from workflow import wfr, <workflow_name>
+from runtime import wfr
+from workflow import <workflow_name>
 from models import WorkflowInput
 
 app = FastAPI()
@@ -132,7 +149,7 @@ if __name__ == "__main__":
 
 ### Key points
 
-- `wfr = WorkflowRuntime()` initializes the workflow runtime and is used to register workflows/activities via decorators.
+- `wfr` is imported from `runtime.py` — it is the shared `WorkflowRuntime` instance.
 - `DaprWorkflowClient()` is used to schedule and query workflow instances.
 - `schedule_new_workflow()` starts a new workflow instance and returns the instance ID. Pass `instance_id` to use a user-provided ID.
 - `get_workflow_state()` retrieves the current status of a workflow instance.
@@ -143,12 +160,12 @@ if __name__ == "__main__":
 
 ## Workflow definition
 
-A workflow definition uses the `@wfr.workflow(name='<WORKFLOWNAME>')` attribute. The workflow orchestrates one or more activities by calling `ctx.call_activity`. Use types from the `models.py` file for input and output. Workflow names should have a `-workflow` suffix. The `wfr` instance is created in `workflow.py` and imported by `main.py`.
+A workflow definition uses the `@wfr.workflow(name='<WORKFLOWNAME>')` attribute. The workflow orchestrates one or more activities by calling `ctx.call_activity`. Use types from the `models.py` file for input and output. Workflow names should have a `-workflow` suffix. The `wfr` instance is imported from `runtime.py`.
 
 ```python
 import dapr.ext.workflow as wf
-
-wfr = wf.WorkflowRuntime()
+from runtime import wfr
+from activities import step1, step2, step3, error_handler
 
 @wfr.workflow(name='my_workflow')
 def task_chain_workflow(ctx: wf.DaprWorkflowContext, wf_input: int):
@@ -168,7 +185,7 @@ def task_chain_workflow(ctx: wf.DaprWorkflowContext, wf_input: int):
 - The `ctx: wf.DaprWorkflowContext` parameter provides the workflow context.
 - Use `yield ctx.call_activity(activity_func, input=value)` to call an activity.
 - Reference activity functions directly (no string names needed).
-- Place workflow functions in `workflow.py`.
+- Place workflow functions in `workflow.py`; import `wfr` from `runtime.py`.
 - Activities can be chained by passing the output of one as input to the next.
 - Guard log/print statements with `if not ctx.is_replaying:` to avoid duplicate output during workflow replay.
 
@@ -366,10 +383,10 @@ See [`../shared/python-local-http.md`](../shared/python-local-http.md) for the f
 
 ## Activity definition
 
-An activity definition is decorated using `@wfr.activity(name='<ACTIVITY_NAME>')`. Activities contain the actual business logic. Use Pydantic types from the `models.py` file for input and output. Activity definitions should have an `_activity` suffix. Activities use the same `wfr` instance from `workflow.py`.
+An activity definition is decorated using `@wfr.activity(name='<ACTIVITY_NAME>')`. Activities contain the actual business logic. Use Pydantic types from the `models.py` file for input and output. Activity definitions should have an `_activity` suffix. Activities import `wfr` from `runtime.py`.
 
 ```python
-from workflow import wfr
+from runtime import wfr
 
 @wfr.activity(name='activity1')
 def step1(ctx, activity_input):

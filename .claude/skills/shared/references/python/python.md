@@ -23,10 +23,17 @@ A workflow is a Python generator function that `yield`s activity/child-workflow 
 `DaprWorkflowContext` and an optional input value.
 
 ```python
-# workflow.py
-from dapr.ext.workflow import DaprWorkflowContext, WorkflowActivityContext, WorkflowRuntime
+# runtime.py
+from dapr.ext.workflow import WorkflowRuntime
 
 wfr = WorkflowRuntime()
+```
+
+```python
+# workflow.py
+from dapr.ext.workflow import DaprWorkflowContext
+from runtime import wfr
+from activities import say_hello
 
 @wfr.workflow(name='greeting_workflow')
 def greeting_workflow(ctx: DaprWorkflowContext, name: str):
@@ -40,7 +47,9 @@ An activity is a plain Python function decorated with `@wfr.activity`. It receiv
 an optional input value. Activities can call external services, databases, and other I/O-bound operations.
 
 ```python
-# workflow.py (continued)
+# activities.py
+from dapr.ext.workflow import WorkflowActivityContext
+from runtime import wfr
 
 @wfr.activity(name='say_hello')
 def say_hello(ctx: WorkflowActivityContext, name: str) -> str:
@@ -57,7 +66,8 @@ scheduling workflows; shut it down on exit.
 from time import sleep
 from dapr.ext.workflow import DaprWorkflowClient
 
-from workflow import wfr, greeting_workflow
+from runtime import wfr
+from workflow import greeting_workflow
 
 def main():
     wfr.start()
@@ -106,23 +116,26 @@ dapr run --app-id myapp --dapr-grpc-port 50001 -- python app.py
 - `ctx.task_id` returns the activity task ID
 
 ### Runtime Setup
-- Create a single `WorkflowRuntime()` instance
+- Create a single `WorkflowRuntime()` instance in `runtime.py`
+- Import `wfr` from `runtime.py` in both `workflow.py` and `activities.py`
 - Call `wfr.start()` before scheduling workflows
 - Call `wfr.shutdown()` on exit
 - Decorators auto-register workflows and activities with the runtime
 
 ### File Organization Best Practice
 
-Keep workflow logic and activity logic in separate files to avoid maintenance overhead:
+Keep the runtime instance, workflow logic, and activity logic in separate files to avoid circular imports:
 
 ```
 my_dapr_app/
-├── workflow.py       # Workflow definitions + activity definitions
-├── app.py            # Entry point: runtime start, client, scheduling
-└── model.py          # Shared dataclasses / models
+├── runtime.py        # WorkflowRuntime instance (wfr)
+├── workflow.py       # Workflow definitions (imports wfr from runtime)
+├── activities.py     # Activity definitions (imports wfr from runtime)
+├── main.py           # Entry point: runtime start, client, scheduling
+└── models.py         # Shared Pydantic models
 ```
 
-For larger applications, split activities and workflows into separate modules.
+The `runtime.py` file breaks the circular dependency between `workflow.py` and `activities.py`.
 
 ## Common Pitfalls
 

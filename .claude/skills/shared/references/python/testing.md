@@ -89,7 +89,8 @@ import json
 import pytest
 from time import sleep
 from dapr.ext.workflow import DaprWorkflowClient
-from workflow import wfr, order_processing_workflow
+from runtime import wfr
+from workflow import order_processing_workflow
 
 @pytest.fixture(scope='module', autouse=True)
 def start_runtime():
