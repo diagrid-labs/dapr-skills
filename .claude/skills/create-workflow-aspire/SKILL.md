@@ -46,7 +46,7 @@ Additional runtime dependencies (handled during project setup):
 - NuGet package: `Dapr.Workflow` version `1.17.8` (ApiService)
 - NuGet package: `Dapr.Workflow.Versioning` version `1.17.8` (ApiService)
 - NuGet package: `CommunityToolkit.Aspire.Hosting.Dapr` version `13.0.0` (AppHost)
-- NuGet package: `Aspire.Hosting.Valkey` version `13.2.1` (AppHost)
+- NuGet package: `Aspire.Hosting.Valkey` version `13.2.2` (AppHost)
 
 ## Project Setup
 
@@ -57,7 +57,7 @@ aspire new aspire-starter -n <SolutionRoot> -o <SolutionRoot> --non-interactive
 ```
 
 **IMPORTANT**
-The `--non-interactive` flag MUST be used otherwise it breaks running the command as a skill.
+The `--non-interactive` flag for the `aspire new` command MUST be used otherwise it breaks running the command as a skill.
 
 After scaffolding:
 
@@ -68,7 +68,7 @@ After scaffolding:
    dotnet add <SolutionRoot>.ApiService package Dapr.Workflow --version 1.17.8
    dotnet add <SolutionRoot>.ApiService package Dapr.Workflow.Versioning --version 1.17.8
    dotnet add <SolutionRoot>.AppHost package CommunityToolkit.Aspire.Hosting.Dapr --version 13.0.0
-   dotnet add <SolutionRoot>.AppHost package Aspire.Hosting.Valkey --version 13.2.1
+   dotnet add <SolutionRoot>.AppHost package Aspire.Hosting.Valkey --version 13.2.2
    ```
 4. **Create/update source files** — Create all files described below, using `REFERENCE.md` for complete code.
 

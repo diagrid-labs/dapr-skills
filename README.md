@@ -58,6 +58,8 @@ The input for the workflow contains the following fields:
 - Date of diagnostics request
 - Name of the engineer who requested the diagnostic
 
+Use mock inputs and outputs for the activities.
+
 ### Example 3: Python Order Processing
 
 Create a Dapr workflow app in Python. The workflow processes an order. The first activity validates the order. Then 2 activities run in parallel:
