@@ -19,7 +19,7 @@ internal sealed partial class MyActivity(ILogger<MyActivity> logger) : WorkflowA
         return Task.FromResult(new ActivityOutput($"Processed: {input.Data}"));
     }
 
-    [LoggerMessage(LogLevel.Information, $"{nameof(MyActivity)}: {Data}")]
+    [LoggerMessage(LogLevel.Information, "MyActivity: {Data}")]
     static partial void LogInput(ILogger logger, string Data);
 }
 ```
@@ -34,3 +34,4 @@ internal sealed partial class MyActivity(ILogger<MyActivity> logger) : WorkflowA
 - If the activity method body is synchronous, return `Task.FromResult()` instead of marking the method `async`.
 - Activities are where non-deterministic and I/O operations should be performed (HTTP calls, database queries, file access, etc.).
 - If the user has described the desired behavior, implement it inside the `RunAsync` method. If the exact functionality is unclear, add a `// TODO: implement actual functionality` statement inside the `RunAsync` method.
+- In `[LoggerMessage]` attributes, use a **plain string** (not `$"..."`) for the message template. The `{ParameterName}` holes are matched by the source generator to the method parameter names. Using `$"..."` with non-constant expressions like method parameter names causes `CS0103` compile errors because those names are not in scope at the class-body level where the attribute is evaluated.
