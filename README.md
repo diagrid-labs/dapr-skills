@@ -23,8 +23,8 @@ This repository contains skill definitions that can be used with Claude Code to 
 1. Clone this repo
 2. Open a terminal and navigate to the cloned repo
 3. Start Claude Code
-4. Run the `check-prereq-xxx` skill to verify your environment (e.g., "check prerequisites for .NET", "check prerequisites for Aspire", or "check prerequisites for Python")
-5. Once all prerequisites pass, run the `create-workflow-xxx` skill to scaffold the project (see the prompt examples below)
+4. OPTIONAL: Run the `check-prereq-xxx` skill to verify your environment (e.g., "check prerequisites for .NET", "check prerequisites for Aspire", or "check prerequisites for Python"). Follow the instructions if the prerequisites are not met.
+5. Run the `create-workflow-xxx` skill to scaffold the project (see the prompt examples below)
 6. Depending on your access permissions, you need to approve the usage of some tools during the generation of the project.
 7. Inspect the README.md file in the new folder after creation of the project.
 

@@ -24,12 +24,13 @@ This repository contains Claude Code skill definitions for building Dapr Workflo
 
 ## Usage
 
-Two flows are supported.
+**Verify your environment (user-invoked only):**
 
-**Build a new workflow application** (two steps):
+The `check-prereq-xxx` skills (`check-prereq-dotnet`, `check-prereq-aspire`, `check-prereq-python`) are opt-in and must **only** be run when the user explicitly asks for them (e.g., "check prerequisites for .NET", "verify Aspire environment"). Do **NOT** run them automatically as part of, or before, a `create-workflow-xxx` invocation — they are separate, user-invoked skills, not an implicit pre-step.
 
-1. **Check prerequisites** — Run the appropriate `check-prereq-xxx` skill first to verify your environment (e.g., `check-prereq-dotnet`, `check-prereq-aspire`, or `check-prereq-python`).
-2. **Create the workflow** — Once the prerequisites pass, run the corresponding skill to scaffold the project: `create-workflow-dotnet`, `create-workflow-aspire`, or `create-workflow-python`.
+**Build a new workflow application:**
+
+Run the appropriate `create-workflow-xxx` skill to scaffold the project: `create-workflow-dotnet`, `create-workflow-aspire`, or `create-workflow-python`. Each skill lists the prerequisites it expects to be installed and assumes they are already in place.
 
 **Review an existing workflow application** (run any combination, in any order):
 
