@@ -50,14 +50,13 @@ Additional runtime dependencies (handled during project setup):
 
 ## Project Setup
 
-Scaffold the solution using the Aspire CLI inside the current location where the terminal is open, then customize it for Dapr Workflow:
+Scaffold the solution using the Aspire CLI inside the current location where the terminal is open, then customize it for Dapr Workflow.
+
+**IMPORTANT: Always include `--non-interactive` in the `aspire new` command below. Omitting it causes the command to block waiting for user input, which breaks skill execution.**
 
 ```shell
 aspire new aspire-starter -n <SolutionRoot> -o <SolutionRoot> --non-interactive
 ```
-
-**IMPORTANT**
-The `--non-interactive` flag for the `aspire new` command MUST be used otherwise it breaks running the command as a skill.
 
 After scaffolding:
 
