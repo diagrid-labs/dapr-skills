@@ -30,7 +30,7 @@ If you don't have enough context what to build, ask the user the following clari
 1. What is the purpose of the workflow application?
 2. Describe how workflow should work. Which patterns should be used?
 3. Specify the input and output objects of the workflow.
-4. What's the name of this project?
+4. What's the name of this project? This will be used as the folder name. Don't use any spaces in this name.
 
 ## Prerequisites
 
@@ -70,6 +70,7 @@ The <ProjectName> should start with the <ProjectRoot> and end with `-app`: <Proj
     ├── pyproject.toml
     ├── main.py
     ├── models.py
+    ├── runtime.py
     ├── workflow.py
     └── activities.py
 ```
@@ -98,13 +99,17 @@ Main entry for the Python workflow application. See `REFERENCE.md` for full exam
 
 Pydantic types for workflow and activity input/output, placed in a `models.py` file. Models must be serializable since Dapr persists workflow state. See `REFERENCE.md` for full example and key points.
 
+### Runtime file
+
+The `runtime.py` file creates the shared `WorkflowRuntime` instance (`wfr`). Both `workflow.py` and `activities.py` import `wfr` from this file. This avoids a circular import between `workflow.py` and `activities.py`. See `REFERENCE.md` for full example.
+
 ### Workflow file
 
-A workflow is defined using the @wfr.workflow(name="<NAME>") attribute. The workflow code is placed in a workflow.py file. See `REFERENCE.md` for full example, key points, determinism rules, and workflow patterns (chaining, fan-out/fan-in, sub-workflows).
+A workflow is defined using the @wfr.workflow(name="<NAME>") attribute. The workflow code is placed in a workflow.py file. It imports `wfr` from `runtime.py`. See `REFERENCE.md` for full example, key points, determinism rules, and workflow patterns (chaining, fan-out/fan-in, sub-workflows).
 
 ### Activities file
 
-A workflow activity is defined using the @wfr.activity(name="<NAME>") attribute. The activity code is placed in an `activities.py` file. See `REFERENCE.md` for full example and key points.
+A workflow activity is defined using the @wfr.activity(name="<NAME>") attribute. The activity code is placed in an `activities.py` file. It imports `wfr` from `runtime.py`. See `REFERENCE.md` for full example and key points.
 
 ### local.http
 
@@ -112,11 +117,10 @@ HTTP request file for testing the workflow endpoints. Contains a `start` request
 
 ## Verify
 
-**IMPORTANT: After Project Setup you MUST show these exact verification instructions:**
+**IMPORTANT: After Project Setup you MUST run these exact verification instructions:**
 
 1. Run `uv venv` in the `<ProjectName>` folder to create a virtual environment.
 2. Run `uv sync` in the `<ProjectName>` folder to install dependencies.
-3. Instruct the user to start the application with `dapr run -f .` in the project root to start the workflow app.
 
 ## Create README.md
 

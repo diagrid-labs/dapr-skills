@@ -15,13 +15,30 @@ This repository contains skill definitions for building Dapr Workflow applicatio
   - `create-workflow-python/REFERENCE.md` — Detailed reference examples for the Python skill
   - `create-workflow-aspire/SKILL.md` — Skill for creating Dapr Workflow apps with Aspire
   - `create-workflow-aspire/REFERENCE.md` — Detailed reference examples for the Aspire skill
+  - `review-workflow-determinism/SKILL.md` — Skill for reviewing existing workflow code for non-determinism hazards
+  - `review-workflow-determinism/REFERENCE.md` — Detailed reference and worked example for the determinism review skill
+  - `review-workflow-activity/SKILL.md` — Skill for reviewing existing activity code for idempotency, error handling, and convention issues
+  - `review-workflow-activity/REFERENCE.md` — Detailed reference and worked example for the activity review skill
+  - `review-workflow-management/SKILL.md` — Skill for reviewing the HTTP management endpoints exposed for Dapr Workflows
+  - `review-workflow-management/REFERENCE.md` — Detailed reference and worked example for the management endpoint review skill
 
 ## Usage
 
-Follow a two-step workflow when building Dapr Workflow applications:
+**Verify your environment (user-invoked only):**
 
-1. **Check prerequisites** — Run the appropriate `check-prereq-xxx` skill first to verify your environment (e.g., `check-prereq-dotnet`, `check-prereq-aspire`, or `check-prereq-python`).
-2. **Create the workflow** — Once the prerequisites pass, run the corresponding skill to scaffold the project: `create-workflow-dotnet`, `create-workflow-aspire`, or `create-workflow-python`.
+The `check-prereq-xxx` skills (`check-prereq-dotnet`, `check-prereq-aspire`, `check-prereq-python`) are opt-in and must **only** be run when the user explicitly asks for them (e.g., "check prerequisites for .NET", "verify Aspire environment"). Do **NOT** run them automatically as part of, or before, a `create-workflow-xxx` invocation — they are separate, user-invoked skills, not an implicit pre-step.
+
+**Build a new workflow application:**
+
+Run the appropriate `create-workflow-xxx` skill to scaffold the project: `create-workflow-dotnet`, `create-workflow-aspire`, or `create-workflow-python`. Each skill lists the prerequisites it expects to be installed and assumes they are already in place.
+
+**Review an existing workflow application** (run any combination, in any order):
+
+- `review-workflow-determinism` — flags non-deterministic constructs in workflow bodies that would break replay.
+- `review-workflow-activity` — flags idempotency, error-handling, and convention issues inside activities.
+- `review-workflow-management` — checks the HTTP management surface (start, status, terminate, pause, resume, raise-event, purge) against the canonical shape used by the `create-workflow-*` skills.
+
+All review skills are read-only and emit a structured report with stable rule ids (`DWF-DET-NNN`, `DWF-ACT-NNN`, `DWF-MGT-NNN`).
 
 ## Repository prerequisites
 

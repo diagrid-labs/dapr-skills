@@ -28,15 +28,15 @@ The following must be installed:
 
 ## Prerequisite Checks
 
-**Run ALL of these checks. Track which checks pass and which fail.**
+**Run ALL of these checks. Check steps 2-6 in parallel. Track which checks pass and which fail.**
 
-### Step 1: Check the Python LSP plugin
-
-Read the file at [`../shared/prereq-check-python-lsp.md`](../shared/prereq-check-python-lsp.md) and follow those instructions.
-
-### Step 2: Detect Operating System
+### Step 1: Detect Operating System
 
 Read the file at [`../shared/prereq-detect-os.md`](../shared/prereq-detect-os.md) and follow those instructions.
+
+### Step 2: Check the Python LSP plugin
+
+Read the file at [`../shared/prereq-check-python-lsp.md`](../shared/prereq-check-python-lsp.md) and follow those instructions.
 
 ### Step 3: Check uv
 
