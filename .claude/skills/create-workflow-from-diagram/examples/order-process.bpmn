@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  id="orderProcessDefinitions"
+                  targetNamespace="http://example.com/bpmn">
+  <bpmn:process id="orderProcess" name="Order Process" isExecutable="true">
+    <bpmn:startEvent id="startOrder" name="Order Received" />
+
+    <bpmn:serviceTask id="validateOrder" name="Validate Order" />
+    <bpmn:serviceTask id="checkInventory" name="Check Inventory" />
+
+    <bpmn:exclusiveGateway id="inStock" name="In Stock?" default="flowOutOfStock" />
+
+    <bpmn:parallelGateway id="fulfillSplit" name="Fulfill" />
+    <bpmn:serviceTask id="chargePayment" name="Charge Payment" />
+    <bpmn:serviceTask id="shipItem" name="Ship Item" />
+    <bpmn:parallelGateway id="fulfillJoin" />
+
+    <bpmn:userTask id="notifyCustomerBackorder" name="Notify Customer of Backorder" />
+    <bpmn:intermediateCatchEvent id="waitForRestock" name="Wait 7 Days for Restock">
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">P7D</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+
+    <bpmn:endEvent id="orderComplete" name="Order Complete" />
+    <bpmn:endEvent id="orderCancelled" name="Order Cancelled" />
+
+    <bpmn:sequenceFlow sourceRef="startOrder" targetRef="validateOrder" />
+    <bpmn:sequenceFlow sourceRef="validateOrder" targetRef="checkInventory" />
+    <bpmn:sequenceFlow sourceRef="checkInventory" targetRef="inStock" />
+
+    <bpmn:sequenceFlow id="flowInStock" sourceRef="inStock" targetRef="fulfillSplit">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${inStock == true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flowOutOfStock" sourceRef="inStock" targetRef="notifyCustomerBackorder" />
+
+    <bpmn:sequenceFlow sourceRef="fulfillSplit" targetRef="chargePayment" />
+    <bpmn:sequenceFlow sourceRef="fulfillSplit" targetRef="shipItem" />
+    <bpmn:sequenceFlow sourceRef="chargePayment" targetRef="fulfillJoin" />
+    <bpmn:sequenceFlow sourceRef="shipItem" targetRef="fulfillJoin" />
+    <bpmn:sequenceFlow sourceRef="fulfillJoin" targetRef="orderComplete" />
+
+    <bpmn:sequenceFlow sourceRef="notifyCustomerBackorder" targetRef="waitForRestock" />
+    <bpmn:sequenceFlow sourceRef="waitForRestock" targetRef="checkInventory" />
+  </bpmn:process>
+</bpmn:definitions>

@@ -15,6 +15,8 @@ This repository contains Claude Code skill definitions for building Dapr Workflo
   - `create-workflow-python/REFERENCE.md` — Detailed reference examples for the Python skill
   - `create-workflow-aspire/SKILL.md` — Skill for creating Dapr Workflow apps with Aspire
   - `create-workflow-aspire/REFERENCE.md` — Detailed reference examples for the Aspire skill
+  - `create-workflow-from-diagram/SKILL.md` — Skill for scaffolding a Dapr Workflow app from a diagram image (PNG/JPG/GIF/WebP) or a BPMN 2.0 XML file, in Go, Python, .NET, Java, or JavaScript
+  - `create-workflow-from-diagram/REFERENCE.md` — Detailed reference for the diagram skill (IR, input paths, per-language notes)
   - `review-workflow-determinism/SKILL.md` — Skill for reviewing existing workflow code for non-determinism hazards
   - `review-workflow-determinism/REFERENCE.md` — Detailed reference and worked example for the determinism review skill
   - `review-workflow-activity/SKILL.md` — Skill for reviewing existing activity code for idempotency, error handling, and convention issues
@@ -30,7 +32,7 @@ The `check-prereq-xxx` skills (`check-prereq-dotnet`, `check-prereq-aspire`, `ch
 
 **Build a new workflow application:**
 
-Run the appropriate `create-workflow-xxx` skill to scaffold the project: `create-workflow-dotnet`, `create-workflow-aspire`, or `create-workflow-python`. Each skill lists the prerequisites it expects to be installed and assumes they are already in place.
+Run the appropriate `create-workflow-xxx` skill to scaffold the project: `create-workflow-dotnet`, `create-workflow-aspire`, or `create-workflow-python` from a text spec, or `create-workflow-from-diagram` from an image or BPMN file (output language: Go, Python, .NET, Java, or JavaScript). Each skill lists the prerequisites it expects to be installed and assumes they are already in place.
 
 **Review an existing workflow application** (run any combination, in any order):
 

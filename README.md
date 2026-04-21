@@ -1,6 +1,10 @@
 # Dapr Workflow Skills
 
-This repository contains skill definitions that can be used with Claude Code to build Dapr Workflow applications for .NET (either with Aspire or without) and Python.
+This repository contains skill definitions that can be used with Claude Code to build Dapr Workflow applications.
+
+- Text-spec skills: `create-workflow-dotnet`, `create-workflow-aspire`, `create-workflow-python` — describe the workflow in natural language and scaffold a runnable project.
+- Diagram-input skill: `create-workflow-from-diagram` — provide a workflow diagram (PNG / JPG / JPEG / GIF / WebP) or a BPMN 2.0 XML file; the skill extracts structure and generates code for Go, Python, .NET, Java, or JavaScript.
+- Review skills: `review-workflow-determinism`, `review-workflow-activity`, `review-workflow-management` — audit an existing project.
 
 ## Prerequisites
 
@@ -85,3 +89,13 @@ The input for the workflow contains the following fields:
 - Ship name
 - Date of diagnostics request
 - Name of the engineer who requested the diagnostic
+
+### Example 5: Generate a Dapr workflow from a diagram
+
+Drop a workflow diagram or BPMN file into the chat and ask Claude Code to scaffold a Dapr workflow app from it:
+
+> Create a Dapr workflow in Python from this diagram. *(attach `.claude/skills/create-workflow-from-diagram/examples/pizza-order.png`)*
+
+> Scaffold a Go Dapr workflow from this BPMN file. *(attach `.claude/skills/create-workflow-from-diagram/examples/order-process.bpmn`)*
+
+The skill extracts the workflow structure into an intermediate representation, validates it, and writes a runnable project in the chosen language. See `.claude/skills/create-workflow-from-diagram/REFERENCE.md` for the IR format and per-language notes.
