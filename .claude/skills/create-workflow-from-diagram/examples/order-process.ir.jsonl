@@ -1,0 +1,25 @@
+{"type":"workflow","id":"orderProcess","name":"Order Process"}
+{"type":"start","id":"startOrder","label":"Order Received"}
+{"type":"activity","id":"validateOrder","label":"Validate Order","activity_type":"task"}
+{"type":"activity","id":"checkInventory","label":"Check Inventory","activity_type":"task"}
+{"type":"gateway","id":"inStock","label":"In Stock?","gateway_type":"exclusive","role":"split","default_edge":"flowOutOfStock"}
+{"type":"gateway","id":"fulfillSplit","label":"Fulfill","gateway_type":"parallel","role":"split"}
+{"type":"activity","id":"chargePayment","label":"Charge Payment","activity_type":"task"}
+{"type":"activity","id":"shipItem","label":"Ship Item","activity_type":"task"}
+{"type":"gateway","id":"fulfillJoin","gateway_type":"parallel","role":"merge"}
+{"type":"activity","id":"notifyCustomerBackorder","label":"Notify Customer of Backorder","activity_type":"task","requires_human_input":true}
+{"type":"activity","id":"waitForRestock","label":"Wait 7 Days for Restock","activity_type":"timer","duration":{"value":7,"unit":"days"}}
+{"type":"end","id":"orderComplete","label":"Order Complete"}
+{"type":"end","id":"orderCancelled","label":"Order Cancelled"}
+{"type":"edge","from":"startOrder","to":"validateOrder"}
+{"type":"edge","from":"validateOrder","to":"checkInventory"}
+{"type":"edge","from":"checkInventory","to":"inStock"}
+{"type":"edge","id":"flowInStock","from":"inStock","to":"fulfillSplit","condition":"${inStock == true}"}
+{"type":"edge","id":"flowOutOfStock","from":"inStock","to":"notifyCustomerBackorder"}
+{"type":"edge","from":"fulfillSplit","to":"chargePayment"}
+{"type":"edge","from":"fulfillSplit","to":"shipItem"}
+{"type":"edge","from":"chargePayment","to":"fulfillJoin"}
+{"type":"edge","from":"shipItem","to":"fulfillJoin"}
+{"type":"edge","from":"fulfillJoin","to":"orderComplete"}
+{"type":"edge","from":"notifyCustomerBackorder","to":"waitForRestock"}
+{"type":"edge","from":"waitForRestock","to":"checkInventory"}
