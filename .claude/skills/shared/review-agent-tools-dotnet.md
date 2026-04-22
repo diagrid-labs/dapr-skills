@@ -1,0 +1,27 @@
+# Agent Tools Checklist — .NET
+
+Apply each rule below to every file in `tool_files` produced by `review-detect-target-agent.md`. The "scope" of every rule is a method referenced by `AIFunctionFactory.Create(...)`.
+
+Rule source: see [`../create-agent-dotnet/REFERENCE.md`](../create-agent-dotnet/REFERENCE.md) — section "Tools".
+
+| Rule id      | Severity | What to detect                                                                                                                   | Why it matters                                                                                        | Suggested fix                                                                                |
+| ------------ | -------- | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| DAG-TOOL-001 | critical | Tool performs a non-idempotent mutation (`HttpClient.PostAsync`, DB `ExecuteAsync`, file write) without an idempotency key      | Dapr Workflow may retry the activity; without an idempotency key the side effect runs more than once.| Accept an `idempotencyKey` parameter and pass it as a header or write-key on the call.        |
+| DAG-TOOL-002 | warning  | Tool method is missing `[Description]` on the method itself                                                                       | The LLM routes tools by description; without it, tool routing is guesswork.                          | Add `[Description("...")]` above the method with a one-line behaviour summary.                |
+| DAG-TOOL-003 | warning  | Any parameter is missing `[Description]`                                                                                         | The LLM receives an under-specified JSON schema for the tool call.                                   | Add `[Description("...")]` on every parameter.                                                |
+| DAG-TOOL-004 | warning  | Tool returns `object`, `dynamic`, or an unbounded collection with no cap                                                         | Unbounded returns bloat agent context and token costs.                                                | Return a concrete typed record; truncate collections before returning.                        |
+| DAG-TOOL-005 | warning  | Tool has `catch (Exception) { return ...; }` (swallowed exception returning a magic string)                                      | Masks retries and silently turns failures into successes.                                            | Rethrow or return a typed `ToolError` record the LLM can reason about.                        |
+| DAG-TOOL-006 | warning  | Tool uses `.Result` or `.Wait()` on an async call                                                                                | Sync-over-async deadlocks the agent's execution context.                                             | Mark the tool method `async Task<T>` and `await` the call.                                    |
+| DAG-TOOL-007 | info     | Tool method name does not clearly express a verb (`Data`, `X`, `Foo`)                                                            | Poor naming degrades LLM tool selection.                                                             | Rename to `<Verb><Noun>` (e.g. `GetWeather`, `SendInvitation`).                              |
+| DAG-TOOL-008 | warning  | `Console.WriteLine` used instead of `ILogger`                                                                                    | Bypasses the application's logging pipeline and trace correlation.                                   | Inject `ILogger<T>` and use structured logging methods.                                       |
+| DAG-TOOL-011 | critical | Tool constructs an outbound URL (`HttpClient.GetAsync`, `HttpClient.SendAsync`) from an agent-supplied argument with no allowlist | Server-side request forgery: the LLM can direct the tool at internal services, cloud metadata endpoints, or loopback. | Validate the host against an allowlist before the call; block private / link-local / loopback IPs; set `AllowAutoRedirect = false`. |
+| DAG-TOOL-012 | critical | Tool uses an agent-supplied argument as a file path (`File.*`, `Path.Combine`, `new FileStream`) without a root-directory check | Path traversal: agent input `..\\..\\..\\Windows\\System32` escapes the intended directory. | Resolve with `Path.GetFullPath` and assert `resolved.StartsWith(allowedRoot, StringComparison.Ordinal)`. |
+| DAG-TOOL-013 | warning  | Tool returns externally-sourced content (HTTP response body, DB row, user-controlled store) directly to the agent | Prompt injection: adversarial content in the response can override the agent's instructions on the next turn. | Return a typed record with bounded size; strip instruction-like prefixes before returning. |
+
+## Confidence notes
+
+- DAG-TOOL-001 — Idempotency may appear as a header (e.g. `Idempotency-Key`), a parameter the caller passes in, or a deterministic id (e.g. workflow instance id + activity id). Any of these satisfy the rule.
+
+## Cross-reference
+
+Memory and state-store rules are in `review-agent-memory-dotnet.md`. Orchestration / pub/sub rules are in `review-agent-orchestration-dotnet.md`. Observability rules are Python-only — framework-wrapper .NET projects ship their own observability.
