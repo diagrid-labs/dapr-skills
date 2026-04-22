@@ -1,10 +1,10 @@
 # Review Report Format
 
-Every `review-workflow-*` skill emits a report that follows the exact shape below so that multiple reviews can be diffed and composed over time.
+Every `review-workflow-*` and `review-agent-*` skill emits a report that follows the exact shape below so that multiple reviews can be diffed and composed over time.
 
 ## Severity taxonomy
 
-- **critical** — code is incorrect or will cause stuck/broken workflows in production. Must be fixed.
+- **critical** — code is incorrect or will cause stuck/broken workflows or unsafe agents in production. Must be fixed.
 - **warning** — code works today but violates a documented best practice or carries a known production risk.
 - **info** — suggestion or stylistic improvement; no correctness impact.
 
@@ -12,11 +12,20 @@ A separate **Please verify** section collects findings the rule heuristic flagge
 
 ## Rule ids
 
-Each rule has a stable id of the form `DWF-<AREA>-<NNN>`:
+Each rule has a stable id of the form `<PREFIX>-<AREA>-<NNN>`. Two prefix families are in use:
+
+**Workflow reviews** (`DWF-*`):
 
 - `DWF-DET-NNN` — determinism rules (`review-workflow-determinism`)
 - `DWF-ACT-NNN` — activity rules (`review-workflow-activity`)
 - `DWF-MGT-NNN` — management/endpoint rules (`review-workflow-management`)
+
+**Agent reviews** (`DAG-*`):
+
+- `DAG-TOOL-NNN` — agent tool rules (`review-agent-tools`)
+- `DAG-MEM-NNN` — agent memory and state-store rules (`review-agent-memory`)
+- `DAG-ORCH-NNN` — multi-agent orchestration rules (`review-agent-orchestration`)
+- `DAG-OBS-NNN` — agent observability rules (`review-agent-observability`)
 
 Rule ids never change once published. New rules append; deprecated rules are kept reserved.
 
@@ -25,7 +34,7 @@ Rule ids never change once published. New rules append; deprecated rules are kep
 The skill MUST emit exactly this structure (omit empty sections — do not print "none"):
 
 ```
-# Dapr Workflow review — <skill-name>
+# Dapr review — <skill-name>
 
 Target: <files or folders scanned>
 Language: <dotnet|aspire|python>
@@ -37,7 +46,7 @@ Found: <n> critical, <n> warnings, <n> suggestions, <n> to verify
   Fix: <one-line concrete fix, ideally referencing the safe API>
 
 ## Warnings
-- [DWF-ACT-004] `<file>:<line>` — <one-line what>
+- [DAG-TOOL-004] `<file>:<line>` — <one-line what>
   Why: <one-line why>
   Fix: <one-line fix>
 
@@ -47,7 +56,7 @@ Found: <n> critical, <n> warnings, <n> suggestions, <n> to verify
   Fix: <one-line fix>
 
 ## Please verify
-- [DWF-DET-009] `<file>:<line>` — <one-line what, plus what to verify>
+- [DAG-MEM-003] `<file>:<line>` — <one-line what, plus what to verify>
 
 ## Next steps
 - <one or two short bullets pointing the user to the next review skill or to the affected files>
