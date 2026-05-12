@@ -61,15 +61,14 @@ aspire new aspire-starter -n <SolutionRoot> -o <SolutionRoot> --non-interactive 
 After scaffolding:
 
 1. **Remove the Web project** — The generated `<SolutionRoot>.Web` project is not needed. Delete the `<SolutionRoot>.Web` folder and remove its project reference from `<SolutionRoot>.AppHost.csproj` and the `.sln` file.
-2. **Fix AppHost launchSettings.json** — The scaffolded `<SolutionRoot>.AppHost/Properties/launchSettings.json` uses `http://` for all URLs. Change the `applicationUrl` and all `ASPIRE_*` environment variable URLs (`ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL`, `ASPIRE_DASHBOARD_MCP_ENDPOINT_URL`, `ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL`) from `http://` to `https://` to avoid the `ASPIRE_ALLOW_UNSECURED_TRANSPORT` validation error at startup.
-3. **Add NuGet packages** — run these commands from **inside the `<SolutionRoot>` folder** (do NOT `cd` elsewhere between commands, as the working directory persists across Bash calls and will break subsequent file operations that use relative paths):
+2. **Add NuGet packages** — run these commands from **inside the `<SolutionRoot>` folder** (do NOT `cd` elsewhere between commands, as the working directory persists across Bash calls and will break subsequent file operations that use relative paths):
    ```shell
    dotnet add <SolutionRoot>.ApiService/<SolutionRoot>.ApiService.csproj package Dapr.Workflow --version 1.17.9
    dotnet add <SolutionRoot>.ApiService/<SolutionRoot>.ApiService.csproj package Dapr.Workflow.Versioning --version 1.17.9
    dotnet add <SolutionRoot>.AppHost/<SolutionRoot>.AppHost.csproj package CommunityToolkit.Aspire.Hosting.Dapr --version 13.0.0
    dotnet add <SolutionRoot>.AppHost/<SolutionRoot>.AppHost.csproj package Aspire.Hosting.Valkey --version 13.3.0
    ```
-4. **Create/update source files** — Create all files described below, using `REFERENCE.md` for complete code.
+3. **Create/update source files** — Create all files described below, using `REFERENCE.md` for complete code.
 
 ### Folder structure
 
