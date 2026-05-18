@@ -24,13 +24,23 @@ This repository contains skill definitions that can be used with Claude Code to 
 
 ## How to use this
 
-1. Clone this repo
-2. Open a terminal and navigate to the cloned repo
-3. Start Claude Code
-4. OPTIONAL: Run the `check-prereq-xxx` skill to verify your environment (e.g., "check prerequisites for .NET", "check prerequisites for Aspire", or "check prerequisites for Python"). Follow the instructions if the prerequisites are not met.
-5. Run the `create-workflow-xxx` skill to scaffold the project (see the prompt examples below)
-6. Depending on your access permissions, you need to approve the usage of some tools during the generation of the project.
-7. Inspect the README.md file in the new folder after creation of the project.
+These skills are distributed as a Claude Code plugin from [diagrid-labs/dapr-skills](https://github.com/diagrid-labs/dapr-skills) — no need to clone this repo.
+
+1. Start Claude Code in the directory where you want the generated project to be created.
+2. Add this repo as a plugin marketplace and install the `dapr-skills` plugin:
+
+   ```
+   /plugin marketplace add diagrid-labs/dapr-skills
+   /plugin install dapr-skills@diagrid-labs
+   ```
+
+   Alternatively, run `/plugin` and use the interactive UI to browse and install the plugin.
+3. OPTIONAL: Run a `check-prereq-<language>` skill to verify your environment (e.g., "check prerequisites for .NET", "check prerequisites for Aspire", or "check prerequisites for Python"). Follow the instructions if the prerequisites are not met.
+4. Run a `create-workflow-<language>` skill to scaffold the project (see the prompt examples below).
+5. Depending on your access permissions, you may need to approve the usage of some tools during project generation.
+6. Inspect the `README.md` file in the new folder after the project is created.
+
+To update or remove the plugin later, use `/plugin` and select the corresponding action.
 
 ## Prompt examples
 
@@ -94,8 +104,8 @@ The input for the workflow contains the following fields:
 
 Drop a workflow diagram or BPMN file into the chat and ask Claude Code to scaffold a Dapr workflow app from it:
 
-> Create a Dapr workflow in Python from this diagram. *(attach `.claude/skills/create-workflow-from-diagram/examples/pizza-order.png`)*
+> Create a Dapr workflow in Python from this diagram. *(attach `skills/create-workflow-from-diagram/examples/pizza-order.png`)*
 
-> Scaffold a Go Dapr workflow from this BPMN file. *(attach `.claude/skills/create-workflow-from-diagram/examples/order-process.bpmn`)*
+> Scaffold a Go Dapr workflow from this BPMN file. *(attach `skills/create-workflow-from-diagram/examples/order-process.bpmn`)*
 
-The skill extracts the workflow structure into an intermediate representation, validates it, and writes a runnable project in the chosen language. See `.claude/skills/create-workflow-from-diagram/REFERENCE.md` for the IR format and per-language notes.
+The skill extracts the workflow structure into an intermediate representation, validates it, and writes a runnable project in the chosen language. See `skills/create-workflow-from-diagram/REFERENCE.md` for the IR format and per-language notes.

@@ -4,7 +4,7 @@ This repository contains Claude Code skill definitions for building Dapr Workflo
 
 ## Repository structure
 
-- `.claude/skills/` — Skill files organized by language/framework
+- `skills/` — Skill files organized by language/framework
   - `shared/` — Shared content referenced by multiple skills (prereq checks, common .NET sections, running instructions)
   - `check-prereq-dotnet/SKILL.md` — Skill for checking .NET prerequisites
   - `check-prereq-aspire/SKILL.md` — Skill for checking .NET Aspire prerequisites
@@ -40,7 +40,7 @@ Run the appropriate `create-workflow-xxx` skill to scaffold the project: `create
 - `review-workflow-activity` — flags idempotency, error-handling, and convention issues inside activities.
 - `review-workflow-management` — checks the HTTP management surface (start, status, terminate, pause, resume, raise-event, purge) against the canonical shape used by the `create-workflow-*` skills.
 
-All review skills are read-only (`Read`, `Grep`, `Glob` only), emit a structured report defined by `.claude/skills/shared/review-report-format.md`, and use stable rule ids (`DWF-DET-NNN`, `DWF-ACT-NNN`, `DWF-MGT-NNN`).
+All review skills are read-only (`Read`, `Grep`, `Glob` only), emit a structured report defined by `skills/shared/review-report-format.md`, and use stable rule ids (`DWF-DET-NNN`, `DWF-ACT-NNN`, `DWF-MGT-NNN`).
 
 ## Repository prerequisites
 
@@ -68,7 +68,7 @@ All skills require:
 
 ## Guidelines for skill files
 
-- Skill files are Markdown documents in `.claude/skills/<skill-name>/SKILL.md`
+- Skill files are Markdown documents in `skills/<skill-name>/SKILL.md`
 - Each skill directory should also include a `REFERENCE.md` with full code examples and detailed explanations
 - Skill front-matter fields: `name`, `description`, `model` (e.g. `opus`)
 - Each skill should include sections for: prerequisite checks, project setup, folder structure, verify, and a final message
@@ -78,4 +78,4 @@ All skills require:
 - Include "Key points" sections after code examples to explain important concepts
 - Skills must perform all prerequisite checks before creating any files
 - Skills must be able to work on MacOS, Linux, and Windows environments.
-- Shared content goes in `.claude/skills/shared/`; SKILL.md and REFERENCE.md files reference shared files to avoid duplication.
+- Shared content goes in `skills/shared/`; SKILL.md and REFERENCE.md files reference shared files to avoid duplication.
