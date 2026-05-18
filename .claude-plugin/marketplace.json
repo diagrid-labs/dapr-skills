@@ -6,7 +6,7 @@
   "plugins": [
     {
       "name": "dapr-skills",
-      "source": "./plugins/dapr-skills",
+      "source": ".",
       "description": "Skills to create Dapr Workflow and Agent applications"
     }
   ]
