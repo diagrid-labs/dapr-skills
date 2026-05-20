@@ -24,7 +24,7 @@ This repository contains skill definitions that can be used with Claude Code to 
 
 ## How to use this
 
-These skills are distributed as a Claude Code plugin from [diagrid-labs/dapr-skills](https://github.com/diagrid-labs/dapr-skills) — no need to clone this repo.
+These skills are distributed as a Claude Code plugin from [diagrid-labs/dapr-skills](https://github.com/diagrid-labs/dapr-skills).
 
 1. Start Claude Code in the directory where you want the generated project to be created.
 2. Add this repo as a plugin marketplace and install the `dapr-skills` plugin:
@@ -41,6 +41,35 @@ These skills are distributed as a Claude Code plugin from [diagrid-labs/dapr-ski
 6. Inspect the `README.md` file in the new folder after the project is created.
 
 To update or remove the plugin later, use `/plugin` and select the corresponding action.
+
+## Available skills
+
+Invoke a skill by asking Claude Code in natural language — the example phrases below trigger each skill.
+
+### Prerequisite checks
+
+| Skill | Example prompt |
+| --- | --- |
+| `check-prereq-dotnet` | "check prerequisites for .NET" |
+| `check-prereq-aspire` | "check prerequisites for Aspire" |
+| `check-prereq-python` | "check prerequisites for Python" |
+
+### Create a workflow
+
+| Skill | Example prompt |
+| --- | --- |
+| `create-workflow-dotnet` | "create a workflow in .NET named ..." |
+| `create-workflow-aspire` | "create a workflow with Aspire named ..." |
+| `create-workflow-python` | "create a workflow in Python named ..." |
+| `create-workflow-from-diagram` | "create a Dapr workflow in `<language>` from this diagram" (attach a PNG/JPG/GIF/WebP image or a `.bpmn` file; supported output languages: Go, Python, .NET, Java, JavaScript) |
+
+### Review an existing workflow
+
+| Skill | Example prompt |
+| --- | --- |
+| `review-workflow-determinism` | "review workflow for determinism" |
+| `review-workflow-activity` | "review workflow activities" |
+| `review-workflow-management` | "review workflow management endpoints" |
 
 ## Prompt examples
 
