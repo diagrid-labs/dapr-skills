@@ -176,11 +176,11 @@
 - **JSON Converter Configuration** - Use proper serialization options:
   ```csharp
   // In Program.cs or Startup.cs
-  builder.Services.AddDaprWorkflow(options =>
-  {
-      options.RegisterWorkflow<OrderProcessingWorkflow>();
-      options.RegisterActivity<ProcessPaymentActivity>();
-  });
+  using Dapr.Workflow.Versioning;
+
+  // As of Dapr 1.18 workflows and activities are auto-registered
+  builder.Services.AddDaprWorkflow();
+  builder.Services.AddDaprWorkflowVersioning();
   
   // Configure JSON options globally if needed
   builder.Services.Configure<JsonOptions>(options =>

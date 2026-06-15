@@ -7,6 +7,7 @@ Execute activities in sequence, passing outputs from one into the next.
 ```csharp
 // Workflows/OrderWorkflow.cs
 using Dapr.Workflow;
+using Dapr.Workflow.Versioning;
 
 internal sealed class OrderWorkflow : Workflow<OrderInput, OrderResult>
 {
@@ -69,14 +70,9 @@ internal sealed class FulfillOrderActivity : WorkflowActivity<FulfillInput, stri
     }
 }
 
-// Program.cs
-builder.Services.AddDaprWorkflow(options =>
-{
-    options.RegisterWorkflow<OrderWorkflow>();
-    options.RegisterActivity<ValidateOrderActivity>();
-    options.RegisterActivity<ProcessPaymentActivity>();
-    options.RegisterActivity<FulfillOrderActivity>();
-});
+// Program.cs — workflows and activities are auto-registered as of Dapr 1.18
+builder.Services.AddDaprWorkflow();
+builder.Services.AddDaprWorkflowVersioning();
 ```
 
 ---
@@ -88,6 +84,7 @@ Execute multiple activities in parallel and collect all results.
 ```csharp
 // Workflows/BatchProcessingWorkflow.cs
 using Dapr.Workflow;
+using Dapr.Workflow.Versioning;
 
 internal sealed class BatchProcessingWorkflow : Workflow<string[], BatchResult>
 {
@@ -124,12 +121,9 @@ internal sealed class ProcessItemActivity : WorkflowActivity<string, ItemResult>
 public record ItemResult(string Item, bool Success);
 public record BatchResult(int Total, int Succeeded);
 
-// Program.cs
-builder.Services.AddDaprWorkflow(options =>
-{
-    options.RegisterWorkflow<BatchProcessingWorkflow>();
-    options.RegisterActivity<ProcessItemActivity>();
-});
+// Program.cs — workflows and activities are auto-registered as of Dapr 1.18
+builder.Services.AddDaprWorkflow();
+builder.Services.AddDaprWorkflowVersioning();
 ```
 
 ---
@@ -141,6 +135,7 @@ Execute a multi-step transaction where each completed step registers a compensat
 ```csharp
 // Workflows/TravelBookingWorkflow.cs
 using Dapr.Workflow;
+using Dapr.Workflow.Versioning;
 
 internal sealed class TravelBookingWorkflow : Workflow<TravelRequest, TravelResult>
 {
@@ -213,17 +208,9 @@ internal sealed class CancelFlightActivity : WorkflowActivity<string, bool>
     }
 }
 
-// Program.cs
-builder.Services.AddDaprWorkflow(options =>
-{
-    options.RegisterWorkflow<TravelBookingWorkflow>();
-    options.RegisterActivity<ReserveFlightActivity>();
-    options.RegisterActivity<ReserveHotelActivity>();
-    options.RegisterActivity<ChargePaymentActivity>();
-    options.RegisterActivity<CancelFlightActivity>();
-    options.RegisterActivity<CancelHotelActivity>();
-    options.RegisterActivity<RefundPaymentActivity>();
-});
+// Program.cs — workflows and activities are auto-registered as of Dapr 1.18
+builder.Services.AddDaprWorkflow();
+builder.Services.AddDaprWorkflowVersioning();
 ```
 
 **Important:** Compensation activities must be **idempotent** — they may be called more than once due to at-least-once activity execution guarantees.
@@ -237,6 +224,7 @@ Pause the workflow at a decision point and wait for an external approval event, 
 ```csharp
 // Workflows/ApprovalWorkflow.cs
 using Dapr.Workflow;
+using Dapr.Workflow.Versioning;
 
 internal sealed class ApprovalWorkflow : Workflow<ApprovalRequest, ApprovalResult>
 {
@@ -295,15 +283,9 @@ public record ApprovalRequest(string RequestId, string Description, decimal Amou
 public record ApprovalDecision(bool Approved, string Comment);
 public record ApprovalResult(bool Approved, string Reason);
 
-// Program.cs
-builder.Services.AddDaprWorkflow(options =>
-{
-    options.RegisterWorkflow<ApprovalWorkflow>();
-    options.RegisterActivity<NotifyApproverActivity>();
-    options.RegisterActivity<ExecuteApprovedActionActivity>();
-    options.RegisterActivity<NotifyRejectionActivity>();
-    options.RegisterActivity<NotifyTimeoutActivity>();
-});
+// Program.cs — workflows and activities are auto-registered as of Dapr 1.18
+builder.Services.AddDaprWorkflow();
+builder.Services.AddDaprWorkflowVersioning();
 ```
 
 ---
@@ -315,6 +297,7 @@ Run indefinitely by periodically checking a condition and restarting the workflo
 ```csharp
 // Workflows/MonitorWorkflow.cs
 using Dapr.Workflow;
+using Dapr.Workflow.Versioning;
 
 internal sealed class MonitorWorkflow : Workflow<MonitorState, object>
 {
@@ -380,13 +363,9 @@ public record MonitorState(string ResourceId, int Cycle = 0);
 public record HealthStatus(bool IsHealthy, string Details);
 public record AlertInput(string ResourceId, string Details);
 
-// Program.cs — start the eternal workflow once
-builder.Services.AddDaprWorkflow(options =>
-{
-    options.RegisterWorkflow<MonitorWorkflow>();
-    options.RegisterActivity<CheckHealthActivity>();
-    options.RegisterActivity<SendAlertActivity>();
-});
+// Program.cs — start the eternal workflow once; workflows and activities are auto-registered as of Dapr 1.18
+builder.Services.AddDaprWorkflow();
+builder.Services.AddDaprWorkflowVersioning();
 
 // Start it (idempotent — use a stable instance ID so it only starts once)
 await workflowClient.ScheduleNewWorkflowAsync(
@@ -406,6 +385,7 @@ Decompose a large workflow into child workflows. Each child has its own instance
 ```csharp
 // Workflows/BatchOrderWorkflow.cs
 using Dapr.Workflow;
+using Dapr.Workflow.Versioning;
 
 internal sealed class BatchOrderWorkflow : Workflow<BatchOrderInput, BatchOrderResult>
 {
@@ -451,14 +431,9 @@ public record BatchOrderResult(int Total, int Succeeded);
 public record OrderInput(string OrderId, string CustomerId, decimal Amount);
 public record OrderResult(bool Success, string? Error = null);
 
-// Program.cs
-builder.Services.AddDaprWorkflow(options =>
-{
-    options.RegisterWorkflow<BatchOrderWorkflow>();
-    options.RegisterWorkflow<SingleOrderWorkflow>();
-    options.RegisterActivity<ProcessPaymentActivity>();
-    options.RegisterActivity<ShipOrderActivity>();
-});
+// Program.cs — workflows and activities are auto-registered as of Dapr 1.18
+builder.Services.AddDaprWorkflow();
+builder.Services.AddDaprWorkflowVersioning();
 ```
 
 **Note:** When a parent workflow terminates, all its child workflows are also terminated. Child workflow retry policies are set via `ChildWorkflowTaskOptions.RetryPolicy`.

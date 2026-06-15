@@ -62,8 +62,7 @@ The `.csproj` file should look like this:
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapr.Workflow" Version="1.17.9" />
-    <PackageReference Include="Dapr.Workflow.Versioning" Version="1.17.9" />
+    <PackageReference Include="Dapr.Workflow" Version="1.18.4" />
   </ItemGroup>
 
 </Project>
@@ -75,7 +74,7 @@ See [`../shared/dotnet-models.md`](../shared/dotnet-models.md) for the full exam
 
 ## Program.cs
 
-Use `AddDaprWorkflow` to register activity types. Use `AddDaprWorkflowVersioning` to auto-register workflow types and enable workflow versioning. Use `DaprWorkflowClient` to manage workflow instances.
+Call `AddDaprWorkflow()` to register the Dapr Workflow runtime. As of Dapr 1.18 the .NET SDK auto-registers all workflow and activity classes, so the method takes no arguments. Call `AddDaprWorkflowVersioning()` to enable name-based workflow versioning. Use `DaprWorkflowClient` to manage workflow instances.
 
 ```csharp
 using Microsoft.AspNetCore.Mvc;
@@ -86,10 +85,7 @@ using <ProjectNamespace>.Activities;
 using <ProjectNamespace>.Models;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddDaprWorkflow(options =>
-{
-    options.RegisterActivity<MyActivity>();
-});
+builder.Services.AddDaprWorkflow();
 builder.Services.AddDaprWorkflowVersioning();
 
 var app = builder.Build();
@@ -149,9 +145,8 @@ app.Run();
 
 ### Key points
 
-- `AddDaprWorkflow` registers the Dapr Workflow services and the workflow/activity types with the DI container.
-- `AddDaprWorkflowVersioning` auto registers workflow classes and enables name based versioning.
-- `RegisterActivity<T>()` registers an activity class. Register each activity separately.
+- `AddDaprWorkflow()` registers the Dapr Workflow runtime and services with the DI container. As of Dapr 1.18 all workflow and activity classes are auto-registered, so no `RegisterWorkflow`/`RegisterActivity` calls are needed.
+- `AddDaprWorkflowVersioning()` enables name-based workflow versioning (part of the `Dapr.Workflow` package as of 1.18; no separate `Dapr.Workflow.Versioning` package is required).
 - `DaprWorkflowClient` is injected via DI and used to schedule new workflow instances.
 - `ScheduleNewWorkflowAsync` starts a new workflow instance and returns the instance ID. Pass a model record as input.
 - `GetWorkflowStateAsync` retrieves the current status of a workflow instance by its instance ID. Check `state.Exists` to verify the instance was found.

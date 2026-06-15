@@ -21,7 +21,7 @@ Given this trimmed `Program.cs`:
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddDaprWorkflow(o => o.RegisterActivity<ChargeCardActivity>());
+builder.Services.AddDaprWorkflow();
 builder.Services.AddDaprWorkflowVersioning();
 var app = builder.Build();
 

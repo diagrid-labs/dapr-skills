@@ -100,25 +100,19 @@ public record WorkflowState(
 
 ## Custom Serializer Options
 
-If the default `JsonSerializerDefaults.Web` options are insufficient, configure a custom serializer when registering workflows:
+If the default `JsonSerializerDefaults.Web` options are insufficient, override the serializer on the workflow builder. Workflows and activities are auto-registered as of Dapr 1.18, so you only need to supply the serializer:
 
 ```csharp
 using System.Text.Json;
 using Dapr.Workflow;
+using Dapr.Workflow.Versioning;
 
-builder.Services.AddDaprWorkflow(options =>
-{
-    options.RegisterWorkflow<OrderWorkflow>();
-    options.RegisterActivity<ProcessOrderActivity>();
-});
+// Auto-registers all workflow and activity classes
+builder.Services.AddDaprWorkflow();
+builder.Services.AddDaprWorkflowVersioning();
 
-// Then override the serializer via the builder
-builder.Services.AddDaprWorkflowBuilder(
-    configureRuntime: options =>
-    {
-        options.RegisterWorkflow<OrderWorkflow>();
-        options.RegisterActivity<ProcessOrderActivity>();
-    })
+// Override the serializer via the builder
+builder.Services.AddDaprWorkflowBuilder()
     .WithJsonSerializer(new JsonSerializerOptions
     {
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,

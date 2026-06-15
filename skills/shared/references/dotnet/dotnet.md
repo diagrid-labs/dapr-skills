@@ -55,19 +55,17 @@ internal sealed class FormatGreetingActivity : WorkflowActivity<string, string>
 
 ## Registration in Program.cs
 
-Register workflows and activities in `Program.cs` using `AddDaprWorkflow`. Every workflow and activity class must be registered — unregistered types will fail at runtime:
+Wire up the Dapr Workflow runtime in `Program.cs` with `AddDaprWorkflow()`. As of Dapr 1.18 the .NET SDK auto-registers every workflow and activity class, so the method takes no arguments — there are no `RegisterWorkflow`/`RegisterActivity` calls to keep in sync. Call `AddDaprWorkflowVersioning()` to enable name-based workflow versioning (part of the `Dapr.Workflow` package as of 1.18 — no separate `Dapr.Workflow.Versioning` package is required):
 
 ```csharp
 // Program.cs
 using Dapr.Workflow;
+using Dapr.Workflow.Versioning;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDaprWorkflow(options =>
-{
-    options.RegisterWorkflow<GreetingWorkflow>();
-    options.RegisterActivity<FormatGreetingActivity>();
-});
+builder.Services.AddDaprWorkflow();
+builder.Services.AddDaprWorkflowVersioning();
 
 var app = builder.Build();
 app.Run();
@@ -117,16 +115,14 @@ For console apps or background services, use `Host.CreateDefaultBuilder`:
 ```csharp
 // Program.cs (console)
 using Dapr.Workflow;
+using Dapr.Workflow.Versioning;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 var builder = Host.CreateDefaultBuilder(args).ConfigureServices(services =>
 {
-    services.AddDaprWorkflow(options =>
-    {
-        options.RegisterWorkflow<GreetingWorkflow>();
-        options.RegisterActivity<FormatGreetingActivity>();
-    });
+    services.AddDaprWorkflow();
+    services.AddDaprWorkflowVersioning();
 });
 
 using var host = builder.Build();

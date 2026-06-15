@@ -32,8 +32,7 @@ The following must be installed by the user before this skill can run:
 
 Additional runtime dependencies (handled during project setup):
 
-- NuGet package: `Dapr.Workflow` version `1.17.9`
-- NuGet package: `Dapr.Workflow.Versioning` version `1.17.9`
+- NuGet package: `Dapr.Workflow` version `1.18.4`
 - Start the [Diagrid Dev Dashboard](https://www.diagrid.io/blog/improving-the-local-dapr-workflow-experience-diagrid-dashboard): `docker run -p 8080:8080 ghcr.io/diagridio/diagrid-dashboard:latest`
 
 ## Check specification
@@ -54,8 +53,7 @@ Create the project root folder inside the current location where the terminal is
 mkdir <ProjectRoot>
 cd <ProjectRoot>
 dotnet new web -n <ProjectName>
-dotnet add <ProjectName> package Dapr.Workflow --version 1.17.9
-dotnet add <ProjectName> package Dapr.Workflow.Versioning --version 1.17.9
+dotnet add <ProjectName> package Dapr.Workflow --version 1.18.4
 ```
 
 The <ProjectName> should start with the <ProjectRoot> and end with `App`: <ProjectRoot>App.
@@ -100,7 +98,7 @@ Configures the application port, which must match `appPort` in `dapr.yaml`. See 
 
 ### .csproj
 
-Standard ASP.NET Core web project targeting `net10.0` with the `Dapr.Workflow` and `Dapr.Workflow.Versioning` packages. See `REFERENCE.md` for full example.
+Standard ASP.NET Core web project targeting `net10.0` with the `Dapr.Workflow` package. See `REFERENCE.md` for full example.
 
 ### Models
 
@@ -108,7 +106,7 @@ Record types for workflow and activity input/output, placed in a `Models` folder
 
 ### Program.cs
 
-Uses `AddDaprWorkflow` to register workflow and activity types. Uses `DaprWorkflowClient` to schedule workflow instances and query status via HTTP endpoints. See `REFERENCE.md` for full example and key points.
+Uses `AddDaprWorkflow()` to register the Dapr Workflow runtime (workflows and activities are auto-registered). Uses `DaprWorkflowClient` to schedule workflow instances and query status via HTTP endpoints. See `REFERENCE.md` for full example and key points.
 
 ### Workflow Class
 

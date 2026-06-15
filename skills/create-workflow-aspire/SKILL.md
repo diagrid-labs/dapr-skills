@@ -43,10 +43,9 @@ The following must be installed by the user before this skill can run:
 
 Additional runtime dependencies (handled during project setup):
 
-- NuGet package: `Dapr.Workflow` version `1.17.9` (ApiService)
-- NuGet package: `Dapr.Workflow.Versioning` version `1.17.9` (ApiService)
+- NuGet package: `Dapr.Workflow` version `1.18.4` (ApiService)
 - NuGet package: `CommunityToolkit.Aspire.Hosting.Dapr` version `13.0.0` (AppHost)
-- NuGet package: `Aspire.Hosting.Valkey` version `13.3.0` (AppHost)
+- NuGet package: `Aspire.Hosting.Valkey` version `13.4.4` (AppHost)
 
 ## Project Setup
 
@@ -63,10 +62,9 @@ After scaffolding:
 1. **Remove the Web project** — The generated `<SolutionRoot>.Web` project is not needed. Delete the `<SolutionRoot>.Web` folder and remove its project reference from `<SolutionRoot>.AppHost.csproj` and the `.sln` file.
 2. **Add NuGet packages** — run these commands from **inside the `<SolutionRoot>` folder** (do NOT `cd` elsewhere between commands, as the working directory persists across Bash calls and will break subsequent file operations that use relative paths):
    ```shell
-   dotnet add <SolutionRoot>.ApiService/<SolutionRoot>.ApiService.csproj package Dapr.Workflow --version 1.17.9
-   dotnet add <SolutionRoot>.ApiService/<SolutionRoot>.ApiService.csproj package Dapr.Workflow.Versioning --version 1.17.9
+   dotnet add <SolutionRoot>.ApiService/<SolutionRoot>.ApiService.csproj package Dapr.Workflow --version 1.18.4
    dotnet add <SolutionRoot>.AppHost/<SolutionRoot>.AppHost.csproj package CommunityToolkit.Aspire.Hosting.Dapr --version 13.0.0
-   dotnet add <SolutionRoot>.AppHost/<SolutionRoot>.AppHost.csproj package Aspire.Hosting.Valkey --version 13.3.0
+   dotnet add <SolutionRoot>.AppHost/<SolutionRoot>.AppHost.csproj package Aspire.Hosting.Valkey --version 13.4.4
    ```
 3. **Create/update source files** — Create all files described below, using `REFERENCE.md` for complete code.
 
@@ -129,11 +127,11 @@ State store component for the Diagrid Dashboard container. Uses `host.docker.int
 
 ### ApiService Program.cs
 
-Same pattern as the dotnet skill but adds `builder.AddServiceDefaults()` at the start and `app.MapDefaultEndpoints()` before `app.Run()`. Uses `AddDaprWorkflow` to register workflow and activity types. Uses `DaprWorkflowClient` to schedule workflow instances and query status via HTTP endpoints. Includes start, status, pause, resume, and terminate endpoints. See `REFERENCE.md` for full example and key points.
+Same pattern as the dotnet skill but adds `builder.AddServiceDefaults()` at the start and `app.MapDefaultEndpoints()` before `app.Run()`. Uses `AddDaprWorkflow()` to register the Dapr Workflow runtime (workflows and activities are auto-registered). Uses `DaprWorkflowClient` to schedule workflow instances and query status via HTTP endpoints. Includes start, status, pause, resume, and terminate endpoints. See `REFERENCE.md` for full example and key points.
 
 ### ApiService .csproj
 
-Standard ASP.NET Core web project targeting `net10.0` with `Dapr.Workflow` and `Dapr.Workflow.Versioning` packages and a project reference to ServiceDefaults. See `REFERENCE.md` for full example.
+Standard ASP.NET Core web project targeting `net10.0` with the `Dapr.Workflow` package and a project reference to ServiceDefaults. See `REFERENCE.md` for full example.
 
 ### Models
 

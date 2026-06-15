@@ -59,7 +59,7 @@ builder.Build().Run();
 ## AppHost .csproj
 
 ```xml
-<Project Sdk="Aspire.AppHost.Sdk/13.3.0">
+<Project Sdk="Aspire.AppHost.Sdk/13.4.4">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -74,7 +74,7 @@ builder.Build().Run();
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.Valkey" Version="13.3.0" />
+    <PackageReference Include="Aspire.Hosting.Valkey" Version="13.4.4" />
     <PackageReference Include="CommunityToolkit.Aspire.Hosting.Dapr" Version="13.0.0" />
   </ItemGroup>
 
@@ -90,7 +90,7 @@ builder.Build().Run();
 
 ### Key points
 
-- Uses `Aspire.AppHost.Sdk/13.3.0` instead of the standard .NET SDK.
+- Uses `Aspire.AppHost.Sdk/13.4.4` instead of the standard .NET SDK.
 - `CommunityToolkit.Aspire.Hosting.Dapr` provides the `AddDapr()` and `WithDaprSidecar()` extension methods.
 - `Aspire.Hosting.Valkey` provides the `AddValkey()` extension method.
 - The `Content` item group copies the `Resources` folder (containing Dapr component YAML files) to the build output directory.
@@ -155,7 +155,7 @@ spec:
 
 ## ApiService Program.cs
 
-Use `AddDaprWorkflow` to register activity types. Use `AddDaprWorkflowVersioning` to enable workflow versioning and auto-register workflow types. Use `DaprWorkflowClient` to schedule workflow instances and query their status via HTTP endpoints. Use `AddServiceDefaults` to integrates with the Aspire ServiceDefaults:
+Call `AddDaprWorkflow()` to register the Dapr Workflow runtime. As of Dapr 1.18 the .NET SDK auto-registers all workflow and activity classes, so the method takes no arguments. Call `AddDaprWorkflowVersioning()` to enable name-based workflow versioning. Use `DaprWorkflowClient` to schedule workflow instances and query their status via HTTP endpoints. Use `AddServiceDefaults` to integrate with the Aspire ServiceDefaults:
 
 ```csharp
 using Microsoft.AspNetCore.Mvc;
@@ -169,10 +169,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-builder.Services.AddDaprWorkflow(options =>
-{
-    options.RegisterActivity<MyActivity>();
-});
+builder.Services.AddDaprWorkflow();
 builder.Services.AddDaprWorkflowVersioning();
 
 var app = builder.Build();
@@ -236,9 +233,8 @@ app.Run();
 
 - `builder.AddServiceDefaults()` adds OpenTelemetry, health checks, resilience, and service discovery from the ServiceDefaults project.
 - `app.MapDefaultEndpoints()` maps the `/health` and `/alive` health check endpoints used by Aspire for orchestration.
-- `AddDaprWorkflow` registers the Dapr Workflow services and the workflow/activity types with the DI container.
-- `AddDaprWorkflowVersioning` registers the Dapr Workflow classes and allows to make breaking changes between workflows with disrupting in-flight workflows.
-- `RegisterActivity<T>()` registers an activity class. Register each activity separately.
+- `AddDaprWorkflow()` registers the Dapr Workflow runtime and services with the DI container. As of Dapr 1.18 all workflow and activity classes are auto-registered, so no `RegisterWorkflow`/`RegisterActivity` calls are needed.
+- `AddDaprWorkflowVersioning()` enables name-based workflow versioning (part of the `Dapr.Workflow` package as of 1.18; no separate `Dapr.Workflow.Versioning` package is required).
 - `DaprWorkflowClient` is injected via DI and used to schedule new workflow instances.
 - `ScheduleNewWorkflowAsync` starts a new workflow instance and returns the instance ID. Pass a model record as input.
 - `GetWorkflowStateAsync` retrieves the current status of a workflow instance by its instance ID. Check `state.Exists` to verify the instance was found.
@@ -261,8 +257,7 @@ app.Run();
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapr.Workflow" Version="1.17.9" />
-    <PackageReference Include="Dapr.Workflow.Versioning" Version="1.17.9" />
+    <PackageReference Include="Dapr.Workflow" Version="1.18.4" />
   </ItemGroup>
 
 </Project>
@@ -271,7 +266,7 @@ app.Run();
 ### Key points
 
 - References the ServiceDefaults project for shared Aspire configuration.
-- Uses `Dapr.Workflow` version `1.17.9` for workflow support.
+- Uses `Dapr.Workflow` version `1.18.4` for workflow support.
 - No `Microsoft.AspNetCore.OpenApi` package is needed unless the user explicitly requests OpenAPI support.
 
 ## ServiceDefaults .csproj

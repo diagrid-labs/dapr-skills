@@ -135,27 +135,26 @@ HTTP calls in workflow code produce different results on replay (server may be u
 
 ---
 
-## Forgetting to Register Workflows or Activities
+## Manually Registering Workflows or Activities
+
+As of Dapr 1.18 the .NET SDK auto-registers every workflow and activity class, so `AddDaprWorkflow()` takes no arguments:
 
 ```csharp
-// BAD — ProcessActivity is called but not registered; will fail at runtime
-builder.Services.AddDaprWorkflow(options =>
-{
-    options.RegisterWorkflow<OrderWorkflow>();
-    // ProcessActivity is missing!
-});
+using Dapr.Workflow.Versioning;
 
-// GOOD — register every type used in the workflow
-builder.Services.AddDaprWorkflow(options =>
-{
-    options.RegisterWorkflow<OrderWorkflow>();
-    options.RegisterActivity<ValidateActivity>();
-    options.RegisterActivity<ProcessActivity>();
-    options.RegisterActivity<NotifyActivity>();
-});
+// GOOD — workflows and activities are discovered and registered automatically
+builder.Services.AddDaprWorkflow();
+builder.Services.AddDaprWorkflowVersioning();
+
+// OBSOLETE — the per-type RegisterWorkflow/RegisterActivity lambda is no longer needed
+// builder.Services.AddDaprWorkflow(options =>
+// {
+//     options.RegisterWorkflow<OrderWorkflow>();
+//     options.RegisterActivity<ProcessActivity>();
+// });
 ```
 
-Unregistered workflows or activities cause a runtime error when the Dapr runtime tries to dispatch the task. There is no compile-time check — the SDK's Roslyn analyzer (`Dapr.Workflow.Analyzers`) can detect missing registrations at build time if included.
+Because registration is automatic, there is no longer a "forgot to register an activity" failure mode at runtime — adding a new workflow or activity class is enough for the runtime to dispatch to it.
 
 ---
 
