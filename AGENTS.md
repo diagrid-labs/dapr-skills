@@ -47,7 +47,7 @@ All review skills are read-only and emit a structured report with stable rule id
 All skills require:
 
 - [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation)
-- [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.17+)
+- [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.18+)
 
 ### .NET skills
 

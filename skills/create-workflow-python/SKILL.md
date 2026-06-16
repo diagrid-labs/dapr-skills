@@ -43,7 +43,7 @@ The following must be installed by the user before this skill can run:
 
 Additional runtime dependencies (handled during project setup):
 
-- Python package: `dapr-ext-workflow` version `1.17.0`
+- Python package: `dapr-ext-workflow` version `1.18.0` (pulls in `dapr` 1.18.0)
 - Start the [Diagrid Dev Dashboard](https://www.diagrid.io/blog/improving-the-local-dapr-workflow-experience-diagrid-dashboard): `docker run -p 8080:8080 ghcr.io/diagridio/diagrid-dashboard:latest`
 
 ## Project Setup
@@ -97,7 +97,7 @@ Main entry for the Python workflow application. See `REFERENCE.md` for full exam
 
 ### Models
 
-Pydantic types for workflow and activity input/output, placed in a `models.py` file. Models must be serializable since Dapr persists workflow state. See `REFERENCE.md` for full example and key points.
+Pydantic types for workflow and activity input/output, placed in a `models.py` file. Models must be serializable since Dapr persists workflow state. As of `dapr-ext-workflow` 1.18, Pydantic models can be passed directly to `schedule_new_workflow`, `call_activity`, and `call_child_workflow` — no manual `model_dump()` is needed. See `REFERENCE.md` for full example and key points.
 
 ### Runtime file
 

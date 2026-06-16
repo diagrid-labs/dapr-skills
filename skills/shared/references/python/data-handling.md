@@ -6,6 +6,9 @@ Dapr Workflow Python serializes activity inputs and outputs as JSON. Any value p
 `call_activity` or `call_child_workflow` must be JSON-serializable. Return values from activities are also
 JSON-serialized before being stored in workflow history.
 
+As of `dapr-ext-workflow` 1.18, Pydantic v2 models may be passed directly as `input=` and returned
+directly; the SDK serializes them to JSON for you.
+
 ## Basic JSON Serialization
 
 Primitive types (`str`, `int`, `float`, `bool`, `None`) and standard collections (`list`, `dict`) serialize
@@ -77,7 +80,11 @@ def dataclass_workflow(ctx: DaprWorkflowContext, order_data: dict):
 
 ## Pydantic Models
 
-Pydantic v2 models serialize cleanly using `.model_dump()` and deserialize with `Model.model_validate()`.
+As of `dapr-ext-workflow` 1.18, Pydantic v2 models can be passed directly as `input=` to
+`schedule_new_workflow`, `call_activity`, and `call_child_workflow`, and returned directly from activities
+and workflows — the SDK serializes them to JSON for you. To receive a reconstructed model in a callback,
+type-annotate the input parameter with the model class; without a type annotation the callback receives a
+plain `dict`.
 
 ```python
 from pydantic import BaseModel
@@ -92,23 +99,32 @@ class PaymentRequest(BaseModel):
     currency: str = 'USD'
 
 
+class PaymentResult(BaseModel):
+    transaction_id: str
+    status: str
+
+
+# As of dapr-ext-workflow 1.18, pass and return Pydantic models directly.
 @wfr.activity(name='process_payment')
-def process_payment(ctx: WorkflowActivityContext, payload: dict) -> dict:
-    request = PaymentRequest.model_validate(payload)
+def process_payment(ctx: WorkflowActivityContext, request: PaymentRequest) -> PaymentResult:
     # ... process payment ...
-    return {'transaction_id': f'txn-{request.order_id}', 'status': 'charged'}
+    return PaymentResult(transaction_id=f'txn-{request.order_id}', status='charged')
 
 
 @wfr.workflow(name='pydantic_workflow')
-def pydantic_workflow(ctx: DaprWorkflowContext, payload: dict):
-    result = yield ctx.call_activity(process_payment, input=payload)
+def pydantic_workflow(ctx: DaprWorkflowContext, request: PaymentRequest):
+    result = yield ctx.call_activity(process_payment, input=request)
     return result
 
 
 # When scheduling:
 # req = PaymentRequest(order_id='abc', amount=99.99)
-# wf_client.schedule_new_workflow(workflow=pydantic_workflow, input=req.model_dump())
+# wf_client.schedule_new_workflow(workflow=pydantic_workflow, input=req)
 ```
+
+**Compatibility note:** Before 1.18 (or for plain `dict`/dataclass payloads), serialize explicitly with
+`.model_dump()` when scheduling and rehydrate with `Model.model_validate(payload)` inside the
+workflow/activity.
 
 ## Payload Size Considerations
 

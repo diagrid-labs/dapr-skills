@@ -91,6 +91,7 @@ from time import sleep
 from dapr.ext.workflow import DaprWorkflowClient
 from runtime import wfr
 from workflow import order_processing_workflow
+from models import OrderRequest  # Pydantic model: item_name, quantity, total_cost
 
 @pytest.fixture(scope='module', autouse=True)
 def start_runtime():
@@ -102,11 +103,11 @@ def start_runtime():
 
 def test_order_workflow_completes():
     wf_client = DaprWorkflowClient()
-    order = {'item_name': 'cars', 'quantity': 1, 'total_cost': 5000}
+    order = OrderRequest(item_name='cars', quantity=1, total_cost=5000)
 
     instance_id = wf_client.schedule_new_workflow(
         workflow=order_processing_workflow,
-        input=json.dumps(order),
+        input=order,
     )
 
     state = wf_client.wait_for_workflow_completion(

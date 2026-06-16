@@ -3,6 +3,9 @@
 All patterns use verified APIs from `dapr.ext.workflow`. Each example includes the workflow definition,
 activity definitions, and registration (all via `WorkflowRuntime` decorators).
 
+> Inputs below use `dict`/primitive types for brevity. As of `dapr-ext-workflow` 1.18 you may pass
+> Pydantic models directly instead — see `references/python/data-handling.md`.
+
 ---
 
 ## Pattern 1: Activity Chaining

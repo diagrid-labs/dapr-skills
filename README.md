@@ -10,7 +10,7 @@ This repository contains skill definitions that can be used with Claude Code to 
 
 - [Claude Code](https://claude.com/product/claude-code)
 - [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation)
-- [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.17+)
+- [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.18+)
 
 ### For .NET skills
 

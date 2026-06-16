@@ -15,7 +15,7 @@ There is no sandbox: **you** are responsible for writing deterministic workflow 
 pip install dapr dapr-ext-workflow
 ```
 
-Requires Python 3.9+.
+Requires Python 3.10+ (`dapr-ext-workflow` 1.18). The `create-workflow-python` skill targets Python 3.12+.
 
 ## Workflow Definition
 
@@ -114,6 +114,7 @@ dapr run --app-id myapp --dapr-grpc-port 50001 -- python app.py
 - Regular Python functions — no `yield`, no generator protocol
 - Can call Dapr APIs using `DaprClient`
 - `ctx.task_id` returns the activity task ID
+- As of 1.18, activity and workflow inputs/outputs may be Pydantic models passed directly (no manual `model_dump()`); see `references/python/data-handling.md`
 
 ### Runtime Setup
 - Create a single `WorkflowRuntime()` instance in `runtime.py`

@@ -38,8 +38,8 @@ name = "workflow-python"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
-    "dapr==1.17.0",
-    "dapr-ext-workflow==1.17.0",
+    "dapr==1.18.0",
+    "dapr-ext-workflow==1.18.0",
     "fastapi==0.118.2",
     "pydantic==2.12.0",
     "uvicorn==0.37.0",
@@ -109,7 +109,7 @@ async def start_workflow(input: WorkflowInput):
     instance_id = dapr_client.schedule_new_workflow(
         workflow=<workflow_name>,
         instance_id=input.id,
-        input=input.model_dump(),
+        input=input,
     )
     return {"instance_id": instance_id}
 
@@ -151,7 +151,7 @@ if __name__ == "__main__":
 
 - `wfr` is imported from `runtime.py` — it is the shared `WorkflowRuntime` instance.
 - `DaprWorkflowClient()` is used to schedule and query workflow instances.
-- `schedule_new_workflow()` starts a new workflow instance and returns the instance ID. Pass `instance_id` to use a user-provided ID.
+- `schedule_new_workflow()` starts a new workflow instance and returns the instance ID. Pass `instance_id` to use a user-provided ID. As of 1.18 you can pass a Pydantic model directly to `input=` — the SDK serializes it; no `model_dump()` call is required.
 - `get_workflow_state()` retrieves the current status of a workflow instance.
 - `pause_workflow()`, `resume_workflow()`, and `terminate_workflow()` manage the lifecycle of a workflow instance.
 - `raise_workflow_event()` sends a named event (with optional data payload) to a waiting workflow instance, resuming it from a `wait_for_external_event` call.
@@ -166,9 +166,10 @@ A workflow definition uses the `@wfr.workflow(name='<WORKFLOWNAME>')` attribute.
 import dapr.ext.workflow as wf
 from runtime import wfr
 from activities import step1, step2, step3, error_handler
+from models import WorkflowInput
 
 @wfr.workflow(name='my_workflow')
-def task_chain_workflow(ctx: wf.DaprWorkflowContext, wf_input: int):
+def task_chain_workflow(ctx: wf.DaprWorkflowContext, wf_input: WorkflowInput):
     try:
         result1 = yield ctx.call_activity(step1, input=wf_input)
         result2 = yield ctx.call_activity(step2, input=result1)
@@ -387,17 +388,19 @@ An activity definition is decorated using `@wfr.activity(name='<ACTIVITY_NAME>')
 
 ```python
 from runtime import wfr
+from models import ActivityInput, ActivityOutput
 
-@wfr.activity(name='activity1')
-def step1(ctx, activity_input):
-    print(f'Step 1: Received input: {activity_input}.')
-    # Do some work
-    return activity_input + 1
+@wfr.activity(name='step1_activity')
+def step1(ctx, activity_input: ActivityInput) -> ActivityOutput:
+    # Do some work; activities may pass Pydantic models directly to and from
+    # the workflow as of dapr-ext-workflow 1.18.
+    return ActivityOutput(processed_data=activity_input.data.upper())
 ```
 
 ### Key points
 
 - The `ctx` parameter provides the activity context.
+- As of 1.18, activities can accept and return Pydantic models directly; type the `activity_input` parameter and the return value with the models from `models.py`.
 - Activities contain the actual business logic (I/O, HTTP calls, database queries).
 - Activity functions should have an `_activity` suffix in the decorator name.
 - Activities are where non-deterministic and I/O operations should be performed (HTTP calls, database queries, file access, etc.).
