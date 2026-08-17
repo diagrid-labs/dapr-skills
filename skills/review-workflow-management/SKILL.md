@@ -40,8 +40,8 @@ You MUST follow these phases in strict order. Do not load files outside the agre
 
 The full rule list, including detection patterns, severities, and suggested fixes, lives in the loaded language checklist:
 
-- [.NET / Aspire rules](`../shared/review-management-dotnet.md`) — `DWF-MGT-001` … `DWF-MGT-015`
-- [Python rules](`../shared/review-management-python.md`) — `DWF-MGT-001` … `DWF-MGT-015`
+- [.NET / Aspire rules](../shared/review-management-dotnet.md) — `DWF-MGT-001` … `DWF-MGT-015`
+- [Python rules](../shared/review-management-python.md) — `DWF-MGT-001` … `DWF-MGT-015`
 
 Rule ids are stable across releases. New rules append; deprecated rule ids are reserved.
 

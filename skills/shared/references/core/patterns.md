@@ -4,11 +4,12 @@
 
 Common patterns for building robust Dapr Workflows. This document covers the conceptual design and trade-offs for each pattern. For language-specific code examples, see:
 
-- `references/go/patterns.md`
 - `references/dotnet/patterns.md`
-- `references/java/patterns.md`
 - `references/python/patterns.md`
-- `references/javascript/patterns.md`
+
+Go, Java and JavaScript have no pattern reference of their own yet. The closest existing
+material is the per-language prompt packs used by the diagram-to-workflow skill:
+`create-workflow-from-diagram/prompts/languages/{go,java,javascript}.md`.
 
 **Key difference from Temporal:** Temporal has Signals, Queries, and Updates as first-class concepts. Dapr does NOT have these. The equivalents in Dapr are:
 

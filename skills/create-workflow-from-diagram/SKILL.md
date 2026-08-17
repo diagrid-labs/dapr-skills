@@ -47,7 +47,7 @@ The following must be installed by the user before running the generated project
 - [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation)
 - [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.17+)
 
-Plus the language toolchain for the chosen target. See the matching `shared/prereq-check-*.md` for the full list.
+Plus the language toolchain for the chosen target. See the matching `../shared/prereq-check-*.md` for the full list.
 
 The skill **does not auto-install** anything. The generated project's README tells the user what to install and run.
 
@@ -131,7 +131,7 @@ Create a `README.md` in `<ProjectRoot>` containing:
 5. Endpoints (if the generated language produces an HTTP surface — Python, .NET and JavaScript do by default).
 6. How to inspect executions with the [Diagrid Dev Dashboard](https://www.diagrid.io/blog/improving-the-local-dapr-workflow-experience-diagrid-dashboard).
 
-See `shared/running-locally-dapr.md` and `shared/running-with-catalyst.md` in this repo for snippets to include.
+See `../shared/running-locally-dapr.md` and `../shared/running-with-catalyst.md` in this repo for snippets to include.
 
 ## Show final message
 

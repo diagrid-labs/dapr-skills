@@ -39,8 +39,8 @@ You MUST follow these phases in strict order. Do not load files outside the agre
 
 The full rule list, including detection patterns, severities, and suggested fixes, lives in the loaded language checklist:
 
-- [.NET / Aspire rules](`../shared/review-activity-dotnet.md`) — `DWF-ACT-001` … `DWF-ACT-012`
-- [Python rules](`../shared/review-activity-python.md`) — `DWF-ACT-001` … `DWF-ACT-011`
+- [.NET / Aspire rules](../shared/review-activity-dotnet.md) — `DWF-ACT-001` … `DWF-ACT-012`
+- [Python rules](../shared/review-activity-python.md) — `DWF-ACT-001` … `DWF-ACT-011`
 
 Rule ids are stable across releases. New rules append; deprecated rule ids are reserved.
 
