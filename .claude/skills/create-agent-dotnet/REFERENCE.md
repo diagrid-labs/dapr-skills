@@ -2,7 +2,7 @@
 
 ## .csproj
 
-> **Advisory:** `Diagrid.Agents.Workflow` is an **indicative** NuGet id. Verify the exact id at [nuget.org](https://www.nuget.org/) and against the upstream [`diagridio/catalyst-quickstarts/agents/microsoft-dotnet`](https://github.com/diagridio/catalyst-quickstarts/tree/main/agents/microsoft-dotnet) `.csproj` before committing the scaffold. Diagrid's .NET agent runtime package may ship under a different id; this file will be stale if the upstream name shifts.
+> The Diagrid package is [`Diagrid.AI.Microsoft.AgentFramework`](https://www.nuget.org/packages/Diagrid.AI.Microsoft.AgentFramework), built from [`diagridio/dotnet-ai`](https://github.com/diagridio/dotnet-ai). It multi-targets `net8.0`, `net9.0` and `net10.0`. Check nuget.org for the current version before pinning.
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk.Web">
@@ -16,13 +16,12 @@
     <PackageReference Include="Microsoft.Extensions.AI" Version="9.7.1" />
     <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="9.7.1-preview.1.25365.4" />
     <PackageReference Include="Microsoft.Agents.AI" Version="1.0.0-preview.250920.3" />
-    <!-- VERIFY PACKAGE ID — Diagrid's .NET agent runtime package may ship under a different id. -->
-    <PackageReference Include="Diagrid.Agents.Workflow" Version="0.3.0" />
+    <PackageReference Include="Diagrid.AI.Microsoft.AgentFramework" Version="1.0.10" />
   </ItemGroup>
 </Project>
 ```
 
-Pin versions according to the latest tested set at the time of scaffolding. The package id `Diagrid.Agents.Workflow` mirrors the `diagrid[...]` PyPI extras and exposes `IDaprAgentInvoker` — but the id itself is unverified in this scaffold; see the Advisory above.
+Pin versions according to the latest tested set at the time of scaffolding. `Diagrid.AI.Microsoft.AgentFramework` exposes `IDaprAgentInvoker` from the `Diagrid.AI.Microsoft.AgentFramework.Abstractions` namespace.
 
 ## Properties/launchSettings.json
 
@@ -84,7 +83,7 @@ internal static class WeatherTools
 ## Program.cs (single agent)
 
 ```csharp
-using Diagrid.Agents.Workflow;
+using Diagrid.AI.Microsoft.AgentFramework.Abstractions;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using OpenAI;

@@ -48,7 +48,7 @@ The following must be installed by the user before this skill can run:
 
 Additional runtime dependencies (handled during project setup):
 
-- NuGet packages: `Microsoft.Extensions.AI`, `Microsoft.Agents.AI`, `Diagrid.Agents.Workflow` (**the `Diagrid.Agents.Workflow` id is indicative** — verify the exact package id at [nuget.org](https://www.nuget.org/) before running `dotnet add package`. Diagrid's .NET agent runtime package may ship under a different id. Cross-check against the upstream [`diagridio/catalyst-quickstarts/agents/microsoft-dotnet`](https://github.com/diagridio/catalyst-quickstarts/tree/main/agents/microsoft-dotnet) `.csproj` for the canonical name.)
+- NuGet packages: `Microsoft.Extensions.AI`, `Microsoft.Agents.AI`, and [`Diagrid.AI.Microsoft.AgentFramework`](https://www.nuget.org/packages/Diagrid.AI.Microsoft.AgentFramework) (targets `net8.0`, `net9.0`, `net10.0`)
 - Start the [Diagrid Dev Dashboard](https://www.diagrid.io/blog/improving-the-local-dapr-workflow-experience-diagrid-dashboard): `docker run -p 8080:8080 ghcr.io/diagridio/diagrid-dashboard:latest`
 
 ## Project Setup
@@ -61,9 +61,7 @@ cd <ProjectRoot>
 dotnet new web -n <ProjectName>
 dotnet add <ProjectName> package Microsoft.Extensions.AI
 dotnet add <ProjectName> package Microsoft.Agents.AI
-# VERIFY PACKAGE ID BEFORE RUNNING — check nuget.org and the upstream
-# diagridio/catalyst-quickstarts/agents/microsoft-dotnet .csproj.
-dotnet add <ProjectName> package Diagrid.Agents.Workflow
+dotnet add <ProjectName> package Diagrid.AI.Microsoft.AgentFramework
 ```
 
 The <ProjectName> should start with the <ProjectRoot> and end with `App`: <ProjectRoot>App.
