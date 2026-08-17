@@ -39,8 +39,8 @@ You MUST follow these phases in strict order. Do not load files outside the agre
 
 The full rule list, including detection patterns, severities, and suggested fixes, lives in the loaded language checklist:
 
-- [.NET / Aspire rules](`../shared/review-determinism-dotnet.md`) — `DWF-DET-001` … `DWF-DET-015`
-- [Python rules](`../shared/review-determinism-python.md`) — `DWF-DET-001` … `DWF-DET-015`
+- [.NET / Aspire rules](../shared/review-determinism-dotnet.md) — `DWF-DET-001` … `DWF-DET-015`
+- [Python rules](../shared/review-determinism-python.md) — `DWF-DET-001` … `DWF-DET-015`
 
 Rule ids are stable across releases. New rules append; deprecated rule ids are reserved.
 
