@@ -21,7 +21,8 @@ spec:
     value: none
 ```
 
-- The component name `agent-registry` is referenced implicitly by `AgentRegistryConfig` (native `dapr-agents`) or by the Diagrid runner in framework-wrapper projects.
+- The component name `agent-registry` is passed **explicitly**, not inferred: native `dapr-agents` agents take `registry=AgentRegistryConfig(store=StateStoreService(store_name="agent-registry"))`, `diagrid` wrapper runners take `registry_config=`, and the .NET package writes to `DiagridCatalystOptions.Registry.ResourceName` (default `agent-registry`) only after you opt in with `.WithCatalyst(...)`. An agent that omits the argument does not register and will not be discovered — with no error.
 - `keyPrefix: none` is required — each agent writes its registration under its own key and cannot use the default `appID`-prefixed scheme.
 - For single-agent projects, omit this file entirely.
+- **On Diagrid Catalyst this component behaves differently.** There, `agent-registry` is a managed component whose writes are intercepted by the sidecar to populate the Agents view, and it is scoped to the App IDs named by an `Agent` resource. An App ID outside that scope still gets a **successful** write and never appears in the view. `diagrid component list` shows `agent-registry` as available to all app identities regardless of the real scope, so it is not evidence either way — confirm in the Agents view. `agent-*` components are also not provisioned on every Catalyst project; check that it exists before relying on it.
 - Redis connection fields (`redisHost`, `redisPassword`) mirror the sibling state-store files (`agent-statestore-memory.md`, `agent-statestore-workflow.md`) and the pub/sub file (`agent-pubsub-redis.md`). Update them together if you change the host or password.

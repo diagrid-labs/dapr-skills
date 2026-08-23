@@ -2,7 +2,7 @@
 
 > **WARNING:** The `redisPassword: ""` below is safe **only** with `dapr init`'s local Redis container (bound to `127.0.0.1`). Before running in any shared environment, set a password via `secretKeyRef` and configure Redis AUTH / ACLs.
 
-Dapr Agents persists conversation history in a Dapr state store component named `agent-memory`. Create a `resources` folder in the project root with an `agent-memory.yaml` file:
+Native `dapr-agents` agents persist conversation history in a Dapr state store component named `agent-memory`. (.NET agents built on Microsoft Agent Framework do not use this component — their session turns live in the workflow state store.) Create a `resources` folder in the project root with an `agent-memory.yaml` file:
 
 ```yaml
 apiVersion: dapr.io/v1alpha1

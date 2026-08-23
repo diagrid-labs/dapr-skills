@@ -1,6 +1,6 @@
 ---
 name: check-prereq-agent-dotnet
-description: This skill checks prerequisites for building Dapr Agent apps in .NET. Use this skill when the user asks to "check prerequisites for .NET agents", "verify .NET agent environment", or "check .NET agent setup".
+description: This skill checks prerequisites for building durable AI agents in .NET with Microsoft Agent Framework on Dapr Workflow. Use this skill when the user asks to "check prerequisites for .NET agents", "verify .NET agent environment", or "check .NET agent setup".
 allowed-tools:
   - Bash(uname -s)
   - Bash(dotnet --version)
@@ -11,11 +11,13 @@ allowed-tools:
   - Bash(podman info:*)
 ---
 
-# Check Prerequisites for Dapr Agents .NET
+# Check Prerequisites for .NET Agents
 
 ## Overview
 
-This skill checks whether all prerequisites are installed for building Dapr Agent applications in .NET (Microsoft Agent Framework wrapped with the Diagrid runner). Run this skill before using the `create-agent-dotnet` skill.
+This skill checks whether all prerequisites are installed for building durable AI agents in .NET. Run this skill before using the `create-agent-dotnet` skill.
+
+> **On naming.** [Dapr Agents](https://github.com/dapr/dapr-agents) is a **Python-only** framework; there is no Dapr Agents SDK for .NET. The .NET path is [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/) (`Microsoft.Agents.AI`, `Microsoft.Extensions.AI`) executed durably on Dapr Workflow by the [`Diagrid.AI.Microsoft.AgentFramework`](https://www.nuget.org/packages/Diagrid.AI.Microsoft.AgentFramework) package. Every agent turn — each LLM call and each tool call — becomes a workflow activity, which is where the durability comes from. The `Dapr` in the .NET type names (`AddDaprAgents`, `IDaprAgentInvoker`) refers to that workflow runtime, not to the Python framework.
 
 ## Prerequisites
 
@@ -24,8 +26,8 @@ The following must be installed:
 - [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download)
 - [C# LSP Plugin](https://claude.com/plugins/csharp-lsp)
 - [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation)
-- [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.17+)
-- At least one LLM provider available: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`, or a local Ollama instance on `http://localhost:11434`
+- [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.18+)
+- At least one LLM provider reachable by a Dapr [conversation component](https://docs.dapr.io/reference/components-reference/supported-conversation/): `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`, or a local Ollama instance on `http://localhost:11434`
 
 ## Prerequisite Checks
 

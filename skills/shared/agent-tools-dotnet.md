@@ -1,12 +1,12 @@
 # .NET tools — `AIFunctionFactory.Create`
 
-Tools in the Microsoft Agent Framework are plain C# methods wrapped with `AIFunctionFactory.Create`. Put them in a `Tools/` folder and register them on the agent at startup.
+Tools in the Microsoft Agent Framework are plain C# methods wrapped with `AIFunctionFactory.Create`. Put them in a `Tools/` folder and register them on the agent at startup. Under `Diagrid.AI.Microsoft.AgentFramework` each tool invocation runs as its own Dapr Workflow activity, so a tool call that has already completed is not re-executed when the run resumes.
 
 ```csharp
 using System.ComponentModel;
 using Microsoft.Extensions.AI;
 
-namespace <ProjectName>.Tools;
+namespace <ProjectNamespace>.Tools;
 
 internal static class WeatherTools
 {
@@ -29,12 +29,21 @@ internal static class WeatherTools
 - Every parameter also needs a `[Description]` so the LLM understands the schema.
 - Tools should be **idempotent** whenever possible. Pass an idempotency key when the tool mutates state, because Dapr Workflow may retry the activity call.
 - Keep the return value small and structured. Avoid returning full HTTP response bodies or large collections.
-- Register the tool on the agent in `Program.cs`:
+- Register the tool on the agent in `Program.cs`. The `tools` parameter is an `IReadOnlyList<AITool>`; `AIFunction` derives from `AITool`, so collect them in a `List<AITool>`:
 
   ```csharp
+  var tools = new List<AITool> { WeatherTools.GetWeather };
+
   builder.Services.AddDaprAgents()
-      .WithAgent(name: "<AgentName>", instructions: "...", tools: new[] { WeatherTools.GetWeather });
+      .WithAgent(
+          agentName: "<AgentName>",
+          conversationComponentName: "llm-provider",
+          instructions: "...",
+          tools: tools,
+          serviceLifetime: ServiceLifetime.Singleton);
   ```
+
+  `new[] { WeatherTools.GetWeather }` infers `AIFunction[]`, which does not match the overload — the compiler then binds `tools` to nothing and the call fails to resolve. Declare the list as `List<AITool>` explicitly.
 
 ## Security key points
 

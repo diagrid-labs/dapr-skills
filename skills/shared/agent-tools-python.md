@@ -26,7 +26,7 @@ def get_weather(location: str, unit: str = "celsius") -> str:
 - Use a Pydantic `args_model` for input validation. The framework auto-generates the JSON schema the LLM sees from this model.
 - Tools should be **idempotent** whenever possible. Dapr Workflow may retry an activity call if a worker restarts mid-flight — if the tool mutates state, include an idempotency key in the request.
 - Keep the return value small and structured. Large payloads bloat the LLM context and slow the agent down.
-- Import the `@tool` decorator from `dapr_agents` for native agents, or from the relevant framework (e.g., `from agents import function_tool` for OpenAI Agents) when using a framework wrapper. `REFERENCE.md` per-framework sections show the exact import.
+- Import the `@tool` decorator from `dapr_agents` for native agents. For a `diagrid[<extra>]` framework wrapper the tool decorator belongs to the **wrapped** framework, not to `dapr_agents` — read that framework's own documentation, or the `Example:` block in the runner class docstring under `diagrid/agent/<module>/` in [`diagridio/python-ai`](https://github.com/diagridio/python-ai), for the current import. These move often enough that reciting them here would go stale.
 
 ## Security key points
 

@@ -1,12 +1,12 @@
 # Agent Observability Checklist — .NET (stub)
 
-Observability review for .NET Dapr Agents is not yet implemented. The skill currently loads this checklist to preserve the "every review skill loads a language-specific checklist before emitting any finding" invariant.
+Observability review for .NET agents is not yet implemented. The skill currently loads this checklist to preserve the "every review skill loads a language-specific checklist before emitting any finding" invariant.
 
 `review-agent-observability` emits exactly one finding when this checklist is loaded.
 
 | Rule id     | Severity | What to detect                                                 | Why it matters                                                                                  | Suggested fix                                                                                 |
 | ----------- | -------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| DAG-OBS-000 | info     | .NET agent project encountered (native Dapr Agents SDK for .NET does not exist) | Observability for .NET agents is handled by the wrapped framework (Microsoft Agent Framework + OpenTelemetry) or the Diagrid Catalyst dashboard, not by an OSS-Dapr-native path. | Configure observability via the wrapped framework's recommended path (`Microsoft.Extensions.AI` + OpenTelemetry) or enable Catalyst's managed observability. |
+| DAG-OBS-000 | info     | .NET agent project encountered (Dapr Agents is a Python-only framework; .NET uses Microsoft Agent Framework on Dapr Workflow) | Above the workflow layer, observability comes from the wrapped framework's OpenTelemetry support or from Diagrid Catalyst, not from an OSS-Dapr-native path. | The sidecar still emits `dapr_workflow_*` and `dapr_component_conversation_*` metrics — scrape `metricsPort` per [`agent-metrics-prometheus.md`](./agent-metrics-prometheus.md). For agent-level spans, configure `Microsoft.Extensions.AI` + OpenTelemetry, or enable Catalyst's managed observability. |
 
 ## Confidence notes
 

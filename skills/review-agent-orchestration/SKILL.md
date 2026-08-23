@@ -1,13 +1,13 @@
 ---
 name: review-agent-orchestration
-description: This skill reviews multi-agent Dapr Agents orchestration for pub/sub topic conventions, loop safety, and handoff correctness. Use this skill when the user asks to "review agent orchestration", "check multi-agent handoffs", "audit agent pub/sub", or similar.
+description: This skill reviews multi-agent orchestration for pub/sub topic conventions, loop safety, and handoff correctness. Use this skill when the user asks to "review agent orchestration", "check multi-agent handoffs", "audit agent pub/sub", or similar.
 allowed-tools:
   - Read
   - Grep
   - Glob
 ---
 
-# Review Dapr Agents — Orchestration
+# Review Agents — Orchestration
 
 ## Overview
 

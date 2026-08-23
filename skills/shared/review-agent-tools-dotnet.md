@@ -2,7 +2,7 @@
 
 Apply each rule below to every file in `tool_files` produced by `review-detect-target-agent.md`. The "scope" of every rule is a method referenced by `AIFunctionFactory.Create(...)`.
 
-Rule source: see [`../create-agent-dotnet/REFERENCE.md`](../create-agent-dotnet/REFERENCE.md) — section "Tools".
+Rule source: see [`agent-tools-dotnet.md`](./agent-tools-dotnet.md) and [`../create-agent-dotnet/REFERENCE.md`](../create-agent-dotnet/REFERENCE.md) — section "Tools/WeatherTools.cs".
 
 | Rule id      | Severity | What to detect                                                                                                                   | Why it matters                                                                                        | Suggested fix                                                                                |
 | ------------ | -------- | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
@@ -24,4 +24,4 @@ Rule source: see [`../create-agent-dotnet/REFERENCE.md`](../create-agent-dotnet/
 
 ## Cross-reference
 
-Memory and state-store rules are in `review-agent-memory-dotnet.md`. Orchestration / pub/sub rules are in `review-agent-orchestration-dotnet.md`. Observability rules are Python-only — framework-wrapper .NET projects ship their own observability.
+Memory and state-store rules are in `review-agent-memory-dotnet.md`. Orchestration / pub/sub rules are in `review-agent-orchestration-dotnet.md`. There are no .NET observability rules yet — the sidecar still emits `dapr_workflow_*` and `dapr_component_conversation_*` for these projects, so the metrics guidance in [`agent-metrics-prometheus.md`](./agent-metrics-prometheus.md) applies even though no rule enforces it.

@@ -1,6 +1,6 @@
 ---
 name: check-prereq-agent-python
-description: This skill checks prerequisites for building Dapr Agent apps in Python. Use this skill when the user asks to "check prerequisites for Python agents", "verify Python agent environment", or "check Python agent setup".
+description: This skill checks prerequisites for building durable AI agents in Python with the Dapr Agents SDK or a Diagrid framework wrapper. Use this skill when the user asks to "check prerequisites for Python agents", "verify Python agent environment", or "check Python agent setup".
 allowed-tools:
   - Bash(uname -s)
   - Bash(python --version)
@@ -14,21 +14,21 @@ allowed-tools:
   - Bash(podman info:*)
 ---
 
-# Check Prerequisites for Dapr Agents Python
+# Check Prerequisites for Python Agents
 
 ## Overview
 
-This skill checks whether all prerequisites are installed for building Dapr Agent applications in Python (native `dapr-agents` SDK or a Diagrid framework wrapper). Run this skill before using the `create-agent-python` skill.
+This skill checks whether all prerequisites are installed for building durable AI agents in Python — either with the native [`dapr-agents`](https://github.com/dapr/dapr-agents) SDK (the Dapr Agents framework, which is Python-only) or with a [`diagrid`](https://pypi.org/project/diagrid/) framework wrapper. Run this skill before using the `create-agent-python` skill.
 
 ## Prerequisites
 
 The following must be installed:
 
-- [Python 3.11+](https://www.python.org/downloads/)
+- [Python](https://www.python.org/downloads/) `>=3.11,<3.14` — the bound both `dapr-agents` and `diagrid` declare
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) (Astral)
 - [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation)
-- [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.17+)
-- [dapr-agents](https://pypi.org/project/dapr-agents/) (Python SDK, version 1.0+) reachable from the package index
+- [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.18+)
+- [dapr-agents](https://pypi.org/project/dapr-agents/) `>=1.0` reachable from the package index (native path only — a `diagrid[<extra>]` project gets it transitively)
 - At least one LLM provider available: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`, or a local Ollama instance on `http://localhost:11434`
 
 ## Prerequisite Checks
@@ -49,7 +49,7 @@ Read the file at [`../shared/prereq-check-uv.md`](../shared/prereq-check-uv.md) 
 
 ### Step 4: Check Python SDK version
 
-Read the file at [`../shared/prereq-check-python-sdk.md`](../shared/prereq-check-python-sdk.md) and follow those instructions, **with this override**: the shared check rejects anything below Python 3.12 because it targets workflow skills. Agent skills accept **Python 3.11+**. If the installed version is `3.11.x`, treat this check as **passing**, not failing. Only fail the check for `3.10.x` and below.
+Read the file at [`../shared/prereq-check-python-sdk.md`](../shared/prereq-check-python-sdk.md) and follow those instructions, **with this override**: the shared check rejects anything below Python 3.12 because it targets workflow skills. Agent skills accept **3.11 up to but excluding 3.14**. Treat `3.11.x` as **passing**. Fail `3.10.x` and below, and also fail `3.14` and above — neither `dapr-agents` nor `diagrid` resolves there, both declaring `>=3.11,<3.14`.
 
 ### Step 5: Check Docker or Podman
 

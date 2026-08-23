@@ -1,13 +1,13 @@
 ---
 name: review-agent-memory
-description: This skill reviews Dapr Agents memory and state-store configuration for correctness. Use this skill when the user asks to "review agent memory", "check state store config", "audit agent persistence", or similar.
+description: This skill reviews agent memory and state-store configuration for correctness. Use this skill when the user asks to "review agent memory", "check state store config", "audit agent persistence", or similar.
 allowed-tools:
   - Read
   - Grep
   - Glob
 ---
 
-# Review Dapr Agents — Memory and State
+# Review Agents — Memory and State
 
 ## Overview
 

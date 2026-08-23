@@ -17,7 +17,7 @@ spec:
     value: "llama3.2"
 ```
 
-- The component name `llm-provider` is the value passed to `DaprChatClient(component_name="llm-provider")` in the agent code.
+- The component name `llm-provider` is the value passed to `DaprChatClient(component_name="llm-provider")` in Python, and to `conversationComponentName:` in .NET.
 - Requires Ollama running locally (`ollama serve` after installation from [ollama.com](https://ollama.com/)).
 - Pull the chosen model first: `ollama pull llama3.2`. Other tool-calling-capable models include `qwen2.5`, `llama3.1`, and `mistral-nemo`.
 - No API key is required for local Ollama; no secret management needed.

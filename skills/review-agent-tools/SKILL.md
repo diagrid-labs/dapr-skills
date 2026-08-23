@@ -1,17 +1,17 @@
 ---
 name: review-agent-tools
-description: This skill reviews Dapr Agents tool implementations for idempotency, input validation, docstring quality, and convention violations. Use this skill when the user asks to "review agent tools", "check tool idempotency", "audit Dapr agent tools", or similar.
+description: This skill reviews agent tool implementations for idempotency, input validation, docstring quality, and convention violations. Use this skill when the user asks to "review agent tools", "check tool idempotency", "audit Dapr agent tools", or similar.
 allowed-tools:
   - Read
   - Grep
   - Glob
 ---
 
-# Review Dapr Agents — Tools
+# Review Agents — Tools
 
 ## Overview
 
-Scans tool definitions used by Dapr Agents (native `dapr-agents` and framework wrappers) for idempotency issues, missing docstrings / descriptions, unbounded return payloads, swallowed exceptions, and convention violations. Read-only: this skill never modifies source files. Memory configuration is covered by `review-agent-memory`; multi-agent orchestration by `review-agent-orchestration`; observability by `review-agent-observability`.
+Scans agent tool definitions for idempotency issues, missing docstrings / descriptions, unbounded return payloads, swallowed exceptions, and convention violations. Applies to both supported paths: the Python [`dapr-agents`](https://github.com/dapr/dapr-agents) SDK and `diagrid[<extra>]` wrappers, and .NET Microsoft Agent Framework agents running on Dapr Workflow. "Dapr Agents" is the Python framework specifically — it has no .NET SDK. Read-only: this skill never modifies source files. Memory configuration is covered by `review-agent-memory`; multi-agent orchestration by `review-agent-orchestration`; observability by `review-agent-observability`.
 
 ## Execution Order
 

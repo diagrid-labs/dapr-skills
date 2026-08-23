@@ -1,5 +1,6 @@
 {
   "name": "diagrid-labs",
+  "description": "Claude Code skills for building and reviewing Dapr Workflow and durable AI agent applications.",
   "owner": {
     "name": "Diagrid"
   },
@@ -7,7 +8,7 @@
     {
       "name": "dapr-skills",
       "source": "./",
-      "description": "Skills to create Dapr Workflow and Agent applications"
+      "description": "Skills to create and review Dapr Workflow and durable AI agent applications"
     }
   ]
 }

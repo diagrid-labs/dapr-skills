@@ -35,7 +35,7 @@ apps:
 ```
 
 - Each app has a unique `appPort`, `daprHTTPPort`, `daprGRPCPort`, and `metricsPort`. Reusing ports is the single most common bring-up error.
-- All apps share the same `resourcesPath`, so every agent sees the same components (`agent-pubsub`, `agent-registry`, `agent-memory`, `agent-workflow`, `llm-provider`).
+- All apps share the same `resourcesPath`, so every agent sees the same components. Python: `agent-pubsub`, `agent-registry`, `agent-memory`, `agent-workflow`, `llm-provider`. .NET: `agent-pubsub`, `agent-workflow`, `llm-provider` — there is no local `agent-registry` on the .NET path, and conversation turns live in the session workflow rather than an `agent-memory` component.
 - Specialists subscribe to `<domain>.requests` and publish to `<domain>.results`. The coordinator publishes to each specialist's request topic and aggregates results.
 - Start all apps together with `dapr run -f .` from the project root.
 - `appLogDestination: fileAndConsole` writes per-app sidecar logs to `.dapr/logs/`. With multi-agent, that's one log directory per app, each containing request-level detail (user tasks, tool arguments). Exclude `.dapr/` from log aggregation pipelines with retention requirements; the generated `.gitignore` already excludes it from git.

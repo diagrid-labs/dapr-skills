@@ -1,13 +1,13 @@
 ---
 name: review-agent-observability
-description: This skill reviews Dapr Agents projects for observability completeness — tracing, metrics, structured logging, and trace propagation. Use this skill when the user asks to "review agent observability", "audit agent tracing", "check agent metrics", or similar.
+description: This skill reviews agent projects for observability completeness — tracing, metrics, structured logging, and trace propagation. Use this skill when the user asks to "review agent observability", "audit agent tracing", "check agent metrics", or similar.
 allowed-tools:
   - Read
   - Grep
   - Glob
 ---
 
-# Review Dapr Agents — Observability
+# Review Agents — Observability
 
 ## Overview
 

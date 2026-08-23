@@ -2,7 +2,7 @@
 
 > **WARNING:** The `redisPassword: ""` below is safe **only** with `dapr init`'s local Redis container (bound to `127.0.0.1`). Before running in any shared environment, set a password via `secretKeyRef` and configure Redis AUTH / ACLs.
 
-Dapr Agents runs on top of Dapr Workflow, which requires an actor-enabled state store. Create an `agent-workflow.yaml` component in the `resources` folder:
+Durable agents run on top of Dapr Workflow, which requires an actor-enabled state store. This component is required on both the Python and the .NET path. Create an `agent-workflow.yaml` component in the `resources` folder:
 
 ```yaml
 apiVersion: dapr.io/v1alpha1

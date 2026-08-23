@@ -4,9 +4,11 @@ Run `uv pip show dapr-agents 2>/dev/null | grep -i '^Version:' || echo "not inst
 
 Interpret the output:
 
-- **Installed with version `1.0.0` or higher** → check passes. Report the version.
-- **Installed with version below `1.0.0`** → check fails. Inform the user to upgrade via `uv pip install --upgrade dapr-agents` (or `uv add dapr-agents` inside a project).
+- **Installed with version `1.0` or higher** → check passes. Report the version. `1.0` is a floor, not a target — do not fail a newer version.
+- **Installed with version below `1.0`** → check fails. Inform the user to upgrade via `uv pip install --upgrade dapr-agents` (or `uv add dapr-agents` inside a project).
 - **Not installed** → check passes **with a note**: actual installation happens inside the project during `uv sync` (run by `create-agent-python`). A missing global install is not an error — but surface the note so the user knows what to expect.
+
+This check only applies to the native path. A project that uses a `diagrid[<extra>]` framework wrapper does not depend on `dapr-agents` directly — it arrives through `diagrid[agent-core]` — so "not installed" is expected there.
 
 This check verifies whether `dapr-agents` is available in the current Python environment. If it is not, the final installation still happens inside the scaffolded project via `uv sync` — this check is informational rather than a hard blocker.
 

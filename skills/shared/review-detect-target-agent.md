@@ -12,15 +12,21 @@ Probe the project root (or the user-specified scope folder) for the markers belo
 | `pyproject.toml` with `diagrid[` extra (e.g. `diagrid[openai_agents]`)           | `python` | `framework-wrapper` |
 | `requirements.txt` referencing `dapr-agents`                                      | `python` | `native`            |
 | `requirements.txt` referencing `diagrid[`                                         | `python` | `framework-wrapper` |
-| `*.csproj` referencing `Microsoft.Extensions.AI` and any Diagrid / Dapr agent package | `dotnet` | `framework-wrapper` |
+| `*.csproj` referencing `Diagrid.AI.Microsoft.AgentFramework` | `dotnet` | `framework-wrapper` |
+| `*.csproj` referencing `Microsoft.Agents.AI` or `Microsoft.Extensions.AI` **and** `Dapr.Workflow` | `dotnet` | `framework-wrapper` |
 
 If multiple pyproject/requirements files exist in the scope, each is classified independently.
 
-If no marker is found, stop the review and tell the user the target is not a recognized Dapr Agents project.
+If no marker is found, stop the review and tell the user the target is not a recognized agent project.
+
+Note for the .NET row: `Diagrid.AI.Microsoft.AgentFramework` brings `Microsoft.Agents.AI`, `Microsoft.Extensions.AI` and `Dapr.Workflow` in transitively, so a correctly-scaffolded project lists only the one package. Do not require the transitive names to be present in the csproj.
 
 ### Agent count
 
-Count the number of subfolders that contain a recognized agent entrypoint (`main.py` for Python, `Program.cs` for .NET). If the count is > 1 and the project has `agent-pubsub.yaml` + `agent-registry.yaml` in `resources/`, classify topology as `orchestrator`; otherwise `single-agent`.
+Count the number of subfolders that contain a recognized agent entrypoint (`main.py` for Python, `Program.cs` for .NET). Then:
+
+- **Python** — if the count is > 1 and `resources/` has both `agent-pubsub.yaml` and `agent-registry.yaml`, classify topology as `orchestrator`; otherwise `single-agent`.
+- **.NET** — require only `agent-pubsub.yaml`. There is no local `agent-registry` component on the .NET path (the registry is a Catalyst opt-in via `.WithCatalyst(...)`), so requiring it would misclassify every .NET multi-agent project as `single-agent` and silently skip the orchestration rules.
 
 **Framework-wrapper caveat.** Wrapper frameworks encode multi-agent patterns in framework-specific shapes that do not always include the pubsub + registry markers: CrewAI uses `Crew(process=Process.hierarchical)`, LangGraph uses compiled subgraphs in a single process, Pydantic AI supports multi-agent via `AgentRunContext`. When `flavor == framework-wrapper` **and** the entrypoint count is > 1 **but** the pubsub / registry markers are absent, classify topology as `single-agent` for the primary decision path **and** surface a "Please verify" finding asking the user to confirm the project is truly single-agent before `review-agent-orchestration` is skipped. A false-single-agent classification silently suppresses the orchestration rules that would apply to those projects.
 

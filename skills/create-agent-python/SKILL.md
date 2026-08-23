@@ -1,21 +1,28 @@
 ---
 name: create-agent-python
-description: This skill creates a Dapr Agents application in Python. Use this skill when the user asks to "create an agent in Python", "write a Python Dapr agent", "build an agent app in Python", "scaffold a Dapr Agents project", or "create a multi-agent orchestrator in Python".
+description: This skill creates a durable AI agent application in Python with the Dapr Agents SDK or a Diagrid framework wrapper. Use this skill when the user asks to "create an agent in Python", "write a Python Dapr agent", "build an agent app in Python", "scaffold a Dapr Agents project", or "create a multi-agent orchestrator in Python".
 allowed-tools:
   - Write
   - Edit
   - Bash(mkdir:*)
+  - Bash(curl:*)
   - Bash(uv venv:*)
   - Bash(uv sync:*)
+  - Bash(uv lock:*)
   - Bash(dapr:*)
   - mcp__ide__getDiagnostics
 ---
 
-# Create Dapr Agents Python Application
+# Create a Python Agent Application
 
 ## Overview
 
-This skill describes how to create a Dapr Agents application in Python. It supports the native `dapr-agents` SDK and seven Diagrid framework wrappers (OpenAI Agents, LangGraph, CrewAI, Pydantic AI, Google ADK, Strands, Deep Agents). Single agent or coordinator + specialists.
+This skill describes how to create a durable AI agent application in Python. Two paths are supported:
+
+- **Native** — the [`dapr-agents`](https://github.com/dapr/dapr-agents) SDK. This is the Dapr Agents framework proper; it is Python-only. Its `DurableAgent` runs on Dapr Workflow, reaches the LLM through a Dapr conversation component, and persists conversation memory in a Dapr state store.
+- **Framework wrappers** — the [`diagrid`](https://pypi.org/project/diagrid/) distribution, which runs an agent you have already written in another framework (LangGraph, CrewAI, Strands, …) on Dapr Workflow so that each node / LLM call / tool call becomes a durable activity. One distribution, one extra per framework.
+
+Single agent or coordinator + specialists, either way.
 
 ## Execution Order
 
@@ -32,27 +39,42 @@ If you don't have enough context what to build, ask the user the following clari
 
 1. What is the purpose of the agent (or agent team)? This becomes the agent's `role` and `instructions`.
 2. Topology: a single agent, or a coordinator + N specialists?
-3. Framework: one of `dapr-agents` (native), `openai-agents`, `langgraph`, `crewai`, `pydantic-ai`, `adk`, `strands`, `deepagents`. Default to `dapr-agents` if the user has no preference.
-4. Pattern (only if Q3 selected `dapr-agents` native AND Q2 selected single-agent): `augmented-llm` (default), `prompt-chaining`, `routing`, `parallelization`, `orchestrator-workers`, or `evaluator-optimizer`. **Skip this question entirely** if the user picked any framework wrapper (openai-agents, langgraph, crewai, pydantic-ai, adk, strands, deepagents) — those frameworks define their own agent loops and the pattern concept does not apply.
+3. Framework: `dapr-agents` (native, the default) or one of the `diagrid` wrapper extras. **Resolve the wrapper list at this point rather than reciting one** — see "Resolving the framework list" below.
+4. Pattern (only if Q3 selected native `dapr-agents` AND Q2 selected single-agent): `augmented-llm` (default), `prompt-chaining`, `routing`, `parallelization`, `orchestrator-workers`, or `evaluator-optimizer`. **Skip this question entirely** if the user picked a wrapper extra — those frameworks define their own agent loop and the pattern concept does not apply.
 5. Tool definitions: name, purpose, and argument schema for each tool the agent should expose.
-6. LLM provider: OpenAI, Anthropic, Google Gemini, or local Ollama. Native `dapr-agents` routes this through a Dapr conversation component; framework wrappers usually call the provider directly via an API key.
-7. Include observability by default? (**recommended: yes** for native `dapr-agents`; default `no` for framework wrappers — they ship their own observability.)
+6. LLM provider: OpenAI, Anthropic, Google Gemini, or local Ollama. Native `dapr-agents` routes this through a Dapr conversation component; wrappers usually let the wrapped framework call the provider directly with an API key from the environment.
+7. Include observability by default? (**recommended: yes** for native `dapr-agents`; default `no` for wrappers — they ship their own observability.)
 8. Project name — used as the folder name. Don't use spaces.
+
+### Resolving the framework list
+
+The wrapper extras live in one place — the `[project.optional-dependencies]` table of [`diagridio/python-ai`'s `pyproject.toml`](https://github.com/diagridio/python-ai/blob/main/pyproject.toml) — and PyPI republishes that table verbatim as the distribution's `provides_extra` metadata. Read it instead of hardcoding it:
+
+```shell
+curl -s https://pypi.org/pypi/diagrid/json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['info']['version']); print('\n'.join(e for e in d['info']['provides_extra'] if e not in ('agent-core','all')))"
+```
+
+Offer the user the extras that command prints. `agent-core` is the shared base every extra pulls in, and `all` is a meta-extra — neither is a framework choice, so both are filtered out above.
+
+If the command fails (no network), fall back to the snapshot in `REFERENCE.md` and **tell the user it is a snapshot with a date on it**, so a missing framework is understood as staleness rather than as unsupported.
 
 ## Prerequisites
 
 The following must be installed by the user before this skill can run:
 
-- [Python 3.11+](https://www.python.org/downloads/)
+- [Python](https://www.python.org/downloads/) `>=3.11,<3.14` — the bound both `dapr-agents` and `diagrid` declare
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) (Astral)
 - [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation)
-- [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/)
+- [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.18+)
 - At least one LLM provider env var (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`) or a local [Ollama](https://ollama.com/) instance
 
 Additional runtime dependencies (handled during project setup):
 
-- Python package: `dapr-agents==1.0.1` (native) **or** `diagrid[<framework>]==0.3.0` (framework wrappers)
-- Start the [Diagrid Dev Dashboard](https://www.diagrid.io/blog/improving-the-local-dapr-workflow-experience-diagrid-dashboard): `docker run -p 8080:8080 ghcr.io/diagridio/diagrid-dashboard:latest`
+- Python package: `dapr-agents>=1.0` (native) **or** `diagrid[<extra>]>=0.4` (wrappers). These are floors, not pins — the exact resolved set is captured in `uv.lock` during Verify. See `REFERENCE.md`.
+
+Optional, for inspecting workflow runs locally:
+
+- The [Diagrid Dev Dashboard](https://www.diagrid.io/blog/improving-the-local-dapr-workflow-experience-diagrid-dashboard) is a separate container the user starts themselves — `dapr init` does not provision it: `docker run -p 8080:8080 ghcr.io/diagridio/diagrid-dashboard:latest`
 
 ## Project Setup
 
@@ -153,15 +175,15 @@ Local Zipkin + Prometheus + Grafana. See [`../shared/agent-observability-stack.m
 
 ### pyproject.toml
 
-Python config file. Dependencies depend on framework choice — see `REFERENCE.md` for the per-framework pinning.
+Python config file. Dependencies depend on the framework choice — see `REFERENCE.md`.
 
 ### main.py
 
-Agent entrypoint. Framework-specific — see `REFERENCE.md` for each of the 8 frameworks.
+Agent entrypoint. See `REFERENCE.md` for the native template and for how to derive the wrapper template from the wrapper's own README.
 
 ### tools.py
 
-Tool definitions. See [`../shared/agent-tools-python.md`](../shared/agent-tools-python.md) and per-framework notes in `REFERENCE.md`.
+Tool definitions. See [`../shared/agent-tools-python.md`](../shared/agent-tools-python.md); tools for a wrapper project are defined with the wrapped framework's own decorator, not with `dapr_agents.tool`.
 
 ### models.py
 
@@ -180,7 +202,8 @@ HTTP request file for testing the agent endpoints. See `REFERENCE.md`.
 **IMPORTANT: After Project Setup you MUST run these exact verification instructions:**
 
 1. Run `uv venv` in each `<ProjectName>` folder to create a virtual environment.
-2. Run `uv sync` in each `<ProjectName>` folder to install dependencies.
+2. Run `uv sync` in each `<ProjectName>` folder to resolve and install dependencies. This writes `uv.lock` next to `pyproject.toml`.
+3. Confirm `uv.lock` exists and instruct the user to commit it — the `>=` floors in `pyproject.toml` keep the project on supported versions, and `uv.lock` is what makes a checkout reproduce byte-for-byte.
 
 ## Create README.md
 
@@ -194,10 +217,10 @@ The README contains the following sections:
 3. A mermaid diagram of the agent (or agent team) that shows the role, tools, and (if multi-agent) the pub/sub topics.
 4. How to start the application using the Dapr CLI (`dapr run -f .`).
 5. How to call the agent endpoints (POST the task, GET the workflow state). Include curl examples and link to `local.http`.
-6. **Observability section** (native only, observability on): how to start the observability stack (`docker compose -f docker-compose.observability.yaml up -d`), the Zipkin URL (http://localhost:9411), Grafana URL (http://localhost:3000), Prometheus URL (http://localhost:9099), and the Diagrid Dev Dashboard (`docker run -p 8080:8080 ghcr.io/diagridio/diagrid-dashboard:latest` → http://localhost:8080).
+6. **Observability section** (native only, observability on): how to start the observability stack (`docker compose -f docker-compose.observability.yaml up -d`), the Zipkin URL (http://localhost:9411), Grafana URL (http://localhost:3000), and Prometheus URL (http://localhost:9099). Mention the Diagrid Dev Dashboard as a separate, optional container the reader starts themselves (`docker run -p 8080:8080 ghcr.io/diagridio/diagrid-dashboard:latest` → http://localhost:8080) — it is **not** part of `dapr init`.
 7. How to run with Diagrid Catalyst: [`../shared/running-with-catalyst.md`](../shared/running-with-catalyst.md).
 
-See `REFERENCE.md` for per-framework main.py / pyproject.toml templates, tool patterns, and observability wiring.
+See `REFERENCE.md` for the pyproject.toml templates, the native `main.py`, the wrapper entry-point table, tool patterns, and observability wiring.
 
 ## Show final message
 

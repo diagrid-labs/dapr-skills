@@ -17,7 +17,7 @@ spec:
     value: "claude-sonnet-4-6"
 ```
 
-- The component name `llm-provider` is the value passed to `DaprChatClient(component_name="llm-provider")` in the agent code.
+- The component name `llm-provider` is the value passed to `DaprChatClient(component_name="llm-provider")` in Python, and to `conversationComponentName:` in .NET.
 - `{{ANTHROPIC_API_KEY}}` is a Dapr template variable; set `ANTHROPIC_API_KEY` in the environment before running `dapr run`.
 - Valid `model` values include `claude-opus-4-7`, `claude-sonnet-4-6`, and `claude-haiku-4-5`. Default to `claude-sonnet-4-6` for a balance of cost and capability.
 - The `conversation.anthropic` building block is part of Dapr; no extra package is required on the agent side.
