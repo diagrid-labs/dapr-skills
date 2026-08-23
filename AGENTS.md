@@ -1,11 +1,14 @@
 # AGENTS.md
 
-This repository contains skill definitions for building Dapr Workflow applications. The skills follow the [Agent Skills specification](https://agentskills.io/home) and can be used with any compatible AI coding assistant.
+This repository contains skill definitions for building Dapr Workflow applications and durable AI agent applications that run on Dapr Workflow. The skills follow the [Agent Skills specification](https://agentskills.io/home) and can be used with any compatible AI coding assistant.
 
 ## Repository structure
 
 - `skills/` — Skill files organized by language/framework
-  - `shared/` — Shared content referenced by multiple skills (prereq checks, common .NET sections, running instructions)
+  - `shared/` — Shared content referenced by multiple skills (prereq checks, component YAMLs, tool templates, observability, running instructions)
+
+### Workflow skills
+
   - `check-prereq-dotnet/SKILL.md` — Skill for checking .NET prerequisites
   - `check-prereq-aspire/SKILL.md` — Skill for checking .NET Aspire prerequisites
   - `check-prereq-python/SKILL.md` — Skill for checking Python prerequisites
@@ -24,15 +27,36 @@ This repository contains skill definitions for building Dapr Workflow applicatio
   - `review-workflow-management/SKILL.md` — Skill for reviewing the HTTP management endpoints exposed for Dapr Workflows
   - `review-workflow-management/REFERENCE.md` — Detailed reference and worked example for the management endpoint review skill
 
+### Agent skills
+
+  - `check-prereq-agent-python/SKILL.md` — Prerequisites for Python agents (`dapr-agents` SDK or a `diagrid` framework wrapper)
+  - `check-prereq-agent-dotnet/SKILL.md` — Prerequisites for .NET agents (Microsoft Agent Framework on Dapr Workflow)
+  - `create-agent-python/SKILL.md` — Skill for creating durable agent apps in Python
+  - `create-agent-python/REFERENCE.md` — Detailed reference examples for the Python agent skill
+  - `create-agent-dotnet/SKILL.md` — Skill for creating durable agent apps in .NET
+  - `create-agent-dotnet/REFERENCE.md` — Detailed reference examples for the .NET agent skill
+  - `review-agent-tools/SKILL.md` — Skill for reviewing agent tool definitions (idempotency, descriptions, payload size, exception handling)
+  - `review-agent-tools/REFERENCE.md` — Detailed reference and worked example for the tool review skill
+  - `review-agent-memory/SKILL.md` — Skill for reviewing agent memory and state-store configuration
+  - `review-agent-memory/REFERENCE.md` — Detailed reference and worked example for the memory review skill
+  - `review-agent-orchestration/SKILL.md` — Skill for reviewing multi-agent pub/sub conventions, loop safety, and port assignment
+  - `review-agent-orchestration/REFERENCE.md` — Detailed reference and worked example for the orchestration review skill
+  - `review-agent-observability/SKILL.md` — Skill for reviewing agent tracing, metrics, and structured logging
+  - `review-agent-observability/REFERENCE.md` — Detailed reference and worked example for the observability review skill
+
 ## Usage
 
 **Verify your environment (user-invoked only):**
 
-The `check-prereq-xxx` skills (`check-prereq-dotnet`, `check-prereq-aspire`, `check-prereq-python`) are opt-in and must **only** be run when the user explicitly asks for them (e.g., "check prerequisites for .NET", "verify Aspire environment"). Do **NOT** run them automatically as part of, or before, a `create-workflow-xxx` invocation — they are separate, user-invoked skills, not an implicit pre-step.
+The `check-prereq-xxx` skills (`check-prereq-dotnet`, `check-prereq-aspire`, `check-prereq-python`, `check-prereq-agent-python`, `check-prereq-agent-dotnet`) are opt-in and must **only** be run when the user explicitly asks for them (e.g., "check prerequisites for .NET", "verify Aspire environment"). Do **NOT** run them automatically as part of, or before, a `create-workflow-xxx` or `create-agent-xxx` invocation — they are separate, user-invoked skills, not an implicit pre-step.
 
 **Build a new workflow application:**
 
 Run the appropriate `create-workflow-xxx` skill to scaffold the project: `create-workflow-dotnet`, `create-workflow-aspire`, or `create-workflow-python` from a text spec, or `create-workflow-from-diagram` from an image or BPMN file (output language: Go, Python, .NET, Java, or JavaScript). Each skill lists the prerequisites it expects to be installed and assumes they are already in place.
+
+**Build a new agent application:**
+
+Run `create-agent-python` or `create-agent-dotnet` to scaffold a durable agent app. `create-agent-python` covers the native [`dapr-agents`](https://github.com/dapr/dapr-agents) SDK and the [`diagrid`](https://pypi.org/project/diagrid/) framework wrappers; `create-agent-dotnet` covers [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/) running on Dapr Workflow via [`Diagrid.AI.Microsoft.AgentFramework`](https://www.nuget.org/packages/Diagrid.AI.Microsoft.AgentFramework). Both support a single agent and a coordinator + specialists topology.
 
 **Review an existing workflow application** (run any combination, in any order):
 
@@ -40,7 +64,14 @@ Run the appropriate `create-workflow-xxx` skill to scaffold the project: `create
 - `review-workflow-activity` — flags idempotency, error-handling, and convention issues inside activities.
 - `review-workflow-management` — checks the HTTP management surface (start, status, terminate, pause, resume, raise-event, purge) against the canonical shape used by the `create-workflow-*` skills.
 
-All review skills are read-only and emit a structured report with stable rule ids (`DWF-DET-NNN`, `DWF-ACT-NNN`, `DWF-MGT-NNN`).
+**Review an existing agent application** (run any combination, in any order):
+
+- `review-agent-tools` — flags idempotency, description quality, unbounded returns, and swallowed exceptions in tool functions.
+- `review-agent-memory` — checks `actorStateStore: "true"` on the workflow store, memory-class appropriateness, and secret handling for LLM API keys.
+- `review-agent-orchestration` — checks multi-agent pub/sub topic conventions, loop bounds, agent-registry wiring, and port collisions.
+- `review-agent-observability` — checks tracing configuration, sampling rate, structured logging, and trace propagation on outbound calls.
+
+All review skills are read-only and emit a structured report with stable rule ids: `DWF-DET-NNN`, `DWF-ACT-NNN`, `DWF-MGT-NNN` for workflow reviews; `DAG-TOOL-NNN`, `DAG-MEM-NNN`, `DAG-ORCH-NNN`, `DAG-OBS-NNN` for agent reviews.
 
 ## Repository prerequisites
 
@@ -62,9 +93,14 @@ All skills require:
 
 ### Python skills
 
-- [Python 3.12+](https://www.python.org/downloads/)
+- Python 3.12+ for workflow skills, Python 3.11+ for agent skills — [download Python](https://www.python.org/downloads/)
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
 - Python language server support (for code diagnostics)
+
+### Agent skills (both languages)
+
+- At least one LLM provider: an `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` or `GOOGLE_API_KEY` environment variable, or a local [Ollama](https://ollama.com/) instance on `http://localhost:11434`.
+- Python agent projects accept Python 3.11+ (the `diagrid` distribution requires `>=3.11,<3.14`).
 
 ## Guidelines for skill files
 
