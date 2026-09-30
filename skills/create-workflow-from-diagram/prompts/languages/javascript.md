@@ -24,19 +24,23 @@
 - Follow JavaScript Standard Style or Prettier formatting
 
 5. Dapr JavaScript Workflow SDK Specific
-- **CRITICAL: JavaScript Deterministic Workflows** - Use generator functions, not async functions:
+- **CRITICAL: JavaScript Deterministic Workflows** - Use `async function*` (async generator functions) — the SDK dispatches on `Symbol.asyncIterator`, which only an async generator implements, so a plain sync `function*` compiles but misbehaves at runtime, and a plain `async function` (no `*`) has no `yield` to suspend on:
   ```javascript
-  // CORRECT: Generator function for deterministic workflows
-  function* myWorkflow(context, input) {
-      const logger = getReplaySafeLogger(context);
-      
+  // CORRECT: async generator function for deterministic workflows
+  async function* myWorkflow(context, input) {
+      // Guard logging with isReplaying() to avoid duplicate output during replay —
+      // there is no separate "replay-safe logger" helper in @dapr/dapr.
+      if (!context.isReplaying()) {
+          console.log('Starting myWorkflow');
+      }
+
       // Use yield for all async operations
       const result = yield context.callActivity('processData', input);
-      
+
       return { success: true, data: result };
   }
   
-  // INCORRECT: Async function (non-deterministic)
+  // INCORRECT: plain async function, no generator (non-deterministic / can't yield)
   // async function myWorkflow(context, input) { ... }
   ```
 
@@ -64,7 +68,7 @@
 
 - **Parallel Execution with Promise Patterns**:
   ```javascript
-  function* parallelWorkflow(context, input) {
+  async function* parallelWorkflow(context, input) {
       // Create parallel tasks
       const tasks = [
           context.callActivity('activity1', input.data1),
@@ -81,7 +85,7 @@
 
 - **Child Workflow Patterns** - String-based workflow calls:
   ```javascript
-  function* parentWorkflow(context, input) {
+  async function* parentWorkflow(context, input) {
       // Call child workflow by string name (no imports needed)
       const childResult = yield context.callChildWorkflow('childWorkflowName', input);
       
@@ -93,21 +97,21 @@
   }
   ```
 
-- **Import Path Precision** - Use exact Dapr SDK paths:
+- **Import Path Precision** - Everything ships from the single `@dapr/dapr` package — there is no separate `@dapr/workflow` or `@dapr/durabletask-js` package to import from, even though `@dapr/durabletask-js` appears in the SDK's own `package.json`; it is an unused dependency, not something your code should import:
   ```javascript
-  // CORRECT: Use specific import paths
-  import { WorkflowRuntime } from '@dapr/workflow';
-  import { whenAll, whenAny } from '@dapr/durabletask-js/task';
-  
+  // CORRECT: import everything from @dapr/dapr
+  import { WorkflowRuntime, DaprWorkflowClient } from '@dapr/dapr';
+
   // Context methods don't need imports
-  function* workflowWithContextMethods(context, input) {
-      // These are available on context without imports
+  async function* workflowWithContextMethods(context, input) {
+      // whenAll/whenAny are methods on the context, not standalone imports
       const allResults = yield context.whenAll([task1, task2, task3]);
       const firstResult = yield context.whenAny([task1, task2]);
   }
-  
-  // INCORRECT: Wrong import paths cause runtime errors
-  // import { whenAll } from '@dapr/durabletask-js'; // Missing /task
+
+  // INCORRECT: these packages don't exist / aren't what the SDK actually uses
+  // import { WorkflowRuntime } from '@dapr/workflow';
+  // import { whenAll } from '@dapr/durabletask-js/task';
   ```
 
 6. JavaScript Serialization Specifics
@@ -155,7 +159,7 @@
 - **JavaScript Workflow Data Patterns** - Design for serialization from the start:
   ```javascript
   // ✅ GOOD: Plain data structures
-  function* goodWorkflow(context, input) {
+  async function* goodWorkflow(context, input) {
       const workflowData = {
           orderId: input.orderId,
           status: 'processing',
@@ -175,7 +179,7 @@
   }
   
   // ❌ BAD: Complex objects and functions
-  function* badWorkflow(context, input) {
+  async function* badWorkflow(context, input) {
       const workflowData = {
           order: new Order(input), // ❌ Class instance
           validator: input => input.isValid(), // ❌ Function
@@ -190,7 +194,7 @@
 
 - **Cross-Workflow Data Communication** - Handle serialization boundaries explicitly:
   ```javascript
-  function* parentWorkflow(context, input) {
+  async function* parentWorkflow(context, input) {
       // Prepare data for child workflow - ensure it's serializable
       const childInput = {
           // Extract only serializable properties
@@ -216,7 +220,7 @@
 
 - **Deterministic Operations** - Safe in **workflow functions only**:
   ```javascript
-  function* deterministicWorkflow(context, input) {
+  async function* deterministicWorkflow(context, input) {
       // Use context methods for time operations (workflow functions only)
       const deadline = new Date(context.getCurrentUtcDateTime().getTime() + (24 * 60 * 60 * 1000));
       const timerTask = context.createTimer(deadline);
@@ -231,7 +235,7 @@
 
 - **Non-deterministic Operations** - Must use activities (activities can use standard JavaScript operations):
   ```javascript
-  function* workflowWithActivities(context, input) {
+  async function* workflowWithActivities(context, input) {
       // In workflow function: Call activities for non-deterministic operations
       const randomId = yield context.callActivity('generateRandomId');
       
@@ -273,8 +277,7 @@
 8. Error Handling Best Practices
 - **Workflow Error Patterns with Retry**:
   ```javascript
-  function* resilientWorkflow(context, input) {
-      const logger = getReplaySafeLogger(context);
+  async function* resilientWorkflow(context, input) {
       const maxRetries = 3;
       
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -282,7 +285,9 @@
               const result = yield context.callActivity('unreliableActivity', input);
               return { success: true, result, attempts: attempt };
           } catch (error) {
-              logger.warn(`Attempt ${attempt} failed: ${error.message}`);
+              if (!context.isReplaying()) {
+                  console.warn(`Attempt ${attempt} failed: ${error.message}`);
+              }
               
               if (attempt === maxRetries) {
                   return { success: false, error: error.message, attempts: attempt };
@@ -298,9 +303,8 @@
 
 - **Compensation Pattern**:
   ```javascript
-  function* compensatingWorkflow(context, input) {
+  async function* compensatingWorkflow(context, input) {
       const completedSteps = [];
-      const logger = getReplaySafeLogger(context);
       
       try {
           // Execute steps and track completion
@@ -313,7 +317,9 @@
           return { success: true };
           
       } catch (error) {
-          logger.error(`Workflow failed, compensating completed steps`);
+          if (!context.isReplaying()) {
+              console.error(`Workflow failed, compensating completed steps`);
+          }
           
           // Compensate in reverse order
           for (let i = completedSteps.length - 1; i >= 0; i--) {
@@ -321,7 +327,9 @@
               try {
                   yield context.callActivity(`compensate_${step}`, input);
               } catch (compensationError) {
-                  logger.error(`Failed to compensate ${step}: ${compensationError.message}`);
+                  if (!context.isReplaying()) {
+                      console.error(`Failed to compensate ${step}: ${compensationError.message}`);
+                  }
               }
           }
           
@@ -333,7 +341,7 @@
 9. Registration and Module Patterns
 - **Workflow Registration**:
   ```javascript
-  import { WorkflowRuntime } from '@dapr/workflow';
+  import { WorkflowRuntime } from '@dapr/dapr';
   import { mainWorkflow } from './workflows/main.js';
   import { childWorkflow } from './workflows/child.js';
   import { myActivity } from './activities/activity.js';
@@ -357,7 +365,7 @@
    * @param {Object} input - Workflow input
    * @returns {Object} Workflow result
    */
-  function* myWorkflow(context, input) {
+  async function* myWorkflow(context, input) {
       // Workflow implementation
   }
   
@@ -365,7 +373,7 @@
   ```
 
 10. Critical Best Practices Summary
-- **Always use generator functions (`function*`) for workflows, never async functions**
+- **Always use async generator functions (`async function*`) for workflows — never a plain sync generator or a plain (non-generator) async function.** The SDK dispatches on `Symbol.asyncIterator`, which only an async generator implements; a plain `function*` compiles but misbehaves at runtime.
 - **Use `yield` for all async operations within workflows**
 - **Design data for JSON serialization** - plain objects, primitives, and arrays only
 - **Convert dates to ISO strings** for cross-workflow communication

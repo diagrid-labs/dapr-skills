@@ -16,6 +16,10 @@ This repository contains skill definitions for building Dapr Workflow applicatio
   - `create-workflow-dotnet/REFERENCE.md` — Detailed reference examples for the .NET skill
   - `create-workflow-python/SKILL.md` — Skill for creating Dapr Workflow apps with Python
   - `create-workflow-python/REFERENCE.md` — Detailed reference examples for the Python skill
+  - `create-workflow-typescript/SKILL.md` — Skill for creating a Dapr building-blocks app (Workflow, service invocation, pub/sub, bindings, jobs, state, secrets) with TypeScript
+  - `create-workflow-typescript/REFERENCE.md` — Detailed reference examples for the TypeScript skill
+  - `migrate-workflow-typescript/SKILL.md` — Skill for migrating an existing TypeScript/Node.js application to Dapr incrementally
+  - `migrate-workflow-typescript/REFERENCE.md` — Detection heuristics, infra-to-component mapping, and verified before/after code for the migration skill
   - `create-workflow-aspire/SKILL.md` — Skill for creating Dapr Workflow apps with Aspire
   - `create-workflow-aspire/REFERENCE.md` — Detailed reference examples for the Aspire skill
   - `create-workflow-from-diagram/SKILL.md` — Skill for scaffolding a Dapr Workflow app from a diagram image (PNG/JPG/GIF/WebP) or a BPMN 2.0 XML file, in Go, Python, .NET, Java, or JavaScript
@@ -52,7 +56,11 @@ The `check-prereq-xxx` skills (`check-prereq-dotnet`, `check-prereq-aspire`, `ch
 
 **Build a new workflow application:**
 
-Run the appropriate `create-workflow-xxx` skill to scaffold the project: `create-workflow-dotnet`, `create-workflow-aspire`, or `create-workflow-python` from a text spec, or `create-workflow-from-diagram` from an image or BPMN file (output language: Go, Python, .NET, Java, or JavaScript). Each skill lists the prerequisites it expects to be installed and assumes they are already in place.
+Run the appropriate `create-workflow-xxx` skill to scaffold the project: `create-workflow-dotnet`, `create-workflow-aspire`, `create-workflow-python`, or `create-workflow-typescript` from a text spec, or `create-workflow-from-diagram` from an image or BPMN file (output language: Go, Python, .NET, Java, or JavaScript). `create-workflow-typescript` differs from the other three: it scaffolds a Workflow whose activities also exercise service invocation, pub/sub, bindings, jobs, state, and secrets, rather than a workflow-only app. Each skill lists the prerequisites it expects to be installed and assumes they are already in place.
+
+**Migrate an existing application to Dapr:**
+
+Run `migrate-workflow-typescript` on an existing TypeScript/Node.js application — it is not a scaffolder. It reads the codebase first (no changes), maps existing service calls, messaging, scheduled jobs, secrets, and state access onto Dapr building blocks, presents a Migration Assessment Report for approval, and only then applies confirmed changes one integration point at a time, verifying after each with the project's own build/test commands. It works on a dedicated git branch and never commits or pushes unless the user opts into per-step commits. This is a fundamentally different kind of skill from the `create-workflow-xxx` family: it never assumes a fixed scenario and never rewrites whole files.
 
 **Build a new agent application:**
 
@@ -96,6 +104,11 @@ All skills require:
 - Python 3.12+ for workflow skills, Python 3.11+ for agent skills — [download Python](https://www.python.org/downloads/)
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
 - Python language server support (for code diagnostics)
+
+### TypeScript skills
+
+- Node.js 22+ (LTS) — [download Node.js](https://nodejs.org/en/download)
+- TypeScript language server support (for code diagnostics)
 
 ### Agent skills (both languages)
 

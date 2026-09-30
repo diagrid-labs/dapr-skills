@@ -5,7 +5,9 @@ This repository contains skill definitions that can be used with Claude Code to 
 ### Workflow skills
 
 - Text-spec skills: `create-workflow-dotnet`, `create-workflow-aspire`, `create-workflow-python` — describe the workflow in natural language and scaffold a runnable project.
+- Building-blocks skill: `create-workflow-typescript` — scaffolds a TypeScript Dapr Workflow whose activities also exercise service invocation, pub/sub, bindings, jobs, state, and secrets, plus a small second service invoked over service invocation.
 - Diagram-input skill: `create-workflow-from-diagram` — provide a workflow diagram (PNG / JPG / JPEG / GIF / WebP) or a BPMN 2.0 XML file; the skill extracts structure and generates code for Go, Python, .NET, Java, or JavaScript.
+- Migration skill: `migrate-workflow-typescript` — analyzes an **existing** TypeScript/Node.js application (not a scaffold), proposes a Dapr building-block mapping for approval, and applies confirmed changes incrementally with verification between each.
 - Review skills: `review-workflow-determinism`, `review-workflow-activity`, `review-workflow-management` — audit an existing project.
 
 ### Agent skills
@@ -28,6 +30,10 @@ This repository contains skill definitions that can be used with Claude Code to 
 
 - Python 3.12+ for workflow skills, Python 3.11+ for agent skills — [download Python](https://www.python.org/downloads/)
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
+
+### For TypeScript skills
+
+- [Node.js 22+ (LTS)](https://nodejs.org/en/download)
 
 ### For agent skills
 
@@ -74,7 +80,14 @@ Invoke a skill by asking Claude Code in natural language — the example phrases
 | `create-workflow-dotnet` | "create a workflow in .NET named ..." |
 | `create-workflow-aspire` | "create a workflow with Aspire named ..." |
 | `create-workflow-python` | "create a workflow in Python named ..." |
+| `create-workflow-typescript` | "create a Dapr building blocks app in TypeScript named ..." |
 | `create-workflow-from-diagram` | "create a Dapr workflow in `<language>` from this diagram" (attach a PNG/JPG/GIF/WebP image or a `.bpmn` file; supported output languages: Go, Python, .NET, Java, JavaScript) |
+
+### Migrate an existing application
+
+| Skill | Example prompt |
+| --- | --- |
+| `migrate-workflow-typescript` | "migrate this app to Dapr", "add Dapr to my existing Node.js app" |
 
 ### Review an existing workflow
 
@@ -187,3 +200,11 @@ Create an agent in .NET named SupportAgent using Microsoft Agent Framework on Da
 > Check the memory and state store configuration of this agent project
 
 > Audit the observability of my dapr-agents project
+
+### Example 10: TypeScript Dapr building blocks tour
+
+Create a Dapr building blocks app in TypeScript named OrderFlow. Use the default Order Processing reference scenario: an order is priced by a separate pricing-service over service invocation, saved to state, paid for using a secret, and its completion is announced via pub/sub, an output binding, and a scheduled follow-up job.
+
+### Example 11: Migrate an existing Node.js service to Dapr
+
+Migrate this app to Dapr. Start with a read-only assessment report — don't change anything until I approve the plan.
