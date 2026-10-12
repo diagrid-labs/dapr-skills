@@ -14,7 +14,7 @@
         "evals/review-workflow-management/files/expense-approval-dotnet/ExpenseApproval/Activities/ReimburseActivity.cs"
       ],
       "expectations": [
-        "The Critical section contains DWF-MGT-006 referencing Program.cs (no endpoint calls RaiseEventAsync) and justified by WaitForExternalEventAsync in Workflows/ExpenseApprovalWorkflow.cs",
+        "The Critical section contains DWF-MGT-006 stating that no endpoint calls RaiseEventAsync and justifying it with the WaitForExternalEventAsync call in Workflows/ExpenseApprovalWorkflow.cs; the finding may be located either at Program.cs (where the endpoint belongs) or at the WaitForExternalEventAsync line in Workflows/ExpenseApprovalWorkflow.cs",
         "The Critical section contains DWF-MGT-011 at Program.cs:43 (WaitForWorkflowCompletionAsync with no CancellationToken/timeout)",
         "The Warnings section contains DWF-MGT-005 referencing Program.cs (no endpoint calls ResumeWorkflowAsync)",
         "The Warnings section contains DWF-MGT-007 at Program.cs:19 (hard-coded instanceId) and DWF-MGT-008 for the /start endpoint at Program.cs:22 (lines 13-23 acceptable)",

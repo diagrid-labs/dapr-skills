@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  id="rentalBookingDefinitions"
+                  targetNamespace="http://example.com/bpmn">
+  <bpmn:process id="rentalBooking" name="Equipment Rental Booking" isExecutable="true">
+    <bpmn:startEvent id="rentalRequested" name="Rental Requested" />
+
+    <bpmn:serviceTask id="verifyCustomer" name="Verify Customer" />
+    <bpmn:serviceTask id="checkAvailability" name="Check Equipment Availability" />
+
+    <bpmn:exclusiveGateway id="equipmentAvailable" name="Equipment Available?" default="flowUnavailable" />
+
+    <bpmn:parallelGateway id="prepareSplit" name="Prepare Rental" />
+    <bpmn:serviceTask id="reserveEquipment" name="Reserve Equipment" />
+    <bpmn:serviceTask id="takeDeposit" name="Take Deposit" />
+    <bpmn:serviceTask id="sendContract" name="Send Rental Contract" />
+    <bpmn:parallelGateway id="prepareJoin" />
+
+    <bpmn:userTask id="offerWaitlist" name="Offer Waitlist Spot" />
+    <bpmn:exclusiveGateway id="joinsWaitlist" name="Customer Joins Waitlist?" default="flowDeclineWaitlist" />
+    <bpmn:intermediateCatchEvent id="waitForReturns" name="Wait 2 Days for Returns">
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">P2D</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+
+    <bpmn:endEvent id="rentalConfirmed" name="Rental Confirmed" />
+    <bpmn:endEvent id="rentalDeclined" name="Rental Declined" />
+
+    <bpmn:sequenceFlow id="flowStart" sourceRef="rentalRequested" targetRef="verifyCustomer" />
+    <bpmn:sequenceFlow id="flowVerified" sourceRef="verifyCustomer" targetRef="checkAvailability" />
+    <bpmn:sequenceFlow id="flowChecked" sourceRef="checkAvailability" targetRef="equipmentAvailable" />
+
+    <bpmn:sequenceFlow id="flowAvailable" sourceRef="equipmentAvailable" targetRef="prepareSplit">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${available == true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flowUnavailable" sourceRef="equipmentAvailable" targetRef="offerWaitlist" />
+
+    <bpmn:sequenceFlow id="flowToReserve" sourceRef="prepareSplit" targetRef="reserveEquipment" />
+    <bpmn:sequenceFlow id="flowToDeposit" sourceRef="prepareSplit" targetRef="takeDeposit" />
+    <bpmn:sequenceFlow id="flowToContract" sourceRef="prepareSplit" targetRef="sendContract" />
+    <bpmn:sequenceFlow id="flowReserved" sourceRef="reserveEquipment" targetRef="prepareJoin" />
+    <bpmn:sequenceFlow id="flowDeposited" sourceRef="takeDeposit" targetRef="prepareJoin" />
+    <bpmn:sequenceFlow id="flowContractSent" sourceRef="sendContract" targetRef="prepareJoin" />
+    <bpmn:sequenceFlow id="flowConfirmed" sourceRef="prepareJoin" targetRef="rentalConfirmed" />
+
+    <bpmn:sequenceFlow id="flowOffered" sourceRef="offerWaitlist" targetRef="joinsWaitlist" />
+    <bpmn:sequenceFlow id="flowJoinWaitlist" sourceRef="joinsWaitlist" targetRef="waitForReturns">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${joinedWaitlist == true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flowDeclineWaitlist" sourceRef="joinsWaitlist" targetRef="rentalDeclined" />
+    <bpmn:sequenceFlow id="flowReturnsChecked" sourceRef="waitForReturns" targetRef="checkAvailability" />
+  </bpmn:process>
+</bpmn:definitions>

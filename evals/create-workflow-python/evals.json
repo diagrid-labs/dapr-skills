@@ -28,7 +28,7 @@
       "expectations": [
         "workflow.py uses `yield ctx.create_timer(...)` with a 5-minute timedelta and calls `ctx.continue_as_new(...)` to restart the monitor with the updated breach count, returning immediately after the continue_as_new call (no further ctx.* calls after it)",
         "workflow.py contains no unbounded `while True:` loop, no `time.sleep`, and no `datetime.now()` / `datetime.utcnow()` calls",
-        "workflow.py calls `ctx.wait_for_external_event` with `timeout=timedelta(hours=1)` and catches TimeoutError to call an escalation activity",
+        "workflow.py waits for the technician-ack external event with a 1-hour timeout (e.g. `ctx.wait_for_external_event` with `timeout=timedelta(hours=1)`, or an equivalent 60-minute value) and calls an escalation activity when the timeout fires (catching TimeoutError, or racing the event against a 1-hour timer with when_any)",
         "Print/log statements inside the workflow function are guarded with `if not ctx.is_replaying:`",
         "Activities are decorated with @wfr.activity(name=...) and the names end with `_activity`",
         "main.py exposes POST /start, GET /status/{instance_id}, POST /pause/{instance_id}, POST /resume/{instance_id}, POST /terminate/{instance_id} and POST /raise-event/{instance_id}, and calls wfr.start() before uvicorn.run",

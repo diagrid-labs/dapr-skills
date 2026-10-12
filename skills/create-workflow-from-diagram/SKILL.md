@@ -49,7 +49,7 @@ The following must be installed by the user before running the generated project
 
 Plus the language toolchain for the chosen target. See the matching `../dapr-shared/prereq-check-*.md` for the full list.
 
-The skill **does not auto-install** anything. The generated project's README tells the user what to install and run.
+The skill **does not auto-install** anything and does not run builds: no `uv sync`, `npm install`, `dotnet restore` / `build`, `go mod tidy` or `mvn`, and no remote downloads (the `.gitignore` is written locally). The generated project's README tells the user what to install and run. These rules override the install and download steps of the `create-workflow-*` conventions this skill reuses.
 
 ## Phase 0: Detect input type
 
@@ -129,7 +129,7 @@ Create a `README.md` in `<ProjectRoot>` containing:
 1. One-sentence summary of what the workflow does (derive from the IR `metadata` record's `name` and `description`).
 2. Architecture description — language, Dapr version, required components.
 3. A Mermaid diagram re-rendered from the IR for quick visual reference.
-4. How to run locally with `dapr run -f dapr.yaml`.
+4. How to run locally with `dapr run -f .` from `<ProjectRoot>` (picks up `dapr.yaml`).
 5. Endpoints (if the generated language produces an HTTP surface — Python, .NET and JavaScript do by default).
 6. Open questions — every remaining `unrecognized_item` from the IR (if any).
 7. How to inspect executions with the [Diagrid Dev Dashboard](https://www.diagrid.io/blog/improving-the-local-dapr-workflow-experience-diagrid-dashboard).

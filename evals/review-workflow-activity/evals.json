@@ -23,8 +23,8 @@
         "The Warnings section contains DWF-ACT-007 at Activities/SendInvoiceEmailActivity.cs:10 (static int _emailsSent) and DWF-ACT-010 at Activities/SendInvoiceEmailActivity.cs:31 (Console.WriteLine)",
         "The Suggestions section contains DWF-ACT-008 at Activities/StartDunningActivity.cs:6 (class is public and not sealed)",
         "Activities/RecordLedgerEntryActivity.cs is not reported as a critical DWF-ACT-002; the report notes that context.TaskExecutionKey changes on each retry-policy attempt (the workflow passes RetryOptions); and its log-and-rethrow catch (lines 27-31) is not reported as DWF-ACT-003",
-        "No finding uses a DWF-DET-* rule id, and no finding references Workflows/ or Program.cs (DateTime.UtcNow at Activities/RecordLedgerEntryActivity.cs:25 is not flagged)",
-        "The report follows review-report-format.md (header with 'Language: dotnet' and 'Found:' line, sections Critical > Warnings > Suggestions, rule ids ascending within a section, ends with '## Next steps'), and only Read/Grep/Glob are used with no file modified"
+        "No finding uses a DWF-DET-* rule id, and no finding is located in Workflows/ or Program.cs (its file:line points into Activities/); mentioning the workflow's RetryOptions as context for the RecordLedgerEntryActivity note is fine. DateTime.UtcNow at Activities/RecordLedgerEntryActivity.cs:25 is not flagged",
+        "The report follows review-report-format.md: it starts with the '# Dapr review' heading (no text before it), the header has 'Language: dotnet' and a 'Found:' line, sections are Critical > Warnings > Suggestions, rule ids ascend within a section, and it ends with '## Next steps'; only Read/Grep/Glob are used on the project and no file is modified"
       ]
     },
     {
@@ -42,10 +42,10 @@
       ],
       "expectations": [
         "The report header contains 'Language: python' and the findings reference activities.py",
-        "The Critical section contains DWF-ACT-002 for create_crm_ticket_activity at activities.py:30 (lines 28-30 acceptable), and its Fix recommends a stable key carried in the activity input (e.g. derived from ctx.instance_id plus a step name in the workflow) or ctx.get_inner_context().task_execution_id, not a non-existent `taskExecutionId` attribute on the activity context",
+        "The Critical section contains DWF-ACT-002 for create_crm_ticket_activity at activities.py:30 (lines 28-30 acceptable), and its Fix recommends a stable key that stays the same across retries and replays: a business id already in the activity input (e.g. request.ticket_id), a key built in the workflow from ctx.instance_id plus a step name, or ctx.get_inner_context().task_execution_id — not a non-existent `taskExecutionId` attribute on the activity context",
         "The Warnings section contains DWF-ACT-005 at activities.py:41 (requests.get inside the async def suggest_articles_activity)",
         "The Warnings section contains DWF-ACT-003 at activities.py:65 (except Exception: pass; line 66 acceptable)",
-        "The Warnings section contains DWF-ACT-007 for the module-level _agent_load dict (activities.py:25 or :49) and DWF-ACT-010 at activities.py:50 (print)",
+        "The Warnings section contains DWF-ACT-007 for the module-level _agent_load dict (declared at activities.py:25 and read/written at :48-49; any of lines 25, 48 or 49) and DWF-ACT-010 at activities.py:50 (print)",
         "The Suggestions section contains DWF-ACT-008 at activities.py:46 for the decorator name 'assign_agent'",
         "Does not report DWF-ACT-002 for send_acknowledgement_activity (it sends an Idempotency-Key header at activities.py:61), does not report DWF-ACT-005 for the synchronous create_crm_ticket_activity, and does not flag datetime.now at activities.py:56",
         "Uses only Read, Grep and Glob; no file is modified; the report ends with a '## Next steps' section that suggests review-workflow-determinism, with no text after it"

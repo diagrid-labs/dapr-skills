@@ -193,7 +193,6 @@ import { orderProcessingWorkflow } from "./workflow";
 import {
   calculatePricingActivity,
   saveOrderStateActivity,
-  getPaymentApiKeyActivity,
   chargePaymentActivity,
   publishOrderCompletedActivity,
   sendReceiptActivity,
@@ -220,7 +219,6 @@ async function start() {
     .registerWorkflow(orderProcessingWorkflow)
     .registerActivity(calculatePricingActivity)
     .registerActivity(saveOrderStateActivity)
-    .registerActivity(getPaymentApiKeyActivity)
     .registerActivity(chargePaymentActivity)
     .registerActivity(publishOrderCompletedActivity)
     .registerActivity(sendReceiptActivity)
@@ -336,7 +334,6 @@ import { WorkflowContext, TWorkflow } from "@dapr/dapr";
 import {
   calculatePricingActivity,
   saveOrderStateActivity,
-  getPaymentApiKeyActivity,
   chargePaymentActivity,
   publishOrderCompletedActivity,
   sendReceiptActivity,
@@ -359,19 +356,18 @@ export const orderProcessingWorkflow: TWorkflow = async function* (ctx: Workflow
   // 2. State management — persist the order.
   yield ctx.callActivity(saveOrderStateActivity, record);
 
-  // 3. Secrets — read the (mock) payment gateway API key.
-  const apiKey = yield ctx.callActivity(getPaymentApiKeyActivity);
+  // 3. Secrets + state management — charge the order and update its status. The activity
+  //    reads the payment API key from the secret store itself: secrets never go through the
+  //    workflow (activity inputs and outputs are stored in workflow history).
+  record = yield ctx.callActivity(chargePaymentActivity, record);
 
-  // 4. State management again — charge the order and update its status.
-  record = yield ctx.callActivity(chargePaymentActivity, { order: record, apiKey });
-
-  // 5. Pub/sub — announce completion.
+  // 4. Pub/sub — announce completion.
   yield ctx.callActivity(publishOrderCompletedActivity, record);
 
-  // 6. Bindings (output) — send the receipt.
+  // 5. Bindings (output) — send the receipt.
   yield ctx.callActivity(sendReceiptActivity, record);
 
-  // 7. Jobs — schedule a follow-up reminder.
+  // 6. Jobs — schedule a follow-up reminder.
   yield ctx.callActivity(scheduleFollowUpJobActivity, record);
 
   const summary: OrderSummary = { orderId: record.orderId, total: record.total, status: "completed" };
@@ -384,6 +380,7 @@ export const orderProcessingWorkflow: TWorkflow = async function* (ctx: Workflow
 - The `ctx: WorkflowContext` parameter provides the workflow context. The `: any` return annotation matches the SDK's own examples — `TWorkflow`'s declared return type doesn't line up cleanly with what a generator function needs to satisfy under `strict` mode (see "SDK gotchas"), and fighting that is not worth it.
 - Reference activity functions directly (no string names needed) when calling `registerActivity`/`callActivity` — the SDK derives the registered name from `fn.name`, so activities must be **named** functions, not anonymous arrow functions assigned inline.
 - Activities are chained by passing the output of one as the input to the next, same as every other Dapr Workflow SDK.
+- **Never pass secrets through the workflow.** Activity inputs and outputs are persisted in the workflow history in the state store, so an API key returned by one activity and passed to another would be stored in plain text. The activity that needs a secret reads it from the secret store itself (see `chargePaymentActivity`).
 - Guard `console.log`/logging with `if (!ctx.isReplaying())` to avoid duplicate output during workflow replay.
 
 ### Workflow determinism
@@ -540,7 +537,7 @@ See [`../dapr-shared/typescript-local-http.md`](../dapr-shared/typescript-local-
 
 ## src/activities.ts
 
-Activities contain the actual business logic and are where I/O happens. Each one below demonstrates a single building block.
+Activities contain the actual business logic and are where I/O happens. Each one below demonstrates one building block, except `chargePaymentActivity`, which combines secrets (it reads the payment API key itself, so the key never enters workflow history) with state management.
 
 ```typescript
 import { DaprClient, HttpMethod, WorkflowActivityContext } from "@dapr/dapr";
@@ -569,18 +566,16 @@ export async function saveOrderStateActivity(_ctx: WorkflowActivityContext, orde
   await daprClient.state.save(STATE_STORE, [{ key: order.orderId, value: order }]);
 }
 
-export async function getPaymentApiKeyActivity(_ctx: WorkflowActivityContext): Promise<string> {
-  // Secrets: read the (mock) payment gateway API key rather than hardcoding it.
+export async function chargePaymentActivity(_ctx: WorkflowActivityContext, order: OrderRecord): Promise<OrderRecord> {
+  // Secrets: read the (mock) payment gateway API key inside the activity that uses it, rather
+  // than hardcoding it or returning it to the workflow (activity inputs/outputs are persisted
+  // in workflow history, so a returned secret would be stored in the state store).
   const secret = (await daprClient.secret.get(SECRET_STORE, "PAYMENT_API_KEY")) as Record<string, string>;
-  return secret["PAYMENT_API_KEY"];
-}
+  const apiKey = secret["PAYMENT_API_KEY"];
 
-export async function chargePaymentActivity(
-  _ctx: WorkflowActivityContext,
-  input: { order: OrderRecord; apiKey: string },
-): Promise<OrderRecord> {
-  // TODO: implement actual functionality — call a real payment gateway using input.apiKey.
-  const paidOrder: OrderRecord = { ...input.order, status: "paid" };
+  // TODO: implement actual functionality — call a real payment gateway using apiKey.
+  void apiKey;
+  const paidOrder: OrderRecord = { ...order, status: "paid" };
   await daprClient.state.save(STATE_STORE, [{ key: paidOrder.orderId, value: paidOrder }]);
   return paidOrder;
 }
@@ -622,6 +617,7 @@ export async function scheduleFollowUpJobActivity(_ctx: WorkflowActivityContext,
 - Activities are where all I/O and non-deterministic operations belong — every Dapr client call in this file (state, secrets, pub/sub, bindings, service invocation, and the raw Jobs HTTP calls) lives here, never in `workflow.ts`.
 - `daprClient.invoker.invoke(...)`'s response is typed `Promise<object>` by the SDK; cast it to the shape you expect (`as unknown as PricingResult` here).
 - `daprClient.secret.get(...)` returns `Promise<object>` shaped like `{ [key]: value }` — cast it before indexing under `strict` mode.
+- Read secrets in the activity that uses them. Never return a secret from an activity or pass it as activity input: both are written to the workflow history.
 - `fetch` is available globally in Node.js 18+ — no extra HTTP client dependency needed for the Jobs calls.
 - If the exact functionality is unclear, add a `// TODO: implement actual functionality` comment inside the activity function, as done in `chargePaymentActivity`.
 

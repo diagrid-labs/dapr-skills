@@ -3,25 +3,27 @@
   "evals": [
     {
       "id": 1,
-      "name": "bpmn-order-process-to-python",
-      "prompt": "Here's the BPMN export of our order handling process: skills/create-workflow-from-diagram/examples/order-process.bpmn. Generate a Python Dapr workflow from it and call the project orderProcess.",
-      "expected_output": "The skill takes the BPMN path and writes orderProcess/.workflow.ir.jsonl using the single __type-keyed IR schema from prompts/ir-schema.md (metadata first, BPMN ids preserved, result + end_of_ir_stream last). Both end events are reachable (the backorder decision leads to orderCancelled). After validation it renders a Python project (parallel fulfillment with when_all, human backorder decision, 7-day timer loop) with dapr.yaml, statestore, README and the exact final message, without installing or running anything.",
+      "name": "bpmn-rental-booking-to-python",
+      "prompt": "Here's the BPMN export of our equipment rental process: evals/create-workflow-from-diagram/files/rental-booking.bpmn. Generate a Python Dapr workflow from it and call the project rentalBooking.",
+      "expected_output": "The skill takes the BPMN path and writes rentalBooking/.workflow.ir.jsonl using the single __type-keyed IR schema from prompts/ir-schema.md (metadata first, BPMN ids preserved, result + end_of_ir_stream last). Both end events are reachable (the waitlist decision leads to rentalDeclined). After validation it renders a Python project (three-way parallel preparation with when_all, human waitlist decision, bounded 2-day timer loop) with dapr.yaml, statestore, README and the exact final message, without installing or running anything. The input is deliberately different from the skill's own examples/order-process.bpmn so the run cannot copy the bundled example IR.",
       "files": [
-        "skills/create-workflow-from-diagram/examples/order-process.bpmn"
+        "evals/create-workflow-from-diagram/files/rental-booking.bpmn"
       ],
       "expectations": [
-        "Creates orderProcess/.workflow.ir.jsonl in which every non-empty line is a standalone JSON object with a `__type` field (no surrounding array, no markdown fences, no records keyed by a top-level `type` such as `workflow`, `start` or `end`)",
-        "The first IR record has `__type: \"metadata\"` with `source: \"bpmn\"` and `process_id: \"orderProcess\"`; the last two records are `{\"__type\": \"result\", \"success\": true, ...}` followed by `{\"__type\": \"end_of_ir_stream\", ...}`",
-        "The IR keeps the BPMN element ids startOrder, validateOrder, checkInventory, inStock, fulfillSplit, chargePayment, shipItem, fulfillJoin, notifyCustomerBackorder, acceptBackorder, waitForRestock, orderComplete and orderCancelled",
-        "In the IR, inStock and acceptBackorder are `__type: \"gateway\"` records with `type: \"exclusive\"` and `role: \"diverging\"` whose `flows` mark the BPMN default flow with `is_default: true`; fulfillSplit is a `parallel` `diverging` gateway and fulfillJoin a `parallel` `converging` gateway",
-        "In the IR, waitForRestock is an `activity` with `type: \"wait_for_event\"` whose `events` entry has `event_type: \"timer\"`, `event_definition: \"P7D\"` and `next: \"checkInventory\"`",
-        "startOrder, orderComplete and orderCancelled are `__type: \"start_end_node\"` records (`type` start / end / end), and the IR contains an edge from acceptBackorder to orderCancelled so every end node is reachable",
-        "Creates orderProcess/dapr.yaml and orderProcess/resources/statestore.yaml with actorStateStore set to \"true\", plus Python files including workflow.py, activities.py, models.py, runtime.py, main.py and pyproject.toml",
-        "The generated workflow schedules the chargePayment and shipItem activities in parallel and waits for both with when_all",
-        "The out-of-stock branch calls the notifyCustomerBackorder activity, waits for the customer's decision with ctx.wait_for_external_event, ends as cancelled when the backorder is declined, and otherwise waits 7 days with ctx.create_timer and a 7-day timedelta before checking inventory again",
+        "Creates rentalBooking/.workflow.ir.jsonl in which every non-empty line is a standalone JSON object with a `__type` field (no surrounding array, no markdown fences, no records keyed by a top-level `type` such as `workflow`, `start` or `end`)",
+        "The first IR record has `__type: \"metadata\"` with `source: \"bpmn\"` and `process_id: \"rentalBooking\"`; the last two records are `{\"__type\": \"result\", \"success\": true, ...}` followed by `{\"__type\": \"end_of_ir_stream\", ...}`",
+        "The IR keeps the BPMN element ids rentalRequested, verifyCustomer, checkAvailability, equipmentAvailable, prepareSplit, reserveEquipment, takeDeposit, sendContract, prepareJoin, offerWaitlist, joinsWaitlist, waitForReturns, rentalConfirmed and rentalDeclined, and contains no ids from the skill's bundled order-process example (such as checkInventory or waitForRestock)",
+        "In the IR, equipmentAvailable and joinsWaitlist are `__type: \"gateway\"` records with `type: \"exclusive\"` and `role: \"diverging\"` whose `flows` mark the BPMN default flow with `is_default: true`; prepareSplit is a `parallel` `diverging` gateway with three outgoing flows and prepareJoin a `parallel` `converging` gateway",
+        "In the IR, waitForReturns is an `activity` with `type: \"wait_for_event\"` whose `events` entry has `event_type: \"timer\"`, `event_definition: \"P2D\"` and `next: \"checkAvailability\"`",
+        "rentalRequested, rentalConfirmed and rentalDeclined are `__type: \"start_end_node\"` records (`type` start / end / end), and the IR contains an edge from joinsWaitlist to rentalDeclined so every end node is reachable",
+        "Creates rentalBooking/dapr.yaml and rentalBooking/resources/statestore.yaml with actorStateStore set to \"true\", plus Python files including workflow.py, activities.py, models.py, runtime.py, main.py and pyproject.toml",
+        "The generated workflow schedules the reserveEquipment, takeDeposit and sendContract activities in parallel and waits for all three with when_all",
+        "The unavailable branch calls the offerWaitlist activity, waits for the customer's decision with ctx.wait_for_external_event, ends as declined when the customer does not join the waitlist, and otherwise waits 2 days with ctx.create_timer and a 2-day timedelta before checking availability again",
         "The workflow function contains no time.sleep, datetime.now or random calls, and the only TODO comments in the project are single `# TODO: implement actual functionality` markers inside activity bodies",
         "The agent does not run `uv sync`, `pip install`, `dapr run` or `dapr init`",
-        "orderProcess/README.md contains a mermaid diagram and `dapr run -f dapr.yaml`, and the last output is exactly: The orderProcess workflow application is created from the diagram. Open the README.md file in the orderProcess folder for a summary and instructions for running locally. The extracted IR is stored at `orderProcess/.workflow.ir.jsonl` for reference."
+        "rentalBooking/README.md contains a mermaid diagram and `dapr run -f .` (or `dapr run -f dapr.yaml`), and the last output is exactly: The rentalBooking workflow application is created from the diagram. Open the README.md file in the rentalBooking folder for a summary and instructions for running locally. The extracted IR is stored at `rentalBooking/.workflow.ir.jsonl` for reference.",
+        "The returns back-edge (waitForReturns -> checkAvailability) is a bounded loop: no `while True`, a `MAX_..._ITERATIONS` constant limits the iterations, and the README records the limit and its exit path under \"Open questions\"",
+        "The agent writes .gitignore itself (no curl/wget/download of a .gitignore) and creates no virtual environment (no .venv folder, no uv.lock)"
       ]
     },
     {
@@ -40,7 +42,9 @@
         "A .csproj in UserOrder references the Dapr.Workflow package, and a workflow class inherits Workflow<TInput, TOutput> while each activity is a separate class inheriting WorkflowActivity<TInput, TOutput>",
         "The workflow class calls activities for Request Changes and Update Order on the incomplete-order branch and Manage Refund on the out-of-stock branch",
         "The workflow class does not use DateTime.Now, DateTime.UtcNow, Guid.NewGuid() or new Random()",
-        "The last output is exactly: The UserOrder workflow application is created from the diagram. Open the README.md file in the UserOrder folder for a summary and instructions for running locally. The extracted IR is stored at `UserOrder/.workflow.ir.jsonl` for reference."
+        "The last output is exactly: The UserOrder workflow application is created from the diagram. Open the README.md file in the UserOrder folder for a summary and instructions for running locally. The extracted IR is stored at `UserOrder/.workflow.ir.jsonl` for reference.",
+        "The generated C# project compiles: the grader runs `dotnet build` on the generated .csproj (on a copy or via a short path) and it succeeds with 0 errors; the agent itself does not run dotnet restore/build",
+        "The change-request loop re-runs the order-completeness check: after update_order (and place_order) the workflow calls check_order_completeness again, inside a loop whose condition is the order-complete decision (no `while (true)`), bounded by a MAX_..._ITERATIONS constant"
       ]
     },
     {
@@ -58,7 +62,8 @@
         "The missing connection between the 60-minute timer and 'call pizza delivery service' is recorded as an `unrecognized_item` with `category: \"disconnected_flow\"` and `ask_user: true`, the `metadata` record has `feedback_required: true`, and the IR contains no edge from the timer branch to 'call pizza delivery service'",
         "The agent reports the disconnected flow to the user in plain language (no IR jargon) and asks how it should connect",
         "The agent does not write workflow or activity code files in this run, because the open question is unresolved",
-        "The agent does not run `npm install` or `dapr run`"
+        "The agent does not run `npm install` or `dapr run`",
+        "Because both pools contain their own process flow, the agent also asks which side to generate as the workflow (the customer pool, the supplier pool, or both) instead of silently picking one"
       ]
     }
   ]

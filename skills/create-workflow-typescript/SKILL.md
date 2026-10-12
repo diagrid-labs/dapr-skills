@@ -29,7 +29,7 @@ You MUST follow these phases in strict order:
 
 If you don't have enough context what to build, ask the user the following clarifying questions one by one using an interview style:
 
-1. Use the default **Order Processing** reference scenario, or describe a different business scenario? The default (recommended) prices an order via service invocation, saves it to state, pays for it using a secret, and announces completion via pub/sub, an output binding, and a scheduled follow-up job — exercising all 7 building blocks in one clean flow. If the user describes a different scenario, restate it back mapped onto the same 7 roles (one activity per building block, plus a second small app that the service-invocation activity calls) before proceeding, and adapt file/activity/topic names to that domain instead of the order-processing ones used below.
+1. Use the default **Order Processing** reference scenario, or describe a different business scenario? The default (recommended) prices an order via service invocation, saves it to state, pays for it using a secret, and announces completion via pub/sub, an output binding, and a scheduled follow-up job — exercising all 7 building blocks in one clean flow. If the user describes a different scenario, restate it back mapped onto the same 7 roles (one activity per building block, plus a second small app that the service-invocation activity calls) in your reply before creating any files — if the user said not to wait for confirmation, still show the mapping first, then continue without stopping — and adapt file/activity/topic names to that domain instead of the order-processing ones used below.
 2. What's the name of this project? This will be used as the folder name. Don't use any spaces in this name.
 
 ## Prerequisites
@@ -122,7 +122,7 @@ A workflow is an `async function*` registered with `WorkflowRuntime.registerWork
 
 ### Activities file
 
-Activities are plain (usually `async`) functions registered with `WorkflowRuntime.registerActivity(...)`, placed in an `activities.ts` file. Each activity in the default scenario demonstrates one building block: service invocation, state, secrets, pub/sub, bindings, and jobs. See `REFERENCE.md` for full example and key points.
+Activities are plain (usually `async`) functions registered with `WorkflowRuntime.registerActivity(...)`, placed in an `activities.ts` file. Each activity in the default scenario demonstrates one building block — service invocation, state, pub/sub, bindings, and jobs — and the payment activity reads the secret it needs itself. In custom scenarios too, never return a secret from an activity or pass it as activity input: activity inputs and outputs are stored in the workflow history, so the activity that uses a secret must read it from the secret store. See `REFERENCE.md` for full example and key points.
 
 ### Main entrypoint (src/index.ts)
 

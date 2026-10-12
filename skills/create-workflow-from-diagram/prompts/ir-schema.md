@@ -982,8 +982,14 @@ Look at the last non-`system` record of the stream:
 | `failure_handling` `timer_boundary_event` | Race the `associated_activity` task against a timer; on timeout continue at `handler_activity`. |
 | `failure_handling` `message_boundary_event` / `signal_boundary_event` | Race the `associated_activity` task against the external event; continue at `handler_activity` when the event wins. |
 | `data_object` | Fields on the workflow input/output and activity models. |
-| `edge` | Control flow between the constructs above. An edge that points back to an earlier node is a loop (`while` in the workflow body). |
+| `edge` | Control flow between the constructs above. An edge that points back to an earlier node is a loop — see **Loops** below. |
 | `unrecognized_item` | Never turned into code. Items with `ask_user: true` are resolved with the user in Phase 2 first; the rest are listed in the generated README under "Open questions". |
+
+**Loops:** a back-edge (an edge to a node that comes earlier on the path from the start) becomes a loop in the workflow body. Workflow loops must be bounded so history cannot grow without limit:
+
+- Make the loop condition the exit condition of the gateway that leaves the loop (for example `while not order_complete` or `while (!itemInStock)`). Never generate `while True`, `while (true)` or `for (;;)`.
+- Add a constant `MAX_<LOOP_NAME>_ITERATIONS` (default `10`) and count iterations. When the limit is reached, leave the loop through the diagram's exit path that makes sense (the default flow of the gateway, or an `end_error`), and record the chosen limit and exit in the README under "Open questions" so the user can adjust it.
+- If the back-edge returns to the very first node after the start, and the loop body waits on timers or external events (polling, retry-after-delay, waiting for restock), use continue-as-new instead of an in-body loop: carry the loop state in the workflow input and return immediately after calling continue-as-new.
 
 **Implicit gateways:** a node with more than one incoming edge and no explicit converging gateway is a merge point (exclusive merge unless the incoming branches were started in parallel). A non-gateway node with more than one outgoing edge is a split: exclusive when the edges carry `gw_flow_condition`, parallel when they do not.
 

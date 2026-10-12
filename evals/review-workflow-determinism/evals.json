@@ -19,7 +19,7 @@
       ],
       "expectations": [
         "Does not ask a scope clarifying question (the folder was named in the prompt) and echoes the resolved scope in one line naming order-fulfillment-dotnet before the report",
-        "The report starts with '# Dapr review — review-workflow-determinism', contains 'Target:', 'Language: dotnet' and a 'Found: <n> critical, <n> warnings, <n> suggestions, <n> to verify' line, orders sections Critical before Warnings before Next steps, and has no text after the '## Next steps' section",
+        "The report section (after the optional one-line `Reviewing <path>` scope echo) starts with '# Dapr review — review-workflow-determinism', contains 'Target:', 'Language: dotnet' and a 'Found: <n> critical, <n> warnings, <n> suggestions, <n> to verify' line, orders sections Critical before Warnings before Next steps, and has no text after the '## Next steps' section",
         "The Critical section contains DWF-DET-001 at Workflows/OrderFulfillmentWorkflow.cs:16, DWF-DET-002 at Workflows/OrderFulfillmentWorkflow.cs:17, DWF-DET-004 at Workflows/OrderFulfillmentWorkflow.cs:27 and DWF-DET-009 at Workflows/OrderFulfillmentWorkflow.cs:18, listed in rule-id ascending order",
         "The Critical section contains DWF-DET-013 at Workflows/InventorySyncWorkflow.cs:13 (while (true)) and its Fix mentions context.ContinueAsNew",
         "The Warnings section contains DWF-DET-012 at Workflows/OrderFulfillmentWorkflow.cs:20 (Console.WriteLine)",
