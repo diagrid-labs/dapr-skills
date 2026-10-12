@@ -380,3 +380,21 @@
 | **Configuration** | ❌ Hard to conditionally register | ✅ Easy conditional registration |
 
 **Recommendation:** Use **manual registration** for applications that need extensive testing, dynamic registration, or complex runtime configuration. Use **decorator approach** for simpler applications where clean syntax is preferred and testing complexity is acceptable. 
+
+## Reading the IR
+
+Generate the code from the validated IR (`../ir-schema.md`), not from the diagram. Every language reads the IR the same way: follow the "Consuming the IR" table in `../ir-schema.md` for which record becomes which construct. The records are keyed by `__type` (`metadata`, `participant`, `activity`, `gateway`, `start_end_node`, `edge`, `failure_handling`, `data_object`, `unrecognized_item`); use activity / gateway `id`s for function and class names (converted to this language's naming conventions) and `condition_label` / `event_label` values for branch variables and external event names.
+
+SDK calls for each construct in this language:
+
+| IR construct | Python (`dapr-ext-workflow`) |
+|---|---|
+| `activity` task | `yield ctx.call_activity(<activity_fn>, input=...)` |
+| `task_type: "call_activity"` | `yield ctx.call_child_workflow(<workflow_fn>, input=...)` |
+| Timer (`event_type: "timer"`, ISO 8601 duration) | `yield ctx.create_timer(ctx.current_utc_datetime + timedelta(...))` |
+| Message / signal wait, `user_task` completion | `yield ctx.wait_for_external_event("<event name>")` |
+| Event-based gateway, wait with timer, timer boundary | `winner = yield when_any([event_task, timer_task])`, then compare `winner` with each task |
+| Parallel / inclusive split + join | `results = yield when_all([task_a, task_b])` |
+| `end_error` | `raise` a domain exception |
+
+Activity bodies: when the diagram does not say how an activity works, write a minimal stub that returns a value of the output type and add exactly one `# TODO: implement actual functionality` comment inside the body. No other `TODO` or placeholder comments anywhere (see `../guardrails.md`, "Output hygiene").

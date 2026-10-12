@@ -4,14 +4,16 @@ description: This skill checks prerequisites for building durable AI agents in P
 allowed-tools:
   - Bash(uname -s)
   - Bash(python --version)
+  - Bash(python3 --version)
   - Bash(uv --version)
   - Bash(uv pip show:*)
-  - Bash(uv pip list:*)
+  - Bash([ -n:*)
   - Bash(curl:*)
   - Bash(powershell:*)
   - Bash(dapr:*)
   - Bash(docker info:*)
   - Bash(podman info:*)
+  - Read
 ---
 
 # Check Prerequisites for Python Agents

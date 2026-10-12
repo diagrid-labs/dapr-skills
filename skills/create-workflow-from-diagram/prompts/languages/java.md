@@ -242,3 +242,22 @@ public class ActivityRegistrar {
 - **Don't use Lambda expressions in data classes** - They are not serializable
 - **Don't forget about nested objects** - All nested types must also be serializable
 - **Don't mix different DataConverter implementations** - Client and worker must use the same one
+
+## Reading the IR
+
+Generate the code from the validated IR (`../ir-schema.md`), not from the diagram. Every language reads the IR the same way: follow the "Consuming the IR" table in `../ir-schema.md` for which record becomes which construct. The records are keyed by `__type` (`metadata`, `participant`, `activity`, `gateway`, `start_end_node`, `edge`, `failure_handling`, `data_object`, `unrecognized_item`); use activity / gateway `id`s for function and class names (converted to this language's naming conventions) and `condition_label` / `event_label` values for branch variables and external event names.
+
+SDK calls for each construct in this language:
+
+| IR construct | Java |
+|---|---|
+| `activity` task | `ctx.callActivity(<ActivityName>, input, <Output>.class).await()` |
+| `task_type: "call_activity"` | `ctx.callSubOrchestrator(<WorkflowName>, input, <Output>.class).await()` (as in the examples above) |
+| Timer (`event_type: "timer"`, ISO 8601 duration) | `ctx.createTimer(Duration.parse("<ISO 8601>")).await()` |
+| Message / signal wait, `user_task` completion | `ctx.waitForExternalEvent("<event name>", <Payload>.class).await()` |
+| Wait with a timer (one message + one timer) | `ctx.waitForExternalEvent("<event name>", <Duration>, <Payload>.class).await()`; a `TaskCanceledException` means the timer branch won |
+| Event-based gateway with several events, timer boundary | `ctx.anyOf(eventTask, timerTask).await()`, then check which task completed |
+| Parallel / inclusive split + join | `ctx.allOf(tasks).await()` |
+| `end_error` | `throw` a domain exception |
+
+Activity bodies: when the diagram does not say how an activity works, write a minimal stub that returns a value of the output type and add exactly one `// TODO: implement actual functionality` comment inside the body. No other `TODO` or placeholder comments anywhere (see `../guardrails.md`, "Output hygiene").

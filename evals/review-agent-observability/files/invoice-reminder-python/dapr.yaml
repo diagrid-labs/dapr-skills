@@ -1,0 +1,13 @@
+version: 1
+common:
+  resourcesPath: ./resources
+  appLogDestination: fileAndConsole
+  daprdLogDestination: fileAndConsole
+apps:
+  - appID: invoice-reminder
+    appDirPath: invoice-reminder-agent
+    appPort: 8001
+    daprHTTPPort: 3500
+    daprGRPCPort: 50001
+    metricsPort: 9090
+    command: ["uv", "run", "main.py"]

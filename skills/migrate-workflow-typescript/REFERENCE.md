@@ -47,6 +47,7 @@ A method-name match whose receiver you can't tie back to a known client construc
 - **Dependency markers (candidates)**: `ioredis`, `redis`, used with a TTL or a `session:`/`cache:`-style key prefix.
 - **Dependency markers (usually NOT candidates)**: `node-cache`/`memory-cache`/`lru-cache` (in-process only — not a migration target at all, they don't cross a network boundary), `pg`, `mysql2`, `mongoose`, `prisma`, `typeorm`, `knex`, `sequelize`.
 - **Grep patterns** (apply the two-pass, name-the-client-first approach above — a bare `\.get\(`/`\.set\(` matches Express route *definitions* like `app.get('/orders', handler)` far more often than a real Redis call): find `new Redis\(|createClient\(` (from `ioredis`/`redis`) first and note the variable name, then scope `\.(get|set|setex|del)\(` to that specific variable.
+- **Key-pattern scans have no direct Dapr state equivalent.** Also scope `\.(keys|scan|scanStream|sscan|hscan)\(` to the same Redis client variable. The Dapr state API is key-based: it can get, save and delete known keys, but it cannot list keys by pattern. Report every `KEYS`/`SCAN` call (e.g. `redis.keys("cart:*")`) as its own `MIG-STATE-` finding under **Needs manual review**, never Recommended, and name the key family it shares with any get/set/del candidate. They are coupled: once the get/set/del for that key family go through Dapr, the old pattern no longer matches anything (see "Key-pattern scans" under the State transformation below). Grep for callers of the scanning function too (e.g. a cron job that iterates the keys), because those callers break silently if the scan is left as-is.
 - **Relational/document access is "Not recommended" by default.** Even a query that looks like a pure single-row primary-key lookup is at most **Optional** — introducing a second persistence mechanism next to an existing ORM/query layer is a real ongoing cost, and Dapr state stores are not a transactional replacement for relational access with joins, aggregates, or multi-row transactions.
 
 ### Secrets
@@ -110,7 +111,7 @@ const secret = (await daprClient.secret.get("secretstore", "STRIPE_API_KEY")) as
 const apiKey = secret["STRIPE_API_KEY"];
 ```
 
-**Key points**: with `secretstores.local.env`, this reads the exact same environment variable — behavior in dev is identical before and after. The payoff comes later: swapping the component's `type:` to a real secret manager needs zero application code changes. This is the lowest-risk, easiest-to-verify category, which is why it's migrated first.
+**Key points**: with `secretstores.local.env`, the secret key is the environment variable name, unchanged (`STRIPE_API_KEY` reads `STRIPE_API_KEY`). The variable is read by the Dapr **sidecar**, not the app: a value loaded in-process by `dotenv` or set through the per-app `env:` map in `dapr.yaml` is not visible to the sidecar. Make sure the variable is set in the shell (or container environment) that runs `dapr run`, and say so in `DAPR_MIGRATION.md`. With that in place, dev behavior is the same before and after. The payoff comes later: swapping the component's `type:` to a real secret manager needs zero application code changes. This is the lowest-risk, easiest-to-verify category, which is why it's migrated first.
 
 ### 2. State (Redis-as-cache)
 
@@ -130,6 +131,39 @@ const restored = await daprClient.state.get("statestore", `session:${userId}`);
 ```
 
 **Key points**: `daprClient.state` JSON-serializes the value for you — drop the manual `JSON.stringify`/`JSON.parse`. The `"EX 3600"`-style TTL argument on `redisClient.set(...)` becomes a **per-item** `metadata: { ttlInSeconds: "3600" }` field (string value) on each element of the `save()` array — this is a real, SDK-verified field, not a guess, and Redis is one of the state stores that honors it; confirm TTL support for whichever backend you land on if it's not Redis. `state.get()` returns only the value, not an etag — use `state.getBulk()` if the existing code relies on optimistic concurrency.
+
+#### Key-pattern scans (`KEYS` / `SCAN`)
+
+The Dapr state API has no "list keys by pattern" operation. Once the get/set/del for a key family go through Dapr, a scan such as `redis.keys("cart:*")` that is left unchanged returns nothing. The Dapr Redis state store writes each item under `<app-id>||<key>` (default `keyPrefix: appid`) and stores it as a Redis hash, not a plain string. Any caller that iterates the scan result (e.g. a cleanup cron job) then silently does nothing.
+
+Pick one of these, in this order of preference, and record the choice in the report and in `DAPR_MIGRATION.md`:
+
+1. **Keep the scan on the existing Redis client, matching Dapr's key layout.** Dapr's docs allow direct, read-only queries against the underlying store; writes must still go through Dapr. This keeps the scanning function's signature, so its callers do not change:
+
+```typescript
+// BEFORE — get/set/del already moved to daprClient.state; the scan still uses the old layout
+export async function listCartKeys(): Promise<string[]> {
+  return redis.keys("cart:*"); // matches nothing once Dapr owns the keys
+}
+
+// AFTER — same Redis client, read-only, pattern adjusted to Dapr's key prefix
+const DAPR_KEY_PREFIX = `${process.env.APP_ID ?? "<AppId>"}||`;
+
+export async function listCartKeys(): Promise<string[]> {
+  const keys = await redis.keys(`${DAPR_KEY_PREFIX}cart:*`);
+  return keys.map((key) => key.slice(DAPR_KEY_PREFIX.length)); // callers still receive "cart:<id>"
+}
+```
+
+2. **Use the state query API, only if the store supports it.** `daprClient.state.query("<StateStoreName>", { filter: ..., sort: ..., page: ... })` filters on fields inside JSON values, not on key patterns, and is an **alpha** API. For Redis it requires the RediSearch and RedisJSON modules plus a `queryIndexes` entry on the component; the plain `redis:7` image and the container created by `dapr init` do not have them. Only propose this when the value already carries the field you need (e.g. `customerId`, `updatedAt`) and the target store is confirmed to support queries.
+3. **Leave the whole key family on the Redis client.** If neither option fits, do not migrate the get/set/del for that key family either. Moving half of a coupled key family is worse than moving none of it. Mark the state item **Needs manual review** and defer it.
+
+**Key points**:
+
+- Write the prefix from the component's `keyPrefix` setting: `appid` (default) gives `<app-id>||`, `name` gives `<component-name>||`, `none` gives no prefix. `dapr run` passes the app id to the app as the `APP_ID` environment variable.
+- Do not switch the component to `keyPrefix: none` just to keep the old pattern working. It removes per-app key isolation, and entries the old code wrote as plain strings under the same names then collide with Dapr's hashes (`WRONGTYPE` errors).
+- Entries written before the migration are not visible through Dapr (different key and different Redis type). That is acceptable for a TTL cache that refills itself; otherwise plan a one-off data copy and say so in the report.
+- The scan stays a read-only direct query. Never write or delete through the raw client for keys that Dapr now owns. Route deletes through `daprClient.state.delete("<StateStoreName>", key)` with the un-prefixed key.
 
 ### 3. Pub/sub
 
@@ -244,7 +278,7 @@ BEFORE (conceptual — a 3-hop queue-chained pipeline):
 
 Categories are applied in this order (Phase 6 of `SKILL.md`) because each one is progressively harder to verify mechanically and more invasive to the app's runtime behavior:
 
-1. **Secrets** — pure substitution, byte-identical behavior with `secretstores.local.env`, trivially verified by a typecheck.
+1. **Secrets** — pure substitution, the same behavior with `secretstores.local.env` once the variable is in the sidecar's environment, trivially verified by a typecheck.
 2. **State** — same substitution shape, but serialization and TTL/etag semantics can differ subtly; verify with a real read-after-write.
 3. **Pub/sub** — introduces a `DaprServer` on the consumer side for the first time; ordering/partitioning guarantees need explicit re-verification.
 4. **Bindings** — mechanically simple, but check the payload shape the destination expects hasn't changed.
@@ -272,7 +306,7 @@ Categories are applied in this order (Phase 6 of `SKILL.md`) because each one is
 - `resources/secretstore.yaml` — `secretstores.local.env`
 
 ## Running locally
-Start the Dapr sidecar and the app together with `dapr run -f .` from the project root (requires the [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) and Docker/Podman running).
+Export the secret environment variables (e.g. `STRIPE_API_KEY`) in the shell first — the Dapr sidecar reads them from its own environment, not from `.env` or the app. Then start the Dapr sidecar and the app together with `dapr run -f .` from the project root (requires the [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) and Docker/Podman running).
 ```
 
 **Important**: `DAPR_MIGRATION.md` is written into the *target* project's own repo, which does not have this plugin's `skills/` tree available on disk — never link back into `../dapr-shared/...` or `../create-workflow-typescript/...` from inside this template. Any cross-reference needs to be a self-contained instruction (as above) or a plain URL, not a relative path into this repo.

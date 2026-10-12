@@ -133,3 +133,23 @@
       Logger      *log.Logger            // ❌ Non-serializable
   }
   ```
+
+## Reading the IR
+
+Generate the code from the validated IR (`../ir-schema.md`), not from the diagram. Every language reads the IR the same way: follow the "Consuming the IR" table in `../ir-schema.md` for which record becomes which construct. The records are keyed by `__type` (`metadata`, `participant`, `activity`, `gateway`, `start_end_node`, `edge`, `failure_handling`, `data_object`, `unrecognized_item`); use activity / gateway `id`s for function and class names (converted to this language's naming conventions) and `condition_label` / `event_label` values for branch variables and external event names.
+
+SDK calls for each construct in this language:
+
+| IR construct | Go (`github.com/dapr/go-sdk/workflow`) |
+|---|---|
+| `activity` task | `ctx.CallActivity(<ActivityFn>, workflow.ActivityInput(input)).Await(&output)` |
+| `task_type: "call_activity"` | `ctx.CallChildWorkflow(<WorkflowFn>, workflow.ChildWorkflowInput(input)).Await(&output)` |
+| Timer (`event_type: "timer"`, ISO 8601 duration) | `ctx.CreateTimer(<time.Duration>).Await(nil)` |
+| Message / signal wait, `user_task` completion | `ctx.WaitForExternalEvent("<event name>", <timeout>).Await(&payload)` |
+| Event-based gateway or wait with one message + one timer | `ctx.WaitForExternalEvent("<event name>", <timer duration>)`; a timeout error means the timer branch won |
+| Parallel / inclusive split + join | Schedule every branch task first, then `Await` each one |
+| `end_error` | Return a non-nil `error` from the workflow |
+
+Go has no when-any over arbitrary tasks. A timer boundary on an activity, or an event-based gateway with more than one message branch, cannot be expressed exactly; generate the closest sequential form and list the gap in the README under "Open questions".
+
+Activity bodies: when the diagram does not say how an activity works, write a minimal stub that returns a value of the output type and add exactly one `// TODO: implement actual functionality` comment inside the body. No other `TODO` or placeholder comments anywhere (see `../guardrails.md`, "Output hygiene").

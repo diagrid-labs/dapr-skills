@@ -1,0 +1,83 @@
+{
+  "skill_name": "review-workflow-determinism",
+  "evals": [
+    {
+      "id": 1,
+      "name": "dotnet-order-fulfillment-seeded-violations",
+      "prompt": "A few of our order fulfillment workflow instances got stuck after last week's redeploy and I suspect replay problems. Can you check the workflow code in evals/review-workflow-determinism/files/order-fulfillment-dotnet for determinism issues? Don't change anything, I just want the list.",
+      "expected_output": "A read-only determinism report in the canonical review-report-format shape for the .NET project. Critical: DWF-DET-001 (DateTime.UtcNow, OrderFulfillmentWorkflow.cs:16), DWF-DET-002 (Guid.NewGuid(), :17), DWF-DET-009 (Environment.GetEnvironmentVariable, :18), DWF-DET-004 (Task.Delay, :27) and DWF-DET-013 (while (true) scheduling activities/timers, InventorySyncWorkflow.cs:13). Warnings: DWF-DET-012 (Console.WriteLine, OrderFulfillmentWorkflow.cs:20). The replay-safe logger, context.CurrentUtcDateTime, the bounded 3-attempt retry loop, and all non-deterministic code in Activities/ and Program.cs are not reported.",
+      "files": [
+        "evals/review-workflow-determinism/files/order-fulfillment-dotnet/OrderFulfillment/OrderFulfillment.csproj",
+        "evals/review-workflow-determinism/files/order-fulfillment-dotnet/OrderFulfillment/Program.cs",
+        "evals/review-workflow-determinism/files/order-fulfillment-dotnet/OrderFulfillment/Models/OrderModels.cs",
+        "evals/review-workflow-determinism/files/order-fulfillment-dotnet/OrderFulfillment/Workflows/OrderFulfillmentWorkflow.cs",
+        "evals/review-workflow-determinism/files/order-fulfillment-dotnet/OrderFulfillment/Workflows/InventorySyncWorkflow.cs",
+        "evals/review-workflow-determinism/files/order-fulfillment-dotnet/OrderFulfillment/Activities/ReserveInventoryActivity.cs",
+        "evals/review-workflow-determinism/files/order-fulfillment-dotnet/OrderFulfillment/Activities/ProcessPaymentActivity.cs",
+        "evals/review-workflow-determinism/files/order-fulfillment-dotnet/OrderFulfillment/Activities/ShipOrderActivity.cs",
+        "evals/review-workflow-determinism/files/order-fulfillment-dotnet/OrderFulfillment/Activities/SyncInventoryActivity.cs"
+      ],
+      "expectations": [
+        "Does not ask a scope clarifying question (the folder was named in the prompt) and echoes the resolved scope in one line naming order-fulfillment-dotnet before the report",
+        "The report starts with '# Dapr review — review-workflow-determinism', contains 'Target:', 'Language: dotnet' and a 'Found: <n> critical, <n> warnings, <n> suggestions, <n> to verify' line, orders sections Critical before Warnings before Next steps, and has no text after the '## Next steps' section",
+        "The Critical section contains DWF-DET-001 at Workflows/OrderFulfillmentWorkflow.cs:16, DWF-DET-002 at Workflows/OrderFulfillmentWorkflow.cs:17, DWF-DET-004 at Workflows/OrderFulfillmentWorkflow.cs:27 and DWF-DET-009 at Workflows/OrderFulfillmentWorkflow.cs:18, listed in rule-id ascending order",
+        "The Critical section contains DWF-DET-013 at Workflows/InventorySyncWorkflow.cs:13 (while (true)) and its Fix mentions context.ContinueAsNew",
+        "The Warnings section contains DWF-DET-012 at Workflows/OrderFulfillmentWorkflow.cs:20 (Console.WriteLine)",
+        "Does not report DWF-DET-013 for the bounded retry loop at Workflows/OrderFulfillmentWorkflow.cs:30, and does not report context.CurrentUtcDateTime (line 15) or the CreateReplaySafeLogger-based logging (lines 12-13) as findings",
+        "No finding references any file under Activities/ or Program.cs (e.g. DateTime.UtcNow at Activities/ReserveInventoryActivity.cs:13, Task.Delay and Random.Shared in Activities/SyncInventoryActivity.cs, Guid.NewGuid() at Program.cs:19)",
+        "Uses only Read, Grep and Glob; does not call Bash, Write or Edit, and no file in the fixture is modified",
+        "The 'Found:' line matches the findings listed: '5 critical, 1 warnings' (the five critical rule ids and DWF-DET-012), with 0 suggestions and 0 to verify"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "python-sensor-alerts-replay-hazards",
+      "prompt": "audit replay safety of the python workflow in evals/review-workflow-determinism/files/sensor-alerts-python. it's the alerting flow for our cold-storage temperature sensors and it's been acting weird after restarts",
+      "expected_output": "A determinism report with 'Language: python' that applies the Python checklist to workflow.py only. Critical: DWF-DET-001 (datetime.now, workflow.py:21), DWF-DET-002 (uuid.uuid4, :22), DWF-DET-004 (time.sleep, :34), DWF-DET-006 (requests.post, :36), DWF-DET-009 (os.getenv, :23). ctx.current_utc_datetime, the bounded for-range retry loop and the is_replaying-guarded print are not reported at all; nothing in activities.py or main.py is reported.",
+      "files": [
+        "evals/review-workflow-determinism/files/sensor-alerts-python/pyproject.toml",
+        "evals/review-workflow-determinism/files/sensor-alerts-python/runtime.py",
+        "evals/review-workflow-determinism/files/sensor-alerts-python/models.py",
+        "evals/review-workflow-determinism/files/sensor-alerts-python/workflow.py",
+        "evals/review-workflow-determinism/files/sensor-alerts-python/activities.py",
+        "evals/review-workflow-determinism/files/sensor-alerts-python/main.py"
+      ],
+      "expectations": [
+        "The report header contains 'Language: python'",
+        "The Critical section contains DWF-DET-001 at workflow.py:21, DWF-DET-002 at workflow.py:22, DWF-DET-004 at workflow.py:34, DWF-DET-006 at workflow.py:36 and DWF-DET-009 at workflow.py:23, ordered by rule id ascending",
+        "The DWF-DET-004 finding's Fix line recommends ctx.create_timer and the DWF-DET-001 finding's Fix line recommends ctx.current_utc_datetime",
+        "Does not report ctx.current_utc_datetime (workflow.py:20) and does not report DWF-DET-013 for the 'for attempt in range(3)' retry loop at workflow.py:43",
+        "The print guarded by 'if not ctx.is_replaying:' (workflow.py:25-26) is not reported anywhere in the report, including Please verify (the guard satisfies DWF-DET-012)",
+        "No finding references activities.py or main.py (datetime.now at activities.py:27, requests.post at activities.py:28, os.getenv at activities.py:12, uuid.uuid4 at main.py:18)",
+        "Every graded finding is three lines (bullet with `file:line`, 'Why:', 'Fix:'), and the '## Next steps' section suggests running review-workflow-activity and review-workflow-management, with no text after it",
+        "Uses only Read, Grep and Glob; does not call Bash, Write or Edit, and no file in the fixture is modified",
+        "The 'Found:' line matches the findings listed: 5 critical (DWF-DET-001, 002, 004, 006, 009) and 0 warnings, 0 suggestions and 0 to verify (the guarded print is not counted)"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "dotnet-clean-invoice-approval-no-false-positives",
+      "prompt": "We just refactored the invoice approval app in evals/review-workflow-determinism/files/invoice-approval-dotnet to get rid of the replay bugs (timers, NewGuid, replay-safe logging, ContinueAsNew for the reminders). Can you do a determinism pass before I open the PR?",
+      "expected_output": "A report for a deterministic .NET project with zero critical and zero warning findings. The bounded loop over input.Lines, the ContinueAsNew-based reminder workflow, the const event name, context.IsReplaying-guarded logging, and the HttpClient/Guid.NewGuid/DateTime.UtcNow usage inside activities are not flagged. Either 'No issues found.' or only Suggestions/Please verify items, followed by Next steps.",
+      "files": [
+        "evals/review-workflow-determinism/files/invoice-approval-dotnet/InvoiceApproval/InvoiceApproval.csproj",
+        "evals/review-workflow-determinism/files/invoice-approval-dotnet/InvoiceApproval/Program.cs",
+        "evals/review-workflow-determinism/files/invoice-approval-dotnet/InvoiceApproval/Models/InvoiceModels.cs",
+        "evals/review-workflow-determinism/files/invoice-approval-dotnet/InvoiceApproval/Workflows/InvoiceApprovalWorkflow.cs",
+        "evals/review-workflow-determinism/files/invoice-approval-dotnet/InvoiceApproval/Workflows/PaymentReminderWorkflow.cs",
+        "evals/review-workflow-determinism/files/invoice-approval-dotnet/InvoiceApproval/Activities/InvoiceActivities.cs"
+      ],
+      "expectations": [
+        "The report's 'Target:' line names both workflow files, Workflows/InvoiceApprovalWorkflow.cs and Workflows/PaymentReminderWorkflow.cs, showing both were reviewed",
+        "The report's 'Found:' line reports 0 critical and 0 warnings, and the report contains no '## Critical' and no '## Warnings' section (empty sections are omitted, not printed as 'none')",
+        "The report body is exactly 'No issues found.' followed by the '## Next steps' section (no finding bullets)",
+        "Does not report DWF-DET-013 for the 'for' loop over input.Lines at Workflows/InvoiceApprovalWorkflow.cs:22 or for Workflows/PaymentReminderWorkflow.cs (which uses context.ContinueAsNew and returns immediately)",
+        "Does not report DWF-DET-011 for the const ApprovalEventName (Workflows/InvoiceApprovalWorkflow.cs:10) or for the static partial [LoggerMessage] methods",
+        "Does not report DWF-DET-012 for the CreateReplaySafeLogger logger or the context.IsReplaying-guarded log call at Workflows/InvoiceApprovalWorkflow.cs:49",
+        "No finding references Activities/InvoiceActivities.cs (HttpRequestMessage, Guid.NewGuid(), DateTime.UtcNow) or Program.cs",
+        "The '## Next steps' section suggests review-workflow-activity and review-workflow-management, and there is no text after it",
+        "Uses only Read, Grep and Glob; does not call Bash, Write or Edit, and no file in the fixture is modified"
+      ]
+    }
+  ]
+}

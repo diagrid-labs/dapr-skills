@@ -158,7 +158,7 @@ Template-generated file that adds OpenTelemetry, health checks, service discover
 
 ### <SolutionRoot>.ApiService.http
 
-HTTP request file for testing the workflow endpoints. Contains a `start` request (POST) to schedule a new workflow instance and a `status` request (GET) to query the workflow state. See `REFERENCE.md` for full example.
+HTTP request file for testing the workflow endpoints: `start`, `status`, `pause`, `resume`, `terminate`, and `raise-event` (only when a workflow waits for an external event), matching the endpoints in the ApiService `Program.cs`. Reuse [`../dapr-shared/dotnet-local-http.md`](../dapr-shared/dotnet-local-http.md) with the ApiService `launchSettings.json` port. See `REFERENCE.md` for the Aspire-specific key points.
 
 ## Verify
 

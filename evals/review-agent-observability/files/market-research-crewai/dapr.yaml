@@ -1,0 +1,8 @@
+version: 1
+common:
+  resourcesPath: ./resources
+apps:
+  - appID: market-research
+    appDirPath: market-research-agent
+    appPort: 8001
+    command: ["uv", "run", "main.py"]

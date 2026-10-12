@@ -1,6 +1,6 @@
 # Reference: Review Dapr Workflow — Activities
 
-This skill is read-only and operates entirely on existing source. The detailed rule tables live in the per-language checklist shards in `.claude/skills/dapr-shared/`.
+This skill is read-only and operates entirely on existing source. The detailed rule tables live in the per-language checklist shards in [`../dapr-shared/`](../dapr-shared/).
 
 ## Source rule corpus
 
@@ -32,8 +32,10 @@ internal sealed partial class ChargeCardActivity(
         }
         catch (Exception)
         {
-            return new ChargeResult(false, "");                                  // DWF-ACT-003 (swallowed)
+            // DWF-ACT-003 (swallowed: no rethrow, no typed failure result)
         }
+
+        return new ChargeResult(true, "pending");                                // magic value reported as success
     }
 }
 ```
@@ -47,8 +49,8 @@ The expected report excerpt:
   Fix: carry a stable key in `ChargeInput` (e.g. generated in the workflow with `context.NewGuid()`) and pass it to `ChargeAsync` as the idempotency key.
 
 ## Warnings
-- [DWF-ACT-003] `Activities/ChargeCardActivity.cs:12` — `catch (Exception)` swallowed without rethrow or typed result
-  Why: hides retries and silently turns a failure into a success.
+- [DWF-ACT-003] `Activities/ChargeCardActivity.cs:12` — empty `catch (Exception)`, no rethrow or typed failure result
+  Why: hides retries and silently turns a failed charge into a success with a magic transaction id.
   Fix: rethrow, or return a typed `ChargeResult` that distinguishes transient vs. terminal failures.
 ```
 
@@ -56,4 +58,4 @@ The expected report excerpt:
 
 - Workflow body code (`Workflow<>` `RunAsync`, `@wfr.workflow` functions) — covered by `review-workflow-determinism`.
 - Management endpoints / `Program.cs` / `main.py` — covered by `review-workflow-management`.
-- Versioning, error-handling policy, ops, and patterns — Phase 2 / 3 in `docs/review-skills-plan.md`.
+- Workflow versioning (`IsPatched` / `is_patched` and named workflow versions), error-handling policy, operations, and pattern-level design reviews — not covered by the review skills.

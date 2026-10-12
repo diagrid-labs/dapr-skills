@@ -10,6 +10,8 @@ allowed-tools:
   - Bash(aspire --version)
   - Bash(~/.aspire/bin/aspire --version)
   - Bash(~/.dotnet/tools/aspire --version)
+  - Bash(powershell:*)
+  - Read
   - mcp__ide__getDiagnostics
 ---
 
@@ -26,7 +28,7 @@ The following must be installed:
 - [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download)
 - [Aspire CLI](https://aspire.dev/get-started/install-cli/) — install via `curl -sSL https://aspire.dev/install.sh | bash` or `irm https://aspire.dev/install.ps1 | iex`
 - [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation)
-- [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/)
+- [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.18+)
 
 ## Prerequisite Checks
 

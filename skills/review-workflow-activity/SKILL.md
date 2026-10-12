@@ -18,7 +18,7 @@ Scans the bodies of Dapr Workflow activity classes/functions for idempotency iss
 You MUST follow these phases in strict order. Do not load files outside the agreed scope, and do not write or edit any files.
 
 1. **Resolve scope** — Read [`../dapr-shared/review-scope-prompt.md`](../dapr-shared/review-scope-prompt.md) and follow it to set `scope_root`.
-2. **Detect target** — Read [`../dapr-shared/review-detect-target.md`](../dapr-shared/review-detect-target.md) and follow it to produce `language` and `activity_files`. If `activity_files` is empty, emit a single warning finding (no activity files found) and stop.
+2. **Detect target** — Read [`../dapr-shared/review-detect-target.md`](../dapr-shared/review-detect-target.md) and follow it to produce `language` and `activity_files`. If `activity_files` is empty, emit the "Nothing to review" report defined in `review-report-format.md` with the reason `no activity files found in <scope_root>` (no rule id, not counted in `Found:`) and stop.
 3. **Load checklist** — Based on `language`, read exactly one of:
    - `dotnet` or `aspire` → [`../dapr-shared/review-activity-dotnet.md`](../dapr-shared/review-activity-dotnet.md)
    - `python` → [`../dapr-shared/review-activity-python.md`](../dapr-shared/review-activity-python.md)

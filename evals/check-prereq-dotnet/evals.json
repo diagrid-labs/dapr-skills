@@ -1,0 +1,53 @@
+{
+  "skill_name": "check-prereq-dotnet",
+  "evals": [
+    {
+      "id": 1,
+      "name": "explicit-dotnet-prereq-check",
+      "prompt": "Check prerequisites for .NET. I'm about to scaffold an invoice-approval workflow with Dapr in C# and want to make sure my machine has everything first.",
+      "expected_output": "The skill detects the OS, then checks the C# LSP plugin, .NET SDK, Docker/Podman and Dapr CLI in parallel, and reports pass/fail per prerequisite with install links for failures. If everything passes it points the user to create-workflow-dotnet. No project files are created.",
+      "files": [],
+      "expectations": [
+        "Runs `uname -s` (OS detection) before the tool-version checks",
+        "Runs `dotnet --version` and judges the .NET check on the major version being 10 or higher (e.g. `10.0.100` and `11.0.100` pass, `9.0.100` fails)",
+        "Runs `docker info`, and runs `podman info` only if Docker is unavailable",
+        "Runs `dapr --version`, parses the `CLI version` line and accepts 1.18 or newer (e.g. `1.19.0` passes); it does not require the literal string `1.18`",
+        "Checks for the `csharp-lsp@claude-plugins-official` plugin by inspecting Claude settings, and does not run any `claude plugin` command",
+        "The `dotnet --version`, `docker info` and `dapr --version` calls are issued together in one parallel batch (same assistant turn), not one per turn",
+        "Final report lists C# LSP plugin, .NET SDK, Docker/Podman and Dapr CLI each with a pass or fail status; if all pass it says the user can proceed with the `create-workflow-dotnet` skill",
+        "Does not create any files or run `dotnet new`, and does not start the `create-workflow-dotnet` skill"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "casual-is-my-machine-ready",
+      "prompt": "is my machine ready to build a dapr workflow in c#?",
+      "expected_output": "Casual phrasing still triggers the .NET prerequisite check. The same checks run (OS, C# LSP, .NET 10 SDK, Docker/Podman, Dapr CLI) and a per-check pass/fail report is shown. Python, uv and Aspire are not checked.",
+      "files": [],
+      "expectations": [
+        "Runs `dotnet --version`, `dapr --version` and `docker info` (or `podman info`) rather than answering from general knowledge",
+        "States that the .NET SDK must be version 10 (.NET 10 SDK), linking https://dotnet.microsoft.com/en-us/download if the check fails",
+        "Report has one line or row per prerequisite (C# LSP plugin, .NET SDK, Docker/Podman, Dapr CLI) marked passed or failed",
+        "Does not run `python --version`, `uv --version` or `aspire --version` (those belong to other prerequisite skills)",
+        "Does not create a project, solution, or any file in the working directory",
+        "If every check passes, the final message mentions the `create-workflow-dotnet` skill as the next step"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "windows-docker-not-installed",
+      "prompt": "I'm on Windows 11 and I haven't installed Docker yet. Can you still verify the rest of my .NET setup for Dapr Workflow and tell me what I need to fix?",
+      "expected_output": "The skill runs every check even though the user says Docker is missing. On Windows it retries failed commands via `powershell -Command`. It tries Podman before reporting the container runtime as failed, gives the Docker and Podman install links, and still reports .NET, Dapr CLI and C# LSP results. It does not try to install anything.",
+      "files": [],
+      "expectations": [
+        "Treats the OS as Windows when `uname -s` returns a value starting with `MINGW`, `MSYS` or `CYGWIN` (Git Bash / MSYS2 / Cygwin) or when `uname` is not available",
+        "Runs `docker info` and, when it fails, also tries `podman info` before reporting the container-runtime check as failed",
+        "If a direct bash command fails, retries it as `powershell -Command \"<cmd>\"` (e.g. `powershell -Command \"docker info\"`) before declaring it missing",
+        "Still runs and reports the `dotnet --version`, `dapr --version` and C# LSP plugin checks; the Docker problem does not stop the run",
+        "If no container runtime is found, the report marks Docker/Podman as failed and includes https://www.docker.com/products/docker-desktop/ and https://podman.io/docs/installation",
+        "Does not run any install command (e.g. `winget`, `choco`, `brew`, an installer download) and does not modify system settings",
+        "Does not tell the user they can proceed with `create-workflow-dotnet` while the Docker/Podman check is failing"
+      ]
+    }
+  ]
+}

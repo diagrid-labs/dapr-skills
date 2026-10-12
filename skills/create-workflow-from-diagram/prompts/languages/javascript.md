@@ -381,3 +381,21 @@
 - **Use context methods when available** (`context.whenAll`, `context.getCurrentUtcDateTime`)
 - **Verify exact import paths** for Dapr SDK modules
 - **Handle errors gracefully** with try/catch and meaningful error messages 
+
+## Reading the IR
+
+Generate the code from the validated IR (`../ir-schema.md`), not from the diagram. Every language reads the IR the same way: follow the "Consuming the IR" table in `../ir-schema.md` for which record becomes which construct. The records are keyed by `__type` (`metadata`, `participant`, `activity`, `gateway`, `start_end_node`, `edge`, `failure_handling`, `data_object`, `unrecognized_item`); use activity / gateway `id`s for function and class names (converted to this language's naming conventions) and `condition_label` / `event_label` values for branch variables and external event names.
+
+SDK calls for each construct in this language:
+
+| IR construct | JavaScript (`@dapr/dapr`) |
+|---|---|
+| `activity` task | `yield context.callActivity(<activityFn>, input)` |
+| `task_type: "call_activity"` | `yield context.callChildWorkflow(<workflowName>, input)` |
+| Timer (`event_type: "timer"`, ISO 8601 duration) | `yield context.createTimer(new Date(context.getCurrentUtcDateTime().getTime() + <ms>))` |
+| Message / signal wait, `user_task` completion | `yield context.waitForExternalEvent("<event name>")` |
+| Event-based gateway, wait with timer, timer boundary | `const winner = yield context.whenAny([eventTask, timerTask])`, then compare `winner` with each task |
+| Parallel / inclusive split + join | `const results = yield context.whenAll([taskA, taskB])` |
+| `end_error` | `throw` a domain error |
+
+Activity bodies: when the diagram does not say how an activity works, write a minimal stub that returns a value of the output type and add exactly one `// TODO: implement actual functionality` comment inside the body. No other `TODO` or placeholder comments anywhere (see `../guardrails.md`, "Output hygiene").

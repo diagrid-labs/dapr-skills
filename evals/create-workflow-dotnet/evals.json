@@ -1,0 +1,54 @@
+{
+  "skill_name": "create-workflow-dotnet",
+  "evals": [
+    {
+      "id": 1,
+      "name": "invoice-batch-fan-out-fan-in",
+      "prompt": "Create a .NET workflow application named InvoiceBatch. At the end of each month our finance team uploads a batch of invoice ids. The workflow should first load the batch (input: batch id + list of invoice ids), then validate every invoice in parallel (each validation returns the invoice id, whether it's valid, and the amount), and once all validations are done, aggregate the valid totals and send a summary email activity to finance. Output of the workflow: batch id, number of valid invoices, number of invalid invoices, and total amount.",
+      "expected_output": "An InvoiceBatch folder containing a .NET 10 web project InvoiceBatchApp that uses Dapr.Workflow 1.18.10, a fan-out/fan-in workflow over invoice validations, consistent ports across dapr.yaml / launchSettings.json / local.http, a Redis state store with actorStateStore, a successful dotnet build, a README.md, and the exact final message.",
+      "files": [],
+      "expectations": [
+        "Creates InvoiceBatch/dapr.yaml, InvoiceBatch/local.http, InvoiceBatch/.gitignore, InvoiceBatch/resources/statestore.yaml and the project folder InvoiceBatch/InvoiceBatchApp containing InvoiceBatchApp.csproj, Program.cs, Properties/launchSettings.json and the folders Models/, Workflows/ and Activities/",
+        "InvoiceBatchApp.csproj targets net10.0 and contains PackageReference Include=\"Dapr.Workflow\" Version=\"1.18.10\"",
+        "resources/statestore.yaml defines a component named statestore of type state.redis with metadata actorStateStore set to \"true\"",
+        "The port in applicationUrl of Properties/launchSettings.json equals appPort in dapr.yaml and the port in the @host line of local.http",
+        "The workflow class in Workflows/ inherits Workflow<TInput, TOutput>, is declared internal sealed, and awaits Task.WhenAll over multiple context.CallActivityAsync calls for the invoice validations",
+        "Program.cs calls builder.Services.AddDaprWorkflow() without registering workflows/activities manually and maps POST /start and GET /status/{instanceId}; it does NOT map a raise-event endpoint because no workflow calls WaitForExternalEventAsync",
+        "The agent runs dotnet build on the project and the build succeeds, then creates InvoiceBatch/README.md containing a mermaid diagram and a `dapr run -f .` start instruction",
+        "The agent does not invoke the check-prereq-dotnet skill, and its last output is exactly: The InvoiceBatch workflow application is created. Open the README.md file in the InvoiceBatch folder for a summary and instructions for running locally."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "expense-approval-human-in-the-loop",
+      "prompt": "I need a C# Dapr workflow app called ExpenseApproval. An employee submits an expense claim (id, employee name, amount, description). If the amount is above 500 the workflow has to wait for a manager approval event, max 2 days; if nobody responds in time, send a timeout notification and stop. Approved claims get paid out via a PayExpense activity, rejected ones just get a notification. Please make sure I can actually send the approval from an HTTP request.",
+      "expected_output": "An ExpenseApproval solution using the human-in-the-loop pattern: WaitForExternalEventAsync with a 2-day timeout and TaskCanceledException fallback, a raise-event endpoint in Program.cs, and a matching raise-event request in local.http.",
+      "files": [],
+      "expectations": [
+        "Creates ExpenseApproval/ExpenseApprovalApp/ExpenseApprovalApp.csproj with Dapr.Workflow version 1.18.10",
+        "The workflow class calls context.WaitForExternalEventAsync<T> with a timeout of 2 days (e.g. TimeSpan.FromDays(2)) and the event name is declared as a constant",
+        "The workflow catches TaskCanceledException for the timeout path and calls a notification activity in that branch",
+        "Program.cs maps POST raise-event/{instanceId}/{eventName}, binds the body as JsonElement, checks state.Exists before calling RaiseEventAsync",
+        "local.http contains a POST {{host}}/raise-event/{{instanceId}}/<event-name> request whose event name equals the constant used in the workflow and whose JSON body matches the approval payload record",
+        "Workflow code contains no DateTime.Now, DateTime.UtcNow, Guid.NewGuid(), Task.Delay or Thread.Sleep",
+        "Model records are public records placed in a single .cs file in the Models folder, and activity classes are internal sealed classes inheriting WorkflowActivity<TInput, TOutput> in the Activities folder",
+        "The agent does not invoke the check-prereq-dotnet skill, and its last output is exactly: The ExpenseApproval workflow application is created. Open the README.md file in the ExpenseApproval folder for a summary and instructions for running locally."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "underspecified-request-asks-clarifying-questions",
+      "prompt": "can you spin up a .net dapr workflow project for me?",
+      "expected_output": "The request contains no purpose, workflow design, input/output, or name, so the skill takes the Check specification path and interviews the user one question at a time before creating anything.",
+      "files": [],
+      "expectations": [
+        "The agent asks a clarifying question about the purpose of the workflow application before creating any files or folders",
+        "The agent asks the clarifying questions one at a time (its first question does not bundle all four specification questions into one message)",
+        "The agent does not run `dotnet new` or `dotnet add package` before the specification questions are answered",
+        "The agent does not invoke the check-prereq-dotnet skill or run prerequisite checks such as `dotnet --version` or `dapr --version` as an automatic pre-step",
+        "No dapr.yaml, statestore.yaml, Program.cs or README.md is created in the working directory during this turn",
+        "The agent does not output the final message 'The <ProjectRoot> workflow application is created...' in this turn"
+      ]
+    }
+  ]
+}

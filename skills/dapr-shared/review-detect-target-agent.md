@@ -25,14 +25,14 @@ Note for the .NET row: `Diagrid.AI.Microsoft.AgentFramework` brings `Microsoft.A
 
 Count the number of subfolders that contain a recognized agent entrypoint (`main.py` for Python, `Program.cs` for .NET). Then:
 
-- **Python** — if the count is > 1 and `resources/` has both `agent-pubsub.yaml` and `agent-registry.yaml`, classify topology as `orchestrator`; otherwise `single-agent`.
+- **Python** — classify topology as `orchestrator` if the count is > 1 **and** at least one pub/sub marker is present: `resources/agent-pubsub.yaml` (or any `pubsub.*` component in `resources/`), an `AgentPubSubConfig(` call (native), or a `publish_topic=` / `subscribe_topic=` argument (wrapper `runner.serve(...)`). Otherwise classify as `single-agent`. `agent-registry.yaml` is **not** required: a missing registry is what `DAG-ORCH-005` reports, so it must not decide the topology.
 - **.NET** — classify as `orchestrator` if **any** of the following holds; otherwise `single-agent`:
   - a single project registers two or more agents (two or more `WithAgent(` calls, or a `WithAgent(` call inside a loop), **or** a class deriving from `Workflow<` calls `RunAgentAsync(`, `RunAgentWithHistoryAsync(` or `RunAgentAndDeserializeAsync(` on its `WorkflowContext` → `shape: in-process`;
   - the entrypoint count is > 1 (separate agent apps listed in `dapr.yaml`), with or without `agent-pubsub.yaml` → `shape: multi-app`.
 
   Do not require `agent-registry.yaml`: there is no local registry component on the .NET path (it is a Catalyst opt-in via `.WithCatalyst(...)`).
 
-**Framework-wrapper caveat.** Wrapper frameworks encode multi-agent patterns in framework-specific shapes that do not always include the pubsub + registry markers: CrewAI uses `Crew(process=Process.hierarchical)`, LangGraph uses compiled subgraphs in a single process, Pydantic AI supports multi-agent via `AgentRunContext`. When `language == python`, `flavor == framework-wrapper`, **and** the entrypoint count is > 1 **but** the pubsub / registry markers are absent, classify topology as `single-agent` for the primary decision path **and** surface a "Please verify" finding asking the user to confirm the project is truly single-agent before `review-agent-orchestration` is skipped. A false-single-agent classification silently suppresses the orchestration rules that would apply to those projects.
+**Framework-wrapper caveat.** Wrapper frameworks encode multi-agent patterns in framework-specific shapes that do not always include the pub/sub markers: CrewAI uses `Crew(process=Process.hierarchical)`, LangGraph uses compiled subgraphs in a single process, Pydantic AI supports multi-agent via `AgentRunContext`. When `language == python`, `flavor == framework-wrapper`, **and** the entrypoint count is > 1 **but** no pub/sub marker is present, classify topology as `single-agent` **and** set `topology_unverified: true`. Only `review-agent-orchestration` acts on this flag: it reports it as the `DAG-ORCH-010` "Please verify" finding instead of its single-agent result, so a false single-agent classification never silently suppresses the orchestration rules. The other `review-agent-*` skills ignore the flag.
 
 ## Step 2: Locate agent code
 
@@ -60,6 +60,7 @@ language: python | dotnet
 flavor: native | framework-wrapper
 topology: single-agent | orchestrator
 shape: in-process | multi-app | null   # .NET orchestrator only
+topology_unverified: true | false      # Python framework-wrapper caveat only
 agent_files: [ ... ]
 tool_files: [ ... ]
 component_files: [ ... ]
@@ -67,4 +68,4 @@ dapr_yaml: <path or null>
 scope_root: <absolute path>
 ```
 
-Empty lists are valid. Each calling review skill decides whether an empty list is a finding, a warning, or simply benign (for example `review-agent-orchestration` is silent when `topology` is `single-agent`).
+Empty lists are valid. Each calling review skill decides whether an empty list means there is nothing to review (for example `review-agent-tools` with no `tool_files`, or `review-agent-orchestration` when `topology` is `single-agent`) or is simply benign.

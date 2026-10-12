@@ -1,0 +1,29 @@
+services:
+  order-service:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      INVENTORY_SERVICE_URL: http://inventory-service:4001
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      AMQP_URL: amqp://rabbitmq:5672
+      DATABASE_URL: postgres://orders:orders@postgres:5432/orders
+    depends_on: [inventory-service, redis, rabbitmq, postgres]
+
+  inventory-service:
+    image: storefront/inventory-service:2.1.0
+    ports:
+      - "4001:4001"
+
+  redis:
+    image: redis:7
+  rabbitmq:
+    image: rabbitmq:3-management
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: orders
+      POSTGRES_PASSWORD: orders
+      POSTGRES_DB: orders

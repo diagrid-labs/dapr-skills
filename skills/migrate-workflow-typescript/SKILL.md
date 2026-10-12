@@ -12,6 +12,8 @@ allowed-tools:
   - Bash(git checkout:*)
   - Bash(git diff:*)
   - Bash(git rev-parse:*)
+  - Bash(git add:*)
+  - Bash(git commit:*)
   - Bash(npm:*)
   - Bash(npx:*)
   - mcp__ide__getDiagnostics
@@ -54,7 +56,7 @@ Additional runtime dependency (added during migration, not before): npm package 
 
 - If the user named a folder or package in the request, use that as `scope_root`. Otherwise default to the current working directory and confirm it back in one line.
 - Confirm `scope_root` contains a Node.js project (`package.json` at or above the scope). If not, stop and tell the user this skill targets Node.js/TypeScript projects.
-- Check for existing Dapr adoption: a `dapr.yaml`, a `resources/` (or `components/`) folder with Dapr `Component` YAML, or `@dapr/dapr` already in `package.json`. If found, treat this as **extending** an existing migration, not a fresh one — read what's already there so Phase 5 doesn't duplicate components, and skip straight to Phase 3 for whatever hasn't been migrated yet.
+- Check for existing Dapr adoption: a `dapr.yaml`, a `resources/` (or `components/`) folder with Dapr `Component` YAML, or `@dapr/dapr` already in `package.json`. If found, treat this as **extending** an existing migration, not a fresh one — read what's already there so Phase 5 doesn't duplicate components, and limit Phase 3 to whatever hasn't been migrated yet. Phase 2 (safety setup) still runs in full — existing adoption never skips it.
 - Detect the web framework in use (Express, Fastify, Koa, NestJS, plain `http`) from `package.json` dependencies — later phases need this to know how routes and middleware are structured.
 - Detect the project's own build/typecheck/test commands from `package.json` `scripts` (e.g. `build`, `test`, `lint`). These are what Phase 6 runs after every change — this skill does not invent its own verification command when the project already has one.
 
@@ -74,7 +76,7 @@ Read-only. Do not write or edit anything in this phase. See `REFERENCE.md` for t
 - Pub/sub candidates — message broker producers and consumers.
 - Binding candidates — outbound calls to external (non-first-party) systems, and inbound triggers from them.
 - Jobs candidates — cron-style or recurring scheduled work.
-- State candidates — simple key-value reads/writes (cache, session, lookup) as distinct from relational/document access that should stay put.
+- State candidates — simple key-value reads/writes (cache, session, lookup) as distinct from relational/document access that should stay put. Key-pattern scans (`KEYS`/`SCAN`) have no direct Dapr state equivalent and are coupled to the get/set/del of the same key family — see `REFERENCE.md`.
 - Secrets candidates — direct environment variable reads and third-party secret-manager SDK calls.
 - Workflow candidates — multi-step processes with manual compensation, hand-rolled state machines, or queue-chained pipelines.
 
@@ -113,7 +115,7 @@ For **each individual item** (not each category — one call site at a time):
 1. Make the change with `Edit` at the exact detected call site. Do not rewrite the whole file, and do not touch code unrelated to this item.
 2. Run the project's own build/typecheck command detected in Phase 1 (and its test command, if one exists).
 3. If verification fails, stop, revert or fix that one item, and report the failure — do not proceed to the next item with a known-broken one in place.
-4. If the user chose per-step commits in Phase 2, commit now with a message naming the single item migrated.
+4. Only if the user explicitly chose per-step commits (option b) in Phase 2: stage just the files changed for this item with `git add <file>...` and run `git commit -m "<message naming the single item migrated>"`. Otherwise run no `git add` or `git commit` at all. Never `git push`.
 
 See `REFERENCE.md` for the verified before/after transformation for each category, and for the service invocation caveat (the full benefit requires the *called* service to also run behind a sidecar — note this in the report rather than silently assuming it).
 

@@ -39,7 +39,7 @@ Content-Type: application/json
 
 ### Key points
 
-- The `<app-port>` must match the port in `launchSettings.json` and `dapr.yaml`.
+- The `<app-port>` must match the port in `launchSettings.json` and, for projects run with the Dapr CLI, the `appPort` in `dapr.yaml`. In an Aspire solution there is no `dapr.yaml`: use the `http` profile port from the ApiService's `Properties/launchSettings.json`.
 - The `start` request matches the `MapPost("/start", ...)` endpoint in `Program.cs`. The json payload in the request should match the workflow input record type that uses the `[FromBody]` attribute in `Program.cs`.
 - The `instanceId` is extracted from the JSON response body of the `start` request.
 - The `status` request matches the `MapGet("/status/{instanceId}", ...)` endpoint in `Program.cs`.

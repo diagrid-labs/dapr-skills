@@ -18,7 +18,7 @@ This skill converts a workflow diagram into a runnable Dapr workflow project. Tw
 - **Image** (PNG / JPG / JPEG / GIF / WebP) — uses Claude's vision to extract workflow structure
 - **BPMN 2.0 XML** (`.bpmn`, `.bpmn20.xml`) — parses the XML deterministically
 
-Both paths produce the same intermediate representation (IR, JSON Lines), which is then rendered into code for the target language.
+Both paths produce the same intermediate representation (IR, JSON Lines) defined in `prompts/ir-schema.md` — records keyed by `__type` (`metadata`, `participant`, `activity`, `gateway`, `start_end_node`, `edge`, …, ending with `result` + `end_of_ir_stream`). Every `prompts/languages/<lang>.md` prompt renders code from that one IR.
 
 ## Execution Order
 
@@ -27,7 +27,7 @@ You MUST follow these phases in strict order:
 1. **Check specification** — Confirm you have the input diagram + target language. Ask clarifying questions only if missing.
 2. **Phase 0: Detect input type** — Decide between the image path and the BPMN path.
 3. **Phase 1: Diagram → IR** — Emit JSON Lines IR per `prompts/ir-schema.md`.
-4. **Phase 2: Validate IR** — Light checks per `prompts/ir-schema.md` acceptance rules.
+4. **Phase 2: Validate IR** — Check the stream outcome and structure per `prompts/ir-schema.md` (Steps 4–6 and "Consuming the IR"); resolve open questions with the user.
 5. **Phase 3: IR → code** — Render the project for the target language using `prompts/languages/<lang>.md`.
 6. **Create README.md** — Summarise the generated project + how to run it.
 7. **Show final message** — Your LAST output MUST be EXACTLY the message defined in `## Show final message`. No extra text.
@@ -45,7 +45,7 @@ You need three things. Ask at most three clarifying questions, interview-style, 
 The following must be installed by the user before running the generated project:
 
 - [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation)
-- [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.17+)
+- [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.18+)
 
 Plus the language toolchain for the chosen target. See the matching `../dapr-shared/prereq-check-*.md` for the full list.
 
@@ -68,37 +68,39 @@ Decide the path:
 3. Load `prompts/ir-schema.md` — this is the full IR grammar, step-by-step extraction procedure (Step 0 content check → Step N emit records), and field definitions.
 4. Use Claude's vision to read the attached image.
 5. Emit IR as **JSON Lines** (one object per line), following the schema. Do not wrap in markdown fences or prose.
-6. If the diagram is unreadable / not a workflow / prohibited content → emit a single `ambiguous_or_undiagrammable_workflow` record (per schema Step 0) and stop.
+6. Prohibited content → emit the single `content_warning` record (schema Step 0) and stop.
+7. Unreadable / not a workflow / more than 10 activities → emit the single `error` record with `check_id` `DIAGRAM_TYPE_VALIDATION` or `DIAGRAM_COMPLEXITY_ABOVE_THRESHOLD` (schema Step 1), show its `user_feedback` to the user, and stop.
+8. Ambiguities and disconnected flows (e.g. a branch with no outgoing flow) → `unrecognized_item` records with `ask_user: true` (schema Step 2F). Never add an edge that is not drawn.
 
 ### BPMN path
 
 1. Load `prompts/guardrails.md`.
 2. Load `prompts/bpmn-to-ir.md` — deterministic BPMN-element → IR-record mapping.
 3. Load `prompts/ir-schema.md` for the IR grammar.
-4. Parse the `.bpmn` XML. Emit IR as JSON Lines following the mapping table.
-5. Unsupported BPMN elements (see `bpmn-to-ir.md`) → emit `unrecognized_item` records; do not silently drop.
+4. Parse the `.bpmn` XML. Emit IR as JSON Lines following the mapping table — same `__type` records, same `content_warning` / `error` / `result` / `end_of_ir_stream` records as the image path.
+5. Unsupported BPMN elements (see `bpmn-to-ir.md`) → emit `unrecognized_item` records (`category: "unsupported_element"`); do not silently drop.
 
-Write the IR to `<ProjectRoot>/.workflow.ir.jsonl` for reference.
+Write the IR (without `system` progress records) to `<ProjectRoot>/.workflow.ir.jsonl` for reference — except when the stream is a `content_warning`, in which case write nothing. `examples/order-process.ir.jsonl` shows a complete valid stream.
 
 ## Phase 2: Validate IR
 
-Light structural checks before code generation:
-
-- There is at least one `start` and one `end` record.
-- Every `edge.from` / `edge.to` references an existing element id (activity, gateway, start, or end).
-- Every gateway has ≥ 1 incoming and ≥ 1 outgoing edge.
-- No orphaned elements (activities / gateways with no edges either direction).
-- No duplicate ids across all records.
-
-If any check fails: report the specific issue to the user, abort (do not continue to Phase 3). Rerun Phase 1 with an adjusted diagram or ask the user for clarification.
+1. **Stream outcome** — read the last record (see "Consuming the IR" in `prompts/ir-schema.md`). `content_warning` or a Step 1 `error` → stop without writing code. `result` with `success: false` → go to step 3. Only `end_of_ir_stream` after `result` `success: true` continues.
+2. **Re-check the structure** independently of the model's own `result`:
+   - At least one `start_end_node` with `type: "start"` (or a trigger `wait_for_event` activity) and at least one end node (`type` `end`, `end_error` or `end_terminate`).
+   - Every `edge.from` / `edge.to`, gateway `flows[].next` and wait `events[].next` references an existing `activity`, `gateway` or `start_end_node` id.
+   - Every gateway has ≥ 1 incoming and ≥ 1 outgoing edge.
+   - No orphaned nodes: no `activity`, `gateway`, **start node, end node or event** without edges (`CONNECTIVITY`).
+   - Every `activity`, `gateway` and `start_end_node` — including every end node and every intermediate event — is reachable from a start node, following `edge` records and `failure_handling` links (`REACHABILITY`).
+   - No duplicate ids across all records.
+3. **Clarification path** — if a check fails, or `metadata.feedback_required` is `true`: report each failed `check_id` / each `unrecognized_item` with `ask_user: true` to the user in plain language, ask how to resolve it, and do not continue to Phase 3 until it is resolved. Apply the answers to the IR (or rerun Phase 1 with an adjusted diagram), then run Phase 2 again. Never add an undrawn edge without the user's confirmation.
 
 ## Phase 3: IR → code
 
-1. Load `prompts/languages/<lang>.md` — this defines the target-language Dapr Workflow patterns, file layout, and code conventions. Language slugs: `go` | `python` | `csharp` | `javascript` | `java`.
+1. Load `prompts/languages/<lang>.md` — this defines the target-language Dapr Workflow patterns, file layout, and code conventions, and (under "Reading the IR") the SDK call for each IR construct. Language slugs: `go` | `python` | `csharp` | `javascript` | `java`. The record → construct mapping itself is the "Consuming the IR" table in `prompts/ir-schema.md`, shared by all languages.
 2. Optionally load `prompts/code-quality-judge.md` for a self-critique pass after initial generation.
 3. Optionally load `prompts/final-turn-prettifier.md` for final cleanup.
 4. Use the Write tool to create one file at a time. Follow the folder structure for the language — see `prompts/languages/<lang>.md`.
-5. Emit complete, compilable files. No `TODO`, no placeholder bodies.
+5. Emit complete, compilable files. The only placeholder allowed is a single `TODO: implement actual functionality` comment inside an activity body whose behaviour the diagram does not describe (see `prompts/guardrails.md`, "Output hygiene").
 
 ### Folder structure
 
@@ -124,12 +126,13 @@ Python-specific layout matches `create-workflow-python` (pyproject.toml, runtime
 
 Create a `README.md` in `<ProjectRoot>` containing:
 
-1. One-sentence summary of what the workflow does (derive from the diagram / IR `workflow` record).
+1. One-sentence summary of what the workflow does (derive from the IR `metadata` record's `name` and `description`).
 2. Architecture description — language, Dapr version, required components.
 3. A Mermaid diagram re-rendered from the IR for quick visual reference.
 4. How to run locally with `dapr run -f dapr.yaml`.
 5. Endpoints (if the generated language produces an HTTP surface — Python, .NET and JavaScript do by default).
-6. How to inspect executions with the [Diagrid Dev Dashboard](https://www.diagrid.io/blog/improving-the-local-dapr-workflow-experience-diagrid-dashboard).
+6. Open questions — every remaining `unrecognized_item` from the IR (if any).
+7. How to inspect executions with the [Diagrid Dev Dashboard](https://www.diagrid.io/blog/improving-the-local-dapr-workflow-experience-diagrid-dashboard).
 
 See `../dapr-shared/running-locally-dapr.md` and `../dapr-shared/running-with-catalyst.md` in this repo for snippets to include.
 

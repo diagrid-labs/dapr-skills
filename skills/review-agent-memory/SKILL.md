@@ -38,7 +38,7 @@ You MUST follow these phases in strict order.
 ## Rules
 
 - [Python rules](../dapr-shared/review-agent-memory-python.md) — `DAG-MEM-001` … `DAG-MEM-008`
-- [.NET rules](../dapr-shared/review-agent-memory-dotnet.md) — `DAG-MEM-001` … `DAG-MEM-007`
+- [.NET rules](../dapr-shared/review-agent-memory-dotnet.md) — `DAG-MEM-001`, `DAG-MEM-003` … `DAG-MEM-007` (`DAG-MEM-002`, `ConversationListMemory`, and `DAG-MEM-008`, `agent-registry` `keyPrefix`, are Python-only)
 
 ## Show final message
 

@@ -4,11 +4,13 @@ description: This skill checks prerequisites for building durable AI agents in .
 allowed-tools:
   - Bash(uname -s)
   - Bash(dotnet --version)
+  - Bash([ -n:*)
   - Bash(curl:*)
   - Bash(powershell:*)
   - Bash(dapr:*)
   - Bash(docker info:*)
   - Bash(podman info:*)
+  - Read
 ---
 
 # Check Prerequisites for .NET Agents

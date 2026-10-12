@@ -1,0 +1,10 @@
+[project]
+name = "travel-concierge-agent"
+version = "0.1.0"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "dapr-agents>=1.0",
+    "fastapi>=0.118",
+    "uvicorn[standard]>=0.37",
+    "pydantic>=2.12,<3",
+]

@@ -1,0 +1,51 @@
+{
+  "skill_name": "check-prereq-agent-dotnet",
+  "evals": [
+    {
+      "id": 1,
+      "name": "explicit-dotnet-agent-prereq-check",
+      "prompt": "Check prerequisites for .NET agents. I'm planning a coordinator agent with two specialists using Microsoft Agent Framework on Dapr Workflow, backed by Anthropic.",
+      "expected_output": "The skill detects the OS, then checks the C# LSP plugin, .NET 10 SDK, Docker/Podman, Dapr CLI and the LLM providers in parallel. API keys are reported only as set/unset. If everything passes it points to create-agent-dotnet. No Python checks are run.",
+      "files": [],
+      "expectations": [
+        "Runs `uname -s` (OS detection) before the other checks",
+        "Runs `dotnet --version` (requiring major version 10 or higher), `docker info` (or `podman info`) and `dapr --version`",
+        "Probes OPENAI_API_KEY, ANTHROPIC_API_KEY and GOOGLE_API_KEY as set/unset, and probes Ollama at http://localhost:11434/api/tags",
+        "No API key value appears in any command output or in the final message",
+        "Does not run `python --version`, `uv --version` or `uv pip show dapr-agents`",
+        "Final report lists C# LSP plugin, .NET SDK, Docker/Podman, Dapr CLI and LLM provider each with a pass or fail status; if all pass it names the `create-agent-dotnet` skill",
+        "Does not create any files and does not run `dotnet new` or `dotnet add package`"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "casual-csharp-agent-gemini",
+      "prompt": "can i build a durable AI agent in c# with dapr on this laptop? i'd use gemini. is there a dapr agents nuget i need?",
+      "expected_output": "The skill runs the .NET agent prerequisite check. It checks GOOGLE_API_KEY as set/unset along with the other providers. It explains that Dapr Agents is Python-only and that the .NET path is Microsoft Agent Framework on Dapr Workflow via Diagrid.AI.Microsoft.AgentFramework, so there is no Dapr Agents NuGet to check.",
+      "files": [],
+      "expectations": [
+        "Runs `dotnet --version`, `dapr --version` and `docker info` (or `podman info`) rather than answering from general knowledge",
+        "Probes GOOGLE_API_KEY with a set/unset test and does not print its value",
+        "States that Dapr Agents is a Python-only framework and that .NET uses Microsoft Agent Framework with the `Diagrid.AI.Microsoft.AgentFramework` package",
+        "Does not try to look up, check for, or install a .NET 'Dapr Agents' package",
+        "Treats the LLM provider check as passing if any one provider (OpenAI, Anthropic, Google, or Ollama) is available",
+        "Does not create any files"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "windows-no-llm-provider",
+      "prompt": "I'm on Windows with PowerShell. Verify my .NET agent environment. I haven't set up any LLM API keys yet and I'm not running Ollama.",
+      "expected_output": "The skill runs every check. On Windows it uses or falls back to the PowerShell forms of the probes. It reports keys only as set/unset. If no provider is available it marks the LLM check failed and lists the four options with their links. The other checks are still reported and nothing is installed.",
+      "files": [],
+      "expectations": [
+        "Probes each key with either the POSIX test or the PowerShell form `powershell -Command \"if ([string]::IsNullOrEmpty($env:OPENAI_API_KEY)) { 'unset' } else { 'set' }\"` (same pattern for ANTHROPIC_API_KEY and GOOGLE_API_KEY)",
+        "Probes Ollama with `curl ... http://localhost:11434/api/tags --max-time 2` or `powershell -Command \"(Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 http://localhost:11434/api/tags).StatusCode\"`",
+        "Does not use `printenv`, `echo $VAR`, or a bare `$env:VAR` expression to inspect a key",
+        "If no probe succeeds, the LLM check is reported as failed and lists OPENAI_API_KEY (platform.openai.com), ANTHROPIC_API_KEY (console.anthropic.com), GOOGLE_API_KEY (ai.google.dev) and Ollama (`ollama serve`)",
+        "Still reports results for the .NET SDK, Docker/Podman, Dapr CLI and C# LSP plugin checks",
+        "Does not set environment variables, write a `.env` file, or install Ollama"
+      ]
+    }
+  ]
+}

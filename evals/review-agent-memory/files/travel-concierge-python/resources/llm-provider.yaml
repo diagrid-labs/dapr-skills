@@ -1,0 +1,12 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: llm-provider
+spec:
+  type: conversation.openai
+  version: v1
+  metadata:
+  - name: key
+    value: "sk-proj-EVALFIXTURE-not-a-real-key-0000000000"
+  - name: model
+    value: "gpt-4o-mini"

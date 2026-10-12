@@ -237,7 +237,7 @@ runner.serve(agent, port=8001)
 ### Key points
 
 - `DurableAgent` runs on Dapr Workflow; `runner.serve(agent, port=...)` starts a FastAPI app exposing `POST /agent/run` and `GET /agent/instances/{instance_id}`.
-- `DaprChatClient(component_name="llm-provider")` routes LLM calls through the Dapr Conversation building block. Swap the provider by swapping `llm-provider.yaml` (OpenAI, Anthropic, Ollama) — no code change.
+- `DaprChatClient(component_name="llm-provider")` routes LLM calls through the Dapr Conversation building block. Swap the provider by swapping `llm-provider.yaml` (OpenAI, Anthropic, Google AI, Ollama) — no code change.
 - `ConversationDaprStateMemory(store_name="agent-memory")` persists conversation history. Without it, each request starts with an empty context.
 - `StateStoreService(store_name="agent-workflow")` holds workflow execution state. The component it references must have `actorStateStore: "true"`.
 - `AgentExecutionConfig.max_iterations` is the agent's loop bound (default `10`). Set it explicitly.
@@ -338,7 +338,7 @@ runner.serve(agent, port=8001)
 
 - **Topic convention**: every specialist subscribes to `<domain>.requests` and publishes to `<domain>.results`. The coordinator publishes to each specialist's request topic.
 - **Broadcast topic**: `agents.broadcast` is used by specialists to announce availability; the coordinator listens to it to populate `agent-registry`.
-- **Registry**: `AgentRegistryConfig(store=StateStoreService(store_name="agent-registry"))` is an explicit argument on each agent. It is not inferred from the component name — an agent without it does not register and will not be discovered.
+- **Registry**: pass `AgentRegistryConfig(store=StateStoreService(store_name="agent-registry"))` explicitly on each agent. `DurableAgent` falls back to a component named exactly `agent-registry` only when its sidecar is reachable at construction time; without a registry, specialists are not discovered and the coordinator fails with `RuntimeError: registry_state must be provided to use agent registry`.
 - `OrchestrationMode.AGENT` (set via `execution=AgentExecutionConfig(orchestration_mode=...)`) tells the coordinator to use its LLM to plan and dispatch. `RANDOM` and `ROUNDROBIN` are the other options. Leaving it `None` means no multi-agent orchestration.
 - `AgentRunner()` takes no `mode` argument — orchestration mode lives on the agent, not the runner.
 

@@ -11,18 +11,20 @@ allowed-tools:
 
 ## Overview
 
-Scans multi-agent projects (coordinator + specialists) for pub/sub topic naming conventions, loop safety (`max_iterations`), agent-registry wiring, port collisions in `dapr.yaml`, and cross-agent shared-state hazards. Read-only. Single-agent projects receive zero findings.
+Scans multi-agent projects (coordinator + specialists) for pub/sub topic naming conventions, loop safety (`max_iterations`), agent-registry wiring, port collisions in `dapr.yaml`, and cross-agent shared-state hazards. Read-only. Single-agent projects get the nothing-to-review result, except Python framework-wrapper projects whose single-agent classification is uncertain, which get one `DAG-ORCH-010` "Please verify" finding.
 
 ## Execution Order
 
 You MUST follow these phases in strict order.
 
 1. **Resolve scope** — Read [`../dapr-shared/review-scope-prompt.md`](../dapr-shared/review-scope-prompt.md) and follow it to set `scope_root`.
-2. **Detect target** — Read [`../dapr-shared/review-detect-target-agent.md`](../dapr-shared/review-detect-target-agent.md). If `topology == single-agent`, emit `No issues found.` and stop.
+2. **Detect target** — Read [`../dapr-shared/review-detect-target-agent.md`](../dapr-shared/review-detect-target-agent.md). If `topology == single-agent`:
+   - `topology_unverified == true` → the report's only finding is `DAG-ORCH-010` under `## Please verify` (see the Python checklist); stop.
+   - otherwise → emit the report with the generic nothing-to-review line from [`../dapr-shared/review-report-format.md`](../dapr-shared/review-report-format.md) (reason: single-agent project, orchestration rules do not apply; no rule id); stop.
 3. **Load checklist** — Based on `language`, read exactly one of:
    - `python` → [`../dapr-shared/review-agent-orchestration-python.md`](../dapr-shared/review-agent-orchestration-python.md)
    - `dotnet` → [`../dapr-shared/review-agent-orchestration-dotnet.md`](../dapr-shared/review-agent-orchestration-dotnet.md)
-4. **Scan** — Apply every rule. Port-collision rules require parsing `dapr.yaml`; topic-routing rules require grepping for `publish_topic=` / `subscribe_topic=` / `DaprClient.PublishEventAsync(`.
+4. **Scan** — Apply every rule. Port-collision rules require parsing `dapr.yaml`; topic-routing rules require grepping for `AgentPubSubConfig(` / `agent_topic=` / `broadcast_topic=` (native Python), `publish_topic=` / `subscribe_topic=` (wrapper Python), or `DaprClient.PublishEventAsync(` (.NET); loop-bound rules for `AgentExecutionConfig(` / `max_iterations=` / `max_steps=`.
 5. **Report** — Format findings using [`../dapr-shared/review-report-format.md`](../dapr-shared/review-report-format.md).
 6. **Show final message** — Emit the report from step 5 with a `## Next steps` block.
 
@@ -36,7 +38,7 @@ You MUST follow these phases in strict order.
 
 ## Rules
 
-- [Python rules](../dapr-shared/review-agent-orchestration-python.md) — `DAG-ORCH-001` … `DAG-ORCH-009`
+- [Python rules](../dapr-shared/review-agent-orchestration-python.md) — `DAG-ORCH-001` … `DAG-ORCH-010`
 - [.NET rules](../dapr-shared/review-agent-orchestration-dotnet.md) — shared subset of `DAG-ORCH-*` (see the rule-id map in the Python file)
 
 ## Show final message

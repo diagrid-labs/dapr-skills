@@ -1,0 +1,55 @@
+{
+  "skill_name": "create-workflow-python",
+  "evals": [
+    {
+      "id": 1,
+      "name": "support-ticket-triage-chaining",
+      "prompt": "Create a Python workflow app named tickettriage. A support ticket comes in with id, customer email, subject and body. The workflow classifies the ticket (category + priority), then assigns it to a support queue based on the category, then sends an acknowledgement email to the customer with the queue name. Return ticket id, category, priority and assigned queue. If any step throws, call an error handler activity and re-raise.",
+      "expected_output": "A tickettriage folder with the tickettriage-app Python project (pyproject.toml pinned to dapr-ext-workflow 1.18.0, runtime.py, workflow.py, activities.py, models.py, main.py), a chained workflow, consistent ports, statestore with actorStateStore, uv venv + uv sync run, README.md and the exact final message.",
+      "files": [],
+      "expectations": [
+        "Creates tickettriage/.gitignore, tickettriage/dapr.yaml, tickettriage/local.http, tickettriage/resources/statestore.yaml and tickettriage/tickettriage-app/ containing pyproject.toml, main.py, models.py, runtime.py, workflow.py and activities.py",
+        "pyproject.toml declares requires-python \">=3.12\" and pins dapr-ext-workflow==1.18.0 and dapr==1.18.0",
+        "runtime.py creates `wfr = wf.WorkflowRuntime()`; workflow.py and activities.py both import wfr from runtime, and activities.py does not import from workflow.py",
+        "models.py defines Pydantic BaseModel classes for the workflow input and output",
+        "workflow.py defines a function decorated with @wfr.workflow that yields ctx.call_activity three times in sequence (classify, assign, acknowledge), and on exception calls an error handler activity and re-raises",
+        "appPort in dapr.yaml equals the port passed to uvicorn.run in main.py and the port in the @host line of local.http, and dapr.yaml uses command [\"uv\", \"run\", \"main.py\"]",
+        "main.py's GET /status/{instance_id} route returns 404 (HTTPException) when get_workflow_state returns None and otherwise returns a {\"state\": ..., \"output\": ...} envelope (state.to_json() plus the deserialized output), not state.__dict__",
+        "The agent runs `uv venv` and `uv sync` in the tickettriage-app folder and creates tickettriage/README.md with a mermaid diagram",
+        "The agent does not invoke the check-prereq-python skill, and its last output is exactly: The tickettriage workflow application is created. Open the README.md file in the tickettriage folder for a summary and instructions for running locally."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "sensor-monitor-with-technician-ack",
+      "prompt": "Build a Dapr workflow in Python called sensorwatch. It monitors a cold-storage temperature sensor (input: sensor id, max temperature, number of consecutive breaches so far). Every 5 minutes it reads the sensor via an activity. If the reading is fine, reset the breach counter; if it's too high, increment it. After 3 breaches in a row it sends an alert and then waits up to 1 hour for a technician to acknowledge via an external event; if no ack arrives, escalate to the on-call manager. The monitoring should keep running without growing the history forever.",
+      "expected_output": "A sensorwatch project combining the monitor pattern (create_timer + continue_as_new with a return immediately after it, no unbounded while loop) with a human-in-the-loop wait (wait_for_external_event with 1-hour timeout and TimeoutError fallback), plus the raise-event endpoint and local.http request.",
+      "files": [],
+      "expectations": [
+        "workflow.py uses `yield ctx.create_timer(...)` with a 5-minute timedelta and calls `ctx.continue_as_new(...)` to restart the monitor with the updated breach count, returning immediately after the continue_as_new call (no further ctx.* calls after it)",
+        "workflow.py contains no unbounded `while True:` loop, no `time.sleep`, and no `datetime.now()` / `datetime.utcnow()` calls",
+        "workflow.py calls `ctx.wait_for_external_event` with `timeout=timedelta(hours=1)` and catches TimeoutError to call an escalation activity",
+        "Print/log statements inside the workflow function are guarded with `if not ctx.is_replaying:`",
+        "Activities are decorated with @wfr.activity(name=...) and the names end with `_activity`",
+        "main.py exposes POST /start, GET /status/{instance_id}, POST /pause/{instance_id}, POST /resume/{instance_id}, POST /terminate/{instance_id} and POST /raise-event/{instance_id}, and calls wfr.start() before uvicorn.run",
+        "local.http contains a raise-event request whose `event_name` value equals the event name the workflow waits for",
+        "README.md does not instruct the user to start Redis separately"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "name-only-request-triggers-spec-check",
+      "prompt": "make a python dapr workflow app named loan_review",
+      "expected_output": "Only the project name is given; purpose, workflow design and input/output are missing, so the skill interviews the user one question at a time before scaffolding.",
+      "files": [],
+      "expectations": [
+        "The agent asks about the purpose of the workflow application (or how the workflow should work) before creating any files",
+        "The agent asks the clarifying questions one at a time rather than all at once",
+        "No loan_review folder, dapr.yaml, pyproject.toml or workflow.py is created during this turn",
+        "The agent does not run `uv venv` or `uv sync` in this turn",
+        "The agent does not invoke the check-prereq-python skill or run `python --version` / `uv --version` as an automatic pre-step",
+        "The agent does not output the final message 'The loan_review workflow application is created...' in this turn"
+      ]
+    }
+  ]
+}

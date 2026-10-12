@@ -1,8 +1,8 @@
 # Check Dapr Agents SDK (Python)
 
-Run `uv pip show dapr-agents 2>/dev/null | grep -i '^Version:' || echo "not installed"` (Windows fallback: `powershell -Command "uv pip show dapr-agents 2>$null | Select-String -Pattern 'Version'"` — report `not installed` if empty).
+Run `uv pip show dapr-agents` (Windows fallback: `powershell -Command "uv pip show dapr-agents"`). Read the `Version:` line from its output. If the command exits with an error or reports that the package is not found (for example `warning: Package(s) not found for: dapr-agents`), treat it as `not installed`. Do not pipe the output into `grep`, `Select-String` or other filters — read it directly.
 
-Interpret the output:
+Interpret the result, comparing `major.minor` numerically:
 
 - **Installed with version `1.0` or higher** → check passes. Report the version. `1.0` is a floor, not a target — do not fail a newer version.
 - **Installed with version below `1.0`** → check fails. Inform the user to upgrade via `uv pip install --upgrade dapr-agents` (or `uv add dapr-agents` inside a project).

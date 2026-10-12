@@ -45,6 +45,40 @@ The skills are distributed from [diagrid-labs/dapr-skills](https://github.com/di
 
 > **Install all skills together.** Skills read shared files from the `dapr-shared` support skill (`../dapr-shared/...`), and some review skills read the REFERENCE files of the matching create skills. Every install method below installs the full set by default.
 
+### Claude Code
+
+Add this repo as a plugin marketplace and install the `dapr-skills` plugin from within a Claude Code session:
+
+```text
+/plugin marketplace add diagrid-labs/dapr-skills
+/plugin install dapr-skills@diagrid-labs
+```
+
+Alternatively, run `/plugin` and use the interactive UI to browse and install the plugin. To update or remove the plugin later, use `/plugin` and select the corresponding action.
+
+### GitHub Copilot CLI
+
+Copilot CLI reads the Claude plugin marketplace in this repo. From a terminal:
+
+```shell
+copilot plugin marketplace add diagrid-labs/dapr-skills
+copilot plugin install dapr-skills@diagrid-labs
+```
+
+Start a new `copilot` session (or run `/skills reload` in an active one) and check that the skills are loaded with `/skills`. Update with `copilot plugin update dapr-skills` and remove with `copilot plugin uninstall dapr-skills`.
+
+### OpenAI Codex CLI
+
+Use the `skills` CLI (see [Any agent](#any-agent-npx-skills) below) with the Codex agent:
+
+```shell
+npx skills add diagrid-labs/dapr-skills --skill "*" -a codex
+```
+
+This installs to `.agents/skills/` (add `-g` for `~/.agents/skills/`), the folders Codex loads skills from. Restart Codex so it picks up the new skills. Copying the repository's `skills/` folder (including `dapr-shared`) into one of those folders by hand also works.
+
+> GitHub Copilot CLI also reads `.agents/skills` and `~/.agents/skills`. If you use Copilot CLI together with Codex or `npx skills -a github-copilot`, install the skills only once to avoid loading duplicate skills in Copilot CLI.
+
 ### Any agent (`npx skills`)
 
 The [`skills` CLI](https://github.com/vercel-labs/skills) installs the skills into Claude Code, Codex, GitHub Copilot, Cursor, and other agents. It requires Node.js.
@@ -81,40 +115,6 @@ If you install only some skills (`--skill <name>`), also install their dependenc
 | `migrate-workflow-typescript` | `create-workflow-typescript` |
 
 `node scripts/validate-skills.mjs` prints the current dependency list; update this table when it changes.
-
-### Claude Code
-
-Add this repo as a plugin marketplace and install the `dapr-skills` plugin from within a Claude Code session:
-
-```text
-/plugin marketplace add diagrid-labs/dapr-skills
-/plugin install dapr-skills@diagrid-labs
-```
-
-Alternatively, run `/plugin` and use the interactive UI to browse and install the plugin. To update or remove the plugin later, use `/plugin` and select the corresponding action.
-
-### GitHub Copilot CLI
-
-Copilot CLI reads the Claude plugin marketplace in this repo. From a terminal:
-
-```shell
-copilot plugin marketplace add diagrid-labs/dapr-skills
-copilot plugin install dapr-skills@diagrid-labs
-```
-
-Start a new `copilot` session (or run `/skills reload` in an active one) and check that the skills are loaded with `/skills`. Update with `copilot plugin update dapr-skills` and remove with `copilot plugin uninstall dapr-skills`.
-
-### OpenAI Codex CLI
-
-Use the `skills` CLI with the Codex agent:
-
-```shell
-npx skills add diagrid-labs/dapr-skills --skill "*" -a codex
-```
-
-This installs to `.agents/skills/` (add `-g` for `~/.agents/skills/`), the folders Codex loads skills from. Restart Codex so it picks up the new skills. Copying the repository's `skills/` folder (including `dapr-shared`) into one of those folders by hand also works.
-
-> GitHub Copilot CLI also reads `.agents/skills` and `~/.agents/skills`. If you use Copilot CLI together with Codex or `npx skills -a github-copilot`, install the skills only once to avoid loading duplicate skills in Copilot CLI.
 
 ## How to use this
 
@@ -241,11 +241,13 @@ The input for the workflow contains the following fields:
 
 Drop a workflow diagram or BPMN file into the chat and ask Claude Code to scaffold a Dapr workflow app from it:
 
-> Create a Dapr workflow in Python from this diagram. *(attach `skills/create-workflow-from-diagram/examples/pizza-order.png`)*
+> Create a Dapr workflow in Python from this diagram. *(attach `skills/create-workflow-from-diagram/examples/user-order.png`)*
 
 > Scaffold a Go Dapr workflow from this BPMN file. *(attach `skills/create-workflow-from-diagram/examples/order-process.bpmn`)*
 
 The skill extracts the workflow structure into an intermediate representation, validates it, and writes a runnable project in the chosen language. See `skills/create-workflow-from-diagram/REFERENCE.md` for the IR format and per-language notes.
+
+`skills/create-workflow-from-diagram/examples/pizza-order.png` is intentionally *not* a clean diagram: its 60-minute timer branch has no outgoing flow and "call pizza delivery service" has no incoming flow. Use it to see the ambiguity path. The skill flags the gap and asks you how the flows connect instead of guessing, and generates no code until that's resolved.
 
 ### Example 6: Python agent with the `dapr-agents` SDK
 

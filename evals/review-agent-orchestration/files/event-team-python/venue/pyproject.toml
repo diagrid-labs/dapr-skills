@@ -1,0 +1,9 @@
+[project]
+name = "venue-agent"
+version = "0.1.0"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "diagrid[openai-agents]>=0.4",
+    "fastapi>=0.129",
+    "uvicorn[standard]>=0.41",
+]

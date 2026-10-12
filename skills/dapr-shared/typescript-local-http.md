@@ -32,6 +32,14 @@ POST {{host}}/resume/{{instanceId}}
 ### Terminate the workflow
 POST {{host}}/terminate/{{instanceId}}
 
+### Raise an external event (only when the workflow waits for external events)
+POST {{host}}/raise-event/{{instanceId}}/<event-name>
+Content-Type: application/json
+
+{
+    "isApproved": true
+}
+
 ### Purge the workflow history (only after it reaches a terminal state)
 POST {{host}}/purge/{{instanceId}}
 ```
@@ -43,4 +51,5 @@ POST {{host}}/purge/{{instanceId}}
 - The `instance_id` is extracted from the JSON response body of the `start` request.
 - The `status` request matches the `app.get("/status/:instanceId", ...)` route.
 - The `pause`, `resume`, `terminate`, and `purge` requests match the corresponding `app.post` routes.
+- Include the `raise-event` request only when a workflow calls `ctx.waitForExternalEvent(...)`; it matches the `app.post("/raise-event/:instanceId/:eventName", ...)` route. Replace `<event-name>` with the event name the workflow waits for (e.g. `approval-event`), and make the JSON body match the payload the workflow reads (e.g. `{ "isApproved": true }`).
 - Use the VS Code REST Client extension or JetBrains HTTP Client to send requests directly from this file.

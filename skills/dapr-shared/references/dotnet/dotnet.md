@@ -176,7 +176,7 @@ Used outside workflow code to manage workflow instances:
 | `RaiseEventAsync(instanceId, eventName, payload)` | Send external event |
 | `TerminateWorkflowAsync(instanceId)` | Force-terminate |
 | `SuspendWorkflowAsync(instanceId)` / `ResumeWorkflowAsync(instanceId)` | Pause/unpause |
-| `PurgeInstanceAsync(instanceId)` | Delete completed instance |
+| `PurgeInstanceAsync(instanceId)` | Delete a completed/failed/terminated instance and its child workflows; throws `RpcException` for unknown or still-running instances |
 
 ## Common Pitfalls
 

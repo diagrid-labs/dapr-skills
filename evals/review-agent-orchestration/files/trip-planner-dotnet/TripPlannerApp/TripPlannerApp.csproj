@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>TripPlannerApp</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Diagrid.AI.Microsoft.AgentFramework" Version="1.2.0" />
+    <PackageReference Include="Dapr.Workflow" Version="1.18.10" />
+  </ItemGroup>
+</Project>

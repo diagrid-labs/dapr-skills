@@ -1,0 +1,67 @@
+{
+  "skill_name": "create-workflow-typescript",
+  "evals": [
+    {
+      "id": 1,
+      "name": "default-order-processing-building-blocks",
+      "prompt": "Create a Dapr app in TypeScript named ShopFlow using the default Order Processing scenario. I want to see every building block in action: workflow, service invocation to a separate pricing service, state, secrets, pub/sub, bindings and jobs.",
+      "expected_output": "A ShopFlow folder with the ShopFlow-app main app and a pricing-service companion app, all five component YAMLs, a dapr.yaml starting both apps, an async-generator workflow chaining seven activities (one per building block), management routes, successful npm install + tsc checks, a README and the exact final message.",
+      "files": [],
+      "expectations": [
+        "Creates ShopFlow/resources/ with statestore.yaml (state.redis, actorStateStore \"true\"), pubsub.yaml (pubsub.redis, name pubsub), secretstore.yaml (secretstores.local.env), binding-receipt.yaml (bindings.http, name receipt-binding) and binding-schedule.yaml (bindings.cron, name schedule-binding)",
+        "ShopFlow/dapr.yaml defines two apps: the ShopFlow-app main app with command [\"npm\", \"start\"], and pricing-service with appPort 3001",
+        "The secret is named `PAYMENT_API_KEY` everywhere: src/activities.ts calls daprClient.secret.get(\"secretstore\", \"PAYMENT_API_KEY\") and indexes the result with `PAYMENT_API_KEY`, no file uses `payment-api-key`, and the README tells the user to export `PAYMENT_API_KEY` in the shell before `dapr run -f .`",
+        "Both ShopFlow-app/package.json and pricing-service/package.json depend on \"@dapr/dapr\": \"3.18.0\"",
+        "src/workflow.ts defines the workflow as an `async function*` and calls ctx.callActivity for seven activities; it contains no daprClient, fetch, Date.now, new Date() or Math.random usage",
+        "src/activities.ts contains daprClient.invoker.invoke to pricing-service method calculate-total, daprClient.state.save, daprClient.secret.get, daprClient.pubsub.publish, daprClient.binding.send to receipt-binding, and a fetch POST to the sidecar's /v1.0/jobs/ HTTP API",
+        "src/index.ts passes an Express app to `new DaprServer({ serverHttp: app })`, registers server.pubsub.subscribe and server.binding.receive(\"schedule-binding\", ...) before server.start(), and defines routes /start, /status/:instanceId, /pause/:instanceId, /resume/:instanceId, /terminate/:instanceId, /purge/:instanceId and POST /job/:jobName",
+        "pricing-service/src/index.ts registers the calculate-total method with server.invoker.listen (not invoker.handle)",
+        "The agent runs `npm install` in both app folders and `npx tsc --noEmit` in both folders, then creates ShopFlow/README.md listing which building block each activity demonstrates; the last output is exactly: The ShopFlow workflow application is created. Open the README.md file in the ShopFlow folder for a summary and instructions for running locally."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "custom-scenario-clinic-appointments",
+      "prompt": "Build me a TypeScript Dapr building-blocks app called ClinicBooking, but not the order example. Scenario: a patient books an appointment. Availability is checked by a separate scheduling service, the appointment is saved, an SMS-provider API key is read from a secret, a booking-confirmed event goes out on pub/sub, a confirmation is sent through an output binding, and a reminder job is scheduled for the day before. Map it onto the building blocks and then go ahead and build it, no need to wait for my confirmation.",
+      "expected_output": "The agent restates the clinic scenario mapped onto the 7 building-block roles, then scaffolds the same structure with domain-specific names: a companion scheduling service instead of pricing-service, appointment-oriented activities/topics/models, all components present, and checks passing.",
+      "files": [],
+      "expectations": [
+        "Before creating files, the agent restates the scenario as a mapping that names each of the seven building blocks (workflow, service invocation, state, secrets, pub/sub, bindings, jobs) to a clinic step",
+        "The companion service folder is named after the scheduling domain (not pricing-service) and is listed as a second app with its own appID in ClinicBooking/dapr.yaml",
+        "No file under ClinicBooking contains the strings `calculate-total`, `order-completed` or `OrderInput`",
+        "ClinicBooking/resources/ contains statestore.yaml, pubsub.yaml, secretstore.yaml, an http output binding and a cron input binding",
+        "The workflow in src/workflow.ts is an `async function*` and the activity that invokes the companion service uses daprClient.invoker.invoke with the companion's app id",
+        "The reminder job is scheduled via an HTTP call to the sidecar's /v1.0/jobs/ endpoint and src/index.ts exposes a POST /job/:jobName callback route",
+        "The agent runs `npx tsc --noEmit` in both the main app folder and the companion service folder"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "underspecified-node-request",
+      "prompt": "I'd like a dapr demo in node/typescript",
+      "expected_output": "The skill's Check specification path: ask whether to use the default Order Processing scenario or a different business scenario, then ask the project name, before scaffolding anything.",
+      "files": [],
+      "expectations": [
+        "The agent asks whether to use the default Order Processing reference scenario or describe a different business scenario",
+        "The agent asks this before creating any files or folders",
+        "The agent does not run `npm install`, `npx tsc` or `dapr` commands in this turn",
+        "No dapr.yaml, package.json or resources/ folder is created in the working directory",
+        "The agent does not output the final message 'The <ProjectRoot> workflow application is created...' in this turn"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "approval-scenario-raise-event",
+      "prompt": "Create a TypeScript Dapr building-blocks app called ExpenseFlow. Scenario: an employee submits an expense claim. A separate policy service checks the claim against the expense policy, the claim is saved, a payroll API key is read from a secret, and claims over 500 wait for a manager to approve or reject them before an expense-approved event is published, a confirmation goes out through an output binding, and a payout job is scheduled. Go ahead and build it without asking me to confirm.",
+      "expected_output": "The agent maps the scenario onto the building blocks and scaffolds the standard structure. Because the workflow waits for a manager decision with ctx.waitForExternalEvent, src/index.ts also exposes POST /raise-event/:instanceId/:eventName calling workflowClient.raiseEvent, and local.http contains the matching raise-event request.",
+      "files": [],
+      "expectations": [
+        "src/workflow.ts is an `async function*` that calls `yield ctx.waitForExternalEvent(\"<event-name>\")` for claims over 500",
+        "src/index.ts defines `app.post(\"/raise-event/:instanceId/:eventName\", ...)` that calls `workflowClient.raiseEvent(req.params.instanceId, req.params.eventName, req.body)`, alongside /start, /status/:instanceId, /pause/:instanceId, /resume/:instanceId, /terminate/:instanceId and /purge/:instanceId",
+        "local.http contains a `POST {{host}}/raise-event/{{instanceId}}/<event-name>` request whose event name matches the name used in `ctx.waitForExternalEvent(...)` and whose JSON body matches the payload the workflow reads",
+        "The secret is read with daprClient.secret.get(\"secretstore\", \"<SECRET_ENV_VAR_NAME>\") using the same upper-case environment variable name that the README tells the user to export before `dapr run -f .`",
+        "The agent runs `npx tsc --noEmit` in both the main app folder and the companion service folder"
+      ]
+    }
+  ]
+}

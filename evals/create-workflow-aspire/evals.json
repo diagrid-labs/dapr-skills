@@ -1,0 +1,55 @@
+{
+  "skill_name": "create-workflow-aspire",
+  "evals": [
+    {
+      "id": 1,
+      "name": "device-provisioning-task-chaining",
+      "prompt": "Build a Dapr workflow app with .NET Aspire called DeviceProvisioning. When a new IoT gateway is registered (input: device id, serial number, site code) the workflow runs these steps in order: RegisterDevice, IssueCertificate, PushConfiguration, ActivateDevice. Each step uses the previous step's output. Output: device id, certificate thumbprint, and activation status.",
+      "expected_output": "A DeviceProvisioning Aspire solution scaffolded with aspire new (including --suppress-agent-init), Web project removed, ApiService with a task-chaining workflow, AppHost wiring Dapr + Valkey + Diagrid Dashboard, correct package versions, successful build, README.md and the exact final message.",
+      "files": [],
+      "expectations": [
+        "The agent runs `aspire new aspire-starter -n DeviceProvisioning -o DeviceProvisioning` including all three flags --non-interactive, --test-framework none and --suppress-agent-init",
+        "The DeviceProvisioning.Web folder does not exist after setup and neither DeviceProvisioning.AppHost.csproj nor the solution file references the Web project",
+        "The Sdk attribute in DeviceProvisioning.AppHost/DeviceProvisioning.AppHost.csproj keeps the Aspire.AppHost.Sdk version written by aspire new, and the Aspire.Hosting.Valkey PackageReference uses that same version; CommunityToolkit.Aspire.Hosting.Dapr is version 13.0.0",
+        "DeviceProvisioning.ApiService.csproj references Dapr.Workflow version 1.18.10 and the ServiceDefaults project",
+        "AppHost.cs calls builder.AddDapr(), AddValkey(\"cache\", 16379, ...), WithDaprSidecar(...) on the ApiService project, and adds the ghcr.io/diagridio/diagrid-dashboard container",
+        "The workflow class awaits RegisterDevice, IssueCertificate, PushConfiguration and ActivateDevice activities sequentially via context.CallActivityAsync, passing each output into the next call",
+        "ApiService Program.cs calls builder.AddServiceDefaults(), builder.Services.AddDaprWorkflow() and app.MapDefaultEndpoints(), and maps POST /start and GET /status/{instanceId}",
+        "DeviceProvisioning.ApiService/DeviceProvisioning.ApiService.http sets @host to the ApiService launchSettings.json http port and contains start, status, pause, resume and terminate requests matching the Program.cs endpoints; it has no leftover /weatherforecast request, and it has a raise-event request only if Program.cs maps a raise-event endpoint",
+        "The agent runs dotnet build on the solution file and it succeeds; the last output is exactly: The DeviceProvisioning workflow application is created. Open the README.md file in the DeviceProvisioning folder for a summary and instructions for running locally."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "travel-booking-saga-compensation",
+      "prompt": "Create an Aspire workflow application named TripBooking. A booking request (trip id, traveler, flight number, hotel id, car class) should reserve a flight, then a hotel, then a rental car. If any later step fails, undo the earlier reservations in reverse order (cancel car, cancel hotel, cancel flight as applicable) and return a result with a success flag and message instead of failing the workflow.",
+      "expected_output": "A TripBooking Aspire solution whose workflow implements the saga pattern with dedicated compensating activities run in reverse order, returning a typed result rather than rethrowing; component files for both the sidecar and the dashboard are correct.",
+      "files": [],
+      "expectations": [
+        "TripBooking.AppHost/Resources/statestore.yaml defines a component named workflow-store of type state.redis with redisHost localhost:16379 and actorStateStore true",
+        "TripBooking.AppHost/Resources/statestore-dashboard.yaml defines workflow-store with redisHost host.docker.internal:16379, actorStateStore true, and scopes containing diagrid-dashboard",
+        "The redisPassword in both statestore files equals the cache-password parameter value configured in AppHost.cs",
+        "Activities exist for reserving flight, hotel and car and for a dedicated compensating (cancel/undo) activity for each forward step",
+        "The workflow wraps the forward steps in try/catch, calls the compensating activities in reverse order of the completed forward steps, and returns a result record with a success flag instead of rethrowing",
+        "Workflow and activity classes are internal sealed and placed in the TripBooking.ApiService Workflows and Activities folders respectively",
+        "No dapr.yaml multi-app run file is created and the README instructs to start the app with `aspire run` without telling the user to start Redis or Valkey separately",
+        "No .agents/ folder is created inside TripBooking and the agent does not modify ~/.claude/settings.json"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "underspecified-aspire-request",
+      "prompt": "Set me up with an Aspire + Dapr workflow solution please",
+      "expected_output": "The skill enters the Check specification path: it interviews the user one question at a time (purpose, workflow/patterns, input/output, name) and does not scaffold anything or run prerequisite checks yet.",
+      "files": [],
+      "expectations": [
+        "The agent asks what the purpose of the workflow application is before creating any files",
+        "The agent asks one specification question per message rather than listing all four at once",
+        "The agent does not run `aspire new` or any `dotnet add package` command in this turn",
+        "The agent does not invoke the check-prereq-aspire skill and does not run `aspire --version` or `dotnet --version` as an automatic pre-step",
+        "No .sln/.slnx, AppHost.cs or README.md file is created in the working directory",
+        "The agent does not output the final message 'The <SolutionRoot> workflow application is created...' in this turn"
+      ]
+    }
+  ]
+}

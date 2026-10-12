@@ -1,6 +1,6 @@
 # Agent Observability Checklist — Python (native dapr-agents only)
 
-Apply these rules only when `flavor == native`. For `framework-wrapper` projects, emit a single `info` finding that observability is handled by the wrapped framework (LangSmith / Arize / OpenAI traces) and stop.
+Apply these rules only when `flavor == native`. For `framework-wrapper` projects, emit the single `info` finding `DAG-OBS-000` that observability is handled by the wrapped framework (LangSmith / Arize / OpenAI traces) and stop.
 
 Rule source: see [`../create-agent-python/REFERENCE.md`](../create-agent-python/REFERENCE.md) — section "Observability".
 

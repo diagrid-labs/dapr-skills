@@ -1,0 +1,52 @@
+{
+  "skill_name": "review-agent-memory",
+  "evals": [
+    {
+      "id": 1,
+      "name": "python-native-workflow-store-and-hardcoded-key",
+      "prompt": "Before we deploy the travel concierge agent in ./travel-concierge-python, check its state store and memory configuration. It's a dapr-agents project.",
+      "expected_output": "A review-agent-memory report with Language: python. Critical DAG-MEM-001 because resources/agent-workflow.yaml has no actorStateStore: \"true\"; warning DAG-MEM-003 for the plain-text OpenAI key in resources/llm-provider.yaml; warning DAG-MEM-006 because the DurableAgent in main.py has no state=AgentStateConfig(...). ConversationListMemory in examples/local_demo.py (marked dev-only) is downgraded to Please verify. agent-memory.yaml is correct and not flagged.",
+      "files": ["evals/review-agent-memory/files/travel-concierge-python/"],
+      "expectations": [
+        "The report starts with `# Dapr review — review-agent-memory` and contains `Language: python`",
+        "Under `## Critical` the report contains [DAG-MEM-001] citing resources/agent-workflow.yaml (any line 1-14) for the missing actorStateStore: \"true\"",
+        "The report contains [DAG-MEM-003] citing resources/llm-provider.yaml:9 or :10 for the hardcoded key, with a Fix that uses `{{OPENAI_API_KEY}}` templating or a secretKeyRef",
+        "The report contains [DAG-MEM-006] citing travel-concierge-agent/main.py (the DurableAgent( at line 9) for the missing state=AgentStateConfig(...)",
+        "DAG-MEM-002 for ConversationListMemory in travel-concierge-agent/examples/local_demo.py appears under `## Please verify`, NOT under `## Critical`",
+        "The report does NOT contain DAG-MEM-007 for resources/agent-memory.yaml (actorStateStore is \"false\"), DAG-MEM-008 (single-agent project, no registry), or DAG-MEM-005 for main.py (it passes memory=)",
+        "The report ends with a `## Next steps` section with no text after it, and the transcript shows only Read, Grep and Glob calls (no Write, Edit or Bash)"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "dotnet-sessionless-invoker-and-package-floor",
+      "prompt": "Our helpdesk agent in helpdesk-dotnet (Microsoft Agent Framework + Diagrid.AI.Microsoft.AgentFramework) forgets everything between /ask calls. Can you review its memory and persistence setup?",
+      "expected_output": "A review-agent-memory report with Language: dotnet. DAG-MEM-005 for invoker.RunAgentAsync in Program.cs called without an AgentSession and with no CreateSessionAsync/AttachSession anywhere. DAG-MEM-006 for Microsoft.Extensions.AI pinned at 10.1.0 (below 10.6.0). The explicit Dapr.Workflow 1.18.10 reference, the context.RunAgentAsync calls inside TicketWorkflow, and the absence of agent-memory.yaml are not findings.",
+      "files": ["evals/review-agent-memory/files/helpdesk-dotnet/"],
+      "expectations": [
+        "The report starts with `# Dapr review — review-agent-memory` and contains `Language: dotnet`",
+        "The report contains [DAG-MEM-005] citing HelpdeskApp/Program.cs:30 (invoker.RunAgentAsync without a session), with a Fix mentioning CreateSessionAsync and AttachSession",
+        "The report contains [DAG-MEM-006] citing HelpdeskApp/HelpdeskApp.csproj:11 for Microsoft.Extensions.AI 10.1.0 being below 10.6.0",
+        "The report does NOT flag the Dapr.Workflow 1.18.10 reference (HelpdeskApp.csproj:10) under DAG-MEM-006 and does not recommend removing it",
+        "The report does NOT cite HelpdeskApp/Workflows/TicketWorkflow.cs for DAG-MEM-005 (the context.RunAgentAsync calls on lines 13 and 17 are one-shot workflow agent runs)",
+        "The report does NOT treat the missing resources/agent-memory.yaml as a finding, and contains no DAG-MEM-001 (agent-workflow.yaml has actorStateStore \"true\") and no DAG-MEM-003 (the key is `{{ANTHROPIC_API_KEY}}`)",
+        "The report uses no Python-only rule ids (DAG-MEM-002, DAG-MEM-008), and the transcript shows no Write, Edit or Bash calls"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "dotnet-clean-single-agent-no-findings",
+      "prompt": "review agent memory for faq-bot-dotnet. there's no agent-memory.yaml in resources and no Dapr.Workflow package in the csproj, is that a problem?",
+      "expected_output": "The project matches the create-agent-dotnet single-agent scaffold: agent-workflow.yaml with actorStateStore \"true\", templated LLM key, Diagrid.AI.Microsoft.AgentFramework 1.2.0 only, and a session created with CreateSessionAsync / reattached with AttachSession. The report body is `No issues found.` followed by Next steps; neither the missing agent-memory.yaml nor the missing explicit Dapr.Workflow reference is reported.",
+      "files": ["evals/review-agent-memory/files/faq-bot-dotnet/"],
+      "expectations": [
+        "The report starts with `# Dapr review — review-agent-memory` and contains `Language: dotnet`",
+        "The report body contains `No issues found.` and no finding bullets (no `[DAG-MEM-` entries)",
+        "The `Found:` line reports 0 critical, 0 warnings, 0 suggestions and 0 to verify",
+        "The report does not describe the missing agent-memory.yaml or the missing explicit Dapr.Workflow package reference as a problem",
+        "The report ends with a `## Next steps` section that suggests running review-agent-tools, and no text follows it",
+        "No Write, Edit or Bash calls appear in the transcript and no fixture file is modified"
+      ]
+    }
+  ]
+}

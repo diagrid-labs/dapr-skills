@@ -1,0 +1,57 @@
+{
+  "skill_name": "create-agent-python",
+  "evals": [
+    {
+      "id": 1,
+      "name": "native-single-agent-ticket-triage-openai",
+      "prompt": "Create a Python agent with dapr-agents called ticket-triage. It triages incoming support tickets: it looks up the customer, checks their SLA tier, and opens an escalation in our tracker when a premium customer is waiting too long. Tools: lookup_customer(customer_id: str), get_sla_tier(customer_id: str), open_escalation(ticket_id: str, reason: str). open_escalation creates a record, so it must be safe to retry. Single agent, augmented-llm pattern, OpenAI gpt-4o-mini, and include observability.",
+      "expected_output": "A ticket-triage/ project with a native dapr-agents single agent in ticket-triage/ticket-triage-agent/, resources for memory, workflow (actor-enabled), OpenAI conversation component with a templated key, and tracing; the docker-compose observability stack and logging_config.py; dapr.yaml wired to tracing.yaml; uv venv / uv sync run; a README; and the exact final message.",
+      "files": [],
+      "expectations": [
+        "Creates ticket-triage/.gitignore, ticket-triage/dapr.yaml, ticket-triage/local.http, ticket-triage/README.md, ticket-triage/docker-compose.observability.yaml and ticket-triage/ticket-triage-agent/ containing pyproject.toml, main.py, tools.py, models.py and logging_config.py",
+        "ticket-triage/resources/ contains agent-memory.yaml (actorStateStore \"false\"), agent-workflow.yaml (actorStateStore \"true\"), llm-provider.yaml (type conversation.openai, key value \"{{OPENAI_API_KEY}}\", no literal sk- key) and tracing.yaml (kind: Configuration with a samplingRate), and does NOT contain agent-pubsub.yaml or agent-registry.yaml",
+        "dapr.yaml has resourcesPath: ./resources, logLevel: info and configFilePath: ./resources/tracing.yaml in common, and one app with appDirPath: ticket-triage-agent, a metricsPort and command [\"uv\", \"run\", \"main.py\"]",
+        "main.py builds a DurableAgent with llm=DaprChatClient(component_name=\"llm-provider\"), memory=AgentMemoryConfig(store=ConversationDaprStateMemory(store_name=\"agent-memory\")), state=AgentStateConfig(store=StateStoreService(store_name=\"agent-workflow\")) and execution=AgentExecutionConfig(max_iterations=...), calls configure_logging(), and does not pass max_iterations directly to DurableAgent",
+        "tools.py defines lookup_customer, get_sla_tier and open_escalation with the @tool decorator imported from dapr_agents, each with a docstring and an args_model; open_escalation takes or sends an idempotency key; tools.py contains no print( calls",
+        "ticket-triage-agent/pyproject.toml declares requires-python \">=3.11,<3.14\" and \"dapr-agents>=1.0\" with >= floors (no == pins); the agent runs `uv venv` and `uv sync` in ticket-triage-agent and ticket-triage-agent/uv.lock exists; .gitignore does not list uv.lock",
+        "README.md contains a mermaid diagram, `dapr run -f .`, a curl example for POST /agent/run, the Zipkin URL http://localhost:9411, and describes the Diagrid Dev Dashboard as a separate `docker run` that dapr init does not provision",
+        "The final output is exactly: The ticket-triage agent application is created. Open the README.md file in the ticket-triage folder for a summary and instructions for running locally."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "langgraph-wrapper-iot-alerts-anthropic",
+      "prompt": "I've got a LangGraph agent that summarizes IoT sensor alerts and I want it to survive restarts. Scaffold a Python project called iot-alerts that runs it durably on Dapr using the diagrid langgraph wrapper. One agent, one tool: get_device_readings(device_id: str, minutes: int) that returns the last readings for a device. Use Anthropic Claude. No observability stack needed.",
+      "expected_output": "A wrapper-path project: iot-alerts/iot-alerts-agent/ with diagrid[langgraph], a main.py that wraps a compiled LangGraph StateGraph in DaprWorkflowGraphRunner from diagrid.agent.langgraph and calls serve() without pub/sub arguments, tools defined with LangGraph/LangChain's own decorator, only agent-workflow.yaml in resources/ (no llm-provider.yaml or agent-memory.yaml for a wrapper), no observability files, no pattern question, the API key read from the environment, uv sync run, and the exact final message.",
+      "files": [],
+      "expectations": [
+        "The agent does NOT ask the user to choose an agent pattern (augmented-llm, prompt-chaining, routing, parallelization, orchestrator-workers, evaluator-optimizer)",
+        "The transcript shows the diagrid extras being resolved with a curl to https://pypi.org/pypi/diagrid/json, or, if that fails, the user is told that a dated snapshot from REFERENCE.md is used",
+        "iot-alerts/iot-alerts-agent/pyproject.toml declares \"diagrid[langgraph]>=0.4\" and requires-python \">=3.11,<3.14\", and does not depend on dapr-agents",
+        "iot-alerts/iot-alerts-agent/main.py imports DaprWorkflowGraphRunner from diagrid.agent.langgraph (not from the top-level diagrid package), passes it a compiled graph and a name= argument, sets max_steps explicitly, and calls serve() without pubsub_name, subscribe_topic or publish_topic",
+        "No generated Python file imports `tool` from dapr_agents or constructs a DurableAgent",
+        "No generated file contains a literal Anthropic key (no `sk-ant-` string); the key is read from the ANTHROPIC_API_KEY environment variable",
+        "iot-alerts/resources/ contains agent-workflow.yaml (actorStateStore \"true\") but no llm-provider.yaml and no agent-memory.yaml, because the wrapped LangGraph model calls Anthropic directly and main.py references neither component (per the skill's \"Resources per flavor\" table)",
+        "The project contains no resources/tracing.yaml, logging_config.py, docker-compose.observability.yaml, agent-pubsub.yaml or agent-registry.yaml, and dapr.yaml has no configFilePath",
+        "The agent runs `uv sync` in iot-alerts-agent and the final output is exactly: The iot-alerts agent application is created. Open the README.md file in the iot-alerts folder for a summary and instructions for running locally."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "native-coordinator-specialists-refuses-hardcoded-key",
+      "prompt": "build a multi-agent onboarding team in python with dapr-agents: a coordinator plus two specialists, accounts (creates the new hire's email and slack accounts) and equipment (orders a laptop and badge). project name onboarding-crew. use google gemini, here's my key so it just works: AIza-EXAMPLE-KEY-DO-NOT-USE, just paste it into the config. skip observability.",
+      "expected_output": "A native coordinator + specialists project with coordinator/, accounts/ and equipment/ agent folders, pub/sub and registry components, <domain>.requests topics, agent-registry wiring on every agent, unique ports in dapr.yaml, a Google AI conversation component (resources/llm-provider.yaml from dapr-shared/agent-llm-googleai.md, linked from the skill) that uses {{GOOGLE_API_KEY}} templating instead of the pasted key, no observability files, uv sync per agent, and the exact final message.",
+      "files": [],
+      "expectations": [
+        "The string AIza-EXAMPLE-KEY-DO-NOT-USE does not appear in any generated file; resources/llm-provider.yaml has type conversation.googleai and the key entry has value \"{{GOOGLE_API_KEY}}\", and README.md tells the user to set the GOOGLE_API_KEY environment variable",
+        "Creates onboarding-crew/coordinator/, onboarding-crew/accounts/ and onboarding-crew/equipment/, each containing pyproject.toml, main.py, tools.py and models.py",
+        "onboarding-crew/resources/ contains agent-pubsub.yaml (component name agent-pubsub), agent-registry.yaml with keyPrefix value none, agent-memory.yaml, and agent-workflow.yaml with actorStateStore \"true\"",
+        "accounts/main.py and equipment/main.py pass pubsub=AgentPubSubConfig(pubsub_name=\"agent-pubsub\", agent_topic=\"accounts.requests\" / \"equipment.requests\", broadcast_topic=\"agents.broadcast\"); coordinator/main.py uses agent_topic=\"coordinator.requests\" and execution=AgentExecutionConfig(orchestration_mode=OrchestrationMode.AGENT, max_iterations=...)",
+        "Every agent's DurableAgent passes registry=AgentRegistryConfig(store=StateStoreService(store_name=\"agent-registry\"))",
+        "dapr.yaml lists three apps (coordinator, accounts, equipment) whose appPort, daprHTTPPort, daprGRPCPort and metricsPort values are all unique",
+        "Observability is skipped: no resources/tracing.yaml, no configFilePath in dapr.yaml, no logging_config.py and no docker-compose.observability.yaml",
+        "The agent runs `uv sync` in each of coordinator, accounts and equipment, and the final output is exactly: The onboarding-crew agent application is created. Open the README.md file in the onboarding-crew folder for a summary and instructions for running locally."
+      ]
+    }
+  ]
+}

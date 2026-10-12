@@ -74,6 +74,7 @@ Your refactoring should:
 - **Inline Comments:** Use sparingly, only for complex algorithms or non-obvious business logic.
 - **Public API Documentation:** Maintain minimal documentation only where required by language best practices (e.g., Go's exported identifiers, Java's public APIs).
 - **Self-Documenting Code:** Prioritize descriptive variable names, function names, and clear code structure over explanatory comments.
+- **Keep the activity TODO marker:** Do not remove a `TODO: implement actual functionality` comment from an activity body whose behaviour is still a stub, and do not add any other `TODO` or placeholder comment (see `guardrails.md`, "Output hygiene").
 
 **3.2. Code Organization and Prettification**
 - **Import Organization:** Group imports logically (standard library, third-party, local) with appropriate separation, sorted alphabetically within groups

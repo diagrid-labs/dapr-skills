@@ -4,10 +4,13 @@ description: This skill checks prerequisites for building Dapr Workflow apps in 
 allowed-tools:
   - Bash(uname -s)
   - Bash(python --version)
+  - Bash(python3 --version)
   - Bash(uv --version)
   - Bash(dapr:*)
   - Bash(docker info:*)
   - Bash(podman info:*)
+  - Bash(powershell:*)
+  - Read
   - mcp__ide__getDiagnostics
 ---
 
@@ -24,7 +27,7 @@ The following must be installed:
 - [Python 3.12+](https://www.python.org/downloads/)
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) (Astral)
 - [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation)
-- [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/)
+- [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.18+)
 
 ## Prerequisite Checks
 

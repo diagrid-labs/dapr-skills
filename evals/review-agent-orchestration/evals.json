@@ -1,0 +1,84 @@
+{
+  "skill_name": "review-agent-orchestration",
+  "evals": [
+    {
+      "id": 1,
+      "name": "python-event-team-topics-loops-and-ports",
+      "prompt": "We have a coordinator + venue + catering agent team in ./event-team-python (diagrid openai-agents wrapper, pub/sub between them). Catering keeps re-triggering itself and one sidecar sometimes doesn't come up. Review the multi-agent orchestration.",
+      "expected_output": "Topology detected as orchestrator (three entrypoints plus the agent-pubsub.yaml / publish_topic pub/sub markers). Critical DAG-ORCH-001: catering publishes to its own subscription topic catering.requests. Warnings: DAG-ORCH-002 (venue runner without max_iterations), DAG-ORCH-003 (topic venue-tasks breaks the <domain>.requests convention), DAG-ORCH-004 (coordinator publishes to music.requests but dapr.yaml has no music app), DAG-ORCH-007 (venue and catering share daprHTTPPort 3501). Coordinator and catering runners set max_iterations; Redis is localhost; agent-registry.yaml exists.",
+      "files": ["evals/review-agent-orchestration/files/event-team-python/"],
+      "expectations": [
+        "The report starts with `# Dapr review — review-agent-orchestration` and contains `Language: python`; it is not the single-agent `Nothing to review:` result",
+        "Under `## Critical` the report contains [DAG-ORCH-001] citing catering/main.py:25 or :26 (publish_topic equals subscribe_topic `catering.requests`)",
+        "The report contains [DAG-ORCH-002] citing venue/main.py:20 (DaprWorkflowAgentRunner without max_iterations), and does NOT contain DAG-ORCH-002 for coordinator/main.py:42 or catering/main.py:20, which set max_iterations",
+        "The report contains [DAG-ORCH-003] for the topic `venue-tasks`, citing venue/main.py:25 and/or coordinator/main.py:12",
+        "The report contains [DAG-ORCH-004] for the `music.requests` topic published at coordinator/main.py:28, stating there is no `music` app in dapr.yaml",
+        "The report contains [DAG-ORCH-007] citing dapr.yaml (line 18 or 25) for the daprHTTPPort 3501 shared by the venue and catering apps",
+        "The report does NOT contain DAG-ORCH-005 (resources/agent-registry.yaml exists) or DAG-ORCH-009 (all Redis hosts are localhost:6379)",
+        "The report ends with `## Next steps` with no text after it, and the transcript shows only Read, Grep and Glob calls with no fixture file modified"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "dotnet-in-process-workflow-orchestrator",
+      "prompt": "Check the agent orchestration in trip-planner-dotnet. It's a .NET app where a Dapr workflow fans out to a flights agent and a hotels agent and then a coordinator agent merges the answers.",
+      "expected_output": "The project is classified as orchestrator with shape in-process (three WithAgent registrations in one app and a Workflow<,> that calls context.RunAgentAsync). Because it uses no pub/sub, DAG-ORCH-003/004/005 stay silent and DAG-ORCH-007 is not applied (single app). The only finding is the info DAG-ORCH-002: TripWorkflow uses the agents' .Text without checking for the 20-iteration cap message.",
+      "files": ["evals/review-agent-orchestration/files/trip-planner-dotnet/"],
+      "expectations": [
+        "The report starts with `# Dapr review — review-agent-orchestration`, contains `Language: dotnet`, and is not the single-agent `Nothing to review:` result",
+        "The transcript or report identifies the topology as orchestrator with shape in-process (several WithAgent( registrations in one app / a Workflow calling context.RunAgentAsync)",
+        "Under `## Suggestions` the report contains [DAG-ORCH-002] citing TripPlannerApp/Workflows/TripWorkflow.cs (lines 26, 29 or 32) for using `.Text` without checking for the `exceeded the maximum of 20 iterations` cap message",
+        "The DAG-ORCH-002 finding does NOT tell the user to add a MaxIterations / max_iterations parameter to WithAgent or AgentRunOptions",
+        "The report contains no DAG-ORCH-003, DAG-ORCH-004 or DAG-ORCH-005 findings and does not suggest adding agent-pubsub.yaml or agent-registry.yaml",
+        "The report contains no DAG-ORCH-007 finding and none of the Python-only ids DAG-ORCH-001, DAG-ORCH-006 or DAG-ORCH-008",
+        "No Write, Edit or Bash calls appear in the transcript"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "single-agent-project-is-silent",
+      "prompt": "audit agent pub/sub and handoffs in support-inbox-python",
+      "expected_output": "Only one agent entrypoint exists (support-inbox-agent/main.py), so the topology is single-agent (and, being native, topology_unverified is false). There is nothing to review: the skill emits the generic nothing-to-review line from review-report-format.md (single-agent project, no rule id) and stops: the non-conventional topic `support_inbox`, the missing max_iterations and the agent-pubsub.yaml are not reported.",
+      "files": ["evals/review-agent-orchestration/files/support-inbox-python/"],
+      "expectations": [
+        "The report starts with `# Dapr review — review-agent-orchestration` and contains `Language: python`",
+        "The report body is the generic nothing-to-review line stating that the project is single-agent so the orchestration rules do not apply, with no `[DAG-ORCH-` finding bullets (in particular no DAG-ORCH-010, since the project is native, not a framework wrapper)",
+        "The topic `support_inbox` (support-inbox-agent/main.py:23) is NOT reported as a DAG-ORCH-003 topic-convention violation",
+        "The missing max_iterations / AgentExecutionConfig on the DurableAgent is NOT reported as DAG-ORCH-002",
+        "The report ends with a `## Next steps` section with no text after it",
+        "No Write, Edit or Bash calls appear in the transcript and no fixture file is modified"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "python-native-party-team-topics-bound-and-registry",
+      "prompt": "Review the multi-agent setup in ./party-team-native-python. It's a dapr-agents (DurableAgent) coordinator with venue and catering specialists. The coordinator seems to keep starting new runs on its own and never manages to hand anything to the specialists.",
+      "expected_output": "Topology detected as orchestrator: three entrypoints plus agent-pubsub.yaml and AgentPubSubConfig, even though there is no agent-registry.yaml. Critical DAG-ORCH-001: the coordinator's AgentPubSubConfig uses agent_topic equal to broadcast_topic (agents.broadcast). Critical DAG-ORCH-005: the coordinator sets orchestration_mode but there is no agent-registry component and no AgentRegistryConfig, so it fails with RuntimeError registry_state must be provided. Warnings: DAG-ORCH-002 (the coordinator's AgentExecutionConfig has no max_iterations) and DAG-ORCH-003 (venue agent_topic venue-tasks). Not reported: DAG-ORCH-007 (ports unique), DAG-ORCH-009 (Redis on localhost), DAG-ORCH-008 (coordinator has no memory= but agent-memory.yaml exists and is auto-wired), DAG-ORCH-004 (no explicit publish calls).",
+      "files": ["evals/review-agent-orchestration/files/party-team-native-python/"],
+      "expectations": [
+        "The report starts with `# Dapr review — review-agent-orchestration` and contains `Language: python`; it is not a single-agent / nothing-to-review result even though resources/ has no agent-registry.yaml",
+        "Under `## Critical` the report contains [DAG-ORCH-001] citing coordinator/main.py (line 23 or 24) because agent_topic and broadcast_topic are both `agents.broadcast`",
+        "Under `## Critical` the report contains [DAG-ORCH-005] citing coordinator/main.py (or resources/) for the missing agent registry, and its Why or Fix mentions the coordinator (orchestration_mode) needing AgentRegistryConfig / an agent-registry component",
+        "The report contains [DAG-ORCH-002] citing coordinator/main.py (line 26 or 27) for AgentExecutionConfig without max_iterations, and does NOT contain DAG-ORCH-002 for venue/main.py or catering/main.py, which pass max_iterations=10",
+        "The report contains [DAG-ORCH-003] for the topic `venue-tasks` citing venue/main.py:22, and no DAG-ORCH-003 for `catering.requests` or `agents.broadcast`",
+        "The report does NOT contain DAG-ORCH-007 (all appID/appPort/daprHTTPPort/daprGRPCPort values are unique), DAG-ORCH-009 (Redis is localhost:6379), DAG-ORCH-008 (agent-memory.yaml exists, so the coordinator auto-wires memory) or DAG-ORCH-010",
+        "The report does NOT tell the user to add publish_topic / subscribe_topic or runner.serve(...) topic arguments (those are wrapper-only); topic fixes refer to AgentPubSubConfig agent_topic / broadcast_topic",
+        "The report ends with `## Next steps` with no text after it, and the transcript shows only Read, Grep and Glob calls with no fixture file modified"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "wrapper-two-entrypoints-without-pubsub-asks-to-verify",
+      "prompt": "check the agent orchestration of content-duo-crewai-python, it's a researcher and a writer built with crewai on the diagrid wrapper",
+      "expected_output": "Two agent entrypoints (researcher/main.py, writer/main.py) in a diagrid[crewai] framework-wrapper project, but no pub/sub marker (no agent-pubsub.yaml, no publish_topic/subscribe_topic, no AgentPubSubConfig). Detection classifies the project as single-agent with topology_unverified true, so instead of the nothing-to-review result the report contains one DAG-ORCH-010 entry under Please verify asking the user to confirm the project is single-agent. No other DAG-ORCH rule is applied, so the runners without max_iterations are not reported as DAG-ORCH-002.",
+      "files": ["evals/review-agent-orchestration/files/content-duo-crewai-python/"],
+      "expectations": [
+        "The report starts with `# Dapr review — review-agent-orchestration` and contains `Language: python`",
+        "The report's only finding is [DAG-ORCH-010] under `## Please verify`, asking the user to confirm the project is single-agent (two entrypoints, no pub/sub wiring), citing dapr.yaml or one of the main.py files",
+        "The report does NOT contain DAG-ORCH-002 for researcher/main.py or writer/main.py (the runners lack max_iterations, but orchestration rules are not applied to an unverified single-agent project), and contains no DAG-ORCH-005 finding",
+        "The report does NOT present the generic nothing-to-review / single-agent result as its whole body, and has no `## Critical`, `## Warnings` or `## Suggestions` section",
+        "The report ends with `## Next steps` with no text after it, and no Write, Edit or Bash calls appear in the transcript"
+      ]
+    }
+  ]
+}

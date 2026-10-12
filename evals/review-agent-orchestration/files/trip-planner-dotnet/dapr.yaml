@@ -1,0 +1,14 @@
+version: 1
+common:
+  resourcesPath: ./resources
+  appLogDestination: fileAndConsole
+  daprdLogDestination: fileAndConsole
+  logLevel: info
+apps:
+  - appID: trip-planner
+    appDirPath: TripPlannerApp
+    appPort: 5100
+    daprHTTPPort: 3500
+    daprGRPCPort: 50001
+    metricsPort: 9090
+    command: ["dotnet", "run"]

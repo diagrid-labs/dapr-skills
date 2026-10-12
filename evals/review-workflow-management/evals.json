@@ -1,0 +1,74 @@
+{
+  "skill_name": "review-workflow-management",
+  "evals": [
+    {
+      "id": 1,
+      "name": "dotnet-expense-approval-management-gaps",
+      "prompt": "The expense approval service goes to production next sprint and other teams' services will call it. Please review the workflow management API in evals/review-workflow-management/files/expense-approval-dotnet.",
+      "expected_output": "A read-only management report for the .NET project. Critical: DWF-MGT-006 (ExpenseApprovalWorkflow waits for 'manager-decision' via WaitForExternalEventAsync but Program.cs has no RaiseEventAsync endpoint), DWF-MGT-011 (WaitForWorkflowCompletionAsync without a timeout token, Program.cs:43). Warnings: DWF-MGT-005 (no ResumeWorkflowAsync), DWF-MGT-007 (hard-coded instanceId 'expense-approval', :19), DWF-MGT-008 (/start returns Accepted without the instanceId, :22), DWF-MGT-009 (status checks 'state is null' instead of state.Exists, :30), DWF-MGT-010 (mutating endpoints have no auth), DWF-MGT-012 (purge calls PurgeInstanceAsync with no state check or RpcException handling and always returns Ok, :67). Start, status, terminate and pause exist, so DWF-MGT-001..004 are not reported.",
+      "files": [
+        "evals/review-workflow-management/files/expense-approval-dotnet/ExpenseApproval/ExpenseApproval.csproj",
+        "evals/review-workflow-management/files/expense-approval-dotnet/ExpenseApproval/Program.cs",
+        "evals/review-workflow-management/files/expense-approval-dotnet/ExpenseApproval/Models/ExpenseModels.cs",
+        "evals/review-workflow-management/files/expense-approval-dotnet/ExpenseApproval/Workflows/ExpenseApprovalWorkflow.cs",
+        "evals/review-workflow-management/files/expense-approval-dotnet/ExpenseApproval/Activities/ReimburseActivity.cs"
+      ],
+      "expectations": [
+        "The Critical section contains DWF-MGT-006 referencing Program.cs (no endpoint calls RaiseEventAsync) and justified by WaitForExternalEventAsync in Workflows/ExpenseApprovalWorkflow.cs",
+        "The Critical section contains DWF-MGT-011 at Program.cs:43 (WaitForWorkflowCompletionAsync with no CancellationToken/timeout)",
+        "The Warnings section contains DWF-MGT-005 referencing Program.cs (no endpoint calls ResumeWorkflowAsync)",
+        "The Warnings section contains DWF-MGT-007 at Program.cs:19 (hard-coded instanceId) and DWF-MGT-008 for the /start endpoint at Program.cs:22 (lines 13-23 acceptable)",
+        "The Warnings section contains DWF-MGT-009 for the /status endpoint (Program.cs:30, lines 25-37 acceptable) and states that a 'state is null' check is insufficient / state.Exists must be checked",
+        "The Warnings section contains DWF-MGT-012 at Program.cs:67 describing that the purge endpoint calls PurgeInstanceAsync without checking the instance state first (Exists / IsWorkflowCompleted) or handling RpcException, with a Fix that returns NotFound/Conflict (or terminates first); DWF-MGT-012 is not reported as critical",
+        "Does not report DWF-MGT-001, DWF-MGT-002, DWF-MGT-003 or DWF-MGT-004 (start, status, terminate and pause endpoints exist)",
+        "The report follows review-report-format.md (Critical before Warnings, rule ids ascending within each section, ends with '## Next steps' suggesting review-workflow-determinism and review-workflow-activity), and only Read/Grep/Glob are used with no file modified"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "python-loan-application-endpoints",
+      "prompt": "review the http endpoints for the loan application workflow (fastapi) in evals/review-workflow-management/files/loan-application-python - want to make sure ops can actually manage these instances",
+      "expected_output": "A management report with 'Language: python' for main.py. Critical: DWF-MGT-003 (no route calls terminate_workflow), DWF-MGT-011 (wait_for_workflow_completion without timeout_in_seconds, main.py:31). Warnings: DWF-MGT-009 (status route uses get_workflow_state without a None/404 check, main.py:25-26), DWF-MGT-012 (purge route calls purge_workflow with no state check or RpcError handling and always returns success, main.py:59). Suggestions: DWF-MGT-014 (returns state.__dict__ instead of the {state, output} envelope, main.py:26). The raise-event route exists for the workflow's wait_for_external_event, so DWF-MGT-006 is not reported; /start uses the request id and returns instance_id.",
+      "files": [
+        "evals/review-workflow-management/files/loan-application-python/pyproject.toml",
+        "evals/review-workflow-management/files/loan-application-python/runtime.py",
+        "evals/review-workflow-management/files/loan-application-python/models.py",
+        "evals/review-workflow-management/files/loan-application-python/workflow.py",
+        "evals/review-workflow-management/files/loan-application-python/activities.py",
+        "evals/review-workflow-management/files/loan-application-python/main.py"
+      ],
+      "expectations": [
+        "The report header contains 'Language: python'",
+        "The Critical section contains DWF-MGT-003 referencing main.py (no route calls terminate_workflow)",
+        "The Critical section contains DWF-MGT-011 at main.py:31 (wait_for_workflow_completion without a timeout), and its Fix mentions the timeout_in_seconds parameter",
+        "The Warnings section (not Critical) contains DWF-MGT-012 at main.py:59 (line 57 acceptable): purge_workflow is called without checking get_workflow_state for None / a non-terminal status and without handling the RpcError it raises, with a Fix that returns 404/409 (or terminates first); the report does not claim that purging a running instance silently drops its history",
+        "The Warnings section contains DWF-MGT-009 for the /status route (main.py:25 or :26) noting that get_workflow_state returns None for unknown instances, and the Suggestions section contains DWF-MGT-014 at main.py:26 (state.__dict__ instead of the {\"state\", \"output\"} envelope)",
+        "Does not report DWF-MGT-006 (the /raise-event route at main.py:47 calls raise_workflow_event for the wait_for_external_event at workflow.py:20)",
+        "Does not report DWF-MGT-001, DWF-MGT-002, DWF-MGT-004, DWF-MGT-005, DWF-MGT-007 or DWF-MGT-008 (start uses application.id and returns instance_id; status, pause and resume routes exist)",
+        "Uses only Read, Grep and Glob; no file is modified; the report ends with '## Next steps' and has no text after it"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "dotnet-clean-ticket-escalation-api",
+      "prompt": "Can you audit the workflow management endpoints in evals/review-workflow-management/files/ticket-escalation-dotnet? I think we've covered everything but want a second opinion.",
+      "expected_output": "A report for a .NET app exposing the full canonical surface (start with input validation, status checking state.Exists with the { state, output } envelope, pause, resume, terminate, raise-event, purge checking the bool), all with RequireAuthorization and WithName/Produces metadata. Expect zero critical and zero warning findings: either 'No issues found.' or only info suggestions, followed by Next steps.",
+      "files": [
+        "evals/review-workflow-management/files/ticket-escalation-dotnet/TicketEscalation/TicketEscalation.csproj",
+        "evals/review-workflow-management/files/ticket-escalation-dotnet/TicketEscalation/Program.cs",
+        "evals/review-workflow-management/files/ticket-escalation-dotnet/TicketEscalation/Models/TicketModels.cs",
+        "evals/review-workflow-management/files/ticket-escalation-dotnet/TicketEscalation/Workflows/TicketEscalationWorkflow.cs",
+        "evals/review-workflow-management/files/ticket-escalation-dotnet/TicketEscalation/Activities/PageOnCallActivity.cs"
+      ],
+      "expectations": [
+        "Echoes the resolved scope in one line naming ticket-escalation-dotnet without asking a clarifying scope question",
+        "The report's 'Found:' line reports 0 critical and 0 warnings, and there is no '## Critical' or '## Warnings' section",
+        "Does not report any of DWF-MGT-001 to DWF-MGT-006 (all endpoints exist, including raise-event for the WaitForExternalEventAsync in Workflows/TicketEscalationWorkflow.cs:19)",
+        "Does not report DWF-MGT-009 (status checks !state.Exists at Program.cs:44) or DWF-MGT-012 (purge checks state.Exists and state.IsWorkflowCompleted before calling PurgeInstanceAsync at Program.cs:125)",
+        "Does not report DWF-MGT-010 (every endpoint calls .RequireAuthorization()), DWF-MGT-011 (no WaitForWorkflowCompletionAsync) or DWF-MGT-013 (/start returns BadRequest on invalid input at Program.cs:24)",
+        "If there are no findings, the report body is exactly 'No issues found.' followed by '## Next steps'; the Next steps suggest review-workflow-determinism and review-workflow-activity, and there is no text after them",
+        "Uses only Read, Grep and Glob; does not call Bash, Write or Edit, and no file in the fixture is modified"
+      ]
+    }
+  ]
+}

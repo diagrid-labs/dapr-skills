@@ -8,7 +8,7 @@ Rule source: see [`../create-agent-dotnet/REFERENCE.md`](../create-agent-dotnet/
 
 ## Rule-id map (Python vs .NET)
 
-See [`review-agent-orchestration-python.md`](./review-agent-orchestration-python.md) for the full rule-id map. Rules listed in this file with the same id as Python carry the same semantics. `DAG-ORCH-001`, `DAG-ORCH-006`, and `DAG-ORCH-008` are reserved Python-only ids — do not reuse them for .NET-specific rules; add new `DAG-ORCH-NNN` ids above `009` if .NET-only rules are needed.
+See [`review-agent-orchestration-python.md`](./review-agent-orchestration-python.md) for the full rule-id map. Rules listed in this file with the same id as Python carry the same semantics. `DAG-ORCH-001`, `DAG-ORCH-006`, `DAG-ORCH-008`, and `DAG-ORCH-010` are reserved Python-only ids — do not reuse them for .NET-specific rules; add new `DAG-ORCH-NNN` ids above `010` if .NET-only rules are needed.
 
 | Rule id      | Severity | What to detect                                                                                                       | Why it matters                                                                        | Suggested fix                                                                                |
 | ------------ | -------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |

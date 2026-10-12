@@ -1,6 +1,6 @@
 # Reference: Review Dapr Workflow — Determinism
 
-This skill is read-only and operates entirely on existing source. The detailed rule tables live in the per-language checklist shards in `.claude/skills/dapr-shared/`.
+This skill is read-only and operates entirely on existing source. The detailed rule tables live in the per-language checklist shards in [`../dapr-shared/`](../dapr-shared/).
 
 ## Source rule corpus
 
@@ -52,4 +52,4 @@ The expected report excerpt:
 
 - Activity bodies — covered by `review-workflow-activity`.
 - Management endpoints / `Program.cs` / `main.py` — covered by `review-workflow-management`.
-- Versioning, error handling, ops, and patterns — Phase 2 / 3 in `docs/review-skills-plan.md`.
+- Workflow versioning (`IsPatched` / `is_patched` and named workflow versions), error-handling policy, operations, and pattern-level design reviews — not covered by the review skills.

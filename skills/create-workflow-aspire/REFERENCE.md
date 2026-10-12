@@ -455,31 +455,14 @@ See [`../dapr-shared/dotnet-activity-class.md`](../dapr-shared/dotnet-activity-c
 
 ## <SolutionRoot>.ApiService.http
 
-Update the existing `<SolutionRoot>.ApiService/<SolutionRoot>.ApiService.http` file and add endpoints to test the workflow:
-
-```http
-@host=http://localhost:<app-port>
-
-### Start the workflow
-# @name workflowStartRequest
-POST {{host}}/start
-Content-Type: application/json
-
-{
-    "id": "{{$guid}}",
-    "message": "Hello Dapr Workflow"
-}
-
-### Get the workflow status
-@instanceId={{workflowStartRequest.response.body.$.instanceId}}
-GET {{host}}/status/{{instanceId}}
-```
+Replace the content of the existing `<SolutionRoot>.ApiService/<SolutionRoot>.ApiService.http` file (template sample requests such as `GET /weatherforecast/` no longer match any endpoint) with the requests from [`../dapr-shared/dotnet-local-http.md`](../dapr-shared/dotnet-local-http.md): `start`, `status`, `pause`, `resume`, `terminate`, and — only when a workflow calls `WaitForExternalEventAsync` — `raise-event`. These map one-to-one onto the `MapPost`/`MapGet` endpoints in the ApiService `Program.cs` above.
 
 ### Key points
 
-- The `<app-port>` must match the port in the ApiService `launchSettings.json`.
-- The `start` request matches the `MapPost("/start", ...)` endpoint in `Program.cs`. The json payload in the request should match the workflow input record type that uses the `[FromBody]` attribute in `Program.cs`.
-- The `status` request matches the `MapGet("/status/{instanceId}", ...)` endpoint in `Program.cs`.
+- Keep the file in the ApiService project folder (`<SolutionRoot>.ApiService/<SolutionRoot>.ApiService.http`), not in the solution root; Aspire solutions have no `local.http`.
+- Set `@host=http://localhost:<app-port>`, where `<app-port>` is the `http` profile port in `<SolutionRoot>.ApiService/Properties/launchSettings.json`. There is no `dapr.yaml` in an Aspire solution; the Dapr sidecar is attached by `WithDaprSidecar()` in the AppHost.
+- The `start` payload must match the `WorkflowInput` record bound with `[FromBody]` in `Program.cs`, and `instanceId` is read from the `start` response body (`$.instanceId`).
+- Remove the `raise-event` request together with the `raise-event` endpoint when no workflow waits for an external event; otherwise replace `<event-name>` with the event name the workflow waits for and match the JSON body to the event payload type.
 - Use the VS Code REST Client extension or JetBrains HTTP Client to send requests directly from this file.
 
 ## .gitignore

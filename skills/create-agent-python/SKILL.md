@@ -96,9 +96,9 @@ The <ProjectName> should start with the <ProjectRoot> and end with `-agent`: <Pr
 ├── local.http
 ├── docker-compose.observability.yaml    # (native only, if observability enabled)
 ├── resources/
-│   ├── agent-memory.yaml
+│   ├── agent-memory.yaml                 # (native only — see "Resources per flavor")
 │   ├── agent-workflow.yaml
-│   ├── llm-provider.yaml
+│   ├── llm-provider.yaml                 # (native only — see "Resources per flavor")
 │   └── tracing.yaml                      # (native only, if observability enabled)
 └── <ProjectName>/
     ├── pyproject.toml
@@ -117,11 +117,11 @@ The <ProjectName> should start with the <ProjectRoot> and end with `-agent`: <Pr
 ├── local.http
 ├── docker-compose.observability.yaml    # (native only)
 ├── resources/
-│   ├── agent-memory.yaml
+│   ├── agent-memory.yaml                 # (native only — see "Resources per flavor")
 │   ├── agent-workflow.yaml
 │   ├── agent-pubsub.yaml
 │   ├── agent-registry.yaml
-│   ├── llm-provider.yaml
+│   ├── llm-provider.yaml                 # (native only — see "Resources per flavor")
 │   └── tracing.yaml                      # (native only)
 ├── coordinator/
 │   ├── pyproject.toml
@@ -137,6 +137,20 @@ The <ProjectName> should start with the <ProjectRoot> and end with `-agent`: <Pr
     └── logging_config.py              # (native only, if observability enabled)
 ```
 
+### Resources per flavor
+
+Generate only the components the chosen flavor uses:
+
+| File in `resources/` | native `dapr-agents` | `diagrid[<extra>]` wrapper |
+| --- | --- | --- |
+| `agent-workflow.yaml` | always | always — the runner executes on Dapr Workflow |
+| `agent-memory.yaml` | always — backs `ConversationDaprStateMemory` | omit — memory lives in the runner's `state_store` or the wrapped framework's own checkpointer |
+| `llm-provider.yaml` | always — `DaprChatClient(component_name="llm-provider")` | omit — the wrapped framework calls the provider directly with the API key from the environment |
+| `agent-pubsub.yaml`, `agent-registry.yaml` | multi-agent only | multi-agent only |
+| `tracing.yaml` | observability on | omit — wrappers ship their own observability |
+
+Add `agent-memory.yaml` or `llm-provider.yaml` to a wrapper project only when its `main.py` actually references that component name. In the README, list the components that were generated, not this whole table.
+
 ### .gitignore
 
 Python `.gitignore` file in the project root. See `REFERENCE.md`.
@@ -145,7 +159,7 @@ Python `.gitignore` file in the project root. See `REFERENCE.md`.
 
 Multi-app run file. Single-agent: see [`../dapr-shared/agent-dapr-yaml-single.md`](../dapr-shared/agent-dapr-yaml-single.md). Multi-agent: see [`../dapr-shared/agent-dapr-yaml-multi.md`](../dapr-shared/agent-dapr-yaml-multi.md).
 
-### resources/agent-memory.yaml
+### resources/agent-memory.yaml (native)
 
 Conversation memory state store. See [`../dapr-shared/agent-statestore-memory.md`](../dapr-shared/agent-statestore-memory.md).
 
@@ -161,9 +175,9 @@ Pub/sub component for handoff. See [`../dapr-shared/agent-pubsub-redis.md`](../d
 
 Agent discovery state store. See [`../dapr-shared/agent-statestore-registry.md`](../dapr-shared/agent-statestore-registry.md).
 
-### resources/llm-provider.yaml
+### resources/llm-provider.yaml (native)
 
-Dapr Conversation component. Pick one: [OpenAI](../dapr-shared/agent-llm-openai.md) | [Anthropic](../dapr-shared/agent-llm-anthropic.md) | [Ollama](../dapr-shared/agent-llm-ollama.md).
+Dapr Conversation component, matching the provider from the specification. Pick one: [OpenAI](../dapr-shared/agent-llm-openai.md) | [Anthropic](../dapr-shared/agent-llm-anthropic.md) | [Google AI (Gemini)](../dapr-shared/agent-llm-googleai.md) | [Ollama](../dapr-shared/agent-llm-ollama.md). Wrapper projects skip this file (see "Resources per flavor") and set the provider's API key env var instead (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`).
 
 ### resources/tracing.yaml (native, observability on)
 

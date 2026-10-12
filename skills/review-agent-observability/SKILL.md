@@ -11,14 +11,14 @@ allowed-tools:
 
 ## Overview
 
-Scans native `dapr-agents` projects for observability completeness: Dapr tracing Configuration present, sampling rate non-zero, structured logging in use, explicit log level, trace-id propagation on outbound tool calls, and README guidance for trace / metrics UIs. Framework-wrapper projects (LangGraph / CrewAI / OpenAI Agents / etc.) receive a single `info` finding — those frameworks ship their own observability pipelines.
+Scans native `dapr-agents` projects for observability completeness: Dapr tracing Configuration present, sampling rate non-zero, structured logging in use, explicit log level, trace-id propagation on outbound tool calls, and README guidance for trace / metrics UIs. Framework-wrapper projects (LangGraph / CrewAI / OpenAI Agents / etc.) receive a single `info` finding, `DAG-OBS-000` — those frameworks ship their own observability pipelines.
 
 ## Execution Order
 
 You MUST follow these phases in strict order.
 
 1. **Resolve scope** — Read [`../dapr-shared/review-scope-prompt.md`](../dapr-shared/review-scope-prompt.md) and follow it to set `scope_root`.
-2. **Detect target** — Read [`../dapr-shared/review-detect-target-agent.md`](../dapr-shared/review-detect-target-agent.md). If `language == python` and `flavor == framework-wrapper`, emit one `info` finding explaining that observability is delegated to the wrapped framework and stop. .NET projects are always classified `framework-wrapper` but have their own checklist — continue for them.
+2. **Detect target** — Read [`../dapr-shared/review-detect-target-agent.md`](../dapr-shared/review-detect-target-agent.md). If `language == python` and `flavor == framework-wrapper`, emit the single `info` finding `DAG-OBS-000` (observability is delegated to the wrapped framework — see [`REFERENCE.md`](REFERENCE.md), "Framework-wrapper fallback") and stop. .NET projects are always classified `framework-wrapper` but have their own checklist — continue for them.
 3. **Load checklist** — Based on `language`, read exactly one of:
    - `python` → [`../dapr-shared/review-agent-observability-python.md`](../dapr-shared/review-agent-observability-python.md)
    - `dotnet` → [`../dapr-shared/review-agent-observability-dotnet.md`](../dapr-shared/review-agent-observability-dotnet.md)

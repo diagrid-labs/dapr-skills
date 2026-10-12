@@ -69,3 +69,22 @@ Found: <n> critical, <n> warnings, <n> suggestions, <n> to verify
 - Group findings by severity, then by rule id ascending, then by file path. This produces stable output across runs so users can diff reports.
 - Do not summarize what the skill did, do not editorialize, do not emit any text after the `Next steps` section.
 - If zero findings, the body is just `No issues found.` followed by `Next steps`.
+
+### Nothing to review
+
+When target detection succeeds but the calling skill has nothing to apply its rules to (for example no workflow files for a determinism review, no tool definitions for a tool review, or a single-agent project for an orchestration review), the review stops without applying any rule. This is not a finding: it carries no rule id and does not count toward the `Found:` totals. The calling skill supplies a short reason string. Emit:
+
+```
+# Dapr review — <skill-name>
+
+Target: <scope_root>
+Language: <detected language>
+Found: 0 critical, 0 warnings, 0 suggestions, 0 to verify
+
+Nothing to review: <reason supplied by the calling skill>.
+
+## Next steps
+- <one or two short bullets: widen or correct the scope, or point to the review skill that covers the files that were found>
+```
+
+Example reasons: `no workflow files found in <scope_root>`, `no tool definitions found`, `single-agent project, orchestration rules do not apply`. This `Nothing to review:` line is the only line in a report that may appear without a rule id. A missing file is reported as a rule finding only when a checklist defines a rule for it (for example `DWF-MGT-001` for a missing `/start` endpoint inside a management file that was found).

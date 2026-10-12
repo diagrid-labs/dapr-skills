@@ -51,7 +51,7 @@ Workflow code must be deterministic because the runtime replays the `RunAsync` m
 - Random number generation.
 - Direct I/O operations (HTTP calls, file access, database queries) — perform these in activities instead.
 - `Thread.Sleep` or `Task.Delay` — use `context.CreateTimer()` instead.
-- while loops - use context.ContinueAsNew(<TInput>) instead.
+- Unbounded loops (`while (true)`, `for (;;)`, or a loop whose condition never changes) that schedule activities, child workflows, or timers — every iteration grows the workflow history. Bounded loops (e.g. retry up to N times, iterate over an input list) are fine. For eternal or long-running loops, process one iteration per execution and call `context.ContinueAsNew(<TInput>)`; `ContinueAsNew` must be the last workflow action, so return immediately after calling it (see the Monitor pattern below).
 
 ### Workflow patterns
 

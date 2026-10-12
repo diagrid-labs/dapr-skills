@@ -1,0 +1,78 @@
+{
+  "skill_name": "review-workflow-activity",
+  "evals": [
+    {
+      "id": 1,
+      "name": "dotnet-subscription-billing-double-charge",
+      "prompt": "Customers on the subscription renewal flow are reporting double charges, and finance wants to know what else is lurking. Please review the activities in evals/review-workflow-activity/files/subscription-billing-dotnet.",
+      "expected_output": "A read-only activity report for the .NET project. Critical: DWF-ACT-001 (DaprWorkflowClient injected into StartDunningActivity), DWF-ACT-002 (ChargeSubscriptionActivity.cs:16 POSTs a charge with no idempotency key). Warnings: DWF-ACT-003 (empty catch at SendInvoiceEmailActivity.cs:27), DWF-ACT-007 (static int _emailsSent at :10), DWF-ACT-010 (Console.WriteLine at :31). Suggestions: DWF-ACT-008 (StartDunningActivity is a public non-sealed class). RecordLedgerEntryActivity uses context.TaskExecutionKey, so it is not a critical DWF-ACT-002, but the report notes the key changes per retry-policy attempt because the workflow calls it with a WorkflowRetryPolicy. Its log-and-rethrow catch is not flagged.",
+      "files": [
+        "evals/review-workflow-activity/files/subscription-billing-dotnet/SubscriptionBilling/SubscriptionBilling.csproj",
+        "evals/review-workflow-activity/files/subscription-billing-dotnet/SubscriptionBilling/Program.cs",
+        "evals/review-workflow-activity/files/subscription-billing-dotnet/SubscriptionBilling/Models/BillingModels.cs",
+        "evals/review-workflow-activity/files/subscription-billing-dotnet/SubscriptionBilling/Workflows/SubscriptionRenewalWorkflow.cs",
+        "evals/review-workflow-activity/files/subscription-billing-dotnet/SubscriptionBilling/Activities/ChargeSubscriptionActivity.cs",
+        "evals/review-workflow-activity/files/subscription-billing-dotnet/SubscriptionBilling/Activities/RecordLedgerEntryActivity.cs",
+        "evals/review-workflow-activity/files/subscription-billing-dotnet/SubscriptionBilling/Activities/SendInvoiceEmailActivity.cs",
+        "evals/review-workflow-activity/files/subscription-billing-dotnet/SubscriptionBilling/Activities/StartDunningActivity.cs"
+      ],
+      "expectations": [
+        "The Critical section contains DWF-ACT-002 at Activities/ChargeSubscriptionActivity.cs:16, and its Fix recommends a stable business key carried in the activity input (e.g. generated in the workflow with context.NewGuid() or derived from context.InstanceId) rather than relying on TaskExecutionKey alone",
+        "The Critical section contains DWF-ACT-001 for Activities/StartDunningActivity.cs (line 6 constructor parameter or line 11 ScheduleNewWorkflowAsync call), with a Fix that points to CallChildWorkflowAsync from the parent workflow",
+        "The Warnings section contains DWF-ACT-003 at Activities/SendInvoiceEmailActivity.cs:27 (empty catch (Exception) block)",
+        "The Warnings section contains DWF-ACT-007 at Activities/SendInvoiceEmailActivity.cs:10 (static int _emailsSent) and DWF-ACT-010 at Activities/SendInvoiceEmailActivity.cs:31 (Console.WriteLine)",
+        "The Suggestions section contains DWF-ACT-008 at Activities/StartDunningActivity.cs:6 (class is public and not sealed)",
+        "Activities/RecordLedgerEntryActivity.cs is not reported as a critical DWF-ACT-002; the report notes that context.TaskExecutionKey changes on each retry-policy attempt (the workflow passes RetryOptions); and its log-and-rethrow catch (lines 27-31) is not reported as DWF-ACT-003",
+        "No finding uses a DWF-DET-* rule id, and no finding references Workflows/ or Program.cs (DateTime.UtcNow at Activities/RecordLedgerEntryActivity.cs:25 is not flagged)",
+        "The report follows review-report-format.md (header with 'Language: dotnet' and 'Found:' line, sections Critical > Warnings > Suggestions, rule ids ascending within a section, ends with '## Next steps'), and only Read/Grep/Glob are used with no file modified"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "python-support-ticket-activities",
+      "prompt": "hey can you check our support ticket intake activities for idempotency / error handling problems? python project, it's in evals/review-workflow-activity/files/support-tickets-python",
+      "expected_output": "An activity report with 'Language: python' for activities.py. Critical: DWF-ACT-002 (create_crm_ticket_activity POSTs to the CRM without an idempotency key, activities.py:30). Warnings: DWF-ACT-003 (except Exception: pass, :65), DWF-ACT-005 (sync requests.get inside async def suggest_articles_activity, :41), DWF-ACT-007 (module-level _agent_load mutated, :25/:49), DWF-ACT-010 (print, :50). Suggestions: DWF-ACT-008 (decorator name 'assign_agent' lacks the _activity suffix, :46). send_acknowledgement_activity (Idempotency-Key header) is not flagged for DWF-ACT-002.",
+      "files": [
+        "evals/review-workflow-activity/files/support-tickets-python/pyproject.toml",
+        "evals/review-workflow-activity/files/support-tickets-python/runtime.py",
+        "evals/review-workflow-activity/files/support-tickets-python/models.py",
+        "evals/review-workflow-activity/files/support-tickets-python/workflow.py",
+        "evals/review-workflow-activity/files/support-tickets-python/activities.py",
+        "evals/review-workflow-activity/files/support-tickets-python/main.py"
+      ],
+      "expectations": [
+        "The report header contains 'Language: python' and the findings reference activities.py",
+        "The Critical section contains DWF-ACT-002 for create_crm_ticket_activity at activities.py:30 (lines 28-30 acceptable), and its Fix recommends a stable key carried in the activity input (e.g. derived from ctx.instance_id plus a step name in the workflow) or ctx.get_inner_context().task_execution_id, not a non-existent `taskExecutionId` attribute on the activity context",
+        "The Warnings section contains DWF-ACT-005 at activities.py:41 (requests.get inside the async def suggest_articles_activity)",
+        "The Warnings section contains DWF-ACT-003 at activities.py:65 (except Exception: pass; line 66 acceptable)",
+        "The Warnings section contains DWF-ACT-007 for the module-level _agent_load dict (activities.py:25 or :49) and DWF-ACT-010 at activities.py:50 (print)",
+        "The Suggestions section contains DWF-ACT-008 at activities.py:46 for the decorator name 'assign_agent'",
+        "Does not report DWF-ACT-002 for send_acknowledgement_activity (it sends an Idempotency-Key header at activities.py:61), does not report DWF-ACT-005 for the synchronous create_crm_ticket_activity, and does not flag datetime.now at activities.py:56",
+        "Uses only Read, Grep and Glob; no file is modified; the report ends with a '## Next steps' section that suggests review-workflow-determinism, with no text after it"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "dotnet-clean-shipment-activities-asked-to-fix",
+      "prompt": "Review the activities in evals/review-workflow-activity/files/shipment-tracking-dotnet and fix whatever you find while you're at it.",
+      "expected_output": "The skill stays read-only despite the request to fix: no edits, writes or shell commands. The activities are clean (internal sealed partial, record types, idempotency keys from the workflow input, log-and-rethrow, ApplicationStopping token passed to I/O), so the report has zero critical and zero warning findings, and is either 'No issues found.' or only suggestions, followed by Next steps.",
+      "files": [
+        "evals/review-workflow-activity/files/shipment-tracking-dotnet/ShipmentTracking/ShipmentTracking.csproj",
+        "evals/review-workflow-activity/files/shipment-tracking-dotnet/ShipmentTracking/Program.cs",
+        "evals/review-workflow-activity/files/shipment-tracking-dotnet/ShipmentTracking/Models/ShipmentModels.cs",
+        "evals/review-workflow-activity/files/shipment-tracking-dotnet/ShipmentTracking/Workflows/ShipmentWorkflow.cs",
+        "evals/review-workflow-activity/files/shipment-tracking-dotnet/ShipmentTracking/Activities/CreateShippingLabelActivity.cs",
+        "evals/review-workflow-activity/files/shipment-tracking-dotnet/ShipmentTracking/Activities/SendTrackingEmailActivity.cs"
+      ],
+      "expectations": [
+        "Does not call Write, Edit or Bash and does not modify any file in the fixture, even though the prompt asks for fixes",
+        "The report's 'Found:' line reports 0 critical and 0 warnings, and there is no '## Critical' or '## Warnings' section",
+        "Does not report DWF-ACT-002 for either activity (both forward input.IdempotencyKey as an Idempotency-Key header)",
+        "Does not report DWF-ACT-003 for the log-and-rethrow catch at Activities/CreateShippingLabelActivity.cs:31",
+        "Does not report DWF-ACT-005, DWF-ACT-008 or DWF-ACT-010 (activities pass lifetime.ApplicationStopping, are internal sealed partial, and log via ILogger/LoggerMessage)",
+        "Does not flag DateTime.UtcNow or Guid.NewGuid() inside the activities and emits no DWF-DET-* rule ids",
+        "If there are no findings, the report body is exactly 'No issues found.' followed by '## Next steps'; the Next steps suggest review-workflow-determinism and review-workflow-management, and there is no text after them"
+      ]
+    }
+  ]
+}

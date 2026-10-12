@@ -1,0 +1,51 @@
+{
+  "skill_name": "check-prereq-python",
+  "evals": [
+    {
+      "id": 1,
+      "name": "explicit-python-prereq-check",
+      "prompt": "Check prerequisites for Python. Next up I'm building a support-ticket triage workflow with Dapr and want to know if anything is missing.",
+      "expected_output": "The skill detects the OS, then checks the Pyright LSP plugin, uv, Python version, Docker/Podman and Dapr CLI in parallel. It reports pass/fail per check with install links for failures and points to create-workflow-python if everything passes.",
+      "files": [],
+      "expectations": [
+        "Runs `uname -s` (OS detection) before the tool checks",
+        "Runs `python --version` (or `python3 --version` if `python` is not found) and treats 3.12 or higher (including 3.13 and 3.14) as passing, comparing the minor version numerically",
+        "Runs `uv --version`, `docker info` (or `podman info` as fallback) and `dapr --version`",
+        "Checks for the `pyright-lsp@claude-plugins-official` plugin by inspecting Claude settings, without running `claude plugin`",
+        "The uv, Python, container-runtime and Dapr CLI checks are issued together in one parallel batch, not one per turn",
+        "Final report lists Pyright LSP plugin, uv, Python, Docker/Podman and Dapr CLI each with a pass or fail status; if all pass it names the `create-workflow-python` skill as the next step",
+        "Does not create a virtual environment, `pyproject.toml`, or any other file, and does not run `uv init` or `uv sync`"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "casual-python-uv-ready",
+      "prompt": "do i have everything i need to write dapr workflows in python? i use uv for everything",
+      "expected_output": "Casual phrasing triggers the Python prerequisite check. The skill actually runs `uv --version`, `python --version`, `docker info` and `dapr --version` and reports each result, with the matching install link for any failure.",
+      "files": [],
+      "expectations": [
+        "Runs `uv --version` and `python --version` rather than answering from general knowledge",
+        "Runs `dapr --version` and `docker info` (falling back to `podman info`)",
+        "Report shows a pass or fail status for each prerequisite",
+        "For any failed check, gives the matching link: https://docs.astral.sh/uv/getting-started/installation/ (uv), https://www.python.org/downloads/ (Python), https://docs.dapr.io/getting-started/install-dapr-cli/ (Dapr CLI), or the Docker/Podman links",
+        "Does not run `dotnet --version` or `aspire --version`",
+        "Does not check LLM API keys or `dapr-agents` (those belong to check-prereq-agent-python)"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "python-311-below-workflow-minimum",
+      "prompt": "Verify Python environment for Dapr workflows. Heads up: I think my default python is still 3.11 — is that going to be a problem?",
+      "expected_output": "The skill runs `python --version` itself instead of trusting the user's guess. It applies the workflow minimum of Python 3.12, not the 3.11 floor used by the agent skills. If the detected version is 3.11.x it reports the Python check as failed with the python.org link. All other checks still run.",
+      "files": [],
+      "expectations": [
+        "Runs `python --version` (with a `powershell -Command` retry on Windows if needed) instead of relying only on the user's statement",
+        "States that Dapr Workflow Python projects need Python 3.12 or newer",
+        "If the detected version is 3.11.x, reports the Python check as failed and links https://www.python.org/downloads/; it does not accept 3.11 as passing",
+        "Still runs and reports uv, Docker/Podman, Dapr CLI and Pyright LSP plugin checks",
+        "Does not install or change the Python version itself (no `uv python install`, `pyenv`, `winget` or similar)",
+        "Does not tell the user they can proceed with `create-workflow-python` while the Python check is failing"
+      ]
+    }
+  ]
+}

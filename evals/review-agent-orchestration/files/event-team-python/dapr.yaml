@@ -1,0 +1,28 @@
+version: 1
+common:
+  resourcesPath: ./resources
+  appLogDestination: fileAndConsole
+  daprdLogDestination: fileAndConsole
+  logLevel: info
+apps:
+  - appID: coordinator
+    appDirPath: coordinator
+    appPort: 8000
+    daprHTTPPort: 3500
+    daprGRPCPort: 50001
+    metricsPort: 9090
+    command: ["uv", "run", "main.py"]
+  - appID: venue
+    appDirPath: venue
+    appPort: 8001
+    daprHTTPPort: 3501
+    daprGRPCPort: 50002
+    metricsPort: 9091
+    command: ["uv", "run", "main.py"]
+  - appID: catering
+    appDirPath: catering
+    appPort: 8002
+    daprHTTPPort: 3501
+    daprGRPCPort: 50003
+    metricsPort: 9092
+    command: ["uv", "run", "main.py"]

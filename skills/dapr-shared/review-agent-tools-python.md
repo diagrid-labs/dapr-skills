@@ -24,6 +24,8 @@ Rule source: see [`../create-agent-python/REFERENCE.md`](../create-agent-python/
 
 - DAG-TOOL-001 — Idempotency may appear as an `Idempotency-Key` header, a UUID passed as an argument, or the framework's `taskExecutionId`. Treat as satisfied if any of these are visible on the outbound call.
 - DAG-TOOL-007 — Only flag inside `async def` bodies. Synchronous tools are allowed.
+- DAG-TOOL-002 — Native `dapr_agents.tool` raises `ToolError` at import time when the docstring is missing entirely, so the agent does not start; still report it under this rule, and cite that consequence in `Why:`. One-word docstrings pass that check and only degrade routing.
+- DAG-TOOL-005 / DAG-TOOL-006 — Without `args_model`, native `@tool` infers the argument schema from the parameter type hints (untyped parameters become `str`). A tool whose named parameters are all type-hinted is therefore validated and does not trigger DAG-TOOL-006; that rule needs both no `args_model` **and** a `**kwargs` parameter. A missing return-type annotation triggers neither rule.
 
 ## Cross-reference
 

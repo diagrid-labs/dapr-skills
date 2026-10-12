@@ -1,0 +1,53 @@
+{
+  "skill_name": "create-agent-dotnet",
+  "evals": [
+    {
+      "id": 1,
+      "name": "single-agent-invoice-desk-openai-sessions",
+      "prompt": "Create a .NET agent app called InvoiceDesk using Microsoft Agent Framework on Dapr. It answers accounts-payable questions from our finance team. Tools: GetInvoice(invoiceId) returns status, amount and due date; ListOverdueInvoices(supplierId) returns at most 10 overdue invoices. Single agent, OpenAI. People should be able to ask follow-up questions in the same conversation.",
+      "expected_output": "An InvoiceDesk/ root with a single ASP.NET Core project InvoiceDeskApp that references Diagrid.AI.Microsoft.AgentFramework 1.2.0, registers one agent with AddDaprAgents()/WithAgent(..., tools:), exposes POST /run backed by IDaprAgentInvoker with a session (CreateSessionAsync / IsWorkflowRunning check / AttachSession), tools created with AIFunctionFactory.Create(..., name: ...), agent-workflow and OpenAI llm-provider components, a .NET dapr.yaml, a successful dotnet build, a README with the BSL license note, and the exact final message.",
+      "files": [],
+      "expectations": [
+        "Creates InvoiceDesk/.gitignore, InvoiceDesk/dapr.yaml, InvoiceDesk/local.http, InvoiceDesk/README.md, InvoiceDesk/resources/agent-workflow.yaml, InvoiceDesk/resources/llm-provider.yaml and InvoiceDesk/InvoiceDeskApp/ with InvoiceDeskApp.csproj, Program.cs, Properties/launchSettings.json, Models/AgentContracts.cs and a Tools/*Tools.cs file; there is no resources/agent-memory.yaml or resources/agent-pubsub.yaml",
+        "InvoiceDeskApp.csproj targets net10.0 and has PackageReference Diagrid.AI.Microsoft.AgentFramework Version=\"1.2.0\"; it does not reference Microsoft.Agents.AI below 1.9.0, Microsoft.Extensions.AI below 10.6.0 or Dapr.Workflow below 1.18.4",
+        "Program.cs calls AddDaprAgents() followed by WithAgent(agentName: ..., conversationComponentName: \"llm-provider\", instructions: ..., tools: ...), and does not register an IChatClient or OpenAIClient, nor call AddDaprWorkflow() or AddDaprConversationClient()",
+        "The POST /run handler injects IDaprAgentInvoker and DaprWorkflowClient, calls CreateSessionAsync when no session id is supplied, otherwise calls GetWorkflowStateAsync and checks IsWorkflowRunning before AttachSession, passes the session to RunAgentAsync, and returns the session id in the response",
+        "Tools are created with AIFunctionFactory.Create(..., name: \"GetInvoice\") and AIFunctionFactory.Create(..., name: \"ListOverdueInvoices\"), the agent instructions reference those exact names, and each tool has a description ([Description] on the method or description: argument) and a [Description] on every LLM-facing parameter",
+        "dapr.yaml has a single app with appDirPath: InvoiceDeskApp, appPort: 5100 matching applicationUrl http://localhost:5100 in Properties/launchSettings.json, command [\"dotnet\", \"run\"] without --project, and no configFilePath; llm-provider.yaml is type conversation.openai with key value \"{{OPENAI_API_KEY}}\" and agent-workflow.yaml has actorStateStore \"true\"",
+        "The agent runs `dotnet build` on the project and it succeeds; README.md contains a License note stating Diagrid.AI.Microsoft.AgentFramework is under the Business Source License 1.1 with a link to its LICENSE.md, and describes the Diagrid Dev Dashboard as a separate `docker run` not provisioned by dapr init",
+        "The final output is exactly: The InvoiceDesk agent application is created. Open the README.md file in the InvoiceDesk folder for a summary and instructions for running locally."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "coordinator-specialists-trip-planner-anthropic",
+      "prompt": "Build a C# multi-agent trip planner with Microsoft Agent Framework running on Dapr Workflow: a flights specialist with a SearchFlights tool, a hotels specialist with a SearchHotels tool, and a coordinator that merges their answers into one itinerary. Use Anthropic Claude. Project name TripPlanner. Planning can take a while, so the HTTP call shouldn't block until it's done.",
+      "expected_output": "A single app TripPlanner/TripPlannerApp that registers three agents with WithAgent, a Workflows/PlanWorkflow.cs that runs the specialists with context.RunAgentAsync and then the coordinator, Dapr.Workflow 1.18.10 next to Diagrid.AI.Microsoft.AgentFramework 1.2.0, POST /run returning 202 Accepted with a /status/{instanceId} URL, GET /status/{instanceId}, no pub/sub or registry components, an Anthropic conversation component, a successful dotnet build and the exact final message.",
+      "files": [],
+      "expectations": [
+        "Creates a single project TripPlanner/TripPlannerApp containing Workflows/PlanWorkflow.cs, and dapr.yaml has exactly one app entry (no separate specialist projects)",
+        "TripPlannerApp.csproj has PackageReference Diagrid.AI.Microsoft.AgentFramework Version=\"1.2.0\" and PackageReference Dapr.Workflow Version=\"1.18.10\"",
+        "PlanWorkflow derives from Workflow<,>, runs the flights and hotels agents with context.RunAgentAsync(context.GetAgent(...), ...) before running the coordinator agent, checks the agents' response text for the iteration-cap message (\"exceeded the maximum of\"), and contains no DateTime.Now/UtcNow, Guid.NewGuid() or HTTP/file I/O",
+        "Program.cs calls AddDaprAgents(registrations: ...) that registers PlanWorkflow (RegisterWorkflow<PlanWorkflow>()) and chains three WithAgent(...) calls: one with the SearchFlights tool, one with the SearchHotels tool, and the coordinator",
+        "POST /run schedules PlanWorkflow with DaprWorkflowClient.ScheduleNewWorkflowAsync and returns Results.Accepted with a `/status/{instanceId}` location; GET /status/{instanceId} uses GetWorkflowStateAsync and returns 404 when the instance does not exist",
+        "There is no resources/agent-pubsub.yaml, resources/agent-registry.yaml or resources/agent-memory.yaml, no PublishEventAsync call and no Dapr.Client package reference; resources/llm-provider.yaml is type conversation.anthropic with key value \"{{ANTHROPIC_API_KEY}}\"",
+        "dapr.yaml uses command [\"dotnet\", \"run\"] without --project, has no configFilePath, and appPort 5100 matches Properties/launchSettings.json; the agent runs `dotnet build` and it succeeds",
+        "README.md includes a mermaid diagram with the coordinating workflow, a curl example for GET /status/{instanceId} and the Business Source License 1.1 note, and the final output is exactly: The TripPlanner agent application is created. Open the README.md file in the TripPlanner folder for a summary and instructions for running locally."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "vague-request-triggers-interview",
+      "prompt": "can you whip up a .NET agent for me? something with Microsoft Agent Framework",
+      "expected_output": "The request has no purpose, tools, topology, provider or project name, so the skill starts the clarifying interview, asking one question at a time (starting with the agent's purpose), and does not create files, run dotnet commands, or run any check-prereq skill before the specification is known.",
+      "files": [],
+      "expectations": [
+        "The first response asks a single clarifying question about the purpose of the agent, rather than listing all questions at once",
+        "No files or folders are created and no `dotnet new`, `dotnet add package` or `dotnet build` command is run in this turn",
+        "The agent does not invoke check-prereq-agent-dotnet or any other check-prereq-* skill",
+        "The agent does not propose using the Python dapr-agents SDK or describe the .NET project as \"Dapr Agents\"",
+        "The response does not contain the final message \"agent application is created\""
+      ]
+    }
+  ]
+}

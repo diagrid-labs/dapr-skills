@@ -18,7 +18,7 @@ Scans the bodies of Dapr Workflow classes/functions for code that is not safe to
 You MUST follow these phases in strict order. Do not load files outside the agreed scope, and do not write or edit any files.
 
 1. **Resolve scope** — Read [`../dapr-shared/review-scope-prompt.md`](../dapr-shared/review-scope-prompt.md) and follow it to set `scope_root`.
-2. **Detect target** — Read [`../dapr-shared/review-detect-target.md`](../dapr-shared/review-detect-target.md) and follow it to produce `language` and `workflow_files`. If `workflow_files` is empty, emit a single critical finding (no workflow files found) and stop.
+2. **Detect target** — Read [`../dapr-shared/review-detect-target.md`](../dapr-shared/review-detect-target.md) and follow it to produce `language` and `workflow_files`. If `workflow_files` is empty, emit the "Nothing to review" report defined in `review-report-format.md` with the reason `no workflow files found in <scope_root>` (no rule id, not counted in `Found:`) and stop.
 3. **Load checklist** — Based on `language`, read exactly one of:
    - `dotnet` or `aspire` → [`../dapr-shared/review-determinism-dotnet.md`](../dapr-shared/review-determinism-dotnet.md)
    - `python` → [`../dapr-shared/review-determinism-python.md`](../dapr-shared/review-determinism-python.md)

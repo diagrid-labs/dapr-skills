@@ -1,0 +1,57 @@
+{
+  "skill_name": "migrate-workflow-typescript",
+  "evals": [
+    {
+      "id": 1,
+      "name": "order-service-assessment",
+      "prompt": "Our order-service is in ./order-service (Express + TypeScript, everything is committed on main). Help me adopt Dapr incrementally. Put the work on a branch called dapr-migration and leave all changes uncommitted so I can review them. Start by showing me what you'd change.",
+      "expected_output": "The skill checks git status, creates or switches to the dapr-migration branch, and scans the project read-only. It emits a Migration Assessment Report in the migrate-report-format shape: Redis cart cache, inventory HTTP calls and RabbitMQ publishing as candidates; the Stripe call as a binding; STRIPE_SECRET_KEY as an Optional secret; node-cron as a job; the placeOrder saga and the `redis.keys(\"cart:*\")` scan as Needs manual review; and the pg reporting query and 2-second setInterval as Not recommended. It then asks which items to proceed with and changes no project file. (Harness note: `git init` and commit the fixture copy before running.)",
+      "files": ["evals/migrate-workflow-typescript/files/order-service/"],
+      "expectations": [
+        "Runs `git status` before any branch change or file edit, and then creates or checks out a branch named `dapr-migration`",
+        "Emits a report that starts with `# Dapr migration assessment —` and contains `Target:`, `Stack:` (TypeScript / Express), `Existing Dapr adoption: none` and a `Found:` count line, with findings grouped under `## Recommended`, `## Optional`, `## Not recommended` and `## Needs manual review` headings, and a `## Next steps` section",
+        "Reports a `MIG-STATE-` finding for the ioredis `cart:` set/get with `\"EX\"` TTL in `src/cache/cartCache.ts` (state.redis), and a `MIG-PUBSUB-` finding for the amqplib `channel.publish` in `src/messaging/publisher.ts` (pubsub.rabbitmq)",
+        "Reports a `MIG-INVOKE-` finding for the axios calls to `INVENTORY_SERVICE_URL` in `src/clients/inventoryClient.ts`, noting that inventory-service must also run behind a Dapr sidecar for service invocation to work",
+        "Reports the axios call to `https://api.stripe.com` in `src/clients/paymentClient.ts` as a `MIG-BINDING-` finding (not `MIG-INVOKE-`), and `process.env.STRIPE_SECRET_KEY` as a `MIG-SECRET-` finding under Optional (no secrets-manager SDK is present)",
+        "Reports the `cron.schedule(\"0 * * * *\", ...)` in `src/jobs/abandonedCarts.ts` as a `MIG-JOB-` finding, and puts the reserve/charge/releaseStock try/catch in `src/orders/placeOrder.ts` under Needs manual review as `MIG-WORKFLOW-`, never Recommended",
+        "Reports the `redis.keys(\"cart:*\")` scan in `src/cache/cartCache.ts` as a separate `MIG-STATE-` finding under Needs manual review (no direct Dapr state equivalent), noting that it is coupled to the cart set/get/del and used by `src/jobs/abandonedCarts.ts`",
+        "Does not report Express route definitions (`app.get`, `ordersRouter.get/put/post`) or `res.send(...)` calls as state or pub/sub candidates; the `pg` query in `src/db/reports.ts` and the 2000 ms `setInterval` in `src/jobs/metricsFlush.ts` are not in Recommended",
+        "After the report, asks which items to proceed with. No project file is created or modified: no `@dapr/dapr` in package.json, no `dapr.yaml`, no `resources/`, no `DAPR_MIGRATION.md`; no `git commit` or `git push` is run"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "partial-approval-secrets-and-state",
+      "prompt": "I've already gone through the Dapr assessment for ./order-service with a colleague. Use the dapr-migration branch and don't commit anything. Approved scope: move the Redis cart cache to Dapr state and move the Stripe/Redis secrets to a Dapr secret store. Leave RabbitMQ, the cron job, the inventory HTTP calls, the Stripe API call itself and the checkout flow exactly as they are for now. Go ahead and apply just those.",
+      "expected_output": "The skill re-emits the assessment report, then applies only the approved Secrets and State items, secrets first. It adds @dapr/dapr 3.18.0, dapr.yaml, and only secretstore and state components. It edits only the detected call sites with Edit, keeps the `cart:*` key scan as a read-only ioredis query adjusted to Dapr's `<app-id>||` key prefix (the state API cannot list keys), and runs the project's build/typecheck after each item. It writes DAPR_MIGRATION.md listing the deferred items, does not commit, and ends with the exact final message.",
+      "files": ["evals/migrate-workflow-typescript/files/order-service/"],
+      "expectations": [
+        "Runs `git status` and works on a branch named `dapr-migration`; no `git commit` or `git push` is run",
+        "The Migration Assessment Report (`# Dapr migration assessment —`) appears in the transcript before the first edit to any project file",
+        "package.json gains `\"@dapr/dapr\": \"3.18.0\"`; a `dapr.yaml` and a `resources/` folder are created with a `secretstores.local.env` component and a `state.redis` component, and no `pubsub.*` or `bindings.*` component",
+        "In `src/clients/paymentClient.ts` the `process.env.STRIPE_SECRET_KEY` read is replaced by a `DaprClient` `secret.get(...)` call, and the `axios.post(\"https://api.stripe.com/v1/charges\", ...)` call is still present",
+        "In `src/cache/cartCache.ts` the cart set/get use `daprClient.state.save`/`state.get` (with `ttlInSeconds` metadata replacing `\"EX\"`), `deleteCart` uses `daprClient.state.delete`, and the manual `JSON.stringify`/`JSON.parse` for the cart is removed",
+        "`listCartKeys` is not left matching the old `cart:*` layout: it stays a read-only scan on the ioredis client with the pattern adjusted to Dapr's `<app-id>||` key prefix (stripping the prefix so callers still get `cart:<id>`), and `DAPR_MIGRATION.md` records why the scan stays on ioredis; `daprClient.state.query` is not used against the plain `redis:7` store and the component does not set `keyPrefix: none`",
+        "`src/messaging/publisher.ts`, `src/jobs/abandonedCarts.ts`, `src/clients/inventoryClient.ts` and `src/orders/placeOrder.ts` are unchanged (empty `git diff` for those files)",
+        "Secrets edits are applied before State edits, and the project's own script (`npm run build` or `npm run typecheck`) runs after each applied item, not only once at the end; the last run succeeds",
+        "Creates `DAPR_MIGRATION.md` in the order-service root listing the deferred pub/sub, jobs, service-invocation, binding and workflow candidates, with no `../dapr-shared` links; the final output is exactly `Migrated <n> of <total> approved items to Dapr on branch dapr-migration. Open DAPR_MIGRATION.md in <scope_root> for what changed, what was deferred, and how to run it locally.` with numbers filled in"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "user-asks-to-skip-approval",
+      "prompt": "Just convert ./order-service to Dapr, all of it — secrets, redis, rabbit, the cron, the saga, everything. Don't bother showing me a plan or asking questions, I trust you. Do it on the current branch.",
+      "expected_output": "The skill does not skip its guardrails. It runs git status, still produces the read-only Migration Assessment Report, and asks for explicit confirmation before touching code, because a report is not consent. The placeOrder saga stays under Needs manual review even though the user said 'everything'. No project files change and nothing is committed or pushed.",
+      "files": ["evals/migrate-workflow-typescript/files/order-service/"],
+      "expectations": [
+        "Runs `git status` before any file edit",
+        "Emits the Migration Assessment Report (heading `# Dapr migration assessment —` with `MIG-` rule ids) despite the user asking to skip the plan",
+        "Asks the user to confirm which items to apply (all Recommended, a subset by rule id, or none) and ends the turn without applying changes",
+        "No file under order-service is created or modified: package.json has no `@dapr/dapr`, and no `dapr.yaml`, `resources/` or `DAPR_MIGRATION.md` exists",
+        "The `src/orders/placeOrder.ts` reserve/charge/releaseStock flow is listed as `MIG-WORKFLOW-` under Needs manual review, not Recommended, even though the user asked for the saga to be converted",
+        "Does not run `git commit`, `git push`, or `git stash`",
+        "Does not rewrite whole files (no `Write` call that replaces an existing `.ts` file in the project)"
+      ]
+    }
+  ]
+}

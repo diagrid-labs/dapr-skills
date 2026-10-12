@@ -214,3 +214,22 @@
   }
   ```
   
+
+## Reading the IR
+
+Generate the code from the validated IR (`../ir-schema.md`), not from the diagram. Every language reads the IR the same way: follow the "Consuming the IR" table in `../ir-schema.md` for which record becomes which construct. The records are keyed by `__type` (`metadata`, `participant`, `activity`, `gateway`, `start_end_node`, `edge`, `failure_handling`, `data_object`, `unrecognized_item`); use activity / gateway `id`s for function and class names (converted to this language's naming conventions) and `condition_label` / `event_label` values for branch variables and external event names.
+
+SDK calls for each construct in this language:
+
+| IR construct | C# (`Dapr.Workflow`) |
+|---|---|
+| `activity` task | `await context.CallActivityAsync<TOutput>(nameof(<Activity>), input)` |
+| `task_type: "call_activity"` | `await context.CallChildWorkflowAsync<TOutput>(nameof(<Workflow>), input)` |
+| Timer (`event_type: "timer"`, ISO 8601 duration) | `await context.CreateTimer(<TimeSpan>)` (use `System.Xml.XmlConvert.ToTimeSpan` to parse ISO 8601 durations) |
+| Message / signal wait, `user_task` completion | `await context.WaitForExternalEventAsync<T>("<event name>")` |
+| Wait with a timer (one message + one timer) | `await context.WaitForExternalEventAsync<T>("<event name>", <TimeSpan>)`; a `TaskCanceledException` means the timer branch won |
+| Event-based gateway with several events, timer boundary | `var winner = await Task.WhenAny(eventTask, timerTask)` (pass a `CancellationTokenSource` token to `CreateTimer` and cancel it when another task wins) |
+| Parallel / inclusive split + join | `await Task.WhenAll(taskA, taskB)` |
+| `end_error` | `throw` a domain exception |
+
+Activity bodies: when the diagram does not say how an activity works, write a minimal stub that returns a value of the output type and add exactly one `// TODO: implement actual functionality` comment inside the body. No other `TODO` or placeholder comments anywhere (see `../guardrails.md`, "Output hygiene").

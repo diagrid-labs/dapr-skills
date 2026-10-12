@@ -1,0 +1,53 @@
+{
+  "skill_name": "check-prereq-aspire",
+  "evals": [
+    {
+      "id": 1,
+      "name": "explicit-aspire-prereq-check",
+      "prompt": "Verify my Aspire environment. I want to build a Dapr Workflow for IoT device onboarding using .NET Aspire as the AppHost.",
+      "expected_output": "The skill detects the OS, then checks the C# LSP plugin, .NET SDK, Docker/Podman, Dapr CLI and Aspire CLI in parallel. It reports pass/fail per check with install links for failures and points to create-workflow-aspire if everything passes.",
+      "files": [],
+      "expectations": [
+        "Runs `uname -s` (OS detection) before the tool checks",
+        "Runs `dotnet --version`, `dapr --version`, `docker info` (or `podman info` as fallback) and `aspire --version`",
+        "The .NET, Dapr, container-runtime and Aspire checks are issued together in one parallel batch after OS detection, not one per turn",
+        "Checks for the `csharp-lsp@claude-plugins-official` plugin by inspecting Claude settings, without running `claude plugin`",
+        "Final report lists C# LSP plugin, .NET SDK, Docker/Podman, Dapr CLI and Aspire CLI each with a pass or fail status",
+        "If all checks pass, the final message says the user can proceed with the `create-workflow-aspire` skill",
+        "Does not create any files and does not run `aspire new` or `dotnet new`"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "aspire-cli-not-on-path",
+      "prompt": "I installed the Aspire CLI with the install script yesterday but now my terminal says `aspire: command not found`. Can you check whether my Aspire + Dapr setup is actually good to go?",
+      "expected_output": "The skill does not conclude Aspire is missing just because `aspire --version` fails. It retries the default install locations (`~/.aspire/bin/aspire`, `~/.dotnet/tools/aspire`, and on Windows `powershell -Command \"aspire --version\"`). It only reports the Aspire CLI as missing if all of those fail, and then gives the install commands. The other checks still run.",
+      "files": [],
+      "expectations": [
+        "Runs `aspire --version` first",
+        "If `aspire --version` fails, runs `~/.aspire/bin/aspire --version` before concluding the CLI is missing",
+        "If that also fails, runs `~/.dotnet/tools/aspire --version` (and on Windows `powershell -Command \"aspire --version\"`)",
+        "If a fallback location succeeds, reports the Aspire CLI as passing (with the version found) and notes that its install directory is not on PATH",
+        "If every location fails, the report includes https://aspire.dev/get-started/install-cli/ and the install commands `curl -sSL https://aspire.dev/install.sh | bash` and `irm https://aspire.dev/install.ps1 | iex` (or `dotnet tool install -g Aspire.Cli`)",
+        "Still runs and reports the .NET SDK, Docker/Podman, Dapr CLI and C# LSP checks",
+        "Does not run any install script itself"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "casual-windows-no-docker",
+      "prompt": "quick sanity check before i start an aspire dapr workflow project on my windows laptop. fyi docker desktop isn't installed on this machine",
+      "expected_output": "The skill runs all checks, including Docker then Podman, retrying via PowerShell on Windows. It reports the container runtime as failed with install links if neither is found, reports the other checks normally, and does not install anything or create files.",
+      "files": [],
+      "expectations": [
+        "Treats the OS as Windows when `uname -s` returns a value starting with `MINGW`, `MSYS` or `CYGWIN` (Git Bash / MSYS2 / Cygwin) or when `uname` is not available",
+        "Runs `docker info` and, if it fails, `podman info` (with `powershell -Command` retries on Windows) before reporting the container runtime as failed",
+        "Still runs `dotnet --version`, `dapr --version` and the Aspire CLI check; the missing Docker does not end the run early",
+        "If neither Docker nor Podman is available, the report marks that check failed and links https://www.docker.com/products/docker-desktop/ and https://podman.io/docs/installation",
+        "Does not run `winget`, `choco`, or any other install command",
+        "Does not say the user can proceed with `create-workflow-aspire` while a check is failing",
+        "Does not create any files in the working directory"
+      ]
+    }
+  ]
+}

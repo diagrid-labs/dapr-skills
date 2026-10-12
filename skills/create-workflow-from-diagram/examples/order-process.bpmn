@@ -17,6 +17,7 @@
     <bpmn:parallelGateway id="fulfillJoin" />
 
     <bpmn:userTask id="notifyCustomerBackorder" name="Notify Customer of Backorder" />
+    <bpmn:exclusiveGateway id="acceptBackorder" name="Customer Accepts Backorder?" default="flowDeclineBackorder" />
     <bpmn:intermediateCatchEvent id="waitForRestock" name="Wait 7 Days for Restock">
       <bpmn:timerEventDefinition>
         <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">P7D</bpmn:timeDuration>
@@ -26,22 +27,26 @@
     <bpmn:endEvent id="orderComplete" name="Order Complete" />
     <bpmn:endEvent id="orderCancelled" name="Order Cancelled" />
 
-    <bpmn:sequenceFlow sourceRef="startOrder" targetRef="validateOrder" />
-    <bpmn:sequenceFlow sourceRef="validateOrder" targetRef="checkInventory" />
-    <bpmn:sequenceFlow sourceRef="checkInventory" targetRef="inStock" />
+    <bpmn:sequenceFlow id="flowStart" sourceRef="startOrder" targetRef="validateOrder" />
+    <bpmn:sequenceFlow id="flowValidated" sourceRef="validateOrder" targetRef="checkInventory" />
+    <bpmn:sequenceFlow id="flowChecked" sourceRef="checkInventory" targetRef="inStock" />
 
     <bpmn:sequenceFlow id="flowInStock" sourceRef="inStock" targetRef="fulfillSplit">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${inStock == true}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="flowOutOfStock" sourceRef="inStock" targetRef="notifyCustomerBackorder" />
 
-    <bpmn:sequenceFlow sourceRef="fulfillSplit" targetRef="chargePayment" />
-    <bpmn:sequenceFlow sourceRef="fulfillSplit" targetRef="shipItem" />
-    <bpmn:sequenceFlow sourceRef="chargePayment" targetRef="fulfillJoin" />
-    <bpmn:sequenceFlow sourceRef="shipItem" targetRef="fulfillJoin" />
-    <bpmn:sequenceFlow sourceRef="fulfillJoin" targetRef="orderComplete" />
+    <bpmn:sequenceFlow id="flowToPayment" sourceRef="fulfillSplit" targetRef="chargePayment" />
+    <bpmn:sequenceFlow id="flowToShipping" sourceRef="fulfillSplit" targetRef="shipItem" />
+    <bpmn:sequenceFlow id="flowPaymentDone" sourceRef="chargePayment" targetRef="fulfillJoin" />
+    <bpmn:sequenceFlow id="flowShippingDone" sourceRef="shipItem" targetRef="fulfillJoin" />
+    <bpmn:sequenceFlow id="flowComplete" sourceRef="fulfillJoin" targetRef="orderComplete" />
 
-    <bpmn:sequenceFlow sourceRef="notifyCustomerBackorder" targetRef="waitForRestock" />
-    <bpmn:sequenceFlow sourceRef="waitForRestock" targetRef="checkInventory" />
+    <bpmn:sequenceFlow id="flowNotified" sourceRef="notifyCustomerBackorder" targetRef="acceptBackorder" />
+    <bpmn:sequenceFlow id="flowAcceptBackorder" sourceRef="acceptBackorder" targetRef="waitForRestock">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${backorderAccepted == true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flowDeclineBackorder" sourceRef="acceptBackorder" targetRef="orderCancelled" />
+    <bpmn:sequenceFlow id="flowRestocked" sourceRef="waitForRestock" targetRef="checkInventory" />
   </bpmn:process>
 </bpmn:definitions>

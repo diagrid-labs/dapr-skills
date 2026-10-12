@@ -1,25 +1,31 @@
-{"type":"workflow","id":"orderProcess","name":"Order Process"}
-{"type":"start","id":"startOrder","label":"Order Received"}
-{"type":"activity","id":"validateOrder","label":"Validate Order","activity_type":"task"}
-{"type":"activity","id":"checkInventory","label":"Check Inventory","activity_type":"task"}
-{"type":"gateway","id":"inStock","label":"In Stock?","gateway_type":"exclusive","role":"split","default_edge":"flowOutOfStock"}
-{"type":"gateway","id":"fulfillSplit","label":"Fulfill","gateway_type":"parallel","role":"split"}
-{"type":"activity","id":"chargePayment","label":"Charge Payment","activity_type":"task"}
-{"type":"activity","id":"shipItem","label":"Ship Item","activity_type":"task"}
-{"type":"gateway","id":"fulfillJoin","gateway_type":"parallel","role":"merge"}
-{"type":"activity","id":"notifyCustomerBackorder","label":"Notify Customer of Backorder","activity_type":"task","requires_human_input":true}
-{"type":"activity","id":"waitForRestock","label":"Wait 7 Days for Restock","activity_type":"timer","duration":{"value":7,"unit":"days"}}
-{"type":"end","id":"orderComplete","label":"Order Complete"}
-{"type":"end","id":"orderCancelled","label":"Order Cancelled"}
-{"type":"edge","from":"startOrder","to":"validateOrder"}
-{"type":"edge","from":"validateOrder","to":"checkInventory"}
-{"type":"edge","from":"checkInventory","to":"inStock"}
-{"type":"edge","id":"flowInStock","from":"inStock","to":"fulfillSplit","condition":"${inStock == true}"}
-{"type":"edge","id":"flowOutOfStock","from":"inStock","to":"notifyCustomerBackorder"}
-{"type":"edge","from":"fulfillSplit","to":"chargePayment"}
-{"type":"edge","from":"fulfillSplit","to":"shipItem"}
-{"type":"edge","from":"chargePayment","to":"fulfillJoin"}
-{"type":"edge","from":"shipItem","to":"fulfillJoin"}
-{"type":"edge","from":"fulfillJoin","to":"orderComplete"}
-{"type":"edge","from":"notifyCustomerBackorder","to":"waitForRestock"}
-{"type":"edge","from":"waitForRestock","to":"checkInventory"}
+{"__type":"metadata","schema_version":"1.0","source":"bpmn","process_id":"orderProcess","diagram_type":"workflow","complexity":"medium","truncated":false,"name":"OrderProcess","description":"Order Process","feedback_required":false}
+{"__type":"participant","id":"system","role":"System","confidence":"high"}
+{"__type":"activity","id":"validateOrder","type":"task","task_type":"service_task","participant":"system","description":"Validate Order","data_objects_flow":[],"asynchronous":false,"multi_instance_type":null,"confidence":"high"}
+{"__type":"activity","id":"checkInventory","type":"task","task_type":"service_task","participant":"system","description":"Check Inventory","data_objects_flow":[],"asynchronous":false,"multi_instance_type":null,"confidence":"high"}
+{"__type":"activity","id":"chargePayment","type":"task","task_type":"service_task","participant":"system","description":"Charge Payment","data_objects_flow":[],"asynchronous":false,"multi_instance_type":null,"confidence":"high"}
+{"__type":"activity","id":"shipItem","type":"task","task_type":"service_task","participant":"system","description":"Ship Item","data_objects_flow":[],"asynchronous":false,"multi_instance_type":null,"confidence":"high"}
+{"__type":"activity","id":"notifyCustomerBackorder","type":"task","task_type":"user_task","participant":"system","description":"Notify Customer of Backorder","data_objects_flow":[],"asynchronous":true,"multi_instance_type":null,"confidence":"high"}
+{"__type":"activity","id":"waitForRestock","type":"wait_for_event","participant":"system","description":"Wait 7 Days for Restock","data_objects_flow":[],"events":[{"event_type":"timer","name":"Wait 7 Days for Restock","event_label":"restock_wait_elapsed","event_definition":"P7D","next":"checkInventory"}],"asynchronous":true,"multi_instance_type":null,"confidence":"high"}
+{"__type":"gateway","id":"inStock","type":"exclusive","role":"diverging","description":"In Stock?","participant":"system","flows":[{"condition":"${inStock == true}","condition_label":"in_stock","is_default":false,"next":"fulfillSplit"},{"condition":null,"condition_label":"out_of_stock","is_default":true,"next":"notifyCustomerBackorder"}],"data_objects_flow":[],"confidence":"high"}
+{"__type":"gateway","id":"fulfillSplit","type":"parallel","role":"diverging","description":"Fulfill","participant":"system","flows":[],"data_objects_flow":[],"confidence":"high"}
+{"__type":"gateway","id":"fulfillJoin","type":"parallel","role":"converging","description":"fulfillJoin","participant":"system","flows":[],"data_objects_flow":[],"confidence":"high"}
+{"__type":"gateway","id":"acceptBackorder","type":"exclusive","role":"diverging","description":"Customer Accepts Backorder?","participant":"system","flows":[{"condition":"${backorderAccepted == true}","condition_label":"backorder_accepted","is_default":false,"next":"waitForRestock"},{"condition":null,"condition_label":"backorder_declined","is_default":true,"next":"orderCancelled"}],"data_objects_flow":[],"confidence":"high"}
+{"__type":"start_end_node","id":"startOrder","type":"start","description":"Order Received","confidence":"high"}
+{"__type":"start_end_node","id":"orderComplete","type":"end","description":"Order Complete","confidence":"high"}
+{"__type":"start_end_node","id":"orderCancelled","type":"end","description":"Order Cancelled","confidence":"high"}
+{"__type":"edge","id":"flowStart","from":"startOrder","to":"validateOrder","type":"synchronous","confidence":"high"}
+{"__type":"edge","id":"flowValidated","from":"validateOrder","to":"checkInventory","type":"synchronous","confidence":"high"}
+{"__type":"edge","id":"flowChecked","from":"checkInventory","to":"inStock","type":"synchronous","confidence":"high"}
+{"__type":"edge","id":"flowInStock","from":"inStock","to":"fulfillSplit","type":"synchronous","gw_flow_condition":"${inStock == true}","confidence":"high"}
+{"__type":"edge","id":"flowOutOfStock","from":"inStock","to":"notifyCustomerBackorder","type":"synchronous","confidence":"high"}
+{"__type":"edge","id":"flowToPayment","from":"fulfillSplit","to":"chargePayment","type":"synchronous","confidence":"high"}
+{"__type":"edge","id":"flowToShipping","from":"fulfillSplit","to":"shipItem","type":"synchronous","confidence":"high"}
+{"__type":"edge","id":"flowPaymentDone","from":"chargePayment","to":"fulfillJoin","type":"synchronous","confidence":"high"}
+{"__type":"edge","id":"flowShippingDone","from":"shipItem","to":"fulfillJoin","type":"synchronous","confidence":"high"}
+{"__type":"edge","id":"flowComplete","from":"fulfillJoin","to":"orderComplete","type":"synchronous","confidence":"high"}
+{"__type":"edge","id":"flowNotified","from":"notifyCustomerBackorder","to":"acceptBackorder","type":"synchronous","confidence":"high"}
+{"__type":"edge","id":"flowAcceptBackorder","from":"acceptBackorder","to":"waitForRestock","type":"synchronous","gw_flow_condition":"${backorderAccepted == true}","confidence":"high"}
+{"__type":"edge","id":"flowDeclineBackorder","from":"acceptBackorder","to":"orderCancelled","type":"synchronous","confidence":"high"}
+{"__type":"edge","id":"flowRestocked","from":"waitForRestock","to":"checkInventory","type":"synchronous","confidence":"high"}
+{"__type":"result","success":true,"failed_checks":[],"confidence":"high"}
+{"__type":"end_of_ir_stream","__description":"End of JSON Lines IR output."}

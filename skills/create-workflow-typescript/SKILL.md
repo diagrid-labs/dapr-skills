@@ -126,7 +126,7 @@ Activities are plain (usually `async`) functions registered with `WorkflowRuntim
 
 ### Main entrypoint (src/index.ts)
 
-Constructs a plain Express app, hands it to `new DaprServer({ serverHttp: app })` so Dapr-routed calls (service invocation, pub/sub, input bindings) and the app's own routes (workflow management, the Jobs trigger callback) share one HTTP port; also constructs the `WorkflowRuntime` and `DaprWorkflowClient` (these use their own gRPC connection to the sidecar, independent of `DaprServer`). Registers the workflow, activities, pub/sub subscription, input binding, and the management endpoints (`/start`, `/status/:instanceId`, `/pause/:instanceId`, `/resume/:instanceId`, `/terminate/:instanceId`, `/purge/:instanceId`). See `REFERENCE.md` for full example and key points.
+Constructs a plain Express app, hands it to `new DaprServer({ serverHttp: app })` so Dapr-routed calls (service invocation, pub/sub, input bindings) and the app's own routes (workflow management, the Jobs trigger callback) share one HTTP port; also constructs the `WorkflowRuntime` and `DaprWorkflowClient` (these use their own gRPC connection to the sidecar, independent of `DaprServer`). Registers the workflow, activities, pub/sub subscription, input binding, and the management endpoints (`/start`, `/status/:instanceId`, `/pause/:instanceId`, `/resume/:instanceId`, `/terminate/:instanceId`, `/purge/:instanceId`, plus `/raise-event/:instanceId/:eventName` only when a workflow waits for an external event). See `REFERENCE.md` for full example and key points.
 
 ### pricing-service/src/index.ts
 
@@ -154,7 +154,7 @@ The README contains the following sections:
 1. Summary of what this folder contains, explicitly listing which building block each activity/route demonstrates.
 2. Architecture description that explains the technology stack (Node.js, TypeScript, `@dapr/dapr`, Express) and prerequisites to run it locally. **DO NOT suggest to run Redis separately since it's part of the Dapr installation and is running in a container already.** Note that the Jobs activity and its callback route bypass the SDK and call the Dapr sidecar's HTTP API directly, since `@dapr/dapr` does not yet wrap Jobs.
 3. A mermaid diagram that explains the workflow, including the call out to the companion service.
-4. How to start the application using the Dapr CLI (`dapr run -f .` starts both apps and their sidecars).
+4. How to start the application using the Dapr CLI (`dapr run -f .` starts both apps and their sidecars). First export the `PAYMENT_API_KEY` environment variable in the same shell (bash/zsh and PowerShell forms), because the `secretstores.local.env` component reads it from the sidecar's environment — see [`../dapr-shared/dapr-secretstore-local-env.md`](../dapr-shared/dapr-secretstore-local-env.md).
 5. List the available endpoints in the main app's `src/index.ts` file and provide examples of how to call these using curl. Also include a link to the `local.http` file.
 6. How to inspect the workflow execution using the Diagrid Dev Dashboard.
 7. How to run the application with Diagrid Catalyst to visually inspect the workflow.

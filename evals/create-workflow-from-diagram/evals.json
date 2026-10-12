@@ -1,0 +1,65 @@
+{
+  "skill_name": "create-workflow-from-diagram",
+  "evals": [
+    {
+      "id": 1,
+      "name": "bpmn-order-process-to-python",
+      "prompt": "Here's the BPMN export of our order handling process: skills/create-workflow-from-diagram/examples/order-process.bpmn. Generate a Python Dapr workflow from it and call the project orderProcess.",
+      "expected_output": "The skill takes the BPMN path and writes orderProcess/.workflow.ir.jsonl using the single __type-keyed IR schema from prompts/ir-schema.md (metadata first, BPMN ids preserved, result + end_of_ir_stream last). Both end events are reachable (the backorder decision leads to orderCancelled). After validation it renders a Python project (parallel fulfillment with when_all, human backorder decision, 7-day timer loop) with dapr.yaml, statestore, README and the exact final message, without installing or running anything.",
+      "files": [
+        "skills/create-workflow-from-diagram/examples/order-process.bpmn"
+      ],
+      "expectations": [
+        "Creates orderProcess/.workflow.ir.jsonl in which every non-empty line is a standalone JSON object with a `__type` field (no surrounding array, no markdown fences, no records keyed by a top-level `type` such as `workflow`, `start` or `end`)",
+        "The first IR record has `__type: \"metadata\"` with `source: \"bpmn\"` and `process_id: \"orderProcess\"`; the last two records are `{\"__type\": \"result\", \"success\": true, ...}` followed by `{\"__type\": \"end_of_ir_stream\", ...}`",
+        "The IR keeps the BPMN element ids startOrder, validateOrder, checkInventory, inStock, fulfillSplit, chargePayment, shipItem, fulfillJoin, notifyCustomerBackorder, acceptBackorder, waitForRestock, orderComplete and orderCancelled",
+        "In the IR, inStock and acceptBackorder are `__type: \"gateway\"` records with `type: \"exclusive\"` and `role: \"diverging\"` whose `flows` mark the BPMN default flow with `is_default: true`; fulfillSplit is a `parallel` `diverging` gateway and fulfillJoin a `parallel` `converging` gateway",
+        "In the IR, waitForRestock is an `activity` with `type: \"wait_for_event\"` whose `events` entry has `event_type: \"timer\"`, `event_definition: \"P7D\"` and `next: \"checkInventory\"`",
+        "startOrder, orderComplete and orderCancelled are `__type: \"start_end_node\"` records (`type` start / end / end), and the IR contains an edge from acceptBackorder to orderCancelled so every end node is reachable",
+        "Creates orderProcess/dapr.yaml and orderProcess/resources/statestore.yaml with actorStateStore set to \"true\", plus Python files including workflow.py, activities.py, models.py, runtime.py, main.py and pyproject.toml",
+        "The generated workflow schedules the chargePayment and shipItem activities in parallel and waits for both with when_all",
+        "The out-of-stock branch calls the notifyCustomerBackorder activity, waits for the customer's decision with ctx.wait_for_external_event, ends as cancelled when the backorder is declined, and otherwise waits 7 days with ctx.create_timer and a 7-day timedelta before checking inventory again",
+        "The workflow function contains no time.sleep, datetime.now or random calls, and the only TODO comments in the project are single `# TODO: implement actual functionality` markers inside activity bodies",
+        "The agent does not run `uv sync`, `pip install`, `dapr run` or `dapr init`",
+        "orderProcess/README.md contains a mermaid diagram and `dapr run -f dapr.yaml`, and the last output is exactly: The orderProcess workflow application is created from the diagram. Open the README.md file in the orderProcess folder for a summary and instructions for running locally. The extracted IR is stored at `orderProcess/.workflow.ir.jsonl` for reference."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "swimlane-image-to-csharp",
+      "prompt": "Turn this swimlane flowchart into a .NET (C#) Dapr workflow, project name UserOrder: skills/create-workflow-from-diagram/examples/user-order.png",
+      "expected_output": "The skill takes the image path, extracts participants, seven activities, two exclusive diverging gateways (with the change-request loop) and two end nodes into UserOrder/.workflow.ir.jsonl using the __type-keyed IR schema, then renders a C# project using Dapr.Workflow with a workflow class and one class per activity.",
+      "files": [
+        "skills/create-workflow-from-diagram/examples/user-order.png"
+      ],
+      "expectations": [
+        "Creates UserOrder/.workflow.ir.jsonl whose first record has `__type: \"metadata\"` with `source: \"image\"`, and which contains `__type: \"participant\"` records for Customer, Sales Team, Inventory and Customer Service Department",
+        "The IR contains `__type: \"activity\"` records for Place Order, Check Order for Completeness, Request Changes, Update Order, Forward Order to Warehouse, Ship Items and Manage Refund",
+        "The IR contains two `__type: \"gateway\"` records with `type: \"exclusive\"` and `role: \"diverging\"` (Order complete? and Item in Stock?) whose `flows` carry Yes/No conditions with distinct `condition_label`s, and two `__type: \"start_end_node\"` records with `type: \"end\"` (Order Complete and Order Cancelled)",
+        "The IR contains an `__type: \"edge\"` record from Update Order back to Place Order, and ends with a `result` record with `success: true` followed by `end_of_ir_stream`",
+        "A .csproj in UserOrder references the Dapr.Workflow package, and a workflow class inherits Workflow<TInput, TOutput> while each activity is a separate class inheriting WorkflowActivity<TInput, TOutput>",
+        "The workflow class calls activities for Request Changes and Update Order on the incomplete-order branch and Manage Refund on the out-of-stock branch",
+        "The workflow class does not use DateTime.Now, DateTime.UtcNow, Guid.NewGuid() or new Random()",
+        "The last output is exactly: The UserOrder workflow application is created from the diagram. Open the README.md file in the UserOrder folder for a summary and instructions for running locally. The extracted IR is stored at `UserOrder/.workflow.ir.jsonl` for reference."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "ambiguous-pizza-collaboration-to-javascript",
+      "prompt": "Generate a JavaScript Dapr workflow from skills/create-workflow-from-diagram/examples/pizza-order.png. Project name pizzaOrder.",
+      "expected_output": "pizza-order.png intentionally exercises the ambiguity/clarification path. The BPMN-style image has two pools linked by message flows, an event-based gateway racing a message against a 60-minute timer, and a disconnected branch (the 60-minute timer has no outgoing flow and 'call pizza delivery service' has no incoming flow). The skill models what is drawn in the __type-keyed IR, records the gap as a disconnected_flow unrecognized_item that needs the user's input, and in Phase 2 asks the user how the flows connect instead of inventing the edge or generating code.",
+      "files": [
+        "skills/create-workflow-from-diagram/examples/pizza-order.png"
+      ],
+      "expectations": [
+        "Creates pizzaOrder/.workflow.ir.jsonl in which every record has a `__type` field, containing `__type: \"participant\"` records for the customer pool and the supplier side (pizza sale supplier or its lanes Pizza-Bäcker / Lieferjunge)",
+        "The IR contains a `__type: \"gateway\"` record with `type: \"event-based\"` after 'order pizza' whose `flows` have one entry with `event_type: \"message\"` (pizza received) and one with `event_type: \"timer\"` (60 minutes)",
+        "The dashed message flows between pools are not emitted as `edge` records; they are captured as message events, send or receive tasks, or `unrecognized_item` records with `category: \"annotation\"`",
+        "The missing connection between the 60-minute timer and 'call pizza delivery service' is recorded as an `unrecognized_item` with `category: \"disconnected_flow\"` and `ask_user: true`, the `metadata` record has `feedback_required: true`, and the IR contains no edge from the timer branch to 'call pizza delivery service'",
+        "The agent reports the disconnected flow to the user in plain language (no IR jargon) and asks how it should connect",
+        "The agent does not write workflow or activity code files in this run, because the open question is unresolved",
+        "The agent does not run `npm install` or `dapr run`"
+      ]
+    }
+  ]
+}

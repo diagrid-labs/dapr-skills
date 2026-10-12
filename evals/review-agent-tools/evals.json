@@ -1,0 +1,54 @@
+{
+  "skill_name": "review-agent-tools",
+  "evals": [
+    {
+      "id": 1,
+      "name": "python-native-crm-tools-seeded-violations",
+      "prompt": "Can you audit the agent tools in ./crm-assistant-python? It's a dapr-agents CRM assistant. I'm especially worried about the refund tool getting retried and anything the LLM could abuse.",
+      "expected_output": "A review-agent-tools report for a Python native dapr-agents project. Critical: DAG-TOOL-001 (issue_refund posts without an idempotency key) and DAG-TOOL-011 (read_web_page fetches an LLM-supplied URL with no allowlist). Warnings include DAG-TOOL-002 (list_notes has no docstring), DAG-TOOL-004 (get_loyalty_points swallows Exception) and DAG-TOOL-007 (requests.get inside an async def tool). send_welcome_email, which sends an Idempotency-Key header, is not flagged for idempotency. No files are modified.",
+      "files": ["evals/review-agent-tools/files/crm-assistant-python/"],
+      "expectations": [
+        "The output contains a report starting with the heading `# Dapr review — review-agent-tools`, a `Language: python` line, and a `Found: <n> critical, <n> warnings, <n> suggestions, <n> to verify` line",
+        "Under `## Critical` the report contains [DAG-TOOL-001] for issue_refund, citing crm-assistant-agent/tools.py with a line number between 40 and 49",
+        "Under `## Critical` the report contains [DAG-TOOL-011] for read_web_page, citing crm-assistant-agent/tools.py with a line number between 84 and 89",
+        "The report contains [DAG-TOOL-002] for list_notes (no docstring), citing crm-assistant-agent/tools.py with a line number between 66 and 70",
+        "The report contains [DAG-TOOL-007] for the synchronous requests.get inside `async def get_loyalty_points` (tools.py line 73-76) and [DAG-TOOL-004] for the `except Exception: return \"unknown\"` block (tools.py line 80-81)",
+        "The report does NOT contain DAG-TOOL-001 for send_welcome_email (tools.py lines 52-64), which passes an Idempotency-Key header, and does NOT contain DAG-TOOL-007 for the synchronous (non-async) issue_refund or send_welcome_email tools",
+        "Every finding uses the `[RULE-ID] `path:line` — what` bullet followed by `Why:` and `Fix:` lines, and the report ends with a `## Next steps` section with no text after it",
+        "The skill only uses Read, Grep and Glob: no Write, Edit or Bash calls appear in the transcript and no fixture file is modified"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "dotnet-agent-framework-tools-name-and-approval",
+      "prompt": "Review the tool definitions of our shop-orders agent (Microsoft Agent Framework on Dapr, folder ./shop-orders-dotnet). The agent sometimes says it can't find the LookupStock tool and refunds always seem to get denied.",
+      "expected_output": "A review-agent-tools report with Language: dotnet. DAG-TOOL-001 for CancelOrderImpl's unkeyed PostAsync, DAG-TOOL-014 for LookupStock created without name: (method LookupStockImpl, instructions say LookupStock), DAG-TOOL-002 for ListPromotionsImpl (no description anywhere), and DAG-TOOL-015 because ApprovalRequiredAIFunction wraps IssueRefund but the IToolApprovalHandler is registered after AddDaprAgents(). SearchCatalog (description passed as Create's description argument), PlaceOrder and IssueRefund (idempotency key from IDaprAgentContextAccessor) are not flagged for those rules.",
+      "files": ["evals/review-agent-tools/files/shop-orders-dotnet/"],
+      "expectations": [
+        "The report starts with `# Dapr review — review-agent-tools` and contains `Language: dotnet`",
+        "Under `## Critical` the report contains [DAG-TOOL-001] for CancelOrderImpl, citing ShopOrdersApp/Tools/OrderTools.cs with a line number between 44 and 53 (the PostAsync is on line 50)",
+        "The report contains [DAG-TOOL-014] citing ShopOrdersApp/Tools/CatalogTools.cs:15 (or the LookupStockImpl method at line 19-22), explaining that AIFunctionFactory.Create(LookupStockImpl) has no name: while the instructions reference LookupStock",
+        "The report contains [DAG-TOOL-002] for ListPromotions / ListPromotionsImpl, citing ShopOrdersApp/Tools/CatalogTools.cs with line 17 or 24",
+        "The report contains [DAG-TOOL-015] citing ShopOrdersApp/Program.cs (line 22, 25 or 34) and states that the IToolApprovalHandler registration on line 34 comes after AddDaprAgents() on line 25",
+        "The report does NOT contain DAG-TOOL-002 for SearchCatalog (its description is passed as the description: argument of AIFunctionFactory.Create) or for PlaceOrder",
+        "The report does NOT contain DAG-TOOL-001 for PlaceOrder or IssueRefund (both derive an idempotency key from IDaprAgentContextAccessor), and does NOT contain DAG-TOOL-014 for any tool created with an explicit name: argument",
+        "The report uses no Python-only rule ids (DAG-TOOL-009, DAG-TOOL-010), and the transcript shows no Write, Edit or Bash calls"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "python-agent-without-tools-stops-early",
+      "prompt": "audit dapr agent tools in meeting-summarizer-python please",
+      "expected_output": "The project is detected as a Python native dapr-agents agent, but no file contains the @tool decorator, so tool_files is empty and there is nothing to review. The skill emits the generic nothing-to-review line from review-report-format.md (no rule id, no severity) saying no tool definitions were found, and stops without applying the DAG-TOOL checklist. The print() inside the plain helper format_action_items is not reported.",
+      "files": ["evals/review-agent-tools/files/meeting-summarizer-python/"],
+      "expectations": [
+        "The report starts with `# Dapr review — review-agent-tools` and contains `Language: python`",
+        "The report body is the generic nothing-to-review line stating that no tool definitions (no `@tool`-decorated functions) were found in scope; it has no `[DAG-TOOL-` rule id and no `## Critical`, `## Warnings`, `## Suggestions` or `## Please verify` section",
+        "If the report has a `Found:` line, it reports 0 critical, 0 warnings, 0 suggestions and 0 to verify (the nothing-to-review line is not counted as a finding)",
+        "The report contains no DAG-TOOL-001 through DAG-TOOL-013 rule findings; in particular the print( call in format_action_items (meeting-summarizer-agent/main.py:14) is NOT reported as DAG-TOOL-009, because that function is not a tool",
+        "The report ends with a `## Next steps` section and no text follows it",
+        "No Write, Edit or Bash calls appear in the transcript and no fixture file is modified"
+      ]
+    }
+  ]
+}

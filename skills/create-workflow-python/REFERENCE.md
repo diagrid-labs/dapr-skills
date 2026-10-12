@@ -94,8 +94,10 @@ wfr = wf.WorkflowRuntime()
 Use FastAPI for HTTP endpoints, `WorkflowRuntime` to register workflows and activities via decorators, and `DaprWorkflowClient` to schedule workflow instances and query their status.
 
 ```python
+import json
+
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 import dapr.ext.workflow as wf
 from runtime import wfr
 from workflow import <workflow_name>
@@ -116,7 +118,14 @@ async def start_workflow(input: WorkflowInput):
 @app.get("/status/{instance_id}")
 async def get_status(instance_id: str):
     state = dapr_client.get_workflow_state(instance_id)
-    return state.__dict__
+    if state is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Workflow instance '{instance_id}' not found.",
+        )
+
+    output = json.loads(state.serialized_output) if state.serialized_output else None
+    return {"state": state.to_json(), "output": output}
 
 @app.post("/pause/{instance_id}")
 async def pause_workflow(instance_id: str):
@@ -152,7 +161,8 @@ if __name__ == "__main__":
 - `wfr` is imported from `runtime.py` — it is the shared `WorkflowRuntime` instance.
 - `DaprWorkflowClient()` is used to schedule and query workflow instances.
 - `schedule_new_workflow()` starts a new workflow instance and returns the instance ID. Pass `instance_id` to use a user-provided ID. As of 1.18 you can pass a Pydantic model directly to `input=` — the SDK serializes it; no `model_dump()` call is required.
-- `get_workflow_state()` retrieves the current status of a workflow instance.
+- `get_workflow_state()` retrieves the current status of a workflow instance and returns `None` when the instance does not exist; the status endpoint returns 404 in that case so clients can distinguish "not found" from "completed".
+- The status endpoint returns the canonical `{"state": ..., "output": ...}` envelope: `state.to_json()` holds the instance id, name, `runtime_status`, timestamps and (if any) failure details; `output` is the deserialized workflow output, or `None` while the workflow is still running. Do not return `state.__dict__`: `WorkflowState` wraps the underlying object, so `__dict__` exposes only a private attribute instead of the state fields.
 - `pause_workflow()`, `resume_workflow()`, and `terminate_workflow()` manage the lifecycle of a workflow instance.
 - `raise_workflow_event()` sends a named event (with optional data payload) to a waiting workflow instance, resuming it from a `wait_for_external_event` call.
 - `wfr.start()` must be called before the app begins serving requests.
@@ -160,7 +170,7 @@ if __name__ == "__main__":
 
 ## Workflow definition
 
-A workflow definition uses the `@wfr.workflow(name='<WORKFLOWNAME>')` attribute. The workflow orchestrates one or more activities by calling `ctx.call_activity`. Use types from the `models.py` file for input and output. Workflow names should have a `-workflow` suffix. The `wfr` instance is imported from `runtime.py`.
+A workflow definition uses the `@wfr.workflow(name='<WORKFLOWNAME>')` attribute. The workflow orchestrates one or more activities by calling `ctx.call_activity`. Use types from the `models.py` file for input and output. Workflow names should have a `_workflow` suffix (e.g. `task_chain_workflow`). The `wfr` instance is imported from `runtime.py`.
 
 ```python
 import dapr.ext.workflow as wf
@@ -198,7 +208,7 @@ Workflow code must be deterministic because the runtime replays the workflow fun
 - Random number or ID generation.
 - Direct I/O operations (HTTP calls, file access, database queries) — perform these in activities instead.
 - `time.sleep()`  — use `ctx.create_timer()` instead.
-- while loops - use context.continue_as_new() instead.
+- Unbounded loops (`while True:` or a loop whose condition never changes) that schedule activities, child workflows, or timers — every iteration grows the workflow history. Bounded loops (e.g. retry up to N times, iterate over an input list) are fine. For eternal or long-running loops, process one iteration per execution and call `ctx.continue_as_new(<new_input>)`; `continue_as_new` must be the last workflow action, so return immediately after calling it (see the Monitor pattern below).
 
 ### Workflow patterns
 
@@ -277,8 +287,14 @@ def monitor_workflow(ctx: wf.DaprWorkflowContext, wf_input):
     if not status:
         yield ctx.create_timer(timedelta(seconds=30))
         ctx.continue_as_new(wf_input)
+        return
     return status
 ```
+
+##### Key points
+
+- `ctx.continue_as_new(...)` restarts the workflow with a fresh history and the new input, so the monitor can run indefinitely without growing its history.
+- `continue_as_new` must be the last workflow action: return immediately after calling it and do not schedule further activities or timers.
 
 #### External system interaction (human-in-the-loop)
 

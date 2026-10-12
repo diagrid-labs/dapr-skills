@@ -44,4 +44,4 @@ management_files: [ ... ]
 scope_root: <absolute path>
 ```
 
-Empty lists are valid. The calling skill decides whether an empty list is itself a finding (e.g., `review-workflow-management` reports a critical issue if no management endpoint file is found).
+Empty lists are valid. When the list the calling skill reviews is empty, the skill emits the "Nothing to review" report defined in [`review-report-format.md`](review-report-format.md) and stops; an empty list is not itself a rule finding.

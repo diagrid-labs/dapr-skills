@@ -19,8 +19,6 @@ apps:
     appDirPath: <ProjectName>
     appPort: <app-port>
     daprHTTPPort: 3555
-    env:
-      PAYMENT_API_KEY: "sk-test-demo-51199"
     command: ["npm", "start"]
   - appID: pricing-service
     appDirPath: pricing-service
@@ -32,7 +30,7 @@ apps:
 ### Key points
 
 - `resourcesPath` is shared by both apps' sidecars — `pricing-service` doesn't need most of the components, but loading them all is harmless.
-- `env.PAYMENT_API_KEY` supplies a demo value for the secrets building block via the `secretstores.local.env` component (see `resources/secretstore.yaml`). Replace it with a real value, or a `secretKeyRef` to a production-grade secret store, before deploying anywhere beyond a local machine.
+- The secrets building block reads `PAYMENT_API_KEY` through the `secretstores.local.env` component (see `resources/secretstore.yaml`). That component runs in the sidecar and reads the sidecar's environment, and `dapr run -f .` does **not** pass a per-app `env:` map to the sidecar — so the variable is not set here. Export it in the shell before starting the apps (`export PAYMENT_API_KEY="sk-test-demo-51199"` on macOS/Linux, `$env:PAYMENT_API_KEY = "sk-test-demo-51199"` in PowerShell) and include that step in the README.
 - `daprHTTPPort` values are chosen away from the Dapr CLI's own default (3500) to avoid colliding with a separately-running default sidecar. `daprGRPCPort` is left unset so the CLI assigns a free port automatically; the SDK reads it back via the `DAPR_GRPC_PORT` environment variable it injects into each app's process (see `WorkflowRuntime`/`DaprWorkflowClient` below — neither is passed an explicit port).
 - Use `dapr run -f .` to start both apps and both sidecars with one command.
 
@@ -266,6 +264,13 @@ async function start() {
     res.json({ status: "terminated" });
   });
 
+  // Only include this route when a workflow calls ctx.waitForExternalEvent(...).
+  // The request body is passed through as the event payload.
+  app.post("/raise-event/:instanceId/:eventName", async (req: Request, res: Response) => {
+    await workflowClient.raiseEvent(req.params.instanceId, req.params.eventName, req.body);
+    res.json({ status: "event_raised" });
+  });
+
   app.post("/purge/:instanceId", async (req: Request, res: Response) => {
     const purged = await workflowClient.purgeWorkflow(req.params.instanceId);
     res.json({ status: purged ? "purged" : "not_found" });
@@ -318,6 +323,7 @@ start().catch((err) => {
 - `server.pubsub.subscribe(...)` and `server.binding.receive(...)` must be called **before** `server.start()`.
 - Returning `DaprPubSubStatusEnum.SUCCESS`/`.RETRY`/`.DROP` from a subscription handler controls Dapr's ack/retry/dead-letter behavior. If a handler throws instead of returning a status, the SDK catches it, logs it, and still reports `SUCCESS` — it will **not** retry. Return `DaprPubSubStatusEnum.RETRY` explicitly for anything that should be retried.
 - `workflowClient.terminateWorkflow(instanceId, output)` takes a second argument (an optional output value recorded against the terminated instance) — `null` is fine when there's nothing meaningful to record.
+- `/raise-event/:instanceId/:eventName` calls `workflowClient.raiseEvent(instanceId, eventName, payload)` and wakes a workflow blocked on `yield ctx.waitForExternalEvent(eventName)`. The default Order Processing workflow does not wait for events, so omit this route unless the workflow uses the external-event pattern (see "External system interaction" below). In the `@dapr/dapr` source, `raiseEvent` does not await the underlying gRPC call, so a `200` response means the event was sent, not that the instance received it — check `/status` to confirm.
 - `/purge` only makes sense once an instance has reached a terminal state (Completed/Failed/Terminated); purging a running instance drops its in-flight history.
 - Import workflow and activity functions before calling `.start()` so the runtime has them registered — `registerWorkflow`/`registerActivity` must run before `workflowRuntime.start()`, not after.
 
@@ -491,6 +497,7 @@ const approvalWorkflow: TWorkflow = async function* (
 ##### Key points
 
 - `yield ctx.waitForExternalEvent(name)` pauses the workflow until `workflowClient.raiseEvent(instanceId, name, payload)` is called elsewhere; the yielded value is whatever `payload` was passed. Event names are matched case-insensitively.
+- When a workflow uses this pattern, add the `POST /raise-event/:instanceId/:eventName` route shown in `src/index.ts` and the matching `raise-event` request in `local.http` — otherwise nothing can wake the waiting instance.
 - Unlike some other Dapr Workflow SDKs, `waitForExternalEvent` in `@dapr/dapr@3.18.0` takes **no built-in timeout parameter**. To bound the wait, race it against `ctx.createTimer(...)` via `ctx.whenAny([...])` — check the winning task's shape against the `@dapr/dapr` type definitions installed in your project (`node_modules/@dapr/dapr/index.d.ts`) before relying on it; this SDK version documents that surface less thoroughly than the rest of the workflow API.
 - Guard logging with `if (!ctx.isReplaying())`.
 

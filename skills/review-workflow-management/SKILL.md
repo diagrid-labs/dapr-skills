@@ -18,7 +18,7 @@ Reviews the HTTP/gRPC management surface a Dapr Workflow app exposes (start, get
 You MUST follow these phases in strict order. Do not load files outside the agreed scope, and do not write or edit any files.
 
 1. **Resolve scope** — Read [`../dapr-shared/review-scope-prompt.md`](../dapr-shared/review-scope-prompt.md) and follow it to set `scope_root`.
-2. **Detect target** — Read [`../dapr-shared/review-detect-target.md`](../dapr-shared/review-detect-target.md) and follow it to produce `language`, `management_files`, and `workflow_files`. If `management_files` is empty, emit a single critical finding (`DWF-MGT-001` — no management endpoints found) and stop.
+2. **Detect target** — Read [`../dapr-shared/review-detect-target.md`](../dapr-shared/review-detect-target.md) and follow it to produce `language`, `management_files`, and `workflow_files`. If `management_files` is empty, emit the "Nothing to review" report defined in `review-report-format.md` with the reason `no management endpoint files found in <scope_root>` (no rule id, not counted in `Found:`) and stop.
 3. **Load checklist** — Based on `language`, read exactly one of:
    - `dotnet` or `aspire` → [`../dapr-shared/review-management-dotnet.md`](../dapr-shared/review-management-dotnet.md)
    - `python` → [`../dapr-shared/review-management-python.md`](../dapr-shared/review-management-python.md)
