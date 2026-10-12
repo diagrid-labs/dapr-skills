@@ -182,13 +182,15 @@
   builder.Services.AddDaprWorkflow();
   builder.Services.AddDaprWorkflowVersioning();
   
-  // Configure JSON options globally if needed
-  builder.Services.Configure<JsonOptions>(options =>
-  {
-      options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-      options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-      options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-  });
+  // To customize workflow serialization, replace AddDaprWorkflow() above with:
+  // builder.Services.AddDaprWorkflowBuilder(configureRuntime: null)
+  //     .WithJsonSerializer(new JsonSerializerOptions(JsonSerializerDefaults.Web)
+  //     {
+  //         IncludeFields = true,
+  //         Converters = { new JsonStringEnumConverter() },
+  //         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+  //     });
+  // Note: builder.Services.Configure<JsonOptions>(...) only affects HTTP bodies, not workflow payloads.
   ```
 
 - **Custom JSON Converters for Domain Types**:

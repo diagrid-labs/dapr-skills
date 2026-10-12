@@ -1,6 +1,6 @@
 # Reference: Review Dapr Workflow — Management Endpoints
 
-This skill is read-only and operates entirely on existing source. The detailed rule tables live in the per-language checklist shards in `.claude/skills/shared/`.
+This skill is read-only and operates entirely on existing source. The detailed rule tables live in the per-language checklist shards in `.claude/skills/dapr-shared/`.
 
 ## Source rule corpus
 
@@ -8,12 +8,12 @@ The canonical baseline for the management surface comes from the existing author
 
 - `Program.cs` example in [`../create-workflow-dotnet/REFERENCE.md`](../create-workflow-dotnet/REFERENCE.md).
 - `main.py` example in [`../create-workflow-python/REFERENCE.md`](../create-workflow-python/REFERENCE.md).
-- Request shapes in [`../shared/dotnet-local-http.md`](../shared/dotnet-local-http.md) and [`../shared/python-local-http.md`](../shared/python-local-http.md).
+- Request shapes in [`../dapr-shared/dotnet-local-http.md`](../dapr-shared/dotnet-local-http.md) and [`../dapr-shared/python-local-http.md`](../dapr-shared/python-local-http.md).
 
 The per-language checklist shards translate those expectations into greppable patterns and stable rule ids:
 
-- [`../shared/review-management-dotnet.md`](../shared/review-management-dotnet.md)
-- [`../shared/review-management-python.md`](../shared/review-management-python.md)
+- [`../dapr-shared/review-management-dotnet.md`](../dapr-shared/review-management-dotnet.md)
+- [`../dapr-shared/review-management-python.md`](../dapr-shared/review-management-python.md)
 
 ## Worked example
 
@@ -54,7 +54,7 @@ The expected report excerpt:
 - [DWF-MGT-005] `Program.cs` — No endpoint calls ResumeWorkflowAsync
   Why: suspended workflows cannot be resumed.
   Fix: add a `MapPost("/resume/{instanceId}", ...)` endpoint.
-- [DWF-MGT-007] `Program.cs:7` — `/start` hard-codes the instanceId
+- [DWF-MGT-007] `Program.cs:8` — `/start` hard-codes the instanceId
   Why: concurrent calls clash on the same id; restarts collide with prior runs.
   Fix: accept the id from the request body or generate a fresh `Guid.NewGuid()`.
 - [DWF-MGT-008] `Program.cs:9` — `/start` does not return the instanceId in the response body

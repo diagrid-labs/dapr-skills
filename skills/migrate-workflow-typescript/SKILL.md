@@ -82,7 +82,7 @@ Also detect the existing backing infrastructure for each candidate (which Redis/
 
 ## Phase 4: Assess & present the plan
 
-Emit the Migration Assessment Report using the exact format in [`../shared/migrate-report-format.md`](../shared/migrate-report-format.md). This is the **only** output of this phase — no changes yet.
+Emit the Migration Assessment Report using the exact format in [`../dapr-shared/migrate-report-format.md`](../dapr-shared/migrate-report-format.md). This is the **only** output of this phase — no changes yet.
 
 After the report, ask the user which items to proceed with: all **Recommended** items (default suggestion), a specific subset by rule id, or none yet (stop here). Explicitly confirm before Phase 5 — a report is not consent to modify code.
 
@@ -124,7 +124,7 @@ Create or update a `DAPR_MIGRATION.md` file in `scope_root` (do not overwrite an
 1. What was migrated, grouped by building block, each with a before/after file:line reference.
 2. What was found but marked **Not recommended** or **Needs manual review**, and why — so the next person doesn't re-litigate it from scratch.
 3. The components added and what backing infrastructure they point at.
-4. How to run the migrated app locally with the Dapr CLI (`dapr run -f .`), reusing [`../shared/running-locally-dapr.md`](../shared/running-locally-dapr.md).
+4. How to run the migrated app locally with the Dapr CLI (`dapr run -f .`), reusing [`../dapr-shared/running-locally-dapr.md`](../dapr-shared/running-locally-dapr.md).
 5. Remaining candidates the user chose not to migrate yet, so a future run of this skill can pick them up.
 
 ## Show final message

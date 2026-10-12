@@ -4,7 +4,7 @@ This reference has three parts: **discovery heuristics** (how to find migration 
 
 ## Discovery heuristics
 
-Run these as `Grep`/`Glob` passes over `scope_root`, combined with a look at `package.json` dependencies. None of these are exact — every match becomes a report entry with a confidence-appropriate bucket (see [`../shared/migrate-report-format.md`](../shared/migrate-report-format.md)), not an automatic change.
+Run these as `Grep`/`Glob` passes over `scope_root`, combined with a look at `package.json` dependencies. None of these are exact — every match becomes a report entry with a confidence-appropriate bucket (see [`../dapr-shared/migrate-report-format.md`](../dapr-shared/migrate-report-format.md)), not an automatic change.
 
 ### Cross-reference: name the client before matching the method
 
@@ -68,16 +68,16 @@ Propose the component that matches what Phase 3 found in the dependency tree and
 
 | Detected in the app | Building block | Component `type:` | Key metadata | Source |
 | --- | --- | --- | --- | --- |
-| `ioredis`/`redis`, simple cache/session use | State | `state.redis` | `redisHost`, `redisPassword` (see [`../shared/dapr-statestore.md`](../shared/dapr-statestore.md)) | already in this repo |
+| `ioredis`/`redis`, simple cache/session use | State | `state.redis` | `redisHost`, `redisPassword` (see [`../dapr-shared/dapr-statestore.md`](../dapr-shared/dapr-statestore.md)) | already in this repo |
 | `pg`/`prisma`/`knex` on Postgres, for the rare Optional-tier candidate | State | `state.postgresql` | `connectionString` (v1 and v2 share this type string — they differ only by `version:`, and v2's schema is **not** data-compatible with v1; pick one deliberately) | docs.dapr.io/reference/components-reference/supported-state-stores/setup-postgresql-v2/ |
 | `mongoose`/`mongodb` | State | `state.mongodb` | `host` (or `server` for DNS SRV), `username`, `password`, `databaseName`, `collectionName` | docs.dapr.io/reference/components-reference/supported-state-stores/setup-mongodb/ |
 | `@aws-sdk/client-dynamodb` | State | `state.aws.dynamodb` | `table`, `region`, `accessKey`, `secretKey` (omit access/secret key on EKS with an IAM role) | docs.dapr.io/reference/components-reference/supported-state-stores/setup-dynamodb/ |
-| `ioredis`/`redis` used with pub/sub commands | Pub/sub | `pubsub.redis` | `redisHost`, `redisPassword` (see [`../shared/dapr-pubsub-redis.md`](../shared/dapr-pubsub-redis.md)) | already in this repo |
+| `ioredis`/`redis` used with pub/sub commands | Pub/sub | `pubsub.redis` | `redisHost`, `redisPassword` (see [`../dapr-shared/dapr-pubsub-redis.md`](../dapr-shared/dapr-pubsub-redis.md)) | already in this repo |
 | `kafkajs` | Pub/sub | `pubsub.kafka` | `brokers`, `authType`, `consumerGroup`/`consumerID`, plus auth-specific fields | docs.dapr.io/reference/components-reference/supported-pubsub/setup-apache-kafka/ |
 | `amqplib`/`amqp-connection-manager` | Pub/sub | `pubsub.rabbitmq` | `host` | already used in `@dapr/dapr`'s own examples |
 | `@aws-sdk/client-sns` + `client-sqs` | Pub/sub | `pubsub.aws.snssqs` | `accessKey`, `secretKey`, `region` | docs.dapr.io/reference/components-reference/supported-pubsub/setup-aws-snssqs/ |
 | `@google-cloud/pubsub` | Pub/sub | `pubsub.gcp.pubsub` | `projectId` (camelCase — see caution below) | docs.dapr.io/reference/components-reference/supported-pubsub/setup-gcp-pubsub/ |
-| `dotenv` / bare `process.env.*_KEY` | Secrets | `secretstores.local.env` | none required (see [`../shared/dapr-secretstore-local-env.md`](../shared/dapr-secretstore-local-env.md)) | already in this repo |
+| `dotenv` / bare `process.env.*_KEY` | Secrets | `secretstores.local.env` | none required (see [`../dapr-shared/dapr-secretstore-local-env.md`](../dapr-shared/dapr-secretstore-local-env.md)) | already in this repo |
 | `@aws-sdk/client-secrets-manager` | Secrets | `secretstores.aws.secretmanager` | `region`, `accessKey`, `secretKey` (omit on EKS with an IAM role) | docs.dapr.io/reference/components-reference/supported-secret-stores/aws-secret-manager/ |
 | `@google-cloud/secret-manager` | Secrets | `secretstores.gcp.secretmanager` | `project_id` (**snake_case** — see caution below) | docs.dapr.io/reference/components-reference/supported-secret-stores/gcp-secret-manager/ |
 | `node-vault`/`hashi-vault-js` | Secrets | `secretstores.hashicorp.vault` | `vaultAddr`, one of `vaultToken`/`vaultTokenMountPath`, optional `enginePath` (default `secret`) | docs.dapr.io/reference/components-reference/supported-secret-stores/hashicorp-vault/ |
@@ -91,7 +91,7 @@ Propose the component that matches what Phase 3 found in the dependency tree and
 - **PostgreSQL v1 vs v2** use the identical `type: state.postgresql` string — only `version:` distinguishes them, and their table schemas are not interchangeable. Confirm which one is intended rather than assuming.
 - **GCP field naming is inconsistent between the two GCP components**: `pubsub.gcp.pubsub` metadata keys are camelCase (`projectId`, `privateKeyId`, …); `secretstores.gcp.secretmanager` metadata keys are snake_case (`project_id`, `private_key_id`, …), matching the raw GCP service-account JSON key names. Using the wrong case silently produces an unrecognized-field failure, not a helpful error.
 
-None of the non-Redis backends above have a shared component file in this repo yet (only `state.redis`, `pubsub.redis`, `pubsub.rabbitmq`, `bindings.http`, `bindings.cron`, and `secretstores.local.env` do). Write the component inline in the migration using the metadata fields above, matching the YAML shape already used by [`../shared/dapr-statestore.md`](../shared/dapr-statestore.md).
+None of the non-Redis backends above have a shared component file in this repo yet (only `state.redis`, `pubsub.redis`, `pubsub.rabbitmq`, `bindings.http`, `bindings.cron`, and `secretstores.local.env` do). Write the component inline in the migration using the metadata fields above, matching the YAML shape already used by [`../dapr-shared/dapr-statestore.md`](../dapr-shared/dapr-statestore.md).
 
 ## Verified before/after transformations
 
@@ -275,8 +275,8 @@ Categories are applied in this order (Phase 6 of `SKILL.md`) because each one is
 Start the Dapr sidecar and the app together with `dapr run -f .` from the project root (requires the [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) and Docker/Podman running).
 ```
 
-**Important**: `DAPR_MIGRATION.md` is written into the *target* project's own repo, which does not have this plugin's `skills/` tree available on disk — never link back into `../shared/...` or `../create-workflow-typescript/...` from inside this template. Any cross-reference needs to be a self-contained instruction (as above) or a plain URL, not a relative path into this repo.
+**Important**: `DAPR_MIGRATION.md` is written into the *target* project's own repo, which does not have this plugin's `skills/` tree available on disk — never link back into `../dapr-shared/...` or `../create-workflow-typescript/...` from inside this template. Any cross-reference needs to be a self-contained instruction (as above) or a plain URL, not a relative path into this repo.
 
 ## Running Locally
 
-See [`../shared/running-locally-dapr.md`](../shared/running-locally-dapr.md) for instructions.
+See [`../dapr-shared/running-locally-dapr.md`](../dapr-shared/running-locally-dapr.md) for instructions.

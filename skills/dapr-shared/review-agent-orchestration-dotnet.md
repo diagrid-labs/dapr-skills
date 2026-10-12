@@ -1,0 +1,24 @@
+# Agent Orchestration Checklist — .NET
+
+Apply each rule below when `topology == orchestrator`. Single-agent .NET projects receive zero findings from this skill.
+
+Rule source: see [`../create-agent-dotnet/REFERENCE.md`](../create-agent-dotnet/REFERENCE.md) — section "Program.cs (coordinator + specialists)".
+
+**Shapes.** `review-detect-target-agent.md` reports `shape: in-process` (one app with several `WithAgent(...)` registrations orchestrated by a workflow via `context.RunAgentAsync`) or `shape: multi-app` (separate apps). Apply `DAG-ORCH-003`, `DAG-ORCH-004` and `DAG-ORCH-005` only when the project actually uses pub/sub (`PublishEventAsync`, `[Topic]`, or an `agent-pubsub.yaml`); the `create-agent-dotnet` topologies do not, so these rules are silent for them. Apply `DAG-ORCH-007` only to `shape: multi-app`.
+
+## Rule-id map (Python vs .NET)
+
+See [`review-agent-orchestration-python.md`](./review-agent-orchestration-python.md) for the full rule-id map. Rules listed in this file with the same id as Python carry the same semantics. `DAG-ORCH-001`, `DAG-ORCH-006`, and `DAG-ORCH-008` are reserved Python-only ids — do not reuse them for .NET-specific rules; add new `DAG-ORCH-NNN` ids above `009` if .NET-only rules are needed.
+
+| Rule id      | Severity | What to detect                                                                                                       | Why it matters                                                                        | Suggested fix                                                                                |
+| ------------ | -------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| DAG-ORCH-002 | info | A caller of `RunAgentAsync` / `RunAgentWithHistoryAsync` uses `response.Text` without checking for the iteration-cap message (`exceeded the maximum of 20 iterations`) | Each agent run is hard-capped at 20 LLM iterations (`AgentRunWorkflow.MaxIterations`), which cannot be configured. When the cap is hit, the run returns a **successful** response whose text is the cap message, not an exception, so a coordinator may pass it on as if it were a real answer. Sessions are bounded separately by `maxTurns` (default 200). Do not report a missing iteration parameter on `WithAgent` or `AgentRunOptions` — there is none. | Check `response.Text` for the cap message before using it, and keep tool sets small and instructions specific so the agent converges well within 20 iterations. |
+| DAG-ORCH-003 | warning  | Pub/sub topic strings (in `DaprClient.PublishEventAsync` / `[Topic]` attributes) do not match `<domain>.(requests\|results)` | Breaks discovery conventions shared with Python agents.                               | Rename topics to the convention.                                                             |
+| DAG-ORCH-004 | warning  | Coordinator publishes to a topic whose `<domain>` prefix does not match any specialist app declared in `dapr.yaml`    | Messages are dropped silently.                                                        | Ensure every target domain has a declared specialist app.                                    |
+| DAG-ORCH-005 | info     | Coordinator hardcodes specialist topics *and* the project has no `.WithCatalyst(...)` call                              | .NET has no local agent-registry path: `Diagrid.AI.Microsoft.AgentFramework` only writes a registry when `.WithCatalyst(...)` opts in, and that targets Catalyst. Static topics are the correct local design — this is informational, not a defect. | If runtime discovery is wanted, run on Catalyst and add `.WithCatalyst(...)`. Note that a registry write can succeed while the agent stays absent from the Agents view if the App ID is outside the `agent-registry` component's scope. |
+| DAG-ORCH-007 | warning  | `dapr.yaml` has duplicate `appID` / port numbers across apps                                                           | Second sidecar fails to bind; race condition during `dapr run`.                       | Assign unique ports per app.                                                                 |
+| DAG-ORCH-009 | warning  | Any agent component YAML has `redisPassword: ""` AND the project references Redis endpoints other than `localhost` / `127.0.0.1` | Unauthenticated Redis outside localhost; pub/sub is open to any reachable process.    | Set `redisPassword` via `secretKeyRef`; configure Redis AUTH / ACLs.                         |
+
+## Cross-reference
+
+Tool-level rules: `review-agent-tools-dotnet.md`. Memory rules: `review-agent-memory-dotnet.md`.

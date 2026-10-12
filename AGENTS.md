@@ -5,7 +5,7 @@ This repository contains skill definitions for building Dapr Workflow applicatio
 ## Repository structure
 
 - `skills/` — Skill files organized by language/framework
-  - `shared/` — Shared content referenced by multiple skills (prereq checks, component YAMLs, tool templates, observability, running instructions)
+  - `dapr-shared/` — Support skill holding shared content referenced by multiple skills (prereq checks, component YAMLs, tool templates, observability, running instructions). It has its own `SKILL.md` so it installs next to the other skills.
 
 ### Workflow skills
 
@@ -127,7 +127,9 @@ All skills require:
 - Include "Key points" sections after code examples to explain important concepts
 - Skills must perform all prerequisite checks before creating any files
 - Skills must be able to work on MacOS, Linux, and Windows environments.
-- Shared content goes in `skills/shared/`; SKILL.md and REFERENCE.md files reference shared files to avoid duplication.
+- Shared content goes in `skills/dapr-shared/`; SKILL.md and REFERENCE.md files reference it as `../dapr-shared/<file>` to avoid duplication. Do not reference files outside the `skills/` folder from skill files — installers copy only the `skills/<name>/` folders.
+- Every folder under `skills/` must contain a `SKILL.md` whose `name` equals the folder name and that has a `description`.
+- Run `node scripts/validate-skills.mjs` (and `node --test "scripts/test/*.test.mjs"` when changing the scripts) before committing skill changes; CI runs both.
 
 ## Supported tools
 

@@ -24,7 +24,7 @@ Found: 1 critical, 1 warning, 1 suggestion, 0 to verify
 ## Suggestions
 - [DAG-ORCH-005] `resources/` — agent-registry.yaml component not found
   Why: Agents cannot discover each other dynamically; they must be wired by static config only.
-  Fix: Add agent-registry.yaml with keyPrefix: none (see shared/agent-statestore-registry.md).
+  Fix: Add agent-registry.yaml with keyPrefix: none (see dapr-shared/agent-statestore-registry.md).
 
 ## Next steps
 - Run `review-agent-memory` next for the same scope.

@@ -1,6 +1,6 @@
 # Dapr Workflow & Agent Skills
 
-This repository contains skill definitions that can be used with Claude Code to build Dapr Workflow applications and durable AI agent applications that run on Dapr Workflow.
+This repository contains skill definitions that can be used with Claude Code, GitHub Copilot CLI, and OpenAI Codex CLI to build Dapr Workflow applications and durable AI agent applications that run on Dapr Workflow.
 
 ### Workflow skills
 
@@ -17,7 +17,7 @@ This repository contains skill definitions that can be used with Claude Code to 
 
 ## Prerequisites
 
-- [Claude Code](https://claude.com/product/claude-code)
+- One of: [Claude Code](https://claude.com/product/claude-code), [GitHub Copilot CLI](https://docs.github.com/en/copilot/how-tos/set-up/install-copilot-cli), or [OpenAI Codex CLI](https://developers.openai.com/codex/cli)
 - [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation)
 - [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.18+)
 
@@ -39,29 +39,95 @@ This repository contains skill definitions that can be used with Claude Code to 
 
 - At least one LLM provider: an `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` or `GOOGLE_API_KEY` environment variable, or a local [Ollama](https://ollama.com/) instance on `http://localhost:11434`.
 
+## Installation
+
+The skills are distributed from [diagrid-labs/dapr-skills](https://github.com/diagrid-labs/dapr-skills). They are written for Claude Code and work best there; other agents ignore Claude-specific front-matter such as `allowed-tools` and `model`.
+
+> **Install all skills together.** Skills read shared files from the `dapr-shared` support skill (`../dapr-shared/...`), and some review skills read the REFERENCE files of the matching create skills. Every install method below installs the full set by default.
+
+### Any agent (`npx skills`)
+
+The [`skills` CLI](https://github.com/vercel-labs/skills) installs the skills into Claude Code, Codex, GitHub Copilot, Cursor, and other agents. It requires Node.js.
+
+```shell
+# Install all skills; the CLI asks which agents to install to
+npx skills add diagrid-labs/dapr-skills --skill "*"
+
+# Non-interactive, user-wide, for specific agents
+npx skills add diagrid-labs/dapr-skills --skill "*" -a claude-code -a codex -a github-copilot -g -y
+
+# Update
+npx skills update
+```
+
+To remove the skills, run `npx skills remove` and select the Dapr skills in the interactive list, or remove them by name (add `-g` if you installed them with `-g`):
+
+```shell
+npx skills remove check-prereq-agent-dotnet check-prereq-agent-python check-prereq-aspire check-prereq-dotnet check-prereq-python create-agent-dotnet create-agent-python create-workflow-aspire create-workflow-dotnet create-workflow-from-diagram create-workflow-python create-workflow-typescript dapr-shared migrate-workflow-typescript review-agent-memory review-agent-observability review-agent-orchestration review-agent-tools review-workflow-activity review-workflow-determinism review-workflow-management -y
+```
+
+Do not use `npx skills remove --skill "*"`: it removes **every** installed skill, including skills from other sources.
+
+Project installs go to `.claude/skills/` (Claude Code) and `.agents/skills/` (Codex, Copilot, and others); add `-g` for a user-wide install. The `skills` CLI sends anonymous usage telemetry; set `DISABLE_TELEMETRY=1` or `DO_NOT_TRACK=1` to turn it off.
+
+If you install only some skills (`--skill <name>`), also install their dependencies:
+
+| Installing… | Also install |
+| --- | --- |
+| any skill | `dapr-shared` |
+| `review-workflow-activity`, `review-workflow-determinism` | `create-workflow-python` |
+| `review-workflow-management` | `create-workflow-dotnet`, `create-workflow-python` |
+| `review-agent-memory`, `review-agent-observability`, `review-agent-orchestration`, `review-agent-tools` | `create-agent-dotnet`, `create-agent-python` |
+| `migrate-workflow-typescript` | `create-workflow-typescript` |
+
+`node scripts/validate-skills.mjs` prints the current dependency list; update this table when it changes.
+
+### Claude Code
+
+Add this repo as a plugin marketplace and install the `dapr-skills` plugin from within a Claude Code session:
+
+```text
+/plugin marketplace add diagrid-labs/dapr-skills
+/plugin install dapr-skills@diagrid-labs
+```
+
+Alternatively, run `/plugin` and use the interactive UI to browse and install the plugin. To update or remove the plugin later, use `/plugin` and select the corresponding action.
+
+### GitHub Copilot CLI
+
+Copilot CLI reads the Claude plugin marketplace in this repo. From a terminal:
+
+```shell
+copilot plugin marketplace add diagrid-labs/dapr-skills
+copilot plugin install dapr-skills@diagrid-labs
+```
+
+Start a new `copilot` session (or run `/skills reload` in an active one) and check that the skills are loaded with `/skills`. Update with `copilot plugin update dapr-skills` and remove with `copilot plugin uninstall dapr-skills`.
+
+### OpenAI Codex CLI
+
+Use the `skills` CLI with the Codex agent:
+
+```shell
+npx skills add diagrid-labs/dapr-skills --skill "*" -a codex
+```
+
+This installs to `.agents/skills/` (add `-g` for `~/.agents/skills/`), the folders Codex loads skills from. Restart Codex so it picks up the new skills. Copying the repository's `skills/` folder (including `dapr-shared`) into one of those folders by hand also works.
+
+> GitHub Copilot CLI also reads `.agents/skills` and `~/.agents/skills`. If you use Copilot CLI together with Codex or `npx skills -a github-copilot`, install the skills only once to avoid loading duplicate skills in Copilot CLI.
+
 ## How to use this
 
-These skills are distributed as a Claude Code plugin from [diagrid-labs/dapr-skills](https://github.com/diagrid-labs/dapr-skills).
-
-1. Start Claude Code in the directory where you want the generated project to be created.
-2. Add this repo as a plugin marketplace and install the `dapr-skills` plugin:
-
-   ```
-   /plugin marketplace add diagrid-labs/dapr-skills
-   /plugin install dapr-skills@diagrid-labs
-   ```
-
-   Alternatively, run `/plugin` and use the interactive UI to browse and install the plugin.
+1. Start your agent (Claude Code, Copilot CLI, or Codex) in the directory where you want the generated project to be created.
+2. Make sure the skills are installed (see [Installation](#installation)).
 3. OPTIONAL: Run a `check-prereq-<language>` skill to verify your environment (e.g., "check prerequisites for .NET", "check prerequisites for Aspire", "check prerequisites for Python", or "check prerequisites for Python agents"). Follow the instructions if the prerequisites are not met.
 4. Run a `create-workflow-<language>` or `create-agent-<language>` skill to scaffold the project (see the prompt examples below).
 5. Depending on your access permissions, you may need to approve the usage of some tools during project generation.
 6. Inspect the `README.md` file in the new folder after the project is created.
 
-To update or remove the plugin later, use `/plugin` and select the corresponding action.
-
 ## Available skills
 
-Invoke a skill by asking Claude Code in natural language — the example phrases below trigger each skill.
+Invoke a skill by asking your agent in natural language — the example phrases below trigger each skill.
 
 ### Prerequisite checks
 

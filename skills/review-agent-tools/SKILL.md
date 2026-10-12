@@ -17,13 +17,13 @@ Scans agent tool definitions for idempotency issues, missing docstrings / descri
 
 You MUST follow these phases in strict order. Do not load files outside the agreed scope, and do not write or edit any files.
 
-1. **Resolve scope** — Read [`../shared/review-scope-prompt.md`](../shared/review-scope-prompt.md) and follow it to set `scope_root`.
-2. **Detect target** — Read [`../shared/review-detect-target-agent.md`](../shared/review-detect-target-agent.md) and follow it to produce `language`, `flavor`, and `tool_files`. If `tool_files` is empty, emit a single warning finding (no tool files found) and stop.
+1. **Resolve scope** — Read [`../dapr-shared/review-scope-prompt.md`](../dapr-shared/review-scope-prompt.md) and follow it to set `scope_root`.
+2. **Detect target** — Read [`../dapr-shared/review-detect-target-agent.md`](../dapr-shared/review-detect-target-agent.md) and follow it to produce `language`, `flavor`, and `tool_files`. If `tool_files` is empty, emit a single warning finding (no tool files found) and stop.
 3. **Load checklist** — Based on `language`, read exactly one of:
-   - `python` → [`../shared/review-agent-tools-python.md`](../shared/review-agent-tools-python.md)
-   - `dotnet` → [`../shared/review-agent-tools-dotnet.md`](../shared/review-agent-tools-dotnet.md)
+   - `python` → [`../dapr-shared/review-agent-tools-python.md`](../dapr-shared/review-agent-tools-python.md)
+   - `dotnet` → [`../dapr-shared/review-agent-tools-dotnet.md`](../dapr-shared/review-agent-tools-dotnet.md)
 4. **Scan** — For each tool file in scope, apply every rule from the loaded checklist using `Grep` and `Read`. For each match, capture `file:line`, the rule id, and a short evidence snippet. Confirm the match is inside a tool body (the function decorated with `@tool` / wrapped with `AIFunctionFactory.Create`) before promoting it from "Please verify" to a graded severity.
-5. **Report** — Format every finding using the canonical template from [`../shared/review-report-format.md`](../shared/review-report-format.md). Group by severity, then rule id, then file path.
+5. **Report** — Format every finding using the canonical template from [`../dapr-shared/review-report-format.md`](../dapr-shared/review-report-format.md). Group by severity, then rule id, then file path.
 6. **Show final message** — Your last output is the report. Do not append a summary, follow-up question, or next-action prompt other than the `## Next steps` block defined by the report format.
 
 ## Prerequisites
@@ -39,8 +39,8 @@ You MUST follow these phases in strict order. Do not load files outside the agre
 
 The full rule list, including detection patterns, severities, and suggested fixes, lives in the loaded language checklist:
 
-- [Python rules](../shared/review-agent-tools-python.md) — `DAG-TOOL-001` … `DAG-TOOL-013`
-- [.NET rules](../shared/review-agent-tools-dotnet.md) — `DAG-TOOL-001` … `DAG-TOOL-013`
+- [Python rules](../dapr-shared/review-agent-tools-python.md) — `DAG-TOOL-001` … `DAG-TOOL-013`
+- [.NET rules](../dapr-shared/review-agent-tools-dotnet.md) — `DAG-TOOL-001` … `DAG-TOOL-008`, `DAG-TOOL-011` … `DAG-TOOL-015`
 
 Rule ids are stable across releases. New rules append; deprecated rule ids are reserved.
 

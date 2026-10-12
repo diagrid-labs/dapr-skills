@@ -17,14 +17,14 @@ Reviews the HTTP/gRPC management surface a Dapr Workflow app exposes (start, get
 
 You MUST follow these phases in strict order. Do not load files outside the agreed scope, and do not write or edit any files.
 
-1. **Resolve scope** — Read [`../shared/review-scope-prompt.md`](../shared/review-scope-prompt.md) and follow it to set `scope_root`.
-2. **Detect target** — Read [`../shared/review-detect-target.md`](../shared/review-detect-target.md) and follow it to produce `language`, `management_files`, and `workflow_files`. If `management_files` is empty, emit a single critical finding (`DWF-MGT-001` — no management endpoints found) and stop.
+1. **Resolve scope** — Read [`../dapr-shared/review-scope-prompt.md`](../dapr-shared/review-scope-prompt.md) and follow it to set `scope_root`.
+2. **Detect target** — Read [`../dapr-shared/review-detect-target.md`](../dapr-shared/review-detect-target.md) and follow it to produce `language`, `management_files`, and `workflow_files`. If `management_files` is empty, emit a single critical finding (`DWF-MGT-001` — no management endpoints found) and stop.
 3. **Load checklist** — Based on `language`, read exactly one of:
-   - `dotnet` or `aspire` → [`../shared/review-management-dotnet.md`](../shared/review-management-dotnet.md)
-   - `python` → [`../shared/review-management-python.md`](../shared/review-management-python.md)
+   - `dotnet` or `aspire` → [`../dapr-shared/review-management-dotnet.md`](../dapr-shared/review-management-dotnet.md)
+   - `python` → [`../dapr-shared/review-management-python.md`](../dapr-shared/review-management-python.md)
 4. **Required-coverage pass** — Determine which of the canonical endpoints are present by grepping `management_files` for the SDK calls listed in the checklist's "Required endpoint coverage" table. Emit a finding for each missing endpoint using the rule id from that table. If `workflow_files` references `WaitForExternalEventAsync` / `wait_for_external_event`, also enforce the raise-event endpoint (`DWF-MGT-006`).
 5. **Per-endpoint pass** — For every endpoint that is present, walk the per-rule heuristics (`DWF-MGT-007` and onward) and emit findings for each match.
-6. **Report** — Format every finding using the canonical template from [`../shared/review-report-format.md`](../shared/review-report-format.md). Group by severity, then rule id, then file path.
+6. **Report** — Format every finding using the canonical template from [`../dapr-shared/review-report-format.md`](../dapr-shared/review-report-format.md). Group by severity, then rule id, then file path.
 7. **Show final message** — Your last output is the report. Do not append a summary, follow-up question, or next-action prompt other than the `## Next steps` block defined by the report format.
 
 ## Prerequisites
@@ -40,8 +40,8 @@ You MUST follow these phases in strict order. Do not load files outside the agre
 
 The full rule list, including detection patterns, severities, and suggested fixes, lives in the loaded language checklist:
 
-- [.NET / Aspire rules](../shared/review-management-dotnet.md) — `DWF-MGT-001` … `DWF-MGT-015`
-- [Python rules](../shared/review-management-python.md) — `DWF-MGT-001` … `DWF-MGT-015`
+- [.NET / Aspire rules](../dapr-shared/review-management-dotnet.md) — `DWF-MGT-001` … `DWF-MGT-015`
+- [Python rules](../dapr-shared/review-management-python.md) — `DWF-MGT-001` … `DWF-MGT-015`
 
 Rule ids are stable across releases. New rules append; deprecated rule ids are reserved.
 

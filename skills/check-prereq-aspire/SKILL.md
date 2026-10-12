@@ -8,6 +8,7 @@ allowed-tools:
   - Bash(docker info:*)
   - Bash(podman info:*)
   - Bash(aspire --version)
+  - Bash(~/.aspire/bin/aspire --version)
   - Bash(~/.dotnet/tools/aspire --version)
   - mcp__ide__getDiagnostics
 ---
@@ -33,27 +34,27 @@ The following must be installed:
 
 ### Step 1: Detect Operating System
 
-Read the file at [`../shared/prereq-detect-os.md`](../shared/prereq-detect-os.md) and follow those instructions.
+Read the file at [`../dapr-shared/prereq-detect-os.md`](../dapr-shared/prereq-detect-os.md) and follow those instructions.
 
 ### Step 2: Check the C# LSP plugin
 
-Read the file at [`../shared/prereq-check-csharp-lsp.md`](../shared/prereq-check-csharp-lsp.md) and follow those instructions.
+Read the file at [`../dapr-shared/prereq-check-csharp-lsp.md`](../dapr-shared/prereq-check-csharp-lsp.md) and follow those instructions.
 
 ### Step 3: Check .NET SDK
 
-Read the file at [`../shared/prereq-check-dotnet-sdk.md`](../shared/prereq-check-dotnet-sdk.md) and follow those instructions.
+Read the file at [`../dapr-shared/prereq-check-dotnet-sdk.md`](../dapr-shared/prereq-check-dotnet-sdk.md) and follow those instructions.
 
 ### Step 4: Check Docker or Podman
 
-Read the file at [`../shared/prereq-check-docker-podman.md`](../shared/prereq-check-docker-podman.md) and follow those instructions.
+Read the file at [`../dapr-shared/prereq-check-docker-podman.md`](../dapr-shared/prereq-check-docker-podman.md) and follow those instructions.
 
 ### Step 5: Check Dapr CLI
 
-Read the file at [`../shared/prereq-check-dapr-cli.md`](../shared/prereq-check-dapr-cli.md) and follow those instructions.
+Read the file at [`../dapr-shared/prereq-check-dapr-cli.md`](../dapr-shared/prereq-check-dapr-cli.md) and follow those instructions.
 
 ### Step 6: Check Aspire CLI
 
-Read the file at [`../shared/prereq-check-aspire-cli.md`](../shared/prereq-check-aspire-cli.md) and follow those instructions.
+Read the file at [`../dapr-shared/prereq-check-aspire-cli.md`](../dapr-shared/prereq-check-aspire-cli.md) and follow those instructions.
 
 ## Show final message
 

@@ -5,7 +5,7 @@ This repository contains Claude Code skill definitions for building Dapr Workflo
 ## Repository structure
 
 - `skills/` — Skill files organized by language/framework
-  - `shared/` — Shared content referenced by multiple skills (prereq checks, component YAMLs, tool templates, observability, running instructions)
+  - `dapr-shared/` — Support skill holding shared content referenced by multiple skills (prereq checks, component YAMLs, tool templates, observability, running instructions). It has its own `SKILL.md` so it installs next to the other skills.
 
 ### Workflow skills
 
@@ -79,7 +79,7 @@ Run `create-agent-python` or `create-agent-dotnet` to scaffold a durable agent a
 - `review-agent-orchestration` — checks multi-agent pub/sub topic conventions, loop bounds, agent-registry wiring, and port collisions.
 - `review-agent-observability` — checks tracing configuration, sampling rate, structured logging, and trace propagation on outbound calls.
 
-All review skills are read-only (`Read`, `Grep`, `Glob` only), emit a structured report defined by `skills/shared/review-report-format.md`, and use stable rule ids: `DWF-DET-NNN`, `DWF-ACT-NNN`, `DWF-MGT-NNN` for workflow reviews; `DAG-TOOL-NNN`, `DAG-MEM-NNN`, `DAG-ORCH-NNN`, `DAG-OBS-NNN` for agent reviews.
+All review skills are read-only (`Read`, `Grep`, `Glob` only), emit a structured report defined by `skills/dapr-shared/review-report-format.md`, and use stable rule ids: `DWF-DET-NNN`, `DWF-ACT-NNN`, `DWF-MGT-NNN` for workflow reviews; `DAG-TOOL-NNN`, `DAG-MEM-NNN`, `DAG-ORCH-NNN`, `DAG-OBS-NNN` for agent reviews.
 
 ## Repository prerequisites
 
@@ -127,4 +127,6 @@ All skills require:
 - Include "Key points" sections after code examples to explain important concepts
 - Skills must perform all prerequisite checks before creating any files
 - Skills must be able to work on MacOS, Linux, and Windows environments.
-- Shared content goes in `skills/shared/`; SKILL.md and REFERENCE.md files reference shared files to avoid duplication.
+- Shared content goes in `skills/dapr-shared/`; SKILL.md and REFERENCE.md files reference it as `../dapr-shared/<file>` to avoid duplication. Do not reference files outside the `skills/` folder from skill files — installers copy only the `skills/<name>/` folders.
+- Every folder under `skills/` must contain a `SKILL.md` whose `name` equals the folder name and that has a `description`.
+- Run `node scripts/validate-skills.mjs` (and `node --test "scripts/test/*.test.mjs"` when changing the scripts) before committing skill changes; CI runs both.

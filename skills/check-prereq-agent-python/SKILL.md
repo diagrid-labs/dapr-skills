@@ -37,35 +37,35 @@ The following must be installed:
 
 ### Step 1: Detect Operating System
 
-Read the file at [`../shared/prereq-detect-os.md`](../shared/prereq-detect-os.md) and follow those instructions.
+Read the file at [`../dapr-shared/prereq-detect-os.md`](../dapr-shared/prereq-detect-os.md) and follow those instructions.
 
 ### Step 2: Check the Python LSP plugin
 
-Read the file at [`../shared/prereq-check-python-lsp.md`](../shared/prereq-check-python-lsp.md) and follow those instructions.
+Read the file at [`../dapr-shared/prereq-check-python-lsp.md`](../dapr-shared/prereq-check-python-lsp.md) and follow those instructions.
 
 ### Step 3: Check uv
 
-Read the file at [`../shared/prereq-check-uv.md`](../shared/prereq-check-uv.md) and follow those instructions.
+Read the file at [`../dapr-shared/prereq-check-uv.md`](../dapr-shared/prereq-check-uv.md) and follow those instructions.
 
 ### Step 4: Check Python SDK version
 
-Read the file at [`../shared/prereq-check-python-sdk.md`](../shared/prereq-check-python-sdk.md) and follow those instructions, **with this override**: the shared check rejects anything below Python 3.12 because it targets workflow skills. Agent skills accept **3.11 up to but excluding 3.14**. Treat `3.11.x` as **passing**. Fail `3.10.x` and below, and also fail `3.14` and above — neither `dapr-agents` nor `diagrid` resolves there, both declaring `>=3.11,<3.14`.
+Read the file at [`../dapr-shared/prereq-check-python-sdk.md`](../dapr-shared/prereq-check-python-sdk.md) and follow those instructions, **with this override**: the shared check rejects anything below Python 3.12 because it targets workflow skills. Agent skills accept **3.11 up to but excluding 3.14**. Treat `3.11.x` as **passing**. Fail `3.10.x` and below, and also fail `3.14` and above — neither `dapr-agents` nor `diagrid` resolves there, both declaring `>=3.11,<3.14`.
 
 ### Step 5: Check Docker or Podman
 
-Read the file at [`../shared/prereq-check-docker-podman.md`](../shared/prereq-check-docker-podman.md) and follow those instructions.
+Read the file at [`../dapr-shared/prereq-check-docker-podman.md`](../dapr-shared/prereq-check-docker-podman.md) and follow those instructions.
 
 ### Step 6: Check Dapr CLI
 
-Read the file at [`../shared/prereq-check-dapr-cli.md`](../shared/prereq-check-dapr-cli.md) and follow those instructions.
+Read the file at [`../dapr-shared/prereq-check-dapr-cli.md`](../dapr-shared/prereq-check-dapr-cli.md) and follow those instructions.
 
 ### Step 7: Check dapr-agents SDK availability
 
-Read the file at [`../shared/prereq-check-dapr-agents-sdk.md`](../shared/prereq-check-dapr-agents-sdk.md) and follow those instructions.
+Read the file at [`../dapr-shared/prereq-check-dapr-agents-sdk.md`](../dapr-shared/prereq-check-dapr-agents-sdk.md) and follow those instructions.
 
 ### Step 8: Check LLM provider availability
 
-Read the file at [`../shared/prereq-check-llm-provider.md`](../shared/prereq-check-llm-provider.md) and follow those instructions.
+Read the file at [`../dapr-shared/prereq-check-llm-provider.md`](../dapr-shared/prereq-check-llm-provider.md) and follow those instructions.
 
 ## Show final message
 

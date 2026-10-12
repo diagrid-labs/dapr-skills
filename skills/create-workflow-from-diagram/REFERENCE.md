@@ -68,7 +68,7 @@ The per-language prompts in `prompts/languages/*.md` define idiomatic Dapr Workf
 
 - **Python** — `dapr-ext-workflow`, `@wfr.workflow(name=...)` decorator, activities with `@wfr.activity(name=...)`, Pydantic input/output models. Shares conventions with the `create-workflow-python` skill.
 - **Go** — `dapr.io/dapr/workflow` package, `wf.Register(...)`, activity handlers registered with the runtime, structs for I/O.
-- **C# / .NET** — `Dapr.Workflow` package, `IWorkflow` / `IActivity` interface impls, classes per activity. Shares conventions with `create-workflow-dotnet`.
+- **C# / .NET** — `Dapr.Workflow` package, classes deriving from `Workflow<TInput, TOutput>` and `WorkflowActivity<TInput, TOutput>`, one class per activity. Shares conventions with `create-workflow-dotnet`.
 - **Java** — `io.dapr.workflows` package, `Workflow` / `WorkflowActivity` interface impls, Maven build.
 - **JavaScript / TypeScript** — `@dapr/dapr` Node SDK, `WorkflowRuntime.registerWorkflow(...)`, Promise-based activities.
 

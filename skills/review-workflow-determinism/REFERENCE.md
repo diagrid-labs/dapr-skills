@@ -1,18 +1,18 @@
 # Reference: Review Dapr Workflow — Determinism
 
-This skill is read-only and operates entirely on existing source. The detailed rule tables live in the per-language checklist shards in `.claude/skills/shared/`.
+This skill is read-only and operates entirely on existing source. The detailed rule tables live in the per-language checklist shards in `.claude/skills/dapr-shared/`.
 
 ## Source rule corpus
 
 The canonical rule sources for this skill are the determinism sections of the existing authoring skills:
 
-- [`../shared/dotnet-workflow-class.md`](../shared/dotnet-workflow-class.md) — section "Workflow determinism".
+- [`../dapr-shared/dotnet-workflow-class.md`](../dapr-shared/dotnet-workflow-class.md) — section "Workflow determinism".
 - [`../create-workflow-python/REFERENCE.md`](../create-workflow-python/REFERENCE.md) — section "Workflow determinism".
 
 The per-language checklist shards translate those rules into greppable patterns and stable rule ids:
 
-- [`../shared/review-determinism-dotnet.md`](../shared/review-determinism-dotnet.md)
-- [`../shared/review-determinism-python.md`](../shared/review-determinism-python.md)
+- [`../dapr-shared/review-determinism-dotnet.md`](../dapr-shared/review-determinism-dotnet.md)
+- [`../dapr-shared/review-determinism-python.md`](../dapr-shared/review-determinism-python.md)
 
 ## Worked example
 

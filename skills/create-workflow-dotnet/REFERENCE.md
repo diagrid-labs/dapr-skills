@@ -24,7 +24,7 @@ apps:
 
 ## resources/statestore.yaml
 
-See [`../shared/dapr-statestore.md`](../shared/dapr-statestore.md) for the full example and key points.
+See [`../dapr-shared/dapr-statestore.md`](../dapr-shared/dapr-statestore.md) for the full example and key points.
 
 ## Properties/launchSettings.json
 
@@ -62,7 +62,7 @@ The `.csproj` file should look like this:
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapr.Workflow" Version="1.18.4" />
+    <PackageReference Include="Dapr.Workflow" Version="1.18.10" />
   </ItemGroup>
 
 </Project>
@@ -70,19 +70,19 @@ The `.csproj` file should look like this:
 
 ## Models
 
-See [`../shared/dotnet-models.md`](../shared/dotnet-models.md) for the full example and key points.
+See [`../dapr-shared/dotnet-models.md`](../dapr-shared/dotnet-models.md) for the full example and key points.
 
 ## Program.cs
 
 Call `AddDaprWorkflow()` to register the Dapr Workflow runtime. As of Dapr 1.18 the .NET SDK auto-registers all workflow and activity classes, so the method takes no arguments. Call `AddDaprWorkflowVersioning()` to enable name-based workflow versioning. Use `DaprWorkflowClient` to manage workflow instances.
 
 ```csharp
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Dapr.Workflow;
 using Dapr.Workflow.Versioning;
-using <ProjectNamespace>;
-using <ProjectNamespace>.Activities;
 using <ProjectNamespace>.Models;
+using <ProjectNamespace>.Workflows;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDaprWorkflow();
@@ -92,7 +92,7 @@ var app = builder.Build();
 
 app.MapPost("/start", async (
     [FromServices] DaprWorkflowClient workflowClient,
-    [FromBody] MyWorkflowInput workflowInput) =>
+    [FromBody] WorkflowInput workflowInput) =>
 {
     var instanceId = await workflowClient.ScheduleNewWorkflowAsync(
         name: nameof(MyWorkflow),
@@ -107,7 +107,7 @@ app.MapGet("/status/{instanceId}", async (
     [FromServices] DaprWorkflowClient workflowClient) =>
 {
     var state = await workflowClient.GetWorkflowStateAsync(instanceId);
-    if (state is null || !state.Exists)
+    if (!state.Exists)
     {
         return Results.NotFound($"Workflow instance '{instanceId}' not found.");
     }
@@ -140,6 +140,23 @@ app.MapPost("terminate/{instanceId}", async (
     return Results.Accepted();
 });
 
+// Only add this endpoint when a workflow calls WaitForExternalEventAsync.
+app.MapPost("raise-event/{instanceId}/{eventName}", async (
+    [FromRoute] string instanceId,
+    [FromRoute] string eventName,
+    [FromBody] JsonElement eventPayload,
+    [FromServices] DaprWorkflowClient workflowClient) =>
+{
+    var state = await workflowClient.GetWorkflowStateAsync(instanceId);
+    if (!state.Exists)
+    {
+        return Results.NotFound($"Workflow instance '{instanceId}' not found.");
+    }
+
+    await workflowClient.RaiseEventAsync(instanceId, eventName, eventPayload);
+    return Results.Accepted();
+});
+
 app.Run();
 ```
 
@@ -149,30 +166,32 @@ app.Run();
 - `AddDaprWorkflowVersioning()` enables name-based workflow versioning (part of the `Dapr.Workflow` package as of 1.18; no separate `Dapr.Workflow.Versioning` package is required).
 - `DaprWorkflowClient` is injected via DI and used to schedule new workflow instances.
 - `ScheduleNewWorkflowAsync` starts a new workflow instance and returns the instance ID. Pass a model record as input.
-- `GetWorkflowStateAsync` retrieves the current status of a workflow instance by its instance ID. Check `state.Exists` to verify the instance was found.
+- `GetWorkflowStateAsync` retrieves the current status of a workflow instance by its instance ID. It never returns `null`; when the instance does not exist it returns a state with `Exists == false`, so check `state.Exists`.
 - Use `state.ReadOutputAs<TOutput>()` to deserialize the workflow output from the state. The `TOutput` type must match the workflow's output type (e.g., `WorkflowOutput`). Return both `state` and `output` in the response.
-- Add `using` directives for the namespaces containing the workflow, activity, and model classes.
+- The `/start` endpoint binds the request body to `WorkflowInput` (the workflow's input type) and uses `WorkflowInput.Id` as the instance ID. The `[FromBody]` type must match the workflow's `TInput`, otherwise the `DAPR1303` analyzer reports an input type mismatch.
+- Add `using` directives for the `Models` and `Workflows` namespaces. Activities are referenced only from workflow classes, so `Program.cs` does not need the `Activities` namespace.
+- The `raise-event` endpoint is only needed when a workflow calls `WaitForExternalEventAsync` (e.g. the human-in-the-loop pattern). The body is bound as a `JsonElement` and forwarded as-is, so one endpoint serves any event; the workflow deserializes it into the type passed to `WaitForExternalEventAsync<T>`. Remove the endpoint (and the `System.Text.Json` using) otherwise. `RaiseEventAsync` silently drops events for unknown instances, so the endpoint checks `state.Exists` first.
 
 ## Workflow Class
 
-See [`../shared/dotnet-workflow-class.md`](../shared/dotnet-workflow-class.md) for the full example, key points, determinism rules, and workflow patterns.
+See [`../dapr-shared/dotnet-workflow-class.md`](../dapr-shared/dotnet-workflow-class.md) for the full example, key points, determinism rules, and workflow patterns.
 
 ## Activity Class
 
-See [`../shared/dotnet-activity-class.md`](../shared/dotnet-activity-class.md) for the full example and key points.
+See [`../dapr-shared/dotnet-activity-class.md`](../dapr-shared/dotnet-activity-class.md) for the full example and key points.
 
 ## local.http
 
-See [`../shared/dotnet-local-http.md`](../shared/dotnet-local-http.md) for the full example and key points.
+See [`../dapr-shared/dotnet-local-http.md`](../dapr-shared/dotnet-local-http.md) for the full example and key points.
 
 ## .gitignore
 
-See [`../shared/dotnet-gitignore.md`](../shared/dotnet-gitignore.md) for instructions.
+See [`../dapr-shared/dotnet-gitignore.md`](../dapr-shared/dotnet-gitignore.md) for instructions.
 
 ## Running Locally
 
-See [`../shared/running-locally-dapr.md`](../shared/running-locally-dapr.md) for instructions.
+See [`../dapr-shared/running-locally-dapr.md`](../dapr-shared/running-locally-dapr.md) for instructions.
 
 ## Running with Diagrid Catalyst
 
-See [`../shared/running-with-catalyst.md`](../shared/running-with-catalyst.md) for instructions.
+See [`../dapr-shared/running-with-catalyst.md`](../dapr-shared/running-with-catalyst.md) for instructions.

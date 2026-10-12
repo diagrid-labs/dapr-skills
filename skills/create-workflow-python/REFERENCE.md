@@ -24,7 +24,7 @@ apps:
 
 ## resources/statestore.yaml
 
-See [`../shared/dapr-statestore.md`](../shared/dapr-statestore.md) for the full example and key points.
+See [`../dapr-shared/dapr-statestore.md`](../dapr-shared/dapr-statestore.md) for the full example and key points.
 
 ## pyproject.toml
 
@@ -380,7 +380,7 @@ def order_saga_workflow(ctx: wf.DaprWorkflowContext, order_input: dict):
 
 ## local.http
 
-See [`../shared/python-local-http.md`](../shared/python-local-http.md) for the full example and key points.
+See [`../dapr-shared/python-local-http.md`](../dapr-shared/python-local-http.md) for the full example and key points.
 
 ## Activity definition
 
@@ -412,8 +412,8 @@ Create a `.gitignore` file in the project root with common Python ignore pattern
 
 ## Running Locally
 
-See [`../shared/running-locally-dapr.md`](../shared/running-locally-dapr.md) for instructions.
+See [`../dapr-shared/running-locally-dapr.md`](../dapr-shared/running-locally-dapr.md) for instructions.
 
 ## Running with Diagrid Catalyst
 
-See [`../shared/running-with-catalyst.md`](../shared/running-with-catalyst.md) for instructions.
+See [`../dapr-shared/running-with-catalyst.md`](../dapr-shared/running-with-catalyst.md) for instructions.

@@ -1,0 +1,21 @@
+# resources/llm-provider.yaml — Ollama (local)
+
+For a local LLM via Ollama (useful for offline development), create an `llm-provider.yaml` component in the `resources` folder:
+
+```yaml
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: llm-provider
+spec:
+  type: conversation.ollama
+  version: v1
+  metadata:
+  - name: model
+    value: "llama3.2"
+```
+
+- The component name `llm-provider` is the value passed to `DaprChatClient(component_name="llm-provider")` in Python, and to `conversationComponentName:` in .NET.
+- Requires Ollama running locally on its default address `http://localhost:11434` (`ollama serve` after installation from [ollama.com](https://ollama.com/)). The `conversation.ollama` component has no `endpoint` field; its documented metadata is `model`, `maxTokens`, and `responseCacheTTL` — see the [Ollama conversation component reference](https://docs.dapr.io/reference/components-reference/supported-conversation/ollama/).
+- Pull the chosen model first: `ollama pull llama3.2`. Other tool-calling-capable models include `qwen2.5`, `llama3.1`, and `mistral-nemo`.
+- No API key is required for local Ollama; no secret management needed.

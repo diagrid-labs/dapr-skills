@@ -143,35 +143,35 @@ Python `.gitignore` file in the project root. See `REFERENCE.md`.
 
 ### dapr.yaml
 
-Multi-app run file. Single-agent: see [`../shared/agent-dapr-yaml-single.md`](../shared/agent-dapr-yaml-single.md). Multi-agent: see [`../shared/agent-dapr-yaml-multi.md`](../shared/agent-dapr-yaml-multi.md).
+Multi-app run file. Single-agent: see [`../dapr-shared/agent-dapr-yaml-single.md`](../dapr-shared/agent-dapr-yaml-single.md). Multi-agent: see [`../dapr-shared/agent-dapr-yaml-multi.md`](../dapr-shared/agent-dapr-yaml-multi.md).
 
 ### resources/agent-memory.yaml
 
-Conversation memory state store. See [`../shared/agent-statestore-memory.md`](../shared/agent-statestore-memory.md).
+Conversation memory state store. See [`../dapr-shared/agent-statestore-memory.md`](../dapr-shared/agent-statestore-memory.md).
 
 ### resources/agent-workflow.yaml
 
-Workflow state store (actor-enabled). See [`../shared/agent-statestore-workflow.md`](../shared/agent-statestore-workflow.md).
+Workflow state store (actor-enabled). See [`../dapr-shared/agent-statestore-workflow.md`](../dapr-shared/agent-statestore-workflow.md).
 
 ### resources/agent-pubsub.yaml (multi-agent only)
 
-Pub/sub component for handoff. See [`../shared/agent-pubsub-redis.md`](../shared/agent-pubsub-redis.md).
+Pub/sub component for handoff. See [`../dapr-shared/agent-pubsub-redis.md`](../dapr-shared/agent-pubsub-redis.md).
 
 ### resources/agent-registry.yaml (multi-agent only)
 
-Agent discovery state store. See [`../shared/agent-statestore-registry.md`](../shared/agent-statestore-registry.md).
+Agent discovery state store. See [`../dapr-shared/agent-statestore-registry.md`](../dapr-shared/agent-statestore-registry.md).
 
 ### resources/llm-provider.yaml
 
-Dapr Conversation component. Pick one: [OpenAI](../shared/agent-llm-openai.md) | [Anthropic](../shared/agent-llm-anthropic.md) | [Ollama](../shared/agent-llm-ollama.md).
+Dapr Conversation component. Pick one: [OpenAI](../dapr-shared/agent-llm-openai.md) | [Anthropic](../dapr-shared/agent-llm-anthropic.md) | [Ollama](../dapr-shared/agent-llm-ollama.md).
 
 ### resources/tracing.yaml (native, observability on)
 
-Dapr `Configuration` with tracing enabled. See [`../shared/agent-tracing-zipkin.md`](../shared/agent-tracing-zipkin.md) (default) or [`../shared/agent-tracing-otlp.md`](../shared/agent-tracing-otlp.md).
+Dapr `Configuration` with tracing enabled. See [`../dapr-shared/agent-tracing-zipkin.md`](../dapr-shared/agent-tracing-zipkin.md) (default) or [`../dapr-shared/agent-tracing-otlp.md`](../dapr-shared/agent-tracing-otlp.md).
 
 ### docker-compose.observability.yaml (native, observability on)
 
-Local Zipkin + Prometheus + Grafana. See [`../shared/agent-observability-stack.md`](../shared/agent-observability-stack.md).
+Local Zipkin + Prometheus + Grafana. See [`../dapr-shared/agent-observability-stack.md`](../dapr-shared/agent-observability-stack.md).
 
 ### pyproject.toml
 
@@ -183,7 +183,7 @@ Agent entrypoint. See `REFERENCE.md` for the native template and for how to deri
 
 ### tools.py
 
-Tool definitions. See [`../shared/agent-tools-python.md`](../shared/agent-tools-python.md); tools for a wrapper project are defined with the wrapped framework's own decorator, not with `dapr_agents.tool`.
+Tool definitions. See [`../dapr-shared/agent-tools-python.md`](../dapr-shared/agent-tools-python.md); tools for a wrapper project are defined with the wrapped framework's own decorator, not with `dapr_agents.tool`.
 
 ### models.py
 
@@ -191,7 +191,7 @@ Pydantic input/output types. See `REFERENCE.md`.
 
 ### logging_config.py (native, observability on)
 
-Structured logging. See [`../shared/agent-logging-python.md`](../shared/agent-logging-python.md).
+Structured logging. See [`../dapr-shared/agent-logging-python.md`](../dapr-shared/agent-logging-python.md).
 
 ### local.http
 
@@ -218,7 +218,7 @@ The README contains the following sections:
 4. How to start the application using the Dapr CLI (`dapr run -f .`).
 5. How to call the agent endpoints (POST the task, GET the workflow state). Include curl examples and link to `local.http`.
 6. **Observability section** (native only, observability on): how to start the observability stack (`docker compose -f docker-compose.observability.yaml up -d`), the Zipkin URL (http://localhost:9411), Grafana URL (http://localhost:3000), and Prometheus URL (http://localhost:9099). Mention the Diagrid Dev Dashboard as a separate, optional container the reader starts themselves (`docker run -p 8080:8080 ghcr.io/diagridio/diagrid-dashboard:latest` → http://localhost:8080) — it is **not** part of `dapr init`.
-7. How to run with Diagrid Catalyst: [`../shared/running-with-catalyst.md`](../shared/running-with-catalyst.md).
+7. How to run with Diagrid Catalyst: [`../dapr-shared/running-with-catalyst.md`](../dapr-shared/running-with-catalyst.md).
 
 See `REFERENCE.md` for the pyproject.toml templates, the native `main.py`, the wrapper entry-point table, tool patterns, and observability wiring.
 

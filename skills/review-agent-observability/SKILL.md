@@ -17,13 +17,13 @@ Scans native `dapr-agents` projects for observability completeness: Dapr tracing
 
 You MUST follow these phases in strict order.
 
-1. **Resolve scope** — Read [`../shared/review-scope-prompt.md`](../shared/review-scope-prompt.md) and follow it to set `scope_root`.
-2. **Detect target** — Read [`../shared/review-detect-target-agent.md`](../shared/review-detect-target-agent.md). If `flavor == framework-wrapper`, emit one `info` finding explaining that observability is delegated to the wrapped framework and stop.
+1. **Resolve scope** — Read [`../dapr-shared/review-scope-prompt.md`](../dapr-shared/review-scope-prompt.md) and follow it to set `scope_root`.
+2. **Detect target** — Read [`../dapr-shared/review-detect-target-agent.md`](../dapr-shared/review-detect-target-agent.md). If `language == python` and `flavor == framework-wrapper`, emit one `info` finding explaining that observability is delegated to the wrapped framework and stop. .NET projects are always classified `framework-wrapper` but have their own checklist — continue for them.
 3. **Load checklist** — Based on `language`, read exactly one of:
-   - `python` → [`../shared/review-agent-observability-python.md`](../shared/review-agent-observability-python.md)
-   - `dotnet` → [`../shared/review-agent-observability-dotnet.md`](../shared/review-agent-observability-dotnet.md) (stub — emits a single `DAG-OBS-000` info finding)
-4. **Scan** — Apply every rule. `dapr.yaml`, `resources/tracing.yaml`, tool file contents, and `README.md` are all potentially in scope.
-5. **Report** — Format findings using [`../shared/review-report-format.md`](../shared/review-report-format.md).
+   - `python` → [`../dapr-shared/review-agent-observability-python.md`](../dapr-shared/review-agent-observability-python.md)
+   - `dotnet` → [`../dapr-shared/review-agent-observability-dotnet.md`](../dapr-shared/review-agent-observability-dotnet.md)
+4. **Scan** — Apply every rule. `dapr.yaml`, `resources/tracing.yaml`, tool file contents, `appsettings*.json` (.NET), and `README.md` are all potentially in scope.
+5. **Report** — Format findings using [`../dapr-shared/review-report-format.md`](../dapr-shared/review-report-format.md).
 6. **Show final message** — Emit the report from step 5 with a `## Next steps` block.
 
 ## Prerequisites
@@ -36,8 +36,8 @@ You MUST follow these phases in strict order.
 
 ## Rules
 
-- [Python rules](../shared/review-agent-observability-python.md) — `DAG-OBS-001` … `DAG-OBS-008`
-- [.NET rules](../shared/review-agent-observability-dotnet.md) — `DAG-OBS-000` (stub; full checklist TBD)
+- [Python rules](../dapr-shared/review-agent-observability-python.md) — `DAG-OBS-001` … `DAG-OBS-008`
+- [.NET rules](../dapr-shared/review-agent-observability-dotnet.md) — `DAG-OBS-001`, `DAG-OBS-002`, `DAG-OBS-004`, `DAG-OBS-006`, `DAG-OBS-007`, `DAG-OBS-009`, `DAG-OBS-010`
 
 ## Show final message
 

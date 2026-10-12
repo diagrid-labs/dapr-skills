@@ -59,7 +59,7 @@ builder.Build().Run();
 ## AppHost .csproj
 
 ```xml
-<Project Sdk="Aspire.AppHost.Sdk/13.4.4">
+<Project Sdk="Aspire.AppHost.Sdk/<AspireVersion>">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -74,7 +74,7 @@ builder.Build().Run();
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.Valkey" Version="13.4.4" />
+    <PackageReference Include="Aspire.Hosting.Valkey" Version="<AspireVersion>" />
     <PackageReference Include="CommunityToolkit.Aspire.Hosting.Dapr" Version="13.0.0" />
   </ItemGroup>
 
@@ -90,7 +90,9 @@ builder.Build().Run();
 
 ### Key points
 
-- Uses `Aspire.AppHost.Sdk/13.4.4` instead of the standard .NET SDK.
+- Uses `Aspire.AppHost.Sdk/<AspireVersion>` instead of the standard .NET SDK. `<AspireVersion>` is the version `aspire new` writes into the `Sdk` attribute (e.g. `13.6.1`); keep it unchanged.
+- Keep the scaffolded `PropertyGroup` as generated. Newer templates may add properties not shown here (e.g. `<AspireUseCliBundle>true</AspireUseCliBundle>`); do not remove them.
+- `Aspire.Hosting.Valkey` uses the same `<AspireVersion>` as the AppHost SDK so all Aspire hosting packages stay on one release.
 - `CommunityToolkit.Aspire.Hosting.Dapr` provides the `AddDapr()` and `WithDaprSidecar()` extension methods.
 - `Aspire.Hosting.Valkey` provides the `AddValkey()` extension method.
 - The `Content` item group copies the `Resources` folder (containing Dapr component YAML files) to the build output directory.
@@ -158,12 +160,12 @@ spec:
 Call `AddDaprWorkflow()` to register the Dapr Workflow runtime. As of Dapr 1.18 the .NET SDK auto-registers all workflow and activity classes, so the method takes no arguments. Call `AddDaprWorkflowVersioning()` to enable name-based workflow versioning. Use `DaprWorkflowClient` to schedule workflow instances and query their status via HTTP endpoints. Use `AddServiceDefaults` to integrate with the Aspire ServiceDefaults:
 
 ```csharp
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Dapr.Workflow;
 using Dapr.Workflow.Versioning;
-using <ProjectNamespace>;
-using <ProjectNamespace>.Activities;
 using <ProjectNamespace>.Models;
+using <ProjectNamespace>.Workflows;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -176,7 +178,7 @@ var app = builder.Build();
 
 app.MapPost("/start", async (
     [FromServices] DaprWorkflowClient workflowClient,
-    [FromBody] MyWorkflowInput workflowInput) =>
+    [FromBody] WorkflowInput workflowInput) =>
 {
     var instanceId = await workflowClient.ScheduleNewWorkflowAsync(
         name: nameof(MyWorkflow),
@@ -191,7 +193,7 @@ app.MapGet("/status/{instanceId}", async (
     [FromServices] DaprWorkflowClient workflowClient) =>
 {
     var state = await workflowClient.GetWorkflowStateAsync(instanceId);
-    if (state is null || !state.Exists)
+    if (!state.Exists)
     {
         return Results.NotFound($"Workflow instance '{instanceId}' not found.");
     }
@@ -224,6 +226,23 @@ app.MapPost("terminate/{instanceId}", async (
     return Results.Accepted();
 });
 
+// Only add this endpoint when a workflow calls WaitForExternalEventAsync.
+app.MapPost("raise-event/{instanceId}/{eventName}", async (
+    [FromRoute] string instanceId,
+    [FromRoute] string eventName,
+    [FromBody] JsonElement eventPayload,
+    [FromServices] DaprWorkflowClient workflowClient) =>
+{
+    var state = await workflowClient.GetWorkflowStateAsync(instanceId);
+    if (!state.Exists)
+    {
+        return Results.NotFound($"Workflow instance '{instanceId}' not found.");
+    }
+
+    await workflowClient.RaiseEventAsync(instanceId, eventName, eventPayload);
+    return Results.Accepted();
+});
+
 app.MapDefaultEndpoints();
 
 app.Run();
@@ -237,9 +256,11 @@ app.Run();
 - `AddDaprWorkflowVersioning()` enables name-based workflow versioning (part of the `Dapr.Workflow` package as of 1.18; no separate `Dapr.Workflow.Versioning` package is required).
 - `DaprWorkflowClient` is injected via DI and used to schedule new workflow instances.
 - `ScheduleNewWorkflowAsync` starts a new workflow instance and returns the instance ID. Pass a model record as input.
-- `GetWorkflowStateAsync` retrieves the current status of a workflow instance by its instance ID. Check `state.Exists` to verify the instance was found.
+- `GetWorkflowStateAsync` retrieves the current status of a workflow instance by its instance ID. It never returns `null`; when the instance does not exist it returns a state with `Exists == false`, so check `state.Exists`.
 - Use `state.ReadOutputAs<TOutput>()` to deserialize the workflow output from the state. The `TOutput` type must match the workflow's output type (e.g., `WorkflowOutput`). Return both `state` and `output` in the response.
-- Add `using` directives for the namespaces containing the workflow, activity, and model classes.
+- The `/start` endpoint binds the request body to `WorkflowInput` (the workflow's input type) and uses `WorkflowInput.Id` as the instance ID. The `[FromBody]` type must match the workflow's `TInput`, otherwise the `DAPR1303` analyzer reports an input type mismatch.
+- Add `using` directives for the `Models` and `Workflows` namespaces. Activities are referenced only from workflow classes, so `Program.cs` does not need the `Activities` namespace.
+- The `raise-event` endpoint is only needed when a workflow calls `WaitForExternalEventAsync` (e.g. the human-in-the-loop pattern). The body is bound as a `JsonElement` and forwarded as-is, so one endpoint serves any event; the workflow deserializes it into the type passed to `WaitForExternalEventAsync<T>`. Remove the endpoint (and the `System.Text.Json` using) otherwise. `RaiseEventAsync` silently drops events for unknown instances, so the endpoint checks `state.Exists` first.
 
 ## ApiService .csproj
 
@@ -257,7 +278,7 @@ app.Run();
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapr.Workflow" Version="1.18.4" />
+    <PackageReference Include="Dapr.Workflow" Version="1.18.10" />
   </ItemGroup>
 
 </Project>
@@ -266,12 +287,12 @@ app.Run();
 ### Key points
 
 - References the ServiceDefaults project for shared Aspire configuration.
-- Uses `Dapr.Workflow` version `1.18.4` for workflow support.
+- Uses `Dapr.Workflow` version `1.18.10` for workflow support.
 - No `Microsoft.AspNetCore.OpenApi` package is needed unless the user explicitly requests OpenAPI support.
 
 ## ServiceDefaults .csproj
 
-Template-generated file — keep as scaffolded by `aspire new`:
+Template-generated file — keep as scaffolded by `aspire new`, including the package versions it writes. The versions below are what the Aspire 13.6.1 template generates and are shown for reference only:
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
@@ -286,13 +307,13 @@ Template-generated file — keep as scaffolded by `aspire new`:
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
 
-    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.1.0" />
-    <PackageReference Include="Microsoft.Extensions.ServiceDiscovery" Version="10.1.0" />
-    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.14.0" />
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.14.0" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.14.0" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.14.0" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.14.0" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.10.0" />
+    <PackageReference Include="Microsoft.Extensions.ServiceDiscovery" Version="10.10.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.17.0" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.17.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.17.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.17.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.17.0" />
   </ItemGroup>
 
 </Project>
@@ -303,7 +324,7 @@ Template-generated file — keep as scaffolded by `aspire new`:
 - `IsAspireSharedProject` marks this as an Aspire shared project.
 - Includes OpenTelemetry packages for tracing, metrics, and logging.
 - Includes resilience and service discovery packages.
-- This file is generated by the Aspire template and should not need modifications.
+- This file is generated by the Aspire template and should not need modifications. Do not change the package versions; they are set by the `aspire new` template to match `<AspireVersion>`.
 
 ## ServiceDefaults Extensions.cs
 
@@ -422,15 +443,15 @@ public static class Extensions
 
 ## Models
 
-See [`../shared/dotnet-models.md`](../shared/dotnet-models.md) for the full example and key points.
+See [`../dapr-shared/dotnet-models.md`](../dapr-shared/dotnet-models.md) for the full example and key points.
 
 ## Workflow Class
 
-See [`../shared/dotnet-workflow-class.md`](../shared/dotnet-workflow-class.md) for the full example, key points, determinism rules, and workflow patterns.
+See [`../dapr-shared/dotnet-workflow-class.md`](../dapr-shared/dotnet-workflow-class.md) for the full example, key points, determinism rules, and workflow patterns.
 
 ## Activity Class
 
-See [`../shared/dotnet-activity-class.md`](../shared/dotnet-activity-class.md) for the full example and key points.
+See [`../dapr-shared/dotnet-activity-class.md`](../dapr-shared/dotnet-activity-class.md) for the full example and key points.
 
 ## <SolutionRoot>.ApiService.http
 
@@ -446,7 +467,7 @@ Content-Type: application/json
 
 {
     "id": "{{$guid}}",
-    "key1": "value1"
+    "message": "Hello Dapr Workflow"
 }
 
 ### Get the workflow status
@@ -463,7 +484,7 @@ GET {{host}}/status/{{instanceId}}
 
 ## .gitignore
 
-See [`../shared/dotnet-gitignore.md`](../shared/dotnet-gitignore.md) for instructions.
+See [`../dapr-shared/dotnet-gitignore.md`](../dapr-shared/dotnet-gitignore.md) for instructions.
 
 ## Running Locally
 

@@ -94,15 +94,15 @@ Multi-app run file in the project root that starts both the main app and the com
 
 ### resources/statestore.yaml
 
-Dapr Workflow requires a state store component (with `actorStateStore` set to `"true"`). See [`../shared/dapr-statestore.md`](../shared/dapr-statestore.md) for full example and key points.
+Dapr Workflow requires a state store component (with `actorStateStore` set to `"true"`). See [`../dapr-shared/dapr-statestore.md`](../dapr-shared/dapr-statestore.md) for full example and key points.
 
 ### resources/pubsub.yaml
 
-See [`../shared/dapr-pubsub-redis.md`](../shared/dapr-pubsub-redis.md) for full example and key points.
+See [`../dapr-shared/dapr-pubsub-redis.md`](../dapr-shared/dapr-pubsub-redis.md) for full example and key points.
 
 ### resources/secretstore.yaml
 
-See [`../shared/dapr-secretstore-local-env.md`](../shared/dapr-secretstore-local-env.md) for full example and key points.
+See [`../dapr-shared/dapr-secretstore-local-env.md`](../dapr-shared/dapr-secretstore-local-env.md) for full example and key points.
 
 ### resources/binding-receipt.yaml and resources/binding-schedule.yaml
 
@@ -134,7 +134,7 @@ A minimal second Dapr app exposing one invocable method (`calculate-total`) via 
 
 ### local.http
 
-See [`../shared/typescript-local-http.md`](../shared/typescript-local-http.md) for the full example and key points.
+See [`../dapr-shared/typescript-local-http.md`](../dapr-shared/typescript-local-http.md) for the full example and key points.
 
 ## Verify
 

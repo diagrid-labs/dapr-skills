@@ -14,7 +14,7 @@ Found: 1 critical, 2 warnings, 2 suggestions, 0 to verify
 ## Critical
 - [DAG-OBS-001] `dapr.yaml:1` — no configFilePath referencing a Configuration resource with tracing
   Why: Agent runs are unobservable; no spans emitted; incidents cannot be diagnosed.
-  Fix: Add `configFilePath: ./resources/tracing.yaml` and create tracing.yaml (see shared/agent-tracing-zipkin.md).
+  Fix: Add `configFilePath: ./resources/tracing.yaml` and create tracing.yaml (see dapr-shared/agent-tracing-zipkin.md).
 
 ## Warnings
 - [DAG-OBS-003] `my-agent-agent/tools.py:12` — bare print() inside tool body

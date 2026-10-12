@@ -1,6 +1,6 @@
 # Reference: Python Agent Application
 
-This reference covers the per-framework detail needed to scaffold a Python agent project. Structural files (`dapr.yaml`, component YAMLs, tracing, docker-compose) live in `../shared/`; this file covers what differs per framework and per topology.
+This reference covers the per-framework detail needed to scaffold a Python agent project. Structural files (`dapr.yaml`, component YAMLs, tracing, docker-compose) live in `../dapr-shared/`; this file covers what differs per framework and per topology.
 
 Two paths, and they are not interchangeable:
 
@@ -187,7 +187,7 @@ class AgentResponse(BaseModel):
 
 ## Tools
 
-See [`../shared/agent-tools-python.md`](../shared/agent-tools-python.md) for the canonical native `@tool` pattern.
+See [`../dapr-shared/agent-tools-python.md`](../dapr-shared/agent-tools-python.md) for the canonical native `@tool` pattern.
 
 For a wrapper project the tool decorator belongs to the wrapped framework, not to `dapr_agents` — read that framework's own documentation for the current import. The list is deliberately not duplicated here; see the note in the entry-point snapshot above.
 
@@ -391,10 +391,10 @@ When observability is enabled, the scaffold wires the Dapr tracing Configuration
 
 ### Observability files produced
 
-- `resources/tracing.yaml` — see [`../shared/agent-tracing-zipkin.md`](../shared/agent-tracing-zipkin.md)
-- `docker-compose.observability.yaml` — see [`../shared/agent-observability-stack.md`](../shared/agent-observability-stack.md)
-- `logging_config.py` — see [`../shared/agent-logging-python.md`](../shared/agent-logging-python.md)
-- `observability/prometheus.yml` + `observability/grafana-datasources.yaml` + `observability/dashboards/dapr-agents.json` — see [`../shared/agent-metrics-prometheus.md`](../shared/agent-metrics-prometheus.md)
+- `resources/tracing.yaml` — see [`../dapr-shared/agent-tracing-zipkin.md`](../dapr-shared/agent-tracing-zipkin.md)
+- `docker-compose.observability.yaml` — see [`../dapr-shared/agent-observability-stack.md`](../dapr-shared/agent-observability-stack.md)
+- `logging_config.py` — see [`../dapr-shared/agent-logging-python.md`](../dapr-shared/agent-logging-python.md)
+- `observability/prometheus.yml` + `observability/grafana-datasources.yaml` + `observability/dashboards/dapr-agents.json` — see [`../dapr-shared/agent-metrics-prometheus.md`](../dapr-shared/agent-metrics-prometheus.md)
 
 ### What users get at runtime
 
@@ -414,10 +414,10 @@ docker run -p 8080:8080 ghcr.io/diagridio/diagrid-dashboard:latest
 
 ## Running locally
 
-See [`../shared/running-locally-dapr.md`](../shared/running-locally-dapr.md).
+See [`../dapr-shared/running-locally-dapr.md`](../dapr-shared/running-locally-dapr.md).
 
 ## Running with Diagrid Catalyst
 
-See [`../shared/running-with-catalyst.md`](../shared/running-with-catalyst.md).
+See [`../dapr-shared/running-with-catalyst.md`](../dapr-shared/running-with-catalyst.md).
 
 On Catalyst, the `agent-registry` component is what backs the **Agents** view, and writing to it can succeed while the agent stays invisible: the view is populated by a sidecar interceptor bound to the component named exactly `agent-registry`, scoped to the App IDs declared by an `Agent` resource. An App ID outside that scope gets a successful write and no entry in the view, with no error to catch. `diagrid component list` is not evidence of scope — it renders `agent-registry` as available to all app identities either way. Confirm the agent appears in the Agents view, and check that the project has `agent-registry` at all: the `agent-*` components are not provisioned on every project.

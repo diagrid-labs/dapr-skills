@@ -32,7 +32,7 @@ The following must be installed by the user before this skill can run:
 
 Additional runtime dependencies (handled during project setup):
 
-- NuGet package: `Dapr.Workflow` version `1.18.4`
+- NuGet package: `Dapr.Workflow` version `1.18.10`
 - Start the [Diagrid Dev Dashboard](https://www.diagrid.io/blog/improving-the-local-dapr-workflow-experience-diagrid-dashboard): `docker run -p 8080:8080 ghcr.io/diagridio/diagrid-dashboard:latest`
 
 ## Check specification
@@ -53,7 +53,7 @@ Create the project root folder inside the current location where the terminal is
 mkdir <ProjectRoot>
 cd <ProjectRoot>
 dotnet new web -n <ProjectName>
-dotnet add <ProjectName> package Dapr.Workflow --version 1.18.4
+dotnet add <ProjectName> package Dapr.Workflow --version 1.18.10
 ```
 
 The <ProjectName> should start with the <ProjectRoot> and end with `App`: <ProjectRoot>App.
@@ -110,11 +110,11 @@ Uses `AddDaprWorkflow()` to register the Dapr Workflow runtime (workflows and ac
 
 ### Workflow Class
 
-Inherits from `Workflow<TInput, TOutput>`, overrides `RunAsync`, and orchestrates activities via `context.CallActivityAsync`. Must be `internal sealed`. Place in a `Workflows` folder/namespace. See `REFERENCE.md` for full example, key points, determinism rules, and workflow patterns (chaining, fan-out/fan-in, sub-workflows).
+Inherits from `Workflow<TInput, TOutput>`, overrides `RunAsync`, and orchestrates activities via `context.CallActivityAsync`. Must be `internal sealed partial` (`partial` is required for `[LoggerMessage]` methods). Place in a `Workflows` folder and the `<ProjectNamespace>.Workflows` namespace. See `REFERENCE.md` for full example, key points, determinism rules, and workflow patterns (chaining, fan-out/fan-in, sub-workflows).
 
 ### Activity Class
 
-Inherits from `WorkflowActivity<TInput, TOutput>`, overrides `RunAsync`, and contains the actual business logic. Must be `internal sealed`. Place in an `Activities` folder/namespace. See `REFERENCE.md` for full example and key points.
+Inherits from `WorkflowActivity<TInput, TOutput>`, overrides `RunAsync`, and contains the actual business logic. Must be `internal sealed partial` (`partial` is required for `[LoggerMessage]` methods). Place in an `Activities` folder and the `<ProjectNamespace>.Activities` namespace. See `REFERENCE.md` for full example and key points.
 
 ### local.http
 

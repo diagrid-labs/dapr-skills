@@ -38,15 +38,15 @@ apps:
 
 ## resources/statestore.yaml
 
-See [`../shared/dapr-statestore.md`](../shared/dapr-statestore.md) for the full example and key points.
+See [`../dapr-shared/dapr-statestore.md`](../dapr-shared/dapr-statestore.md) for the full example and key points.
 
 ## resources/pubsub.yaml
 
-See [`../shared/dapr-pubsub-redis.md`](../shared/dapr-pubsub-redis.md) for the full example and key points.
+See [`../dapr-shared/dapr-pubsub-redis.md`](../dapr-shared/dapr-pubsub-redis.md) for the full example and key points.
 
 ## resources/secretstore.yaml
 
-See [`../shared/dapr-secretstore-local-env.md`](../shared/dapr-secretstore-local-env.md) for the full example and key points.
+See [`../dapr-shared/dapr-secretstore-local-env.md`](../dapr-shared/dapr-secretstore-local-env.md) for the full example and key points.
 
 ## resources/binding-receipt.yaml
 
@@ -529,7 +529,7 @@ const orderSagaWorkflow: TWorkflow = async function* (ctx: WorkflowContext, orde
 
 ## local.http
 
-See [`../shared/typescript-local-http.md`](../shared/typescript-local-http.md) for the full example and key points.
+See [`../dapr-shared/typescript-local-http.md`](../dapr-shared/typescript-local-http.md) for the full example and key points.
 
 ## src/activities.ts
 
@@ -708,8 +708,8 @@ Verified against `@dapr/dapr@3.18.0` source — worth knowing before adding to t
 
 ## Running Locally
 
-See [`../shared/running-locally-dapr.md`](../shared/running-locally-dapr.md) for instructions.
+See [`../dapr-shared/running-locally-dapr.md`](../dapr-shared/running-locally-dapr.md) for instructions.
 
 ## Running with Diagrid Catalyst
 
-See [`../shared/running-with-catalyst.md`](../shared/running-with-catalyst.md) for instructions.
+See [`../dapr-shared/running-with-catalyst.md`](../dapr-shared/running-with-catalyst.md) for instructions.

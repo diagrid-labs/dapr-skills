@@ -17,13 +17,13 @@ Scans agent memory and state-store configuration (component YAMLs + in-code wiri
 
 You MUST follow these phases in strict order.
 
-1. **Resolve scope** — Read [`../shared/review-scope-prompt.md`](../shared/review-scope-prompt.md) and follow it to set `scope_root`.
-2. **Detect target** — Read [`../shared/review-detect-target-agent.md`](../shared/review-detect-target-agent.md) and follow it to produce `language`, `flavor`, `agent_files`, and `component_files`.
+1. **Resolve scope** — Read [`../dapr-shared/review-scope-prompt.md`](../dapr-shared/review-scope-prompt.md) and follow it to set `scope_root`.
+2. **Detect target** — Read [`../dapr-shared/review-detect-target-agent.md`](../dapr-shared/review-detect-target-agent.md) and follow it to produce `language`, `flavor`, `agent_files`, and `component_files`.
 3. **Load checklist** — Based on `language`, read exactly one of:
-   - `python` → [`../shared/review-agent-memory-python.md`](../shared/review-agent-memory-python.md)
-   - `dotnet` → [`../shared/review-agent-memory-dotnet.md`](../shared/review-agent-memory-dotnet.md)
+   - `python` → [`../dapr-shared/review-agent-memory-python.md`](../dapr-shared/review-agent-memory-python.md)
+   - `dotnet` → [`../dapr-shared/review-agent-memory-dotnet.md`](../dapr-shared/review-agent-memory-dotnet.md)
 4. **Scan** — Apply every rule from the loaded checklist to agent files and component YAMLs. Cross-reference: a rule about a component is only valid if the component name is referenced in code (or conventionally expected, like `agent-workflow`).
-5. **Report** — Format findings using [`../shared/review-report-format.md`](../shared/review-report-format.md). Group by severity, then rule id, then file path.
+5. **Report** — Format findings using [`../dapr-shared/review-report-format.md`](../dapr-shared/review-report-format.md). Group by severity, then rule id, then file path.
 6. **Show final message** — Emit the report from step 5 with a `## Next steps` block.
 
 ## Prerequisites
@@ -37,8 +37,8 @@ You MUST follow these phases in strict order.
 
 ## Rules
 
-- [Python rules](../shared/review-agent-memory-python.md) — `DAG-MEM-001` … `DAG-MEM-008`
-- [.NET rules](../shared/review-agent-memory-dotnet.md) — `DAG-MEM-001` … `DAG-MEM-007`
+- [Python rules](../dapr-shared/review-agent-memory-python.md) — `DAG-MEM-001` … `DAG-MEM-008`
+- [.NET rules](../dapr-shared/review-agent-memory-dotnet.md) — `DAG-MEM-001` … `DAG-MEM-007`
 
 ## Show final message
 
