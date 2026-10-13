@@ -36,15 +36,15 @@ Found: 1 critical, 4 warnings, 1 suggestion, 0 to verify
 
 ## Critical
 - [DAG-TOOL-001] `my-agent-agent/tools.py:8` — charge_customer calls requests.post without an idempotency key
-  Why: Dapr Workflow may retry the activity; without an idempotency key the side effect runs more than once.
-  Fix: Accept an `idempotency_key` arg (or read `taskExecutionId`) and include it as a header on the outbound call.
+  Why: Tools run as at-least-once workflow activities: a crash or retry after the charge runs it again.
+  Fix: Accept an LLM-supplied `idempotency_key` arg and send it as an `Idempotency-Key` header on the call.
 
 ## Warnings
 - [DAG-TOOL-002] `my-agent-agent/tools.py:7` — charge_customer has a one-word docstring ("Charge.")
   Why: The LLM routes tool calls by docstring; a vague docstring silently degrades agent behaviour.
   Fix: Write a one-line sentence describing what the tool does and when to call it.
 - [DAG-TOOL-003] `my-agent-agent/tools.py:9` — return response.json() has no size cap
-  Why: Large returns bloat the agent context and can exhaust the LLM token budget.
+  Why: The full message history is the input to every LLM activity and is stored in workflow state.
   Fix: Truncate, summarize, or return a reference id the agent can fetch selectively.
 - [DAG-TOOL-006] `my-agent-agent/tools.py:13` — find_invoices accepts **kwargs and has no args_model
   Why: Inputs are unvalidated; malformed tool calls reach the function body.
@@ -64,6 +64,37 @@ Found: 1 critical, 4 warnings, 1 suggestion, 0 to verify
 ```
 
 Not reported: the return-type annotations (`-> dict`, `-> list`) are not part of DAG-TOOL-005, which covers parameters only; `charge_customer` has typed parameters and no `**kwargs`, so it does not trigger DAG-TOOL-006 (native `@tool` infers its schema from the hints); `find_invoices` uses a read-only GET and caps its return, so DAG-TOOL-001 and DAG-TOOL-003 do not apply.
+
+## Wrapper example
+
+A `diagrid[pydantic_ai]` app in `billing-agent/main.py` (flavor `wrapper`, tool file found through the `@<agent>.tool` marker):
+
+```python
+@agent.tool
+async def get_invoice(ctx: RunContext[None], invoice_id: str) -> dict:
+    """Fetch the amount and due date of an invoice by its id."""
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.get(f"{BILLING_URL}/invoices/{invoice_id}")
+        response.raise_for_status()
+    except Exception:
+        return {"error": "unavailable"}
+    return {"amount": response.json()["amount"]}
+```
+
+Report body:
+
+```
+## Warnings
+- [DAG-TOOL-004] `billing-agent/main.py:23` — get_invoice swallows every exception and returns a placeholder
+  Why: pydantic_ai under the wrapper already returns tool exceptions to the LLM; swallowing hides the cause.
+  Fix: Let the exception propagate (catch-and-return framework); the LLM then sees the real error.
+- [DAG-TOOL-016] `billing-agent/main.py:17` — get_invoice is an @agent.tool whose first parameter is RunContext
+  Why: The wrapper calls the tool as function(**args) with no context, so every call fails.
+  Fix: Use @agent.tool_plain and drop the RunContext parameter.
+```
+
+For a re-raise framework (langchain, smolagents, langgraph, deepagents) the DAG-TOOL-004 `Fix:` instead says to raise only transient errors and return an error value for permanent ones, because a raised exception fails the activity, is retried 3 times and then fails the workflow.
 
 ## No tool definitions in scope
 

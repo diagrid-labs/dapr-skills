@@ -2,10 +2,10 @@
 
 Run `uv pip show dapr-agents` (Windows fallback: `powershell -Command "uv pip show dapr-agents"`). Read the `Version:` line from its output. If the command exits with an error or reports that the package is not found (for example `warning: Package(s) not found for: dapr-agents`), treat it as `not installed`. Do not pipe the output into `grep`, `Select-String` or other filters — read it directly.
 
-Interpret the result, comparing `major.minor` numerically:
+Interpret the result, comparing `major.minor.patch` numerically:
 
-- **Installed with version `1.0` or higher** → check passes. Report the version. `1.0` is a floor, not a target — do not fail a newer version.
-- **Installed with version below `1.0`** → check fails. Inform the user to upgrade via `uv pip install --upgrade dapr-agents` (or `uv add dapr-agents` inside a project).
+- **Installed with version `1.0.9` or higher** → check passes. Report the version. `1.0.9` is a floor, not a target — do not fail a newer version.
+- **Installed with version below `1.0.9`** → check fails. Inform the user to upgrade via `uv pip install --upgrade dapr-agents` (or `uv add dapr-agents` inside a project). Projects scaffolded by `create-agent-python` declare `dapr-agents>=1.0.9`.
 - **Not installed** → check passes **with a note**: actual installation happens inside the project during `uv sync` (run by `create-agent-python`). A missing global install is not an error — but surface the note so the user knows what to expect.
 
 This check only applies to the native path. A project that uses a `diagrid[<extra>]` framework wrapper does not depend on `dapr-agents` directly — it arrives through `diagrid[agent-core]` — so "not installed" is expected there.

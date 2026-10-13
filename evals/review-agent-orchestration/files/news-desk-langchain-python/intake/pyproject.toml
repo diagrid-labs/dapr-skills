@@ -1,0 +1,10 @@
+[project]
+name = "intake-agent"
+version = "0.1.0"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "diagrid[langchain]>=0.5.3",
+    "langchain-openai",
+    "fastapi>=0.129",
+    "uvicorn[standard]>=0.41",
+]

@@ -43,6 +43,5 @@ runner = DaprWorkflowAgentRunner(agent=agent, name="coordinator", max_iterations
 
 runner.serve(
     port=int(os.getenv("APP_PORT", "8000")),
-    pubsub_name="agent-pubsub",
     subscribe_topic="coordinator.requests",
 )

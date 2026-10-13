@@ -34,9 +34,13 @@ apps:
     command: ["uv", "run", "main.py"]
 ```
 
+Remove the `configFilePath` line (and do not create `resources/tracing.yaml`) if observability is opt-out.
+
 - Each app has a unique `appPort`, `daprHTTPPort`, `daprGRPCPort`, and `metricsPort`. Reusing ports is the single most common bring-up error.
-- All apps share the same `resourcesPath`, so every agent sees the same components. Python: `agent-pubsub`, `agent-registry`, `agent-memory`, `agent-workflow`, `llm-provider`.
-- Specialists subscribe to `<domain>.requests` and publish to `<domain>.results`. The coordinator publishes to each specialist's request topic and aggregates results.
+- All apps share the same `resourcesPath`, so every agent sees the same components. Python native: `agent-workflow`, `agent-registry`, `agent-pubsub`, `llm-provider`. Python mixed (native coordinator + `diagrid` wrapper specialists): `agent-workflow`, `agent-registry`, `llm-provider`.
+- Python: the coordinator finds the specialists in `agent-registry` and calls each one as a child workflow on the specialist's app (the registry records its app id and workflow name). Dispatch does not go through pub/sub; native agents use `agent-pubsub` for their own `<name>.topic` and the `agents.broadcast` team topic, on which the coordinator shares its final result.
+- Python: leave the Dapr host/port unset in agent code. `dapr run` gives every app its own `DAPR_GRPC_PORT`, and the SDK reads it.
+- Python wrapper apps take per-app environment variables (OTLP endpoint, service name, analytics opt-out) in an `env:` map on the app entry, for example `env: { OTEL_SERVICE_NAME: <specialist-1> }`.
 - Start all apps together with `dapr run -f .` from the project root.
 - `appLogDestination: fileAndConsole` writes per-app sidecar logs to `.dapr/logs/`. With multi-agent, that's one log directory per app, each containing request-level detail (user tasks, tool arguments). Exclude `.dapr/` from log aggregation pipelines with retention requirements; the generated `.gitignore` already excludes it from git.
 

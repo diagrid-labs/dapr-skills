@@ -2,7 +2,7 @@
 
 > **WARNING: Development only.** The stack below uses hardcoded default credentials (`admin:admin`) and enables anonymous viewer access on Grafana. Do not expose any of these ports on a shared network, a docker-compose network reachable from other services, or a port-forwarded VM — a publicly-reachable Grafana with `admin:admin` is a real incident. For any environment beyond a single developer's laptop, change `GF_SECURITY_ADMIN_PASSWORD` to a secret, set `GF_AUTH_ANONYMOUS_ENABLED=false`, and put the stack behind an auth proxy or VPN.
 
-Local observability stack for native `dapr-agents` projects. Starts Zipkin (traces), Prometheus (metrics), and Grafana (dashboards). Place this file in the project root so users can bring the stack up with `docker compose -f docker-compose.observability.yaml up -d`.
+Local observability stack for Python agent projects. Starts Zipkin (traces), Prometheus (metrics), and Grafana (dashboards). Native `dapr-agents` projects use it as shown; projects with `diagrid` framework wrappers swap Zipkin for Jaeger (see "Wrapper variant" below). Place this file in the project root so users can bring the stack up with `docker compose -f docker-compose.observability.yaml up -d`.
 
 ```yaml
 services:
@@ -58,9 +58,27 @@ Accompanying files placed in `./observability/`:
 4. Open Grafana at http://localhost:3000 (anonymous viewer) to see dashboards.
 5. Open Prometheus at http://localhost:9099 (web UI) to query raw metrics.
 
+### Wrapper variant (OTLP)
+
+`diagrid` wrapper runners export their spans (and logs) over **OTLP gRPC only**, which Zipkin cannot receive. For a project with wrapper apps (including a native coordinator with wrapper specialists), replace the `zipkin` service with Jaeger, which accepts OTLP and serves its own UI:
+
+```yaml
+  jaeger:
+    image: jaegertracing/jaeger:latest
+    container_name: agent-jaeger
+    ports:
+      - "16686:16686"   # UI
+      - "4317:4317"     # OTLP gRPC
+      - "4318:4318"     # OTLP HTTP
+```
+
+- Point the sidecars at it with the OTLP `tracing.yaml` (`agent-tracing-otlp.md`, `endpointAddress: "localhost:4317"`), and the wrapper apps with `OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4317` plus a per-app `OTEL_SERVICE_NAME` in their `dapr.yaml` `env:` block.
+- A native coordinator in the same project sends its app spans to the same receiver with `AgentObservabilityConfig(..., tracing_exporter=AgentTracingExporter.OTLP_GRPC, endpoint="http://localhost:4317")` (the `http://` scheme makes the gRPC exporter connect without TLS).
+- Open Jaeger at http://localhost:16686 instead of Zipkin in step 3 above. Prometheus and Grafana are unchanged.
+
 ### Port assignments
 
-- Zipkin: host `9411` → container `9411`
+- Zipkin: host `9411` → container `9411` (wrapper variant: Jaeger UI `16686`, OTLP `4317` / `4318`)
 - Prometheus: host `9099` → container `9090` (host port moved to `9099` so it does not conflict with Dapr sidecar metrics ports `9090`, `9091`, …)
 - Grafana: host `3000` → container `3000`
 - Dapr sidecar metrics ports (`9090`, `9091`, `9092`, …) are reserved for the sidecars themselves and scraped via `host.docker.internal` from inside the Prometheus container.

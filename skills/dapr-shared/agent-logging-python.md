@@ -1,6 +1,6 @@
 # Python structured logging — logging_config.py
 
-Native `dapr-agents` scaffolds include a `logging_config.py` that sets up JSON structured logging with the W3C trace context attached, so log lines can be correlated with Zipkin/OTLP traces.
+Python agent scaffolds (native `dapr-agents` and `diagrid` wrappers) with observability on include a `logging_config.py` that sets up JSON structured logging with the W3C trace context attached, so log lines can be correlated with Zipkin/OTLP traces.
 
 ```python
 import json
@@ -43,7 +43,7 @@ from logging_config import configure_logging
 configure_logging()
 ```
 
-Call `configure_logging()` before importing anything from `dapr_agents`, so the library picks up the handlers.
+Call `configure_logging()` at the top of `main.py`, before the agent or runner is constructed. It replaces the root logger's handlers, so calling it later would remove the OpenTelemetry log handler that a native agent (with `logging_enabled=True`) or a wrapper's `serve()` (with `OTEL_EXPORTER_OTLP_ENDPOINT` set) adds to the root logger.
 
 ### Key points
 

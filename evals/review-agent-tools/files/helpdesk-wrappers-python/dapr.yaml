@@ -1,0 +1,25 @@
+version: 1
+common:
+  resourcesPath: ./resources
+  appLogDestination: fileAndConsole
+  daprdLogDestination: fileAndConsole
+  logLevel: info
+apps:
+  - appID: ticket-agent
+    appDirPath: ticket-agent
+    appPort: 5001
+    daprHTTPPort: 3500
+    daprGRPCPort: 50001
+    command: ["uv", "run", "main.py"]
+  - appID: order-status-agent
+    appDirPath: order-status-agent
+    appPort: 5002
+    daprHTTPPort: 3501
+    daprGRPCPort: 50002
+    command: ["uv", "run", "main.py"]
+  - appID: billing-agent
+    appDirPath: billing-agent
+    appPort: 5003
+    daprHTTPPort: 3502
+    daprGRPCPort: 50003
+    command: ["uv", "run", "main.py"]

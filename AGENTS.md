@@ -101,7 +101,7 @@ All skills require:
 
 ### Python skills
 
-- Python 3.12+ for workflow skills, Python 3.11+ for agent skills — [download Python](https://www.python.org/downloads/)
+- Python 3.12+ for workflow skills, Python 3.11–3.13 for agent skills — [download Python](https://www.python.org/downloads/)
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
 - Python language server support (for code diagnostics)
 
@@ -113,7 +113,7 @@ All skills require:
 ### Agent skills (both languages)
 
 - At least one LLM provider: an `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` or `GOOGLE_API_KEY` environment variable, or a local [Ollama](https://ollama.com/) instance on `http://localhost:11434`.
-- Python agent projects accept Python 3.11+ (the `diagrid` distribution requires `>=3.11,<3.14`).
+- Python agent projects accept Python 3.11–3.13 (the `diagrid` distribution requires `>=3.11,<3.14`).
 
 ## Guidelines for skill files
 

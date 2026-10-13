@@ -28,7 +28,7 @@ This repository contains skill definitions that can be used with Claude Code, Gi
 
 ### For Python skills
 
-- Python 3.12+ for workflow skills, Python 3.11+ for agent skills — [download Python](https://www.python.org/downloads/)
+- Python 3.12+ for workflow skills, Python 3.11–3.13 for agent skills — [download Python](https://www.python.org/downloads/)
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
 
 ### For TypeScript skills
@@ -255,7 +255,7 @@ Create an agent in Python named weather_agent using the native dapr-agents SDK. 
 
 ### Example 7: Multi-agent orchestrator in Python
 
-Create a multi-agent orchestrator in Python named event_planner. The coordinator and three specialists (venue_scout, catering_coordinator, decoration_planner) all use the native dapr-agents SDK. Each specialist subscribes to its own `<domain>.requests` topic and publishes to `<domain>.results`; the coordinator discovers them through the `agent-registry` state store.
+Create a multi-agent orchestrator in Python named event_planner. The coordinator and three specialists (venue_scout, catering_coordinator, decoration_planner) all use the native dapr-agents SDK. Each specialist runs as its own Dapr app and registers in the shared `agent-registry` state store; the coordinator finds them there and calls each one as a child workflow, then broadcasts the final plan on `agents.broadcast`.
 
 ### Example 8: .NET agent with Microsoft Agent Framework
 

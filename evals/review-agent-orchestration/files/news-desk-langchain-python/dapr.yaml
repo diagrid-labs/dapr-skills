@@ -1,0 +1,21 @@
+version: 1
+common:
+  resourcesPath: ./resources
+  appLogDestination: fileAndConsole
+  daprdLogDestination: fileAndConsole
+  logLevel: info
+apps:
+  - appID: intake
+    appDirPath: intake
+    appPort: 8001
+    daprHTTPPort: 3501
+    daprGRPCPort: 50002
+    metricsPort: 9091
+    command: ["uv", "run", "main.py"]
+  - appID: summarizer
+    appDirPath: summarizer
+    appPort: 8002
+    daprHTTPPort: 3502
+    daprGRPCPort: 50003
+    metricsPort: 9092
+    command: ["uv", "run", "main.py"]

@@ -30,7 +30,7 @@ The following must be installed:
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) (Astral)
 - [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation)
 - [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.18+)
-- [dapr-agents](https://pypi.org/project/dapr-agents/) `>=1.0` reachable from the package index (native path only — a `diagrid[<extra>]` project gets it transitively)
+- [dapr-agents](https://pypi.org/project/dapr-agents/) `>=1.0.9`, checked as a local install only (native path only — a `diagrid[<extra>]` project gets it transitively, and either way the project installs it with `uv sync`)
 - At least one LLM provider available: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`, or a local Ollama instance on `http://localhost:11434`
 
 ## Prerequisite Checks
@@ -76,3 +76,4 @@ After all checks are complete, report the results:
 - List each check and whether it passed or failed.
 - For any failed checks, provide the relevant install / configuration link from the Prerequisites section.
 - If all checks passed, inform the user they can proceed with the `create-agent-python` skill.
+- If the user mentioned HolmesGPT, warn them that `diagrid[holmesgpt]` cannot be resolved from PyPI (its pins conflict with `diagrid[agent-core]`), so `create-agent-python` does not scaffold it.

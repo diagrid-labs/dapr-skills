@@ -1,6 +1,6 @@
 # Dapr metrics for Prometheus
 
-Every Dapr sidecar exposes Prometheus metrics on the port declared by `metricsPort` in `dapr.yaml`. For native `dapr-agents` scaffolds, this is set to `9090` (single agent) or `9090`, `9091`, `9092`, … (multi-agent).
+Every Dapr sidecar exposes Prometheus metrics on the port declared by `metricsPort` in `dapr.yaml`. For Python scaffolds (native `dapr-agents` and `diagrid` wrappers alike), this is set to `9090` (single agent) or `9090`, `9091`, `9092`, … (multi-agent).
 
 ### What's on the endpoint
 

@@ -22,9 +22,9 @@ Rule source: see [`agent-tools-dotnet.md`](./agent-tools-dotnet.md) and [`../cre
 
 ## Confidence notes
 
-- DAG-TOOL-001 — Idempotency may appear as a header (e.g. `Idempotency-Key`), a parameter the caller passes in, or a deterministic id (e.g. `IDaprAgentContextAccessor.Current.CurrentWorkflowInstanceId` + argument hash). Any of these satisfy the rule.
+- DAG-TOOL-001 — Idempotency may appear as a header (e.g. `Idempotency-Key`), a parameter the caller passes in, or a deterministic id (e.g. `IDaprAgentContextAccessor.Current.CurrentWorkflowInstanceId` + argument hash). Any of these satisfy the rule. Report it as critical: do not move it to Please verify on a guess that the remote service already tolerates repeats (for example that a repeated cancel is a no-op). Only an idempotency mechanism visible in this code satisfies the rule; mention the server-side possibility in `Fix:` if it matters.
 - DAG-TOOL-002 — A description passed as the third argument of `AIFunctionFactory.Create(method, name, description)` satisfies the rule; this is the style used by the `diagridio/dotnet-ai` examples.
-- DAG-TOOL-014 and DAG-TOOL-015 are .NET-only ids (Python uses `DAG-TOOL-009` and `DAG-TOOL-010` for Python-only rules).
+- DAG-TOOL-014 and DAG-TOOL-015 are .NET-only ids (Python uses `DAG-TOOL-009`, `DAG-TOOL-010` and `DAG-TOOL-016` … `DAG-TOOL-018` for Python-only rules; add new .NET-only ids above `018`).
 
 ## Cross-reference
 

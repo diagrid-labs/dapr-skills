@@ -5,47 +5,60 @@
       "id": 1,
       "name": "python-native-no-tracing-and-print",
       "prompt": "I can't find any traces for our invoice reminder agent (./invoice-reminder-python, dapr-agents). Can you audit its tracing, logging and metrics setup?",
-      "expected_output": "A review-agent-observability report with Language: python. Critical DAG-OBS-001: dapr.yaml has no configFilePath and there is no resources/tracing.yaml. Warnings DAG-OBS-003 (print( inside list_overdue_invoices in tools.py) and DAG-OBS-004 (no logLevel in the common block). metricsPort is set and logging_config.py exists, so DAG-OBS-006 and DAG-OBS-008 are not reported.",
-      "files": ["evals/review-agent-observability/files/invoice-reminder-python/"],
+      "expected_output": "A review-agent-observability report with Language: python. Warnings: DAG-OBS-001 (dapr.yaml has no configFilePath and there is no resources/tracing.yaml; a warning, not critical), DAG-OBS-003 (print( inside list_overdue_invoices in tools.py), DAG-OBS-004 (no logLevel in the common block) and DAG-OBS-014 (the DurableAgent in main.py has no agent_observability= and no OTEL_* variables enable agent tracing). Suggestion DAG-OBS-007 (no README.md). metricsPort is set and logging_config.py exists, so DAG-OBS-006 and DAG-OBS-008 are not reported. Wrapper-only rules (DAG-OBS-011, -012, -015, -016) do not apply to this native project.",
+      "files": [
+        "evals/review-agent-observability/files/invoice-reminder-python/"
+      ],
       "expectations": [
         "The report section (after the optional one-line `Reviewing <path>` scope echo) starts with `# Dapr review — review-agent-observability` and contains `Language: python`",
-        "Under `## Critical` the report contains [DAG-OBS-001] citing dapr.yaml for the missing configFilePath / tracing Configuration, with a Fix mentioning `configFilePath: ./resources/tracing.yaml`",
+        "The `Found:` line reports 0 critical, 4 warnings, 1 suggestion and 0 to verify",
+        "Under `## Warnings` the report contains [DAG-OBS-001] citing dapr.yaml for the missing configFilePath / tracing Configuration, with a Fix mentioning `configFilePath: ./resources/tracing.yaml`; there is no `## Critical` section",
         "The report contains [DAG-OBS-003] citing invoice-reminder-agent/tools.py:22 (print inside list_overdue_invoices)",
         "The report contains [DAG-OBS-004] citing dapr.yaml for the missing `logLevel:` in the `common:` block",
+        "Under `## Warnings` the report contains [DAG-OBS-014] citing invoice-reminder-agent/main.py for the DurableAgent without `agent_observability=`, and its Fix mentions `AgentObservabilityConfig` or the `OTEL_*` variables that enable tracing",
+        "Under `## Suggestions` the report contains [DAG-OBS-007] for the missing README / trace UI guidance",
         "The report does NOT contain DAG-OBS-006 (metricsPort: 9090 is set on dapr.yaml line 12) or DAG-OBS-008 (invoice-reminder-agent/logging_config.py exists)",
-        "The report does NOT contain DAG-OBS-000, DAG-OBS-009 or DAG-OBS-010 (the framework-wrapper and .NET-only ids)",
-        "The report ends with a `## Next steps` section with no text after it, and the transcript shows only Read, Grep and Glob calls (no Write, Edit or Bash)"
+        "The report does NOT contain DAG-OBS-000 (retired), the wrapper-only ids DAG-OBS-011, DAG-OBS-012, DAG-OBS-015 or DAG-OBS-016, or the .NET-only ids DAG-OBS-009 or DAG-OBS-010",
+        "The report ends with a `## Next steps` section with it is the last section (nothing follows its bullets)",
+        "Tool use: the run uses only Read, Grep and Glob to inspect the project — no Bash, PowerShell, Write or Edit call appears in the transcript (the two harness output files written with Write are excluded) — and no fixture file is modified"
       ]
     },
     {
       "id": 2,
       "name": "dotnet-debug-logging-and-no-otel",
       "prompt": "Review the observability of claims-intake-dotnet before it goes to production. It's a Microsoft Agent Framework agent running on Dapr Workflow via Diagrid.AI.Microsoft.AgentFramework.",
-      "expected_output": "A review-agent-observability report with Language: dotnet. DAG-OBS-001 as a warning (not critical, because the .NET scaffold does not add tracing by default), DAG-OBS-009 for \"Diagrid.AI\": \"Debug\" in appsettings.json, and info DAG-OBS-010 because no OpenTelemetry is registered. appsettings.Development.json setting Default to Debug is not a finding; logLevel and metricsPort are set in dapr.yaml. Python-only ids are not used and the framework-wrapper fallback (DAG-OBS-000) is not emitted.",
-      "files": ["evals/review-agent-observability/files/claims-intake-dotnet/"],
+      "expected_output": "A review-agent-observability report with Language: dotnet. DAG-OBS-001 as a warning (not critical, because the .NET scaffold does not add tracing by default), DAG-OBS-009 for \"Diagrid.AI\": \"Debug\" in appsettings.json, and info DAG-OBS-010 because no OpenTelemetry is registered. appsettings.Development.json setting Default to Debug is not a finding; logLevel and metricsPort are set in dapr.yaml. Python-only ids are not used and the retired DAG-OBS-000 is not emitted.",
+      "files": [
+        "evals/review-agent-observability/files/claims-intake-dotnet/"
+      ],
       "expectations": [
-        "The report section (after the optional one-line `Reviewing <path>` scope echo) starts with `# Dapr review — review-agent-observability` and contains `Language: dotnet`; it does NOT stop with the DAG-OBS-000 framework-wrapper finding",
+        "The report section (after the optional one-line `Reviewing <path>` scope echo) starts with `# Dapr review — review-agent-observability` and contains `Language: dotnet`; it does NOT contain the retired DAG-OBS-000 id",
         "The report contains [DAG-OBS-001] citing dapr.yaml under `## Warnings`, and there is no DAG-OBS-001 entry under `## Critical`",
         "The report contains [DAG-OBS-009] citing ClaimsIntakeApp/appsettings.json:6 (\"Diagrid.AI\": \"Debug\") and mentions that prompts, tool arguments or tool results would be logged",
         "The report does NOT cite ClaimsIntakeApp/appsettings.Development.json for DAG-OBS-009",
         "Under `## Suggestions` the report contains [DAG-OBS-010] for the missing OpenTelemetry registration (no AddOpenTelemetry / UseOtlpExporter / AddServiceDefaults in ClaimsIntakeApp/Program.cs)",
         "The report does NOT contain DAG-OBS-004 or DAG-OBS-006 (dapr.yaml sets logLevel: info and metricsPort: 9090), nor the Python-only ids DAG-OBS-003, DAG-OBS-005 or DAG-OBS-008",
-        "No Write, Edit or Bash calls appear in the transcript and no fixture file is modified"
+        "Every cited file exists in the project: the missing README is reported (if at all) against dapr.yaml or the project folder, not as `README.md:<line>`, and Next steps does not tell the user to run a docker-compose.observability.yaml (the project has none)",
+        "Tool use: the run uses only Read, Grep and Glob to inspect the project — no Bash, PowerShell, Write or Edit call appears in the transcript (the two harness output files written with Write are excluded) — and no fixture file is modified"
       ]
     },
     {
       "id": 3,
-      "name": "python-crewai-wrapper-delegated",
+      "name": "python-crewai-wrapper-checklist",
       "prompt": "audit agent tracing for market-research-crewai",
-      "expected_output": "The pyproject.toml references diagrid[crewai], so the project is a Python framework-wrapper. The skill emits a single info finding DAG-OBS-000 at market-research-agent/pyproject.toml:1 saying observability is delegated to the wrapped framework (CrewAI) and stops. The print() in the tool, the missing tracing Configuration and the missing logLevel/metricsPort are not reported.",
-      "files": ["evals/review-agent-observability/files/market-research-crewai/"],
+      "expected_output": "main.py imports diagrid.agent.crewai, so the project is a Python framework wrapper. The skill does not stop: it applies the shared rules and the wrapper checklist. Warnings: DAG-OBS-001 (no configFilePath / tracing Configuration), DAG-OBS-003 (print( inside the lookup_competitors tool at market-research-agent/main.py:11) and DAG-OBS-004 (no logLevel in the common block). Suggestions: DAG-OBS-006 (no metricsPort), DAG-OBS-007 (no README.md), DAG-OBS-008 (no logging bootstrap and no OTel LoggingHandler) and DAG-OBS-011 (no OTEL_EXPORTER_OTLP_ENDPOINT, so the runner's built-in telemetry stays off). The entrypoint calls runner.serve(), so DAG-OBS-015 is not reported; no endpoint is set, so DAG-OBS-012 and DAG-OBS-016 are not reported; native-only DAG-OBS-014 and DAG-OBS-018 do not apply.",
+      "files": [
+        "evals/review-agent-observability/files/market-research-crewai/"
+      ],
       "expectations": [
         "The report section (after the optional one-line `Reviewing <path>` scope echo) starts with `# Dapr review — review-agent-observability` and contains `Language: python`",
-        "The report contains exactly one finding: [DAG-OBS-000] under `## Suggestions`, citing market-research-agent/pyproject.toml:1 and naming CrewAI (crewai) as the wrapped framework",
-        "The `Found:` line reports 0 critical, 0 warnings, 1 suggestion and 0 to verify",
-        "The report does NOT contain DAG-OBS-001, DAG-OBS-003 (print( at market-research-agent/main.py:11), DAG-OBS-004 or DAG-OBS-006",
-        "The report ends with a `## Next steps` section with no text after it",
-        "No Write, Edit or Bash calls appear in the transcript and no fixture file is modified"
+        "The report does NOT contain DAG-OBS-000 and does not stop with a single \"observability is delegated to the wrapped framework\" finding",
+        "Under `## Warnings` the report contains [DAG-OBS-001] citing dapr.yaml, [DAG-OBS-003] citing market-research-agent/main.py:11 and [DAG-OBS-004] citing dapr.yaml",
+        "Under `## Suggestions` the report contains [DAG-OBS-006], [DAG-OBS-007], [DAG-OBS-008] and [DAG-OBS-011], and the DAG-OBS-011 Fix mentions `OTEL_EXPORTER_OTLP_ENDPOINT`",
+        "The `Found:` line reports 0 critical, 3 warnings, 4 suggestions and 0 to verify",
+        "The report does NOT contain DAG-OBS-012, DAG-OBS-014, DAG-OBS-015, DAG-OBS-016 or DAG-OBS-018 (no OTLP endpoint is set, the entrypoint calls `runner.serve(`, and DAG-OBS-014 / DAG-OBS-018 are native-only)",
+        "The report ends with a `## Next steps` section with it is the last section (nothing follows its bullets)",
+        "Tool use: the run uses only Read, Grep and Glob to inspect the project — no Bash, PowerShell, Write or Edit call appears in the transcript (the two harness output files written with Write are excluded) — and no fixture file is modified"
       ]
     }
   ]

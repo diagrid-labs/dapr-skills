@@ -21,3 +21,4 @@ spec:
 - `{{ANTHROPIC_API_KEY}}` is a Dapr template variable; set `ANTHROPIC_API_KEY` in the environment before running `dapr run`.
 - Valid `model` values include `claude-opus-4-7`, `claude-sonnet-4-6`, and `claude-haiku-4-5`. Default to `claude-sonnet-4-6` for a balance of cost and capability.
 - The `conversation.anthropic` building block is part of Dapr; no extra package is required on the agent side.
+- `diagrid[<extra>]` framework-wrapper apps do not use this component: the wrapped framework calls Anthropic directly with `ANTHROPIC_API_KEY` from the environment. Most extras bundle only an OpenAI client, so add the framework's Anthropic package (for example `langchain-anthropic`, `pydantic-ai-slim[anthropic]`, `strands-agents[anthropic]`); `claude-agents` uses Anthropic natively, and `crewai` takes a LiteLLM model string such as `anthropic/claude-sonnet-4-6`.

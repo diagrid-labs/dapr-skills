@@ -21,7 +21,7 @@ spec:
     value: "true"
 ```
 
-- Python: the component name `agent-workflow` is the value passed to `StateStoreService(store_name="agent-workflow")` in the agent code. .NET: no code references the name — Dapr Workflow uses whichever component in `resources/` has `actorStateStore: "true"`.
+- Python native: the component name `agent-workflow` is the value passed to `StateStoreService(store_name="agent-workflow")` in the agent code (`DurableAgent` also auto-wires a component with exactly this name when `state=` is omitted). Python `diagrid` wrappers and .NET: no code references the name — Dapr Workflow uses whichever component in `resources/` has `actorStateStore: "true"`.
 - `actorStateStore` **must** be `"true"` because Dapr Workflow uses the actor framework internally. Without this, workflow execution will fail at runtime.
-- Python: do not reuse this component for conversation memory — keep the two separate so the workflow state and the chat history have independent lifecycles. .NET is the exception: there is no `agent-memory` component, and the conversation history of a session lives in the session workflow's state, i.e. in this store.
+- Python native: in `dapr-agents` 1.0.9 the agent also writes its conversation memory to this store (one key per workflow instance, `<agent-name>:_memory_<instance-id>`), replacing any `memory=` argument, so the scaffold has no separate `agent-memory` component. Python wrappers keep the conversation of a run in the workflow history, which also lives in this store. .NET: there is no `agent-memory` component either, and the conversation history of a session lives in the session workflow's state, i.e. in this store.
 - Redis connection fields (`redisHost`, `redisPassword`) mirror the sibling state-store files (`agent-statestore-memory.md`, `agent-statestore-registry.md`) and the pub/sub file (`agent-pubsub-redis.md`). Update them together if you change the host or password.

@@ -1,6 +1,6 @@
 # resources/tracing.yaml — OTLP (alternative)
 
-For teams that already run an OpenTelemetry Collector, use the OTLP exporter instead of Zipkin:
+For teams that already run an OpenTelemetry Collector, and for Python projects with `diagrid` framework wrappers (whose runners export over OTLP gRPC only; the local stack then runs Jaeger, see `agent-observability-stack.md`), use the OTLP exporter instead of Zipkin:
 
 ```yaml
 apiVersion: dapr.io/v1alpha1
@@ -21,3 +21,4 @@ spec:
 - `protocol` is `grpc` by default; use `http` if your collector listens on port 4318.
 - OTLP traces can be forwarded from the collector to Jaeger, Tempo, Honeycomb, Datadog, or any OTLP-compatible backend without changing the agent. Apply the same PII review as documented in `agent-tracing-zipkin.md` before enabling cross-boundary export.
 - Only use **one** of `zipkin` or `otel` in the Configuration — not both.
+- This file configures the **sidecar**. Python `diagrid` wrapper apps export their own spans separately, set through `OTEL_EXPORTER_OTLP_ENDPOINT` (gRPC, for example `http://localhost:4317`; an OTLP/HTTP receiver such as `:4318` does not work) and `OTEL_SERVICE_NAME` in the app's `dapr.yaml` `env:` block. Without the endpoint their telemetry stays off.

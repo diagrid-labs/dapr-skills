@@ -46,6 +46,19 @@
         "Still runs and reports the other checks: Python, uv, Docker/Podman, Dapr CLI, dapr-agents, and the other LLM provider probes",
         "Does not write the key to any file"
       ]
+    },
+    {
+      "id": 4,
+      "name": "holmesgpt-wrapper-warning",
+      "prompt": "Check my Python agent prerequisites. I want to wrap HolmesGPT with the diagrid package so our SRE agent runs durably on Dapr.",
+      "expected_output": "The skill runs the full agent prerequisite check and, because the user mentioned HolmesGPT, warns that diagrid[holmesgpt] cannot be resolved from PyPI and is not scaffolded by create-agent-python. It installs nothing.",
+      "files": [],
+      "expectations": [
+        "Runs `uv pip show dapr-agents` (POSIX or the PowerShell fallback) and does not run `uv pip index versions` or `pip index versions`",
+        "The final report warns that `diagrid[holmesgpt]` cannot be resolved from PyPI (or that its dependency pins conflict) and that `create-agent-python` does not scaffold HolmesGPT",
+        "Final report lists Python, uv, Docker/Podman, Dapr CLI, dapr-agents and LLM provider each with a pass or fail status",
+        "Does not install or upgrade any package and does not run `pip install` or `uv add`"
+      ]
     }
   ]
 }

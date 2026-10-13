@@ -1,6 +1,6 @@
 # dapr.yaml — single agent
 
-Multi-app run file in the project root that launches a single agent with its Dapr sidecar. Native `dapr-agents` scaffolds also include tracing and metrics defaults when observability is enabled.
+Multi-app run file in the project root that launches a single agent with its Dapr sidecar. Python scaffolds also include tracing and metrics defaults when observability is enabled.
 
 ```yaml
 version: 1
@@ -27,6 +27,15 @@ apps:
 - `metricsPort` exposes Dapr's Prometheus metrics on the sidecar. Scrape from `http://localhost:9090/metrics`. The local Prometheus container in `docker-compose.observability.yaml` scrapes this via `host.docker.internal:9090`; see [`agent-metrics-prometheus.md`](./agent-metrics-prometheus.md) for the scrape config and [`agent-observability-stack.md`](./agent-observability-stack.md) for the container layout and port map.
 - `daprHTTPPort` is the Dapr sidecar HTTP endpoint. Agent code does not need to know it when using the SDK.
 - Start the application with `dapr run -f .` from the project root.
+- `appPort` must equal the port the agent listens on: `runner.serve(agent, port=...)` for native `dapr-agents` (default `8001`), `runner.serve(port=...)` for a `diagrid` wrapper (default `5001`, so pass it explicitly). `dapr run` exports it to the app as `APP_PORT`.
+
+For a Python `diagrid` wrapper with observability on, add the OTLP settings to the app entry (the runner exports over OTLP gRPC only, and without `OTEL_SERVICE_NAME` it reports its class name):
+
+```yaml
+    env:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4317
+      OTEL_SERVICE_NAME: <app-id>
+```
 
 For the .NET variant:
 
