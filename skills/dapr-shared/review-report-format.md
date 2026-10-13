@@ -1,6 +1,6 @@
 # Review Report Format
 
-Every `review-workflow-*` and `review-agent-*` skill emits a report that follows the exact shape below so that multiple reviews can be diffed and composed over time.
+Every `review-workflow-*`, `review-agent-*` and `review-pubsub-*` skill emits a report that follows the exact shape below so that multiple reviews can be diffed and composed over time.
 
 ## Severity taxonomy
 
@@ -12,7 +12,7 @@ A separate **Please verify** section collects findings the rule heuristic flagge
 
 ## Rule ids
 
-Each rule has a stable id of the form `<PREFIX>-<AREA>-<NNN>`. Two prefix families are in use:
+Each rule has a stable id of the form `<PREFIX>-<AREA>-<NNN>`. Three prefix families are in use:
 
 **Workflow reviews** (`DWF-*`):
 
@@ -26,6 +26,12 @@ Each rule has a stable id of the form `<PREFIX>-<AREA>-<NNN>`. Two prefix famili
 - `DAG-MEM-NNN` — agent memory and state-store rules (`review-agent-memory`)
 - `DAG-ORCH-NNN` — multi-agent orchestration rules (`review-agent-orchestration`)
 - `DAG-OBS-NNN` — agent observability rules (`review-agent-observability`)
+
+**Pub/sub reviews** (`DPS-*`):
+
+- `DPS-PUB-NNN` — publishing rules (`review-pubsub-publishing`)
+- `DPS-SUB-NNN` — subscription and handler rules (`review-pubsub-subscriptions`)
+- `DPS-CFG-NNN` — component, subscription, resiliency and run-configuration rules (`review-pubsub-components`)
 
 Rule ids never change once published. New rules append; deprecated rules are kept reserved.
 

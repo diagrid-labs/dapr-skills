@@ -1,6 +1,6 @@
 ---
 name: dapr-shared
-description: Shared reference files (component YAMLs, prerequisite checks, review checklists, language references) used by the Dapr Workflow and Dapr agent skills. Not a task skill — do not invoke it directly; other Dapr skills read its files by relative path.
+description: Shared reference files (component YAMLs, prerequisite checks, review checklists, language references) used by the Dapr Workflow, pub/sub and agent skills. Not a task skill — do not invoke it directly; other Dapr skills read its files by relative path.
 disable-model-invocation: true
 user-invocable: false
 ---

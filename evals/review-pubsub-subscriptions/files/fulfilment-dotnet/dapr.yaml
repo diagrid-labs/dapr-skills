@@ -1,0 +1,14 @@
+version: 1
+common:
+  resourcesPath: ./resources
+apps:
+  - appID: fulfilment-api
+    appDirPath: Fulfilment.Api
+    appPort: 5130
+    daprHTTPPort: 3530
+    command: ["dotnet", "run"]
+  - appID: fulfilment-worker
+    appDirPath: Fulfilment.Worker
+    appPort: 5140
+    daprHTTPPort: 3540
+    command: ["dotnet", "run"]

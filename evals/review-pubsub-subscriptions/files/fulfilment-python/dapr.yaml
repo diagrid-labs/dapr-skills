@@ -1,0 +1,14 @@
+version: 1
+common:
+  resourcesPath: ./resources
+apps:
+  - appID: api
+    appDirPath: api
+    appPort: 8011
+    daprHTTPPort: 3511
+    command: ["uv", "run", "main.py"]
+  - appID: worker
+    appDirPath: worker
+    appPort: 8012
+    daprHTTPPort: 3512
+    command: ["uv", "run", "main.py"]

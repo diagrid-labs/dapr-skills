@@ -1,0 +1,70 @@
+{
+  "skill_name": "create-pubsub-python",
+  "evals": [
+    {
+      "id": 1,
+      "name": "both-declarative",
+      "prompt": "Create a Python pub/sub app named order-flow where one FastAPI service publishes order-placed events and another processes them.",
+      "expected_output": "An order-flow uv workspace with contracts, publisher and subscriber packages, a declarative subscription (default) with a Dapr-free subscriber, a handler that drops invalid messages, a successful uv sync, a README.md and the exact final message plus the Dev Dashboard recommendation.",
+      "files": [],
+      "expectations": [
+        "The root pyproject.toml has a [tool.uv.workspace] table with members contracts, publisher and subscriber",
+        "subscriber/pyproject.toml lists neither dapr nor dapr-ext-fastapi as a dependency",
+        "subscriber/main.py has @app.post(\"/events/pubsub/orders\") with a parameter typed dict = Body( and contains no DaprApp",
+        "subscriber/handler.py returns \"DROP\" when pydantic raises ValidationError",
+        "resources/subscription.yaml has scopes containing order-flow-subscriber, matching the appID in dapr.yaml",
+        "dapr.yaml has appID order-flow-publisher with appPort 8001 and daprHTTPPort 3501, and appID order-flow-subscriber with appPort 8002 and daprHTTPPort 3502",
+        "The publisher calls publish_event( with data_content_type=\"application/json\"",
+        "The agent ran uv sync --all-packages in the project root and it succeeded",
+        "The agent ran `diagrid-dev-dashboard --version` once and did not stop, ask or install because of the result",
+        "order-flow/README.md has sections for running and trying the app, the Diagrid Dapr Dev Dashboard (link https://github.com/diagridio/dev-dashboard) and running with Catalyst, plus a Switching the message broker paragraph that links https://docs.dapr.io/reference/components-reference/supported-pubsub/ and keeps metadata.name pubsub",
+        "The final output starts with exactly: The order-flow pub/sub application is created. Open the README.md file in the order-flow folder for a summary and instructions for running locally. followed only by the matching Diagrid Dapr Dev Dashboard recommendation"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "programmatic-publisher-ttl-raw",
+      "prompt": "Create a Python pub/sub app named Notifier with a programmatic subscription (dapr-ext-fastapi) and a publisher that sends messages with a 60-second TTL and as raw payload.",
+      "expected_output": "A Notifier workspace with a DaprApp-based programmatic subscriber using a dead-letter topic and raw payload metadata, a publisher with string-valued TTL and rawPayload metadata, and a handler that decodes data_base64.",
+      "files": [],
+      "expectations": [
+        "The subscriber code contains DaprApp(app) exactly once",
+        "The .subscribe( call has dead_letter_topic= and metadata={\"rawPayload\": \"true\"}",
+        "The publisher passes publish_metadata equal to {\"ttlInSeconds\": \"60\", \"rawPayload\": \"true\"} with string values, not an integer 60 or boolean true",
+        "subscriber/handler.py decodes data_base64 (base64.b64decode)",
+        "subscriber/pyproject.toml depends on dapr-ext-fastapi==1.18.3",
+        "No resources/subscription.yaml is created, and no file contains isRawPayload",
+        "The agent asked no question about the subscription type, because the prompt specified programmatic"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "streaming-subscriber",
+      "prompt": "Create a Python streaming subscriber for the orders topic named Shipping.",
+      "expected_output": "A single-role streaming subscriber with subscribe_with_handler, a dead-letter topic, a handler that always returns a TopicEventResponse, a close in finally, no FastAPI/uvicorn and no appPort in dapr.yaml.",
+      "files": [],
+      "expectations": [
+        "A streaming.py file calls subscribe_with_handler( with dead_letter_topic=, and every return path of handle_message returns a TopicEventResponse",
+        "main.py calls the close function returned by the subscription inside a finally block",
+        "The subscriber pyproject.toml lists neither fastapi nor uvicorn",
+        "The subscriber entry in dapr.yaml has no appPort key",
+        "No resources/subscription.yaml is created",
+        "The final output starts with exactly: The Shipping pub/sub application is created. Open the README.md file in the Shipping folder for a summary and instructions for running locally. followed only by the Diagrid Dapr Dev Dashboard recommendation"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "edge-programmatic-routing",
+      "prompt": "Create a Python pub/sub subscriber project named OrderRisk, using programmatic subscriptions, that routes orders with an amount over 1000 to a separate handler called `large`, and use Kafka.",
+      "expected_output": "The agent explains that dapr-ext-fastapi cannot route by content and offers a declarative subscription instead (default yes). The project is named OrderRisk (folder OrderRisk, app ids order-risk-*). The result is a declarative subscription.yaml with a CEL rule and a /events/pubsub/orders/large route, and no programmatic subscription for orders.",
+      "files": [],
+      "expectations": [
+        "transcript.md or final_message.md contains the question text \"dapr-ext-fastapi cannot route by content. Use a declarative subscription for this topic instead?\" (key phrase: cannot route by content ... declarative subscription), with the default answer logged as yes, and this appears in the transcript before the first project file or folder is created",
+        "After the default answer, resources/subscription.yaml has a rule whose match contains int(event.data.amount) > 1000 and whose path is /events/pubsub/orders/large",
+        "The subscriber has a route for /events/pubsub/orders/large and no file contains a DaprApp(...).subscribe registration for the orders topic",
+        "resources/subscription.yaml scopes contain order-risk-subscriber, matching the appID order-risk-subscriber in dapr.yaml (the kebab-case form of the project name OrderRisk)",
+        "resources/pubsub.yaml is a component of type pubsub.redis, and the README says: You asked for Kafka; this scaffold runs on Redis locally so it works without extra infrastructure, and explains how to switch by replacing the pubsub component file with a pubsub.kafka component"
+      ]
+    }
+  ]
+}

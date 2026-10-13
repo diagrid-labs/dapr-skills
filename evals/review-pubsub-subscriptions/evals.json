@@ -1,0 +1,107 @@
+{
+  "skill_name": "review-pubsub-subscriptions",
+  "evals": [
+    {
+      "id": 1,
+      "name": "dotnet-fulfilment-seeded-subscription-issues",
+      "prompt": "We receive orders, refunds and shipments through Dapr pub/sub in the fulfilment services and messages keep disappearing or arriving with empty fields. Please review the subscribers in evals/review-pubsub-subscriptions/files/fulfilment-dotnet.",
+      "expected_output": "A read-only subscriptions report for the .NET project (Fulfilment.Api is programmatic, Fulfilment.Worker is declarative with resources/subscription.yaml). Critical: DPS-SUB-001 (Fulfilment.Api/Program.cs:18, WithTopic for 'returns' without MapSubscribeHandler), DPS-SUB-002 (Fulfilment.Worker/Program.cs:10, typed OrderPlaced body without UseCloudEvents), DPS-SUB-003 (Fulfilment.Api/Program.cs:26, UseCloudEvents after UseEndpoints), DPS-SUB-004 (Fulfilment.Worker/Program.cs:14, Results.NotFound), DPS-SUB-005 (Fulfilment.Worker/Program.cs:23, catch returns Ok), DPS-SUB-015 (resources/subscription.yaml:13, rule path /events/pubsub/orders/vip has no endpoint). Warnings: DPS-SUB-006 (Fulfilment.Worker/Program.cs:19, no dedupe before SaveChangesAsync; may be listed under Please verify), DPS-SUB-008 (Fulfilment.Worker/Program.cs:40, BadRequest on the refunds subscription that has no dead-letter topic), DPS-SUB-009 (resources/subscription.yaml:15, deadLetterTopic orders-dead has no subscriber), DPS-SUB-010 (Fulfilment.Api/RawPublisher.cs:11, rawPayload publisher to orders while the orders subscription lacks rawPayload), DPS-SUB-012 (resources/subscription.yaml:10, amount compared without int()), DPS-SUB-014 (shipments subscribed declaratively in resources/subscription.yaml for fulfilment-api and programmatically in Fulfilment.Api/Program.cs:15). The Worker is declarative-only, so DPS-SUB-001 is not reported for it. DPS-SUB-011, DPS-SUB-013 and DPS-SUB-016 are Python-only and do not appear.",
+      "files": [
+        "evals/review-pubsub-subscriptions/files/fulfilment-dotnet/dapr.yaml",
+        "evals/review-pubsub-subscriptions/files/fulfilment-dotnet/resources/subscription.yaml",
+        "evals/review-pubsub-subscriptions/files/fulfilment-dotnet/Fulfilment.Api/Fulfilment.Api.csproj",
+        "evals/review-pubsub-subscriptions/files/fulfilment-dotnet/Fulfilment.Api/Program.cs",
+        "evals/review-pubsub-subscriptions/files/fulfilment-dotnet/Fulfilment.Api/Models.cs",
+        "evals/review-pubsub-subscriptions/files/fulfilment-dotnet/Fulfilment.Api/RawPublisher.cs",
+        "evals/review-pubsub-subscriptions/files/fulfilment-dotnet/Fulfilment.Worker/Fulfilment.Worker.csproj",
+        "evals/review-pubsub-subscriptions/files/fulfilment-dotnet/Fulfilment.Worker/Program.cs",
+        "evals/review-pubsub-subscriptions/files/fulfilment-dotnet/Fulfilment.Worker/Models.cs"
+      ],
+      "expectations": [
+        "The report header contains 'Language: dotnet' (or 'Language: .NET'), and the `Found:` line reads 'Found: 6 critical, 6 warnings, 0 suggestions, 0 to verify' (if DPS-SUB-006 is placed under Please verify instead, 5 warnings and 1 to verify)",
+        "The Critical section contains DPS-SUB-001 at Fulfilment.Api/Program.cs:18 (WithTopic for 'returns' with no MapSubscribeHandler anywhere in the app); the Fix mentions app.MapSubscribeHandler()",
+        "DPS-SUB-001 is not reported for Fulfilment.Worker (it is declarative-only and has no [Topic] or WithTopic)",
+        "The Critical section contains DPS-SUB-002 at Fulfilment.Worker/Program.cs:10 (typed OrderPlaced body on the declarative /events/pubsub/orders route while the Worker has no UseCloudEvents); the Fix mentions app.UseCloudEvents()",
+        "The Critical section contains DPS-SUB-003 at Fulfilment.Api/Program.cs:26 (UseCloudEvents is called after UseEndpoints); the Fix says to move it after UseRouting() and before the endpoints",
+        "The Critical section contains DPS-SUB-004 at Fulfilment.Worker/Program.cs:14 (Results.NotFound() makes Dapr drop the message)",
+        "The Critical section contains DPS-SUB-005 at Fulfilment.Worker/Program.cs:23 (catch (Exception) returns Results.Ok() and acknowledges a failed save)",
+        "The Critical section contains DPS-SUB-015 at resources/subscription.yaml:13 (rule path /events/pubsub/orders/vip has no matching MapPost in Fulfilment.Worker); it does not report /events/pubsub/orders/large, which has an endpoint",
+        "DPS-SUB-006 is reported for Fulfilment.Worker/Program.cs:19 (db.Orders.Add and SaveChangesAsync with no check on the CloudEvent id or a business key), either in Warnings or under Please verify",
+        "The Warnings section contains DPS-SUB-008 at Fulfilment.Worker/Program.cs:40 (BadRequest on the refunds subscription, which has no dead-letter topic); the Fix recommends DROP plus a dead-letter topic",
+        "The Warnings section contains DPS-SUB-009 at resources/subscription.yaml:15 (deadLetterTopic orders-dead has no subscription to it anywhere in scope)",
+        "The Warnings section contains DPS-SUB-010 at Fulfilment.Api/RawPublisher.cs:11 or at the orders Subscription in resources/subscription.yaml (e.g. its topic line 7; both locations are accepted) (publisher sends rawPayload to orders, subscription has no rawPayload: \"true\")",
+        "The Warnings section contains DPS-SUB-012 at resources/subscription.yaml:10 (event.data.amount > 1000 without int()); the Fix is int(event.data.amount) > 1000",
+        "The Warnings section contains DPS-SUB-014 for the pubsub/shipments topic in app fulfilment-api, citing Fulfilment.Api/Program.cs:15 and/or the shipments Subscription in resources/subscription.yaml (lines 32-41), because it is subscribed both declaratively and with WithTopic",
+        "DPS-SUB-011, DPS-SUB-013 and DPS-SUB-016 do not appear anywhere in the report (they are Python-only rules)",
+        "Findings are grouped Critical before Warnings with rule ids ascending inside each section, per review-report-format.md; the report ends with '## Next steps' (suggesting review-pubsub-components and review-pubsub-publishing) with no text after it; the project files under review are unchanged (identical to the fixture) and the report contains no instruction or claim that the review modified files"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "python-fulfilment-seeded-subscription-issues",
+      "prompt": "can you check the dapr subscribers in evals/review-pubsub-subscriptions/files/fulfilment-python? the api handlers and the worker's streaming subscription both look shaky and I want to know what's wrong before we deploy",
+      "expected_output": "A read-only subscriptions report with 'Language: python'. Critical: DPS-SUB-002 (api/main.py:19, DaprApp.subscribe handler takes the OrderPlaced Pydantic model), DPS-SUB-004 (api/main.py:21, HTTPException 404), DPS-SUB-005 (api/main.py:25, except returns SUCCESS), DPS-SUB-013 (worker/streaming.py:15-17, streaming handler returns nothing in the except branch), DPS-SUB-015 (resources/subscription.yaml:11, route /events/pubsub/payments/urgent has no endpoint). Warnings: DPS-SUB-006 (api/main.py:23, requests.post with no dedupe; may be under Please verify), DPS-SUB-007 (api/main.py:26, status FAIL), DPS-SUB-008 (api/main.py:39, RETRY on refunds with no dead-letter topic), DPS-SUB-009 (resources/subscription.yaml:13, payments-dead has no subscriber), DPS-SUB-011 (api/main.py:51, decorated handle_orders is called), DPS-SUB-012 (resources/subscription.yaml:10), DPS-SUB-014 (invoices subscribed in resources/subscription.yaml for worker and with subscribe_with_handler at worker/streaming.py:23), DPS-SUB-016 (worker/streaming.py:23, close function discarded). DPS-SUB-001 and DPS-SUB-003 are .NET-only and do not appear.",
+      "files": [
+        "evals/review-pubsub-subscriptions/files/fulfilment-python/pyproject.toml",
+        "evals/review-pubsub-subscriptions/files/fulfilment-python/dapr.yaml",
+        "evals/review-pubsub-subscriptions/files/fulfilment-python/resources/subscription.yaml",
+        "evals/review-pubsub-subscriptions/files/fulfilment-python/api/main.py",
+        "evals/review-pubsub-subscriptions/files/fulfilment-python/api/models.py",
+        "evals/review-pubsub-subscriptions/files/fulfilment-python/worker/main.py",
+        "evals/review-pubsub-subscriptions/files/fulfilment-python/worker/streaming.py",
+        "evals/review-pubsub-subscriptions/files/fulfilment-python/worker/models.py"
+      ],
+      "expectations": [
+        "The report header contains 'Language: python', and the `Found:` line reads 'Found: 5 critical, 8 warnings, 0 suggestions, 0 to verify' (6 critical if the tolerated extra DPS-SUB-005 on streaming.py is reported; if DPS-SUB-006 is placed under Please verify instead, 7 warnings and 1 to verify)",
+        "The Critical section contains DPS-SUB-002 at api/main.py:19 (handle_orders takes the domain model 'order: OrderPlaced', so FastAPI validates the CloudEvent envelope and returns 422); the Fix mentions 'dict = Body(...)'",
+        "The Critical section contains DPS-SUB-004 at api/main.py:21 (HTTPException(status_code=404))",
+        "The Critical section contains DPS-SUB-005 at api/main.py:25 (except Exception returns {\"status\": \"SUCCESS\"})",
+        "The Critical section contains DPS-SUB-013 at worker/streaming.py:15 or :17 (the except branch of handle_invoice returns no TopicEventResponse); lines 15-17 acceptable. An additional DPS-SUB-005 on worker/streaming.py:15-17 (bare return in the except) is tolerated alongside DPS-SUB-013 and raises the critical count by 1",
+        "The Critical section contains DPS-SUB-015 at resources/subscription.yaml:11 (rule path /events/pubsub/payments/urgent has no POST endpoint in app api); it does not report /events/pubsub/payments, which has an endpoint at api/main.py:43",
+        "DPS-SUB-006 is reported for api/main.py:23 (requests.post with no check on the CloudEvent id or a business key), either in Warnings or under Please verify",
+        "The Warnings section contains DPS-SUB-007 at api/main.py:26 (\"FAIL\" is not SUCCESS, RETRY or DROP)",
+        "The Warnings section contains DPS-SUB-008 at api/main.py:39 (RETRY on the refunds subscription, which has no dead-letter topic)",
+        "The Warnings section contains DPS-SUB-009 at resources/subscription.yaml:13 (deadLetterTopic payments-dead has no subscription); it does not report orders-deadletter, which has a handler at api/main.py:30",
+        "The Warnings section contains DPS-SUB-011 at api/main.py:51 (the decorated handle_orders is called; the decorator returns None)",
+        "The Warnings section contains DPS-SUB-012 at resources/subscription.yaml:10 (event.data.priority > 2 without int())",
+        "The Warnings section contains DPS-SUB-014 for the pubsub/invoices topic in app worker, citing worker/streaming.py:23 and/or the invoices Subscription in resources/subscription.yaml (lines 17-27), because it is subscribed declaratively and with subscribe_with_handler",
+        "The Warnings section contains DPS-SUB-016 at worker/streaming.py:23 (the close function returned by subscribe_with_handler is discarded); the Fix says the returned close function must be kept and called/closed on shutdown (for example in finally, or \"return it so shutdown closes the stream\"); any wording to that effect is accepted",
+        "DPS-SUB-001 and DPS-SUB-003 do not appear anywhere in the report (they are .NET-only rules), and no finding says a streaming-only app is missing appPort",
+        "Findings are grouped Critical before Warnings with rule ids ascending inside each section, the report ends with '## Next steps' with no text after it; the project files under review are unchanged (identical to the fixture) and the report contains no instruction or claim that the review modified files"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "dotnet-clean-three-subscription-types",
+      "prompt": "I think the subscribers in evals/review-pubsub-subscriptions/files/clean-three-types are fine (one declarative, one programmatic, one streaming), but can you audit the subscriptions and handlers before we ship?",
+      "expected_output": "A report with zero critical and zero warning findings: either 'No issues found.' or only info suggestions, followed by Next steps. The declarative app has no MapSubscribeHandler and must not be flagged by DPS-SUB-001; the streaming app is not flagged by DPS-SUB-002, 003 or 004; the HTTP handler's catch (JsonException) that returns DROP is exempt from DPS-SUB-005.",
+      "files": [
+        "evals/review-pubsub-subscriptions/files/clean-three-types/dapr.yaml",
+        "evals/review-pubsub-subscriptions/files/clean-three-types/resources/subscription.yaml",
+        "evals/review-pubsub-subscriptions/files/clean-three-types/declarative-app/DeclarativeApp.csproj",
+        "evals/review-pubsub-subscriptions/files/clean-three-types/declarative-app/Program.cs",
+        "evals/review-pubsub-subscriptions/files/clean-three-types/declarative-app/OrderPlacedHandler.cs",
+        "evals/review-pubsub-subscriptions/files/clean-three-types/declarative-app/Contracts.cs",
+        "evals/review-pubsub-subscriptions/files/clean-three-types/programmatic-app/ProgrammaticApp.csproj",
+        "evals/review-pubsub-subscriptions/files/clean-three-types/programmatic-app/Program.cs",
+        "evals/review-pubsub-subscriptions/files/clean-three-types/programmatic-app/Controllers/OrderEventsController.cs",
+        "evals/review-pubsub-subscriptions/files/clean-three-types/programmatic-app/OrderPlacedHandler.cs",
+        "evals/review-pubsub-subscriptions/files/clean-three-types/programmatic-app/Contracts.cs",
+        "evals/review-pubsub-subscriptions/files/clean-three-types/streaming-app/StreamingApp.csproj",
+        "evals/review-pubsub-subscriptions/files/clean-three-types/streaming-app/Program.cs",
+        "evals/review-pubsub-subscriptions/files/clean-three-types/streaming-app/Handlers.cs",
+        "evals/review-pubsub-subscriptions/files/clean-three-types/streaming-app/Contracts.cs"
+      ],
+      "expectations": [
+        "The report's 'Found:' line reports 0 critical and 0 warnings, and there is no '## Critical' or '## Warnings' section",
+        "DPS-SUB-001 is not reported for declarative-app (it has no [Topic] or WithTopic and no MapSubscribeHandler by design: the YAML is the subscription)",
+        "DPS-SUB-002, DPS-SUB-003 and DPS-SUB-004 are not reported for streaming-app (it has no HTTP route and no UseCloudEvents by design)",
+        "DPS-SUB-002 and DPS-SUB-003 are not reported for declarative-app or programmatic-app (both call UseCloudEvents before the Map* subscriber routes and use HttpRequest bodies)",
+        "DPS-SUB-005 is not reported for the catch (JsonException) in OrderPlacedHandler.cs (it returns DROP, which is exempt)",
+        "DPS-SUB-009, DPS-SUB-012, DPS-SUB-014 and DPS-SUB-015 are not reported (orders-deadletter has handlers in all three apps, the match uses int(), each app subscribes orders through exactly one type, and every Subscription route has a MapPost endpoint in declarative-app)",
+        "If there are no findings, the report body is exactly 'No issues found.' followed by '## Next steps', with no conversational lead-in line before 'No issues found.' (review-report-format.md allows only the single `Reviewing <path>` line before the heading); the Next steps suggest review-pubsub-components (always) and review-pubsub-publishing only if publisher files exist in the scope (this fixture has none, so a review-pubsub-publishing suggestion is not required, and a note that there is nothing to publish-review is acceptable), and there is no text after them",
+        "The project files under review are unchanged (identical to the fixture) and the report contains no instruction or claim that the review modified files"
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Review Scope Prompt
 
-Used by every `review-workflow-*` and `review-agent-*` skill before any file is read, so the user knows exactly which code is about to be analysed. The calling skill decides which target-detection file runs next.
+Used by every `review-workflow-*`, `review-agent-*` and `review-pubsub-*` skill before any file is read, so the user knows exactly which code is about to be analysed. The calling skill decides which target-detection file runs next.
 
 ## When to skip the prompt
 
@@ -11,7 +11,7 @@ If the user has already named a folder, file, or solution in the request (for ex
 If the request is generic ("review my workflow code", "audit my agent", "audit this project"), ask the user a single clarifying question with up to four options, in this order:
 
 1. The whole repository (the current working directory).
-2. The folder that contains the most code of the kind the calling skill reviews (workflows, activities, endpoints, or agents), if obvious from a quick `Glob` (for example `**/*Workflow*.cs` and `**/workflow*.py` for workflow reviews, `**/*Agent*.cs` and `**/*agent*.py` for agent reviews).
+2. The folder that contains the most code of the kind the calling skill reviews (workflows, activities, endpoints, or agents), if obvious from a quick `Glob` (for example `**/*Workflow*.cs` and `**/workflow*.py` for workflow reviews, `**/*Agent*.cs` and `**/*agent*.py` for agent reviews, `**/*.yaml` containing `kind: Subscription` or `type: pubsub.`, and `**/*Publisher*`, `**/*Subscriber*`, `**/main.py` for pub/sub reviews).
 3. A specific file or folder of the user's choice.
 4. Cancel — the user wants to refine the scope themselves first.
 
@@ -21,7 +21,7 @@ Do not enumerate every file in scope. The point of the prompt is to set a single
 
 - Resolve the scope to a single absolute path (`scope_root`).
 - Confirm the path back to the user in one line: `Reviewing <scope_root>`.
-- Pass `scope_root` to the target-detection file named by the calling skill (for example `review-detect-target.md` for workflow reviews, `review-detect-target-agent.md` for agent reviews).
+- Pass `scope_root` to the target-detection file named by the calling skill (for example `review-detect-target.md` for workflow reviews, `review-detect-target-agent.md` for agent reviews, `review-detect-target-pubsub.md` for pub/sub reviews).
 
 ## Multi-language repositories
 

@@ -1,0 +1,25 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: pubsub
+spec:
+  type: pubsub.redis
+  version: v1
+  metadata:
+    - name: redisHost
+      value: 10.0.0.5:6379
+    # SEED DPS-CFG-002
+    - name: redisPassword
+      value: ""
+    # SEED DPS-CFG-006
+    - name: consumerID
+      value: "{namespace}"
+    # SEED DPS-CFG-008
+    - name: redeliverInterval
+      value: "0"
+    - name: enableTLS
+      value: "true"
+    # SEED DPS-CFG-009
+    - name: insecureSkipTLSVerify
+      value: "true"
+    # SEED DPS-CFG-007 (no maxLenApprox and no streamTTL in this component)

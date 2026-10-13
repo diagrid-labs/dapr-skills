@@ -1,0 +1,9 @@
+version: 1
+common:
+  resourcesPath: ./resources
+apps:
+  - appID: notify
+    appDirPath: ./
+    appPort: 8000
+    daprHTTPPort: 3500
+    command: ["uv", "run", "uvicorn", "main:app", "--port", "8000"]

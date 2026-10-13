@@ -1,0 +1,82 @@
+{
+  "skill_name": "review-pubsub-publishing",
+  "evals": [
+    {
+      "id": 1,
+      "name": "dotnet-seeded",
+      "prompt": "Review the publishing code in evals/review-pubsub-publishing/files/checkout-dotnet.",
+      "expected_output": "A read-only publishing report for the .NET project. Critical: DPS-PUB-001 (discarded Task, Services/CheckoutPublisher.cs:10), DPS-PUB-002 (empty catch, :17), DPS-PUB-003 (pubsub name 'order-bus' matches no component, :24). Warnings: DPS-PUB-006 (new DaprClientBuilder().Build(), :29), DPS-PUB-007 (BulkPublishEventAsync result discarded, :35), DPS-PUB-008 (cloudevent.traceparent metadata, :42). Suggestions: DPS-PUB-009 (repeated 'orders' literals, e.g. :44). Please verify: DPS-PUB-010 (collection published, :49), DPS-PUB-012 (rawPayload, :57). DPS-PUB-004 and DPS-PUB-011 are Python-only and not reported; DPS-PUB-005 is not reported (no raw HTTP publish).",
+      "files": [
+        "evals/review-pubsub-publishing/files/checkout-dotnet/Checkout.csproj",
+        "evals/review-pubsub-publishing/files/checkout-dotnet/Program.cs",
+        "evals/review-pubsub-publishing/files/checkout-dotnet/Models/OrderPlaced.cs",
+        "evals/review-pubsub-publishing/files/checkout-dotnet/Services/CheckoutPublisher.cs",
+        "evals/review-pubsub-publishing/files/checkout-dotnet/components/pubsub.yaml"
+      ],
+      "expectations": [
+        "The report starts with the heading '# Dapr review — review-pubsub-publishing' (only a single 'Reviewing <path>' line may precede it)",
+        "The Critical section contains [DPS-PUB-001] at Services/CheckoutPublisher.cs:10 (the PublishEventAsync Task is assigned to the discard '_' and never awaited)",
+        "The Critical section contains [DPS-PUB-002] at Services/CheckoutPublisher.cs:17 (lines 16-19 acceptable): an empty catch (DaprException) around the publish",
+        "The Critical section contains [DPS-PUB-003] at Services/CheckoutPublisher.cs:24 stating that pubsub name 'order-bus' differs from the component name 'pubsub' in components/pubsub.yaml",
+        "The Warnings section contains [DPS-PUB-006] at Services/CheckoutPublisher.cs:29 (new DaprClientBuilder().Build() inside a method body)",
+        "The Warnings section contains [DPS-PUB-007] at Services/CheckoutPublisher.cs:35 (BulkPublishEventAsync result is not assigned, so FailedEntries is never read)",
+        "The Warnings section contains [DPS-PUB-008] at Services/CheckoutPublisher.cs:42 (cloudevent.traceparent metadata key; lines 40-45 acceptable)",
+        "The Suggestions section contains [DPS-PUB-009] referencing Services/CheckoutPublisher.cs (the repeated \"orders\" literal at publish sites such as lines 10, 16, 24, 35, 44 or 59) and recommending shared constants",
+        "The Please verify section (not Critical or Warnings) contains [DPS-PUB-010] at Services/CheckoutPublisher.cs:49 (allOrders.ToList() published as one event)",
+        "The Please verify section (not Critical or Warnings) contains [DPS-PUB-012] at Services/CheckoutPublisher.cs:57 (rawPayload = \"true\"; lines 55-59 acceptable)",
+        "Does not report DPS-PUB-004 or DPS-PUB-011 as findings (Python-only rules, reserved for .NET) and does not report DPS-PUB-005 (no raw HTTP POST to /v1.0/publish/). An additional [DPS-PUB-010] under Please verify at Services/CheckoutPublisher.cs:35 (the bulk publish of a collection) is tolerated and is not a failure",
+        "The Found: line reads 'Found: 3 critical, 3 warnings, 1 suggestion (the report template prints '1 suggestions'; either form is accepted), 2 to verify' (if the tolerated extra [DPS-PUB-010] at :35 is reported under Please verify, the to-verify count is 3 instead of 2; the critical, warning and suggestion counts must not change). Critical findings come before Warnings, and the report ends with '## Next steps' suggesting review-pubsub-subscriptions and review-pubsub-components, with no text after it",
+        "The project files under review are unchanged (identical to the fixture) and the report contains no instruction or claim that the review modified files"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "python-seeded",
+      "prompt": "Review the publishing code in evals/review-pubsub-publishing/files/checkout-python.",
+      "expected_output": "A read-only publishing report with 'Language: python' for publisher.py. Critical: DPS-PUB-001 (aio publish_event without await, publisher.py:17), DPS-PUB-002 (except DaprGrpcError: pass, :34), DPS-PUB-003 ('order-bus', :42), DPS-PUB-004 (data=order.model_dump() at :54 and an int ttlInSeconds metadata value at :66). Warnings: DPS-PUB-005 (json.dumps data with no data_content_type, :75), DPS-PUB-006 (DaprClient() never closed, :80), DPS-PUB-007 (publish_events result ignored, :91). Suggestions: DPS-PUB-009 (repeated 'orders' literals, e.g. :19), DPS-PUB-011 (sync publish_event in async def, :100). Please verify: DPS-PUB-012 (rawPayload, :115). DPS-PUB-008 and DPS-PUB-010 are not seeded.",
+      "files": [
+        "evals/review-pubsub-publishing/files/checkout-python/pyproject.toml",
+        "evals/review-pubsub-publishing/files/checkout-python/publisher.py",
+        "evals/review-pubsub-publishing/files/checkout-python/components/pubsub.yaml"
+      ],
+      "expectations": [
+        "The report starts with the heading '# Dapr review — review-pubsub-publishing' and its header contains 'Language: python'",
+        "The Critical section contains [DPS-PUB-001] at publisher.py:17 (publish_event on the dapr.aio client without await; lines 16-22 acceptable)",
+        "The Critical section contains [DPS-PUB-002] at publisher.py:34 (except DaprGrpcError with pass; lines 33-35 acceptable)",
+        "The Critical section contains [DPS-PUB-003] at publisher.py:42 stating that pubsub_name 'order-bus' differs from the component name 'pubsub'",
+        "The Critical section contains [DPS-PUB-004] at publisher.py:54 (data=order.model_dump() is a dict, not str/bytes) and a second [DPS-PUB-004] finding (or location) at publisher.py:66 (publish_metadata ttlInSeconds value 60 is an int, not a string)",
+        "The Warnings section contains [DPS-PUB-005] at publisher.py:75 (json.dumps data without data_content_type=\"application/json\"; lines 72-76 acceptable)",
+        "The Warnings section contains [DPS-PUB-006] at publisher.py:80 (DaprClient() assigned outside a with block and never closed)",
+        "The Warnings section contains [DPS-PUB-007] at publisher.py:91 (publish_events result not assigned, failed_entries never read; lines 91-96 acceptable). The publish_events data=[...] list is a bulk entry list, so it must not be reported as DPS-PUB-004 or DPS-PUB-010",
+        "The Suggestions section contains [DPS-PUB-009] referencing publisher.py (the repeated \"orders\" topic literal) and [DPS-PUB-011] at publisher.py:100 (a sync DaprClient().publish_event inside async def)",
+        "The Please verify section (not Critical or Warnings) contains [DPS-PUB-012] at publisher.py:115 (rawPayload \"true\")",
+        "The Fix for DPS-PUB-002 recommends catching TimeoutError together with DaprGrpcError, or re-raising/returning 503",
+        "The report does NOT contain DPS-PUB-008 or DPS-PUB-010 (they are not seeded in the Python fixture). The Found: line reads 'Found: 5 critical, 3 warnings, 2 suggestions, 1 to verify'. Critical findings come before Warnings, and the report ends with '## Next steps' with no text after it",
+        "The project files under review are unchanged (identical to the fixture) and the report contains no instruction or claim that the review modified files"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "clean",
+      "prompt": "Review the publishing code in evals/review-pubsub-publishing/files/clean-publisher.",
+      "expected_output": "A report with no critical and no warning findings: 'No issues found.' (possibly with only an info-level Please verify note for the optional rawPayload feature flag), followed by Next steps. The 503 mapping of DaprException is not a swallowed failure.",
+      "files": [
+        "evals/review-pubsub-publishing/files/clean-publisher/CleanPublisher.csproj",
+        "evals/review-pubsub-publishing/files/clean-publisher/Program.cs",
+        "evals/review-pubsub-publishing/files/clean-publisher/Models/OrderPlaced.cs",
+        "evals/review-pubsub-publishing/files/clean-publisher/Models/PubSubNames.cs",
+        "evals/review-pubsub-publishing/files/clean-publisher/Services/OrderPublisher.cs",
+        "evals/review-pubsub-publishing/files/clean-publisher/components/pubsub.yaml"
+      ],
+      "expectations": [
+        "The report starts with the heading '# Dapr review — review-pubsub-publishing'",
+        "The report has no '## Critical' section and no '## Warnings' section, and its 'Found:' line reports 0 critical and 0 warnings (a clean report with only 'No issues found.' may show 0 for every count; if DPS-PUB-012 is reported, it adds 1 suggestion or 1 to verify and nothing else)",
+        "Does not report DPS-PUB-002 (Program.cs:12-22 catches Dapr.DaprException and returns a 503 Problem result)",
+        "Does not report DPS-PUB-001, DPS-PUB-003, DPS-PUB-006, DPS-PUB-007 or DPS-PUB-008 (publish is awaited, 'pubsub' matches the component, DaprClient is injected, no bulk publish, no cloudevent.* metadata) and does not report DPS-PUB-009 (names come from PubSubNames constants)",
+        "Any finding that is reported is at most DPS-PUB-012 under Please verify or Suggestions (the optional rawPayload feature flag in Services/OrderPublisher.cs:21); otherwise the report body is 'No issues found.'",
+        "The report ends with '## Next steps' with no text after it",
+        "The project files under review are unchanged (identical to the fixture) and the report contains no instruction or claim that the review modified files"
+      ]
+    }
+  ]
+}

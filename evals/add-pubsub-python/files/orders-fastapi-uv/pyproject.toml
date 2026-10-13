@@ -1,0 +1,20 @@
+[project]
+name = "orders-fastapi"
+version = "0.1.0"
+description = "Small orders API used as an add-pubsub-python eval fixture"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi==0.118.2",
+    "pydantic==2.12.0",
+    "uvicorn==0.37.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==8.3.3",
+    "httpx==0.27.2",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

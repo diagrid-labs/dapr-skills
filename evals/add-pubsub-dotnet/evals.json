@@ -1,0 +1,92 @@
+{
+  "skill_name": "add-pubsub-dotnet",
+  "evals": [
+    {
+      "id": 1,
+      "name": "shop-api-both-declarative",
+      "prompt": "In ./shop-api, add Dapr pub/sub: when an order is placed, publish an order-placed event, and process those events in the same app. Show me the plan first, then go ahead without waiting for my approval.",
+      "expected_output": "An Add Pub/Sub Plan for ShopApi (declarative by default, role both, question 2 about POST /orders defaulting to yes), then targeted edits: Dapr.AspNetCore 1.18.10 on net8.0, AddDaprClient and UseCloudEvents once each, no MapSubscribeHandler, OrderPublisher awaited by POST /orders, plain MapPost subscriber routes, dapr.yaml, resources/pubsub.yaml, resiliency.yaml and a subscription.yaml scoped to shop-api, a .http file and DAPR-PUBSUB.md. The solution builds; the existing tests are run and the result is reported truthfully; README unchanged.",
+      "files": [
+        "evals/add-pubsub-dotnet/files/shop-api/README.md"
+      ],
+      "expectations": [
+        "Before the first file change, the response contains an Add Pub/Sub Plan with the heading `## Add Pub/Sub Plan — ShopApi`, the line `**Subscription type:** declarative — default`, the hosting mode `dapr run` and the role `both`, and lists every file it will add or edit",
+        "Before the first file change the plan asks question 2 about `POST /orders` also publishing the event, with Yes as the default, and does not ask question 1 (the project has no Dapr.* package yet); the question 2 line shows Yes and the plan has no Risk line (the existing tests call OrderStore directly, not the endpoint over HTTP)",
+        "src/ShopApi/ShopApi.csproj references Dapr.AspNetCore version 1.18.10, does not reference Dapr.Client explicitly, and its TargetFramework is still net8.0",
+        "src/ShopApi/Program.cs still contains the existing `builder.Services.AddSingleton<OrderStore>();` and `app.MapGet(\"/orders/{id}\"` lines, contains exactly one `AddDaprClient()` call and exactly one `UseCloudEvents()` call, and `UseCloudEvents()` appears before the first `app.Map` call",
+        "No file in the project contains `MapSubscribeHandler`, `WithTopic(` or `[Topic(`",
+        "In Program.cs the `app.MapPost(\"/orders\"` handler still calls `store.Add(order)` and returns `Results.Created(...)`, and now also awaits `PublishOrderPlacedAsync` after `store.Add(order)`",
+        "Program.cs contains `app.MapPost(\"/events/pubsub/orders\"` and `app.MapPost(\"/events/pubsub/orders-deadletter\"`; the handlers and the publisher are in src/ShopApi/Messaging/ in the namespace ShopApi.Messaging, and the message contract OrderPlaced and the PubSubNames class (PubSubName, OrdersTopic, OrdersDeadLetterTopic) are in src/ShopApi/Models/ in the namespace ShopApi.Models",
+        "resources/subscription.yaml has `kind: Subscription`, `scopes` containing exactly `shop-api`, and subscriptions for the topics `orders` and `orders-deadletter`; dapr.yaml has an app entry with `appID: shop-api`, `appPort: 5180` and `resourcesPath: ./resources`; resources/pubsub.yaml defines a component named `pubsub`",
+        "resources/resiliency.yaml exists and has `kind: Resiliency`",
+        "The subscriber handler for `orders` acknowledges an already-processed order id with a SUCCESS (HTTP 200) response and returns a DROP status (HTTP 200) for a malformed or invalid payload, rather than returning an error status",
+        "A requests file src/ShopApi/ShopApi.pubsub.http exists",
+        "The transcript shows `dotnet build` on ShopApi.slnx after the steps and `dotnet test` was run at the end (or the transcript states it could not run and why) and its result is reported truthfully; tests/ShopApi.Tests/*, src/ShopApi/Services/OrderStore.cs and src/ShopApi/Models/Order.cs are unchanged",
+        "README.md is byte-for-byte unchanged and DAPR-PUBSUB.md exists at the solution root next to ShopApi.slnx",
+        "No git command other than `git status` was run",
+        "Dev Dashboard: the agent runs `diagrid-dev-dashboard --version` once without stopping, and the final output ends with exactly `Dapr pub/sub is added to ShopApi. Open DAPR-PUBSUB.md in the solution root for what changed and how to run it.` followed only by the matching Diagrid Dapr Dev Dashboard recommendation block (installed or not installed) and nothing after it"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "ledger-aspire-follow-programmatic",
+      "prompt": "Add a subscription to the orders topic in the Ledger API. Show the plan, then proceed without asking.",
+      "expected_output": "A plan that follows the existing programmatic [Topic] style (Aspire hosting, controllers, Central Package Management), question 1 offering Dapr.Client and Dapr.AspNetCore 1.17.9 to 1.18.10 (default yes), a new controller with [Topic] actions for orders and the dead-letter topic, a Resources/resiliency.yaml in the AppHost, no Subscription YAML and no second MapSubscribeHandler; the existing PaymentsEventsController is untouched and the solution builds.",
+      "files": [
+        "evals/add-pubsub-dotnet/files/ledger-aspire/Directory.Packages.props"
+      ],
+      "expectations": [
+        "Before the first file change, the response contains an Add Pub/Sub Plan whose `**Subscription type:**` line says programmatic and that it follows the existing `[Topic` handlers, names the role subscriber, and names the hosting mode Aspire with the AppHost Ledger.AppHost",
+        "Before the first file change the plan asks question 1 about package updates, listing Dapr.Client with 1.17.9 → 1.18.10 and Dapr.AspNetCore with 1.17.9 → 1.18.10, with Yes as the default",
+        "Directory.Packages.props has Dapr.Client and Dapr.AspNetCore at version 1.18.10, and Ledger.ApiService.csproj still has PackageReference elements for them without a Version attribute",
+        "A new controller file under Ledger.ApiService/Controllers/ (not a minimal API MapPost) has two actions with `[Topic(`: one for pubsub `pubsub` and topic `orders` with `orders-deadletter` as its dead-letter topic, routed at `[HttpPost(\"/events/pubsub/orders\")]`, and one for pubsub `pubsub` and topic `orders-deadletter` routed at `[HttpPost(\"/events/pubsub/orders-deadletter\")]`; the `[Topic(` arguments may be string literals or `PubSubNames` constants (or the project's own constants), as long as they resolve to `pubsub`, `orders` and `orders-deadletter`",
+        "No `kind: Subscription` YAML file was created, and Ledger.ApiService/Program.cs still contains exactly one `MapSubscribeHandler()` and exactly one `UseCloudEvents()`, with `UseCloudEvents()` before `MapControllers()`",
+        "Ledger.AppHost/Resources/resiliency.yaml exists and has `kind: Resiliency`; the existing Ledger.AppHost/Resources/pubsub.yaml component `pubsub` is reused and no second pubsub component file was created",
+        "Ledger.AppHost/AppHost.cs still contains exactly one `AddDapr()` call and exactly one `WithDaprSidecar(` call with `AppId = \"ledger-api\"`",
+        "Ledger.ApiService/Controllers/PaymentsEventsController.cs is unchanged",
+        "The transcript shows `dotnet build` on Ledger.slnx succeeding after the steps, and no git command other than `git status` was run",
+        "The final output ends with exactly `Dapr pub/sub is added to Ledger.ApiService. Open DAPR-PUBSUB.md in the solution root for what changed and how to run it.` followed only by the Dev Dashboard recommendation in its Aspire form (`aspire run` starts it as the `dapr-dev-dashboard` resource)"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "alerts-api-streaming",
+      "prompt": "Add Dapr pub/sub to ./alerts-api: publish an alert-raised event from POST /alerts and consume it with a streaming subscription. Show the plan, then go ahead.",
+      "expected_output": "A plan with subscription type streaming (requested), then Dapr.Messaging 1.18.10 (not Dapr.AspNetCore), AddDaprMessaging() once, an ITopicHandler class with [DaprTopic] and DeliveryMode.Streaming, publishing through IDaprPublishSubscribeClient, the existing appPort 5190 kept in dapr.yaml, no subscription.yaml, and a project that builds.",
+      "files": [
+        "evals/add-pubsub-dotnet/files/alerts-api/Program.cs"
+      ],
+      "expectations": [
+        "Before the first file change, the response contains an Add Pub/Sub Plan that says `streaming — requested`, and asks question 2 about `POST /alerts` also publishing the event with Yes as the default",
+        "AlertsApi.csproj references Dapr.Messaging version 1.18.10 and does not reference Dapr.AspNetCore or Dapr.Client",
+        "`AddDaprMessaging(` appears exactly once in the project, with `DaprGrpcEndpoint` set from the DAPR_GRPC_PORT environment variable",
+        "A handler class implementing `ITopicHandler<` has a `[DaprTopic(` attribute that uses `DeliveryMode.Streaming` and sets no Route, Match or Priority",
+        "Publishing code injects `IDaprPublishSubscribeClient` (for example `client.PublishEventAsync(...)` on it); no file references `DaprClient`, `using Dapr.Client;` or the `Dapr.AspNetCore` package",
+        "Program.cs does not contain `UseCloudEvents`, `MapSubscribeHandler` or a `/events/pubsub/` route",
+        "dapr.yaml has an app entry with `appID: alerts-api` and `appPort: 5190`",
+        "No `kind: Subscription` YAML file exists, and a `kind: Resiliency` file exists",
+        "The transcript shows `dotnet build` succeeding after the steps, and no git command other than `git status` was run",
+        "DAPR-PUBSUB.md and dapr.yaml exist in the alerts-api folder next to AlertsApi.csproj (there is no solution file), and README.md is not created or edited",
+        "The final output ends with exactly `Dapr pub/sub is added to AlertsApi. Open DAPR-PUBSUB.md in the project root for what changed and how to run it.` followed only by the matching Diagrid Dapr Dev Dashboard recommendation block (installed or not installed) and nothing after it"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "inventory-clash-no-approval",
+      "prompt": "Subscribe ./inventory-service to the orders topic using a declarative subscription file.",
+      "expected_output": "The skill inspects the project, shows an Add Pub/Sub Plan or findings naming the existing messagebus component and the existing programmatic orders subscription, refuses to add a second subscription type for the same topic, asks whether to extend the existing handler or use another topic, and stops. No file is changed and nothing is built.",
+      "files": [
+        "evals/add-pubsub-dotnet/files/inventory-service/Program.cs",
+        "evals/add-pubsub-dotnet/files/inventory-service/dapr.yaml",
+        "evals/add-pubsub-dotnet/files/inventory-service/components/messagebus.yaml"
+      ],
+      "expectations": [
+        "The response names the existing messagebus pub/sub component and the existing programmatic subscription for the `orders` topic (the file name, component type and exact `.WithTopic(...)` call need not be quoted)",
+        "The response refuses to add a second subscription type (a declarative Subscription file) for the `orders` topic, and asks whether to extend the existing handler or use another topic",
+        "The run ends after that question with no approval assumed: every file under the copied inventory-service project is identical to the original fixture at evals/add-pubsub-dotnet/files/inventory-service (a hash comparison or `diff -r` shows no differences)",
+        "No `dotnet build`, `dotnet test`, `dotnet add` or `dapr` command was run, and no git command other than `git status` was run",
+        "The response does not contain the final message `Dapr pub/sub is added to ...`"
+      ]
+    }
+  ]
+}

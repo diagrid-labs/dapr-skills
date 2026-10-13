@@ -1,0 +1,19 @@
+apiVersion: dapr.io/v1alpha1
+kind: Resiliency
+metadata:
+  name: notify-resiliency
+scopes:
+  - notify
+spec:
+  policies:
+    retries:
+      pubsubRetry:
+        policy: constant
+        duration: 5s
+        # SEED DPS-CFG-012
+        maxRetries: -1
+  targets:
+    components:
+      pubsub:
+        inbound:
+          retry: pubsubRetry

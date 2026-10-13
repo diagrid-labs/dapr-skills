@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Ledger.ApiService/Ledger.ApiService.csproj" />
+  <Project Path="Ledger.AppHost/Ledger.AppHost.csproj" />
+  <Project Path="Ledger.ServiceDefaults/Ledger.ServiceDefaults.csproj" />
+</Solution>

@@ -1,0 +1,19 @@
+version: 1
+common:
+  resourcesPath: ./resources
+apps:
+  - appID: clean-declarative
+    appDirPath: declarative-app
+    appPort: 5150
+    daprHTTPPort: 3550
+    command: ["dotnet", "run"]
+  - appID: clean-programmatic
+    appDirPath: programmatic-app
+    appPort: 5160
+    daprHTTPPort: 3560
+    command: ["dotnet", "run"]
+  - appID: clean-streaming
+    appDirPath: streaming-app
+    daprHTTPPort: 3570
+    daprGRPCPort: 50070
+    command: ["dotnet", "run"]

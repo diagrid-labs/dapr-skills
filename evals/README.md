@@ -49,4 +49,7 @@ Notes:
 - For evals with `files`, copy the fixture into the scratch folder first and point the prompt at the copy, so review skills see a project root and migration skills can't modify the fixture.
 - `migrate-workflow-typescript` needs a git repository: after copying `files/order-service/`, run `git init` and make one commit in the copy, because the skill checks for a clean working tree and creates a migration branch.
 - `review-agent-memory/files/helpdesk-dotnet` intentionally fails `dotnet build`/`restore` with `NU1605` (package downgrade). That is the seeded `DAG-MEM-006` violation; the other .NET fixtures build.
+- `create-pubsub-*` and `add-pubsub-*` have four evals each (one per subscription type plus an edge case).
+- The `review-pubsub-*` fixtures contain deliberate violations marked `SEED <rule id>`; the `clean-*` fixtures must produce no critical or warning findings.
+- The .NET `add-pubsub-dotnet` fixtures build; `inventory-service` is used for a hash check.
 - Scaffolding and prerequisite evals need the prerequisites from the main [README](../README.md) (.NET 10, Python/uv, Node.js, Dapr CLI, Docker). Agent evals that run the generated app also need an LLM provider key.

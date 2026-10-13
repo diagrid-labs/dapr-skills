@@ -1,0 +1,41 @@
+apiVersion: dapr.io/v2alpha1
+kind: Subscription
+metadata:
+  name: orders-subscription
+spec:
+  pubsubname: pubsub
+  topic: orders
+  routes:
+    rules:
+      - match: event.data.amount > 1000 # SEED DPS-SUB-012
+        path: /events/pubsub/orders/large
+      - match: event.data.customerId == "c-100"
+        path: /events/pubsub/orders/vip # SEED DPS-SUB-015
+    default: /events/pubsub/orders
+  deadLetterTopic: orders-dead # SEED DPS-SUB-009
+scopes:
+  - fulfilment-worker
+---
+apiVersion: dapr.io/v2alpha1
+kind: Subscription
+metadata:
+  name: refunds-subscription
+spec:
+  pubsubname: pubsub
+  topic: refunds
+  routes:
+    default: /events/pubsub/refunds
+scopes:
+  - fulfilment-worker
+---
+apiVersion: dapr.io/v2alpha1
+kind: Subscription
+metadata:
+  name: shipments-subscription
+spec:
+  pubsubname: pubsub
+  topic: shipments
+  routes:
+    default: /events/pubsub/shipments
+scopes:
+  - fulfilment-api

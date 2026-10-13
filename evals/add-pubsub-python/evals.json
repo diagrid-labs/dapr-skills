@@ -1,0 +1,93 @@
+{
+  "skill_name": "add-pubsub-python",
+  "evals": [
+    {
+      "id": 1,
+      "name": "uv-both-declarative",
+      "prompt": "In ./orders-fastapi-uv, add Dapr pub/sub: publish an order-placed event when an order is created and handle those events in this app. Show the plan, then proceed.",
+      "expected_output": "An Add Pub/Sub Plan with declarative as the default subscription type and question 2 defaulting to yes (the request asks to publish when an order is created, even though an existing test calls POST /orders over HTTP) with a Risk line naming tests/test_orders.py, then targeted edits: dapr added with uv, plain FastAPI subscriber routes under /events/pubsub/orders, create_order publishing after it saves the order, a POST /pubsub/orders publish endpoint, resources/subscription.yaml scoped to orders-fastapi, import checks after each step, tests/ untouched with the pytest result reported truthfully (any failures attributed to the publish call with a test-double suggestion), and DAPR-PUBSUB.md.",
+      "files": [
+        "evals/add-pubsub-python/files/orders-fastapi-uv/"
+      ],
+      "expectations": [
+        "Before the first file change, the response or transcript contains an Add Pub/Sub Plan that includes the line `**Subscription type:** declarative — default`",
+        "Before the first file change, the plan asks whether POST /orders should also publish and states the default is Yes (the request explicitly asks to publish when an order is created), and the plan contains a Risk line that names tests/test_orders.py, says it will need a Dapr sidecar or a test double for the publisher via `app.dependency_overrides[get_order_publisher]` (the exact override target name), and mentions `DAPR_HEALTH_TIMEOUT=2` for running tests without a sidecar, and says the skill does not edit tests",
+        "pyproject.toml lists `dapr==1.18.3` in its dependencies, and the transcript shows it was added with `uv add`",
+        "app/main.py contains `@app.post(\"/events/pubsub/orders\")` whose handler takes a parameter declared with `dict = Body(`, and contains no `DaprApp`",
+        "app/main.py contains a new `POST /pubsub/orders` publish endpoint (a `@app.post(\"/pubsub/orders\"` decorator), and the existing `POST /orders` handler (`create_order`) now publishes (calls `publish_event` directly or through the injected publisher) after its existing work (saving the order), still returns its original response on success, and its original save logic is unchanged",
+        "resources/subscription.yaml exists, has `kind: Subscription`, `topic: orders` and `deadLetterTopic: orders-deadletter`, and contains `scopes:` with the entry `orders-fastapi` (equal to the appID in dapr.yaml)",
+        "app/main.py is a targeted edit: compared with the original fixture evals/add-pubsub-python/files/orders-fastapi-uv/app/main.py, every original line is still present in the same order (only additions, plus the minimal edit to `create_order` and the imports)",
+        "The `create_order` publisher is injected through a FastAPI dependency (`Depends(` with a `get_order_publisher` function, not a module-level function called directly) so `app.dependency_overrides` can replace it, and the plan's Risk line names `get_order_publisher` as the override target",
+        "The transcript or plan mentions `DAPR_HEALTH_TIMEOUT` for the final test run (set for that command only), and the pytest result is reported truthfully",
+        "dapr.yaml exists at the project root with `appID: orders-fastapi` and `appPort: 8000`",
+        "The transcript shows a compile or import check (`compileall` or `import app.main`) run after each apply step, and none was skipped after a failure",
+        "The transcript shows `uv run pytest` (or `python -m pytest`) was run at the end and the result is reported truthfully: either both tests passed, or the failures are attributed to the publish call (a 503 or sidecar timeout from `publish_event`) as an expected consequence of the Risk line with a test-double suggestion (`app.dependency_overrides`); every file under tests/ is identical to the fixture",
+        "DAPR-PUBSUB.md exists at the project root, and the README is not edited",
+        "The final message ends with `Dapr pub/sub is added to` followed by the project name and `Open DAPR-PUBSUB.md in the project root for what changed and how to run it.`, followed only by the Dev Dashboard recommendation",
+        "resources/resiliency.yaml exists, and app/main.py contains the dead-letter route `@app.post(\"/events/pubsub/orders-deadletter\")` with a handler",
+        "No git command other than `git status` appears in the transcript"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "req-follow-programmatic",
+      "prompt": "Add a subscription to the orders topic in ./notify-fastapi-req (create .venv with python -m venv .venv if needed). Show the plan, then proceed.",
+      "expected_output": "A plan that follows the existing DaprApp programmatic subscriptions, offers the dapr and dapr-ext-fastapi 1.18.0 to 1.18.3 update (default yes) before any change, then adds one new @dapr_app.subscribe for orders with a dead-letter topic to the existing DaprApp, with aligned 1.18.3 pins in requirements.txt and the emails subscription untouched.",
+      "files": [
+        "evals/add-pubsub-python/files/notify-fastapi-req/"
+      ],
+      "expectations": [
+        "The plan contains `programmatic — follows existing DaprApp subscriptions` on its Subscription type line",
+        "Before any file change, the plan lists question 1 about package updates naming `dapr` and `dapr-ext-fastapi` going from 1.18.0 to 1.18.3, with Yes as the default",
+        "After the default is accepted, requirements.txt contains `dapr==1.18.3` and `dapr-ext-fastapi==1.18.3` and no `1.18.0` pin remains",
+        "main.py contains exactly one `DaprApp(` occurrence",
+        "main.py contains a new `@dapr_app.subscribe(` decorator for topic `orders` that passes `dead_letter_topic=`",
+        "The original `@dapr_app.subscribe(pubsub=\"pubsub\", topic=\"emails\", route=\"/events/pubsub/emails\")` decorator and its `handle_email` function are unchanged and still return `{\"status\": \"SUCCESS\"}`",
+        "No new component YAML is created: resources/pubsub.yaml is reused and no second `type: pubsub.` component exists",
+        "The transcript shows `python -m venv .venv` was attempted before any pip install (the prompt allowed creating it), and a compile or import check (`compileall` or `import main`) runs after each apply step",
+        "The .venv directory is removed (or absent) at the end of the run",
+        "No `resources/subscription.yaml` with `kind: Subscription` is created, and dapr.yaml keeps `appID: notify` and `appPort: 8010`"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "uv-streaming",
+      "prompt": "In ./orders-fastapi-uv, add Dapr pub/sub: publish an order-placed event when an order is created and consume them with a streaming subscription. Show the plan, then proceed.",
+      "expected_output": "An Add Pub/Sub Plan with streaming as the requested type and question 2 defaulting to yes with a Risk line naming tests/test_orders.py, then app/streaming.py with subscribe_with_handler started and closed in a FastAPI lifespan, a handler that returns TopicEventResponse on every path, create_order publishing after it saves the order, no subscription.yaml, tests/ untouched, and the pytest result reported truthfully (failures, if any, attributed to the publish call with a test-double suggestion).",
+      "files": [
+        "evals/add-pubsub-python/files/orders-fastapi-uv/"
+      ],
+      "expectations": [
+        "The plan's Subscription type line says `streaming` (requested), not declarative",
+        "Before the first file change, the plan asks whether POST /orders should also publish and states the default is Yes (the request explicitly asks to publish when an order is created), and the plan contains a Risk line that names tests/test_orders.py, says it will need a Dapr sidecar or a test double for the publisher via `app.dependency_overrides[get_order_publisher]` (the exact override target name), and mentions `DAPR_HEALTH_TIMEOUT=2` for running tests without a sidecar, and says the skill does not edit tests",
+        "app/main.py `POST /orders` handler (`create_order`) now publishes (calls `publish_event` directly or through the injected publisher) after its existing work (saving the order), and its original save logic is unchanged",
+        "app/streaming.py exists and contains `subscribe_with_handler(`",
+        "app/main.py constructs the app with `FastAPI(lifespan=lifespan)`, and the lifespan starts the streaming subscription before `yield` and calls `close()` on it after `yield`",
+        "Every code path of the streaming handler returns a `TopicEventResponse` (success, retry and drop), and no path returns a bare dict or None",
+        "No `subscription.yaml` file with `kind: Subscription` is created anywhere in the project, and no `@app.post(\"/events/pubsub/orders\")` route is added",
+        "app/main.py contains no `DaprApp`",
+        "The transcript shows `uv run pytest` (or `python -m pytest`) was run at the end and the result is reported truthfully: either both tests passed, or the failures are attributed to the publish call (a 503 or sidecar timeout from `publish_event`) as an expected consequence of the Risk line with a test-double suggestion (`app.dependency_overrides`); every file under tests/ is identical to the fixture",
+        "app/main.py is a targeted edit: compared with the original fixture evals/add-pubsub-python/files/orders-fastapi-uv/app/main.py, every original line is still present in the same order (only additions, plus the minimal edit to `create_order` and the imports)",
+        "The `create_order` publisher is injected through a FastAPI dependency (`Depends(` with a `get_order_publisher` function, not a module-level function called directly) so `app.dependency_overrides` can replace it, and the plan's Risk line names `get_order_publisher` as the override target",
+        "The transcript or plan mentions `DAPR_HEALTH_TIMEOUT` for the final test run (set for that command only), and the pytest result is reported truthfully",
+        "DAPR-PUBSUB.md exists at the project root"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "flask-unsupported",
+      "prompt": "Add Dapr pub/sub to the Flask app in ./flask-app so it can publish and subscribe to an orders topic.",
+      "expected_output": "The skill stops after inspection: it explains that v1 supports FastAPI only, points to the dapr-ext-grpc alternative, and changes no file.",
+      "files": [
+        "evals/add-pubsub-python/files/flask-app/"
+      ],
+      "expectations": [
+        "The response states that the skill supports FastAPI apps only and that this Flask app is not supported",
+        "The response points to the dapr-ext-grpc alternative for non-FastAPI apps",
+        "No file in flask-app is created, edited or deleted: app.py and requirements.txt are byte-identical to the fixture, and there is no dapr.yaml, resources folder or DAPR-PUBSUB.md",
+        "No package is installed and no Add Pub/Sub Plan approval is requested",
+        "No git command other than `git status` appears in the transcript"
+      ]
+    }
+  ]
+}

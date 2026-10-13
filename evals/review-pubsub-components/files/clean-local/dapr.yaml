@@ -1,0 +1,14 @@
+version: 1
+common:
+  resourcesPath: ./resources
+apps:
+  - appID: orders-publisher
+    appDirPath: ./publisher
+    appPort: 8001
+    daprHTTPPort: 3501
+    command: ["uv", "run", "uvicorn", "main:app", "--port", "8001"]
+  - appID: orders-subscriber
+    appDirPath: ./subscriber
+    appPort: 8002
+    daprHTTPPort: 3502
+    command: ["uv", "run", "uvicorn", "main:app", "--port", "8002"]

@@ -133,3 +133,84 @@ Use this when the solution already has an AppHost. Edit it; never replace it.
 3. Keep the existing `AddProject<...>("<existing-name>")` call and its resource name; chain `.WithDaprSidecar(new DaprSidecarOptions { ResourcesPaths = [Path.Join(executingPath, "Resources")] })` and `.WaitFor(cache)` onto it (use the existing cache resource's variable; if it was added inline without one, assign it to a variable first). Never rename the resource.
 4. Add the Dev Dashboard executable resource exactly as in `## AppHost.cs (new solution)`, before `builder.Build().Run();`. Skip this step if the AppHost already has a `dapr-dev-dashboard` resource; if another resource already uses port 9090, say so in the plan and use the next free port in both `--port` and `WithHttpEndpoint(port: ...)`.
 5. Do not create a `dapr.yaml`: Aspire starts the sidecar.
+
+## Pub/sub apps
+
+Use this for the pub/sub create and add skills. It has two services (publisher and subscriber) that share one broker.
+
+### AppHost.cs (two services)
+
+```csharp
+using System.Reflection;
+using CommunityToolkit.Aspire.Hosting.Dapr;
+
+var builder = DistributedApplication.CreateBuilder(args);
+
+builder.AddDapr();
+
+string executingPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
+    ?? throw new("Where am I?");
+
+var brokerPassword = builder.AddParameter("cache-password", "pubsub-broker-123", secret: true);
+var cache = builder
+    .AddValkey("cache", 16379, brokerPassword)
+    .WithContainerName("pubsub-broker")
+    .WithDataVolume("pubsub-broker-data");
+
+var publisher = builder
+    .AddProject<Projects.<ProjectRoot>_Publisher>("publisher")
+    .WithDaprSidecar(new DaprSidecarOptions
+    {
+        AppId = "<root-kebab>-publisher",
+        ResourcesPaths = [Path.Join(executingPath, "Resources")],
+    })
+    .WaitFor(cache);
+
+var subscriber = builder
+    .AddProject<Projects.<ProjectRoot>_Subscriber>("subscriber")
+    .WithDaprSidecar(new DaprSidecarOptions
+    {
+        AppId = "<root-kebab>-subscriber",
+        ResourcesPaths = [Path.Join(executingPath, "Resources")],
+    })
+    .WaitFor(cache);
+
+builder.AddExecutable("dapr-dev-dashboard", "diagrid-dev-dashboard", ".",
+        "--port", "9090", "--no-open")
+    .WithHttpEndpoint(port: 9090, isProxied: false);
+
+builder.Build().Run();
+```
+
+### Resources/pubsub.yaml
+
+```yaml
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: pubsub
+spec:
+  type: pubsub.redis
+  version: v1
+  metadata:
+    - name: redisHost
+      value: "localhost:16379"
+    - name: redisPassword
+      value: "pubsub-broker-123"
+```
+
+### Resources/resiliency.yaml and Resources/subscription.yaml
+
+- `Resources/resiliency.yaml`: the YAML from `dapr-pubsub-resiliency.md` (`## resources/resiliency.yaml`).
+- `Resources/subscription.yaml`: the YAML from `dapr-pubsub-subscription.md` (`## resources/subscription.yaml`), only for a declarative subscriber. Programmatic and streaming subscribers have no Subscription file.
+
+### Key points
+
+- `AppId` is set explicitly, so the declarative `scopes` in `subscription.yaml` match the sidecar's app-id. Without it Aspire derives the id from the resource name.
+- `redisPassword` equals the `cache-password` parameter default. This is local-only and earns an `info` finding from DPS-CFG-001.
+- A streaming subscriber needs no extra settings. Aspire may pass the project's HTTP port as the app port, which streaming ignores. The .NET streaming registration still sets `DaprGrpcEndpoint` from the injected `DAPR_GRPC_PORT`.
+- Single-role apps keep only one `AddProject`.
+
+### Adding to an existing AppHost
+
+Follow `## Adding to an existing AppHost` steps 1-5, using `pubsub.yaml` (plus `resiliency.yaml` and `subscription.yaml`) instead of `statestore.yaml`. Reuse an existing Redis or Valkey resource and point `Resources/pubsub.yaml` at its host port and password.

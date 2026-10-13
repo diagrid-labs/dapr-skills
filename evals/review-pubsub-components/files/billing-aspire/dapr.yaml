@@ -1,0 +1,15 @@
+version: 1
+common:
+  resourcesPath: ./Resources
+apps:
+  - appID: billing-api
+    appDirPath: ./Billing.Api
+    appPort: 5210
+    # SEED DPS-CFG-013 (daprHTTPPort 3500 is used by both apps)
+    daprHTTPPort: 3500
+    command: ["dotnet", "run"]
+  - appID: billing-sub
+    appDirPath: ./Billing.Subscriber
+    appPort: 5220
+    daprHTTPPort: 3500
+    command: ["dotnet", "run"]

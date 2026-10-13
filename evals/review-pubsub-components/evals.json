@@ -1,0 +1,71 @@
+{
+  "skill_name": "review-pubsub-components",
+  "evals": [
+    {
+      "id": 1,
+      "name": "aspire-inline-secret-and-scope-mismatch",
+      "prompt": "We're about to ship the billing Aspire solution in ./billing-aspire. Audit the Dapr pub/sub component, subscription and run configuration before we deploy.",
+      "expected_output": "A review-pubsub-components report with Language: aspire. Critical DPS-CFG-001 (inline redisPassword in Resources/pubsub.yaml:13-14, value never printed) and DPS-CFG-011 (Resources/subscription.yaml scopes billing-subscriber matches no app id; the apps are billing-api and billing-sub). Warnings DPS-CFG-003 (deadLetterTopic invoices-dead, no Resiliency), DPS-CFG-005 (literal consumerID billing shared by two subscribing apps) and DPS-CFG-013 (daprHTTPPort 3500 twice in dapr.yaml). Suggestion DPS-CFG-004 (no scopes on the component with two apps).",
+      "files": [
+        "evals/review-pubsub-components/files/billing-aspire/"
+      ],
+      "expectations": [
+        "The report section (after the optional one-line `Reviewing <path>` scope echo) starts with `# Dapr review — review-pubsub-components` and contains `Language: aspire`",
+        "Under `## Critical` the report contains [DPS-CFG-001] citing Resources/pubsub.yaml at line 13 or 14 and naming the metadata key `redisPassword`, with a Fix that uses `secretKeyRef` (and `auth.secretStore`)",
+        "The literal secret value `s3cret` does NOT appear anywhere in the report (the key is named, the value is never echoed)",
+        "Under `## Critical` the report contains [DPS-CFG-011] citing Resources/subscription.yaml at line 13 or 14, saying that the scope `billing-subscriber` matches no app id and naming `billing-api` and/or `billing-sub` as the actual ids",
+        "Under `## Warnings` the report contains [DPS-CFG-003] citing Resources/subscription.yaml:11 for `deadLetterTopic: invoices-dead` with no Resiliency policy, with a Fix to add a resiliency.yaml",
+        "Under `## Warnings` the report contains [DPS-CFG-005] citing Resources/pubsub.yaml at line 20 or 21 for the literal `consumerID: billing`, with a Fix to remove it or use `{appID}`",
+        "Under `## Warnings` the report contains [DPS-CFG-013] citing dapr.yaml at line 9 and/or 14 for `daprHTTPPort: 3500` used by both apps",
+        "The report contains [DPS-CFG-004] citing Resources/pubsub.yaml (any line 1-21) under `## Suggestions`, NOT under `## Critical` or `## Warnings`",
+        "The report does NOT contain DPS-CFG-002 (the password is set), DPS-CFG-009 (enableTLS is \"true\"), DPS-CFG-007 (maxLenApprox is set), DPS-CFG-008, DPS-CFG-010 or DPS-CFG-014",
+        "The report does NOT report the `Billing.AppHost/AppHost.cs` AppId values as a port or app-id collision (DPS-CFG-013 cites dapr.yaml only)",
+        "The `Found:` line reads `Found: 2 critical, 3 warnings, 1 suggestion, 0 to verify` (suggestions may be written `suggestions`)",
+        "The report ends with a `## Next steps` section and it is the last section (nothing follows its bullets)",
+        "Read-only: The project files under review are unchanged (identical to the fixture) and the report contains no instruction or claim that the review modified files"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "python-redis-hygiene-and-raw-payload-key",
+      "prompt": "Review the pub/sub config in notify-python. Redis is on a shared host at 10.0.0.5 and some alerts seem to arrive as CloudEvents even though we asked for raw payloads.",
+      "expected_output": "A review-pubsub-components report with Language: python. Warnings DPS-CFG-002 (empty redisPassword on 10.0.0.5), DPS-CFG-008 (redeliverInterval \"0\"), DPS-CFG-009 (insecureSkipTLSVerify \"true\"), DPS-CFG-012 (maxRetries -1, no dead-letter topic) and DPS-CFG-014 (isRawPayload ignored; use rawPayload). Suggestions DPS-CFG-007 and DPS-CFG-010. DPS-CFG-006 ({namespace} in consumerID) appears only under Please verify. No critical findings.",
+      "files": [
+        "evals/review-pubsub-components/files/notify-python/"
+      ],
+      "expectations": [
+        "The report section (after the optional one-line `Reviewing <path>` scope echo) starts with `# Dapr review — review-pubsub-components` and contains `Language: python`",
+        "Under `## Warnings` the report contains [DPS-CFG-002] citing resources/pubsub.yaml at line 12 or 13 for the empty `redisPassword` on host `10.0.0.5:6379`",
+        "Under `## Warnings` the report contains [DPS-CFG-008] citing resources/pubsub.yaml at line 18 or 19 for `redeliverInterval: \"0\"`, with a Fix to use a positive value",
+        "Under `## Warnings` the report contains [DPS-CFG-009] citing resources/pubsub.yaml at line 23 or 24 for `insecureSkipTLSVerify: \"true\"`",
+        "Under `## Warnings` the report contains [DPS-CFG-012] citing resources/resiliency.yaml at line 14 (or 19) for `maxRetries: -1` on the pubsub inbound target with no dead-letter topic, with a Fix that bounds the retries and adds a dead-letter topic",
+        "Under `## Warnings` the report contains [DPS-CFG-014] citing resources/subscription.yaml:12 for the `isRawPayload` key, with a Fix that renames it to `rawPayload`",
+        "Under `## Suggestions` the report contains [DPS-CFG-007] citing resources/pubsub.yaml (no maxLenApprox or streamTTL)",
+        "Under `## Suggestions` the report contains [DPS-CFG-010] citing resources/subscription-v1.yaml at line 2 for `apiVersion: dapr.io/v1alpha1`, with a Fix to move to v2alpha1 `routes:`",
+        "If the report contains [DPS-CFG-006] for resources/pubsub.yaml (line 15 or 16, `consumerID: \"{namespace}\"`), it appears under `## Please verify` (a two-line entry with `Verify:`), NOT under Warnings or Critical",
+        "The report has no `## Critical` section and its `Found:` line reports 0 critical, 5 warnings, 2 suggestions and 1 to verify (the 1 to verify is DPS-CFG-006)",
+        "The report does NOT contain DPS-CFG-001 (the password is empty, not inline), DPS-CFG-003 (no subscription has a dead-letter topic), DPS-CFG-004 (single app), DPS-CFG-005, DPS-CFG-011 (scope `notify` matches the app id) or DPS-CFG-013 (single app)",
+        "The report ends with a `## Next steps` section and it is the last section (nothing follows its bullets)",
+        "Read-only: The project files under review are unchanged (identical to the fixture) and the report contains no instruction or claim that the review modified files"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "clean-local-only-info-findings",
+      "prompt": "review the pubsub components and resiliency in clean-local - this came straight out of the create-pubsub-python skill, anything I should fix?",
+      "expected_output": "The create-pubsub-python shape: two apps with unique ids and ports, a localhost Redis component with an empty password, a bounded inbound retry policy, and subscriptions scoped to the subscriber with a dead-letter topic. Only two info findings are reported: DPS-CFG-004 (no component scopes with two apps) and DPS-CFG-007 (no maxLenApprox or streamTTL). No critical, no warnings. An empty password on localhost does not trigger DPS-CFG-001 or DPS-CFG-002.",
+      "files": [
+        "evals/review-pubsub-components/files/clean-local/"
+      ],
+      "expectations": [
+        "The report section (after the optional one-line `Reviewing <path>` scope echo) starts with `# Dapr review — review-pubsub-components` and contains `Language: python`",
+        "The report contains [DPS-CFG-004] and [DPS-CFG-007], both citing resources/pubsub.yaml, both under `## Suggestions`",
+        "The `Found:` line reports 0 critical, 0 warnings, 2 suggestions and 0 to verify",
+        "The report has no `## Critical`, `## Warnings` or `## Please verify` section",
+        "The report contains no rule id other than DPS-CFG-004 and DPS-CFG-007 (in particular no DPS-CFG-001, DPS-CFG-002, DPS-CFG-003, DPS-CFG-009, DPS-CFG-011, DPS-CFG-012 or DPS-CFG-013)",
+        "The report ends with a `## Next steps` section and it is the last section (nothing follows its bullets)",
+        "Read-only: The project files under review are unchanged (identical to the fixture) and the report contains no instruction or claim that the review modified files"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "skill_name": "create-pubsub-dotnet",
+  "evals": [
+    {
+      "id": 1,
+      "name": "both-declarative-dapr-run",
+      "prompt": "Create a .NET pub/sub app named OrderFlow where one service publishes order-placed events and another processes them.",
+      "expected_output": "An OrderFlow folder with a Publisher, a Subscriber and a Contracts project, a declarative subscription (default), resiliency with dead-letter, a dapr.yaml with the .NET ports, a successful dotnet build, a README.md and the exact final message plus the Dev Dashboard recommendation.",
+      "files": [],
+      "expectations": [
+        "OrderFlow/OrderFlow.slnx exists and lists the projects OrderFlow.Publisher, OrderFlow.Subscriber and OrderFlow.Contracts",
+        "OrderFlow.Publisher and OrderFlow.Subscriber both contain PackageReference Include=\"Dapr.AspNetCore\" Version=\"1.18.10\", and no .csproj in the solution references Dapr.Client explicitly",
+        "resources/subscription.yaml has apiVersion dapr.io/v2alpha1, routes.default equal to /events/pubsub/orders, deadLetterTopic equal to orders-deadletter, and scopes containing orderflow-subscriber",
+        "resources/subscription.yaml contains a second Subscription for the topic orders-deadletter",
+        "OrderFlow.Subscriber/Program.cs calls app.UseCloudEvents() before MapPost(\"/events/pubsub/orders\"",
+        "OrderFlow.Subscriber/Program.cs and the rest of the subscriber project contain none of MapSubscribeHandler, WithTopic or [Topic(",
+        "resources/resiliency.yaml defines a policy that targets the component pubsub with direction inbound",
+        "dapr.yaml has an app with appID orderflow-publisher using appPort 5110, daprHTTPPort 3510 and daprGRPCPort 50010, and an app with appID orderflow-subscriber using appPort 5120, daprHTTPPort 3520 and daprGRPCPort 50020",
+        "The appPort values in dapr.yaml equal the ports in applicationUrl of each project's Properties/launchSettings.json",
+        "The publisher awaits PublishEventAsync and catches DaprException, mapping it to an HTTP 503 response",
+        "Contracts declare the OrderPlaced record and a PubSubNames class with PubSubName, OrdersTopic and OrdersDeadLetterTopic",
+        "The agent ran dotnet build \"OrderFlow.slnx\" (not .sln) and the build succeeded",
+        "OrderFlow/README.md has sections for running and trying the app, the Diagrid Dapr Dev Dashboard (link https://github.com/diagridio/dev-dashboard) and running with Catalyst, plus a Switching the message broker paragraph that links https://docs.dapr.io/reference/components-reference/supported-pubsub/ and keeps metadata.name pubsub",
+        "The transcript shows the `diagrid-dev-dashboard --version` check was run and the final message carries the matching installed/not-installed Dev Dashboard tip; the agent did not ask about it, did not install it, and did not invoke any check-prereq skill",
+        "The final output starts with exactly: The OrderFlow pub/sub application is created. Open the README.md file in the OrderFlow folder for a summary and instructions for running locally. followed only by the matching Diagrid Dapr Dev Dashboard recommendation (start instructions if the command succeeded, install instructions if it failed)"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "aspire-controllers-programmatic-routing",
+      "prompt": "Create an Aspire subscriber app named Billing using controllers and programmatic [Topic] subscriptions; orders with an amount over 1000 go to a separate handler.",
+      "expected_output": "A Billing Aspire solution (Billing.sln) with a controller-based subscriber using [Topic] attributes with a CEL rule routing large orders to /events/pubsub/orders/large, an AppHost that wires the Dapr sidecar with explicit app id billing-subscriber, and no dapr.yaml or subscription.yaml.",
+      "files": [],
+      "expectations": [
+        "No dapr.yaml exists anywhere under Billing/",
+        "Billing.AppHost/AppHost.cs calls WithDaprSidecar for the subscriber with DaprSidecarOptions whose AppId is \"billing-subscriber\"",
+        "Billing.AppHost contains Resources/pubsub.yaml and Resources/resiliency.yaml, and no subscription.yaml exists anywhere under Billing/",
+        "A controller in Billing.Subscriber has a [Topic] attribute for pubsub and orders with the rule int(event.data.amount) > 1000 and priority 1 (literal strings or the PubSubNames constants) on an action routed to /events/pubsub/orders/large",
+        "The same controller has a default [Topic] attribute for the orders topic on an action routed to /events/pubsub/orders, with the dead-letter topic orders-deadletter (the literal \"orders-deadletter\" or `PubSubNames.OrdersDeadLetterTopic`, whose value is orders-deadletter)",
+        "Billing.Subscriber/Program.cs calls app.UseCloudEvents(), app.MapSubscribeHandler() and app.MapControllers()",
+        "The agent asked no question about role, subscription type, hosting style or controllers vs minimal APIs, because the prompt already specified them",
+        "The agent ran dotnet build \"Billing.sln\" (Aspire creates a .sln, not .slnx) and the build succeeded",
+        "The final output starts with exactly: The Billing pub/sub application is created. Open the README.md file in the Billing folder for a summary and instructions for running locally. followed only by the Diagrid Dapr Dev Dashboard recommendation"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "streaming-subscriber-only",
+      "prompt": "Create a .NET streaming subscriber for the orders topic named Shipping.",
+      "expected_output": "A Shipping project with a single streaming subscriber built on Dapr.Messaging 1.18.10: an ITopicHandler<OrderPlaced> with [DaprTopic] using streaming delivery and a dead-letter topic, no HTTP routing attributes, a dapr.yaml entry without appPort, and a successful build.",
+      "files": [],
+      "expectations": [
+        "The subscriber .csproj contains PackageReference Include=\"Dapr.Messaging\" Version=\"1.18.10\" and does not reference Dapr.AspNetCore",
+        "Program.cs calls AddDaprMessaging()",
+        "A class implements ITopicHandler<OrderPlaced> and carries [DaprTopic( with DeliveryMode.Streaming and a DeadLetterTopic of orders-deadletter (either the literal \"orders-deadletter\" or `PubSubNames.OrdersDeadLetterTopic`, whose value is orders-deadletter)",
+        "No file in the project contains Route =, Match = or Priority =",
+        "No file in the project contains MapSubscribeHandler or MapDaprMessaging",
+        "The subscriber entry in dapr.yaml has no appPort key",
+        "No resources/subscription.yaml is created",
+        "The transcript shows no question about minimal APIs versus controllers",
+        "The build succeeds",
+        "The final output starts with exactly: The Shipping pub/sub application is created. Open the README.md file in the Shipping folder for a summary and instructions for running locally. followed only by the Diagrid Dapr Dev Dashboard recommendation"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "edge-streaming-with-routing",
+      "prompt": "Create a .NET streaming subscriber named Fulfilment that routes large orders to a separate handler, using Kafka.",
+      "expected_output": "The agent explains that streaming subscriptions cannot route by content and asks whether to use a declarative subscription instead (default yes). With the default (and the skill's default answers for the remaining questions: minimal APIs, dapr run hosting) it creates a declarative subscription with a CEL rule and a default route, keeps the Redis pubsub component, and the README explains how to switch to Kafka by replacing the component.",
+      "files": [],
+      "expectations": [
+        "transcript.md or final_message.md contains the question text \"Streaming subscriptions cannot route by content. Use a declarative subscription for this topic instead?\" (key phrase: cannot route by content ... declarative subscription), with the default answer logged as yes, and this appears in the transcript before the first project file or folder is created",
+        "After the default answer, resources/subscription.yaml has a rules entry whose match contains int(event.data.amount) and a path under /events/pubsub/orders/, plus a routes.default of /events/pubsub/orders",
+        "The subscriber does not use DeliveryMode.Streaming or ITopicHandler",
+        "resources/pubsub.yaml is a component of type pubsub.redis (Kafka is not configured as the local component)",
+        "The README states how to switch to Kafka by replacing the pubsub component file with a pubsub.kafka component, and says: You asked for Kafka; this scaffold runs on Redis locally so it works without extra infrastructure.",
+        "The subscriber Program.cs calls app.UseCloudEvents() before MapPost"
+      ]
+    }
+  ]
+}

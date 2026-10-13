@@ -50,11 +50,28 @@ This repository contains Claude Code skill definitions for building Dapr Workflo
   - `review-agent-observability/SKILL.md` — Skill for reviewing agent tracing, metrics, and structured logging
   - `review-agent-observability/REFERENCE.md` — Detailed reference and worked example for the observability review skill
 
+### Pub/sub skills
+
+  - `create-pubsub-dotnet/SKILL.md` — Skill for creating Dapr pub/sub apps in .NET (dapr run or Aspire; declarative, programmatic or streaming subscriptions)
+  - `create-pubsub-dotnet/REFERENCE.md` — Detailed reference examples for the .NET pub/sub create skill
+  - `create-pubsub-python/SKILL.md` — Skill for creating Dapr pub/sub apps in Python (FastAPI with dapr run; declarative, programmatic or streaming subscriptions)
+  - `create-pubsub-python/REFERENCE.md` — Detailed reference examples for the Python pub/sub create skill
+  - `add-pubsub-dotnet/SKILL.md` — Skill for adding Dapr pub/sub to an existing ASP.NET Core project (plain or Aspire) after a plan the user approves
+  - `add-pubsub-dotnet/REFERENCE.md` — Detection heuristics, plan template, edit recipes and run-doc template for the .NET pub/sub add skill
+  - `add-pubsub-python/SKILL.md` — Skill for adding Dapr pub/sub to an existing Python FastAPI app after a plan the user approves
+  - `add-pubsub-python/REFERENCE.md` — Detection heuristics, plan template, edit recipes and run-doc template for the Python pub/sub add skill
+  - `review-pubsub-publishing/SKILL.md` — Skill for reviewing Dapr pub/sub publishing code in .NET and Python (swallowed publish failures, pub/sub names, content types, client lifetime, bulk publish, payload size)
+  - `review-pubsub-publishing/REFERENCE.md` — Detailed reference and worked example for the pub/sub publishing review skill
+  - `review-pubsub-subscriptions/SKILL.md` — Skill for reviewing Dapr pub/sub subscriptions and handlers (declarative, programmatic and streaming: CloudEvent handling, response statuses, idempotency, dead-letter handling, duplicate subscriptions)
+  - `review-pubsub-subscriptions/REFERENCE.md` — Detailed reference and worked example for the pub/sub subscriptions review skill
+  - `review-pubsub-components/SKILL.md` — Skill for reviewing Dapr pub/sub configuration (components, Subscription files, resiliency, dapr.yaml and Aspire AppHost wiring: secrets, scopes, dead-letter retry policies, app-id and port collisions)
+  - `review-pubsub-components/REFERENCE.md` — Detailed reference and worked example for the pub/sub components review skill
+
 ## Usage
 
 **Verify your environment (user-invoked only):**
 
-The `check-prereq-xxx` skills (`check-prereq-dotnet`, `check-prereq-aspire`, `check-prereq-python`, `check-prereq-agent-python`, `check-prereq-agent-dotnet`) are opt-in and must **only** be run when the user explicitly asks for them (e.g., "check prerequisites for .NET", "verify Aspire environment"). Do **NOT** run them automatically as part of, or before, a `create-workflow-xxx` or `create-agent-xxx` invocation — they are separate, user-invoked skills, not an implicit pre-step.
+The `check-prereq-xxx` skills (`check-prereq-dotnet`, `check-prereq-aspire`, `check-prereq-python`, `check-prereq-agent-python`, `check-prereq-agent-dotnet`) are opt-in and must **only** be run when the user explicitly asks for them (e.g., "check prerequisites for .NET", "verify Aspire environment"). Do **NOT** run them automatically as part of, or before, a `create-workflow-xxx`, `create-agent-xxx` or `create-pubsub-xxx` invocation — they are separate, user-invoked skills, not an implicit pre-step.
 
 **Build a new workflow application:**
 
@@ -72,6 +89,14 @@ Run `add-workflow-dotnet` on an existing ASP.NET Core project (net8.0, net9.0 or
 
 Run `create-agent-python` or `create-agent-dotnet` to scaffold a durable agent app. `create-agent-python` covers the native [`dapr-agents`](https://github.com/dapr/dapr-agents) SDK and the [`diagrid`](https://pypi.org/project/diagrid/) framework wrappers; `create-agent-dotnet` covers [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/) running on Dapr Workflow via [`Diagrid.AI.Microsoft.AgentFramework`](https://www.nuget.org/packages/Diagrid.AI.Microsoft.AgentFramework). Both support a single agent and a coordinator + specialists topology.
 
+**Build a new pub/sub application:**
+
+Run `create-pubsub-dotnet` or `create-pubsub-python` to scaffold a publisher and subscriber app (`dapr run`, or Aspire for .NET; Python uses FastAPI). The role (publisher, subscriber or both) and the subscription type are asked once; declarative is the default, followed by programmatic and streaming.
+
+**Add pub/sub to an existing project:**
+
+Run `add-pubsub-dotnet` or `add-pubsub-python` on an existing project (.NET: ASP.NET Core, plain or Aspire; Python: FastAPI only). They inspect it, show a plan for approval, and then apply targeted edits, keeping the subscription type the project already uses. They never change git state and write a `DAPR-PUBSUB.md` instead of editing the README.
+
 **Review an existing workflow application** (run any combination, in any order):
 
 - `review-workflow-determinism` — flags non-deterministic constructs in workflow bodies that would break replay.
@@ -85,7 +110,15 @@ Run `create-agent-python` or `create-agent-dotnet` to scaffold a durable agent a
 - `review-agent-orchestration` — checks multi-agent pub/sub topic conventions, loop bounds, agent-registry wiring, and port collisions.
 - `review-agent-observability` — checks tracing configuration, sampling rate, structured logging, and trace propagation on outbound calls.
 
-All review skills are read-only (`Read`, `Grep`, `Glob` only), emit a structured report defined by `skills/dapr-shared/review-report-format.md`, and use stable rule ids: `DWF-DET-NNN`, `DWF-ACT-NNN`, `DWF-MGT-NNN` for workflow reviews; `DAG-TOOL-NNN`, `DAG-MEM-NNN`, `DAG-ORCH-NNN`, `DAG-OBS-NNN` for agent reviews.
+**Review an existing pub/sub application** (run any combination, in any order):
+
+- `review-pubsub-publishing` — flags swallowed publish failures, wrong pub/sub names, content types, client lifetime, bulk-publish partial failures and payload size.
+- `review-pubsub-subscriptions` — flags CloudEvent handling, response statuses, idempotency, dead-letter handling and duplicate subscriptions across types.
+- `review-pubsub-components` — checks pub/sub components, Subscription files, resiliency policies and `dapr.yaml`/Aspire wiring (inline secrets, scopes, app-id and port collisions).
+
+Rule ids use the prefixes `DPS-PUB-NNN`, `DPS-SUB-NNN` and `DPS-CFG-NNN`.
+
+All review skills are read-only (`Read`, `Grep`, `Glob` only), emit a structured report defined by `skills/dapr-shared/review-report-format.md`, and use stable rule ids: `DWF-DET-NNN`, `DWF-ACT-NNN`, `DWF-MGT-NNN` for workflow reviews; `DAG-TOOL-NNN`, `DAG-MEM-NNN`, `DAG-ORCH-NNN`, `DAG-OBS-NNN` for agent reviews; `DPS-PUB-NNN`, `DPS-SUB-NNN`, `DPS-CFG-NNN` for pub/sub reviews.
 
 ## Repository prerequisites
 
@@ -111,6 +144,7 @@ All skills require:
 - Python 3.12+ for workflow skills, Python 3.11–3.13 for agent skills — [download Python](https://www.python.org/downloads/)
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
 - [Pyright LSP Plugin](https://claude.com/plugins/pyright-lsp)
+- `add-pubsub-python` accepts Python 3.10+ in existing projects
 
 ### TypeScript skills
 

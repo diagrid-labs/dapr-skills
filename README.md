@@ -16,6 +16,12 @@ This repository contains skill definitions that can be used with Claude Code, Gi
 - Text-spec skills: `create-agent-python`, `create-agent-dotnet` — scaffold a durable agent app. Python covers the [`dapr-agents`](https://github.com/dapr/dapr-agents) SDK and the [`diagrid`](https://pypi.org/project/diagrid/) framework wrappers; .NET covers [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/) on Dapr Workflow via [`Diagrid.AI.Microsoft.AgentFramework`](https://www.nuget.org/packages/Diagrid.AI.Microsoft.AgentFramework).
 - Review skills: `review-agent-tools`, `review-agent-memory`, `review-agent-orchestration`, `review-agent-observability` — audit tools, memory/state config, multi-agent pub/sub wiring, and tracing/metrics on an existing agent project.
 
+### Pub/sub skills
+
+- Create skills: `create-pubsub-dotnet`, `create-pubsub-python` — scaffold a Dapr pub/sub publisher and subscriber app (`dapr run`, or Aspire for .NET; Python uses FastAPI). You choose the role and the subscription type (declarative by default, programmatic or streaming).
+- Add skills: `add-pubsub-dotnet`, `add-pubsub-python` — add Dapr pub/sub to an **existing** project (ASP.NET Core, or a FastAPI app for Python) after you approve a plan, keeping the subscription type the project already uses.
+- Review skills: `review-pubsub-publishing`, `review-pubsub-subscriptions`, `review-pubsub-components` — audit publishing code, subscriptions and handlers, and pub/sub components and wiring on an existing .NET or Python project.
+
 ## Prerequisites
 
 - One of: [Claude Code](https://claude.com/product/claude-code), [GitHub Copilot CLI](https://docs.github.com/en/copilot/how-tos/set-up/install-copilot-cli), or [OpenAI Codex CLI](https://developers.openai.com/codex/cli)
@@ -99,7 +105,7 @@ npx skills update
 To remove the skills, run `npx skills remove` and select the Dapr skills in the interactive list, or remove them by name (add `-g` if you installed them with `-g`):
 
 ```shell
-npx skills remove add-workflow-dotnet check-prereq-agent-dotnet check-prereq-agent-python check-prereq-aspire check-prereq-dotnet check-prereq-python create-agent-dotnet create-agent-python create-workflow-aspire create-workflow-dotnet create-workflow-from-diagram create-workflow-python create-workflow-typescript dapr-shared migrate-workflow-typescript review-agent-memory review-agent-observability review-agent-orchestration review-agent-tools review-workflow-activity review-workflow-determinism review-workflow-management -y
+npx skills remove add-pubsub-dotnet add-pubsub-python add-workflow-dotnet check-prereq-agent-dotnet check-prereq-agent-python check-prereq-aspire check-prereq-dotnet check-prereq-python create-agent-dotnet create-agent-python create-pubsub-dotnet create-pubsub-python create-workflow-aspire create-workflow-dotnet create-workflow-from-diagram create-workflow-python create-workflow-typescript dapr-shared migrate-workflow-typescript review-agent-memory review-agent-observability review-agent-orchestration review-agent-tools review-pubsub-components review-pubsub-publishing review-pubsub-subscriptions review-workflow-activity review-workflow-determinism review-workflow-management -y
 ```
 
 Do not use `npx skills remove --skill "*"`: it removes **every** installed skill, including skills from other sources.
@@ -120,10 +126,10 @@ If you install only some skills (`--skill <name>`), also install their dependenc
 
 ## How to use this
 
-1. Start your agent (Claude Code, Copilot CLI, or Codex) in the directory where you want the generated project to be created, or in your existing project for `add-workflow-dotnet` and `migrate-workflow-typescript`.
+1. Start your agent (Claude Code, Copilot CLI, or Codex) in the directory where you want the generated project to be created, or in your existing project for `add-workflow-dotnet`, `add-pubsub-dotnet`, `add-pubsub-python` and `migrate-workflow-typescript`.
 2. Make sure the skills are installed (see [Installation](#installation)).
 3. OPTIONAL: Run a `check-prereq-<language>` skill to verify your environment (e.g., "check prerequisites for .NET", "check prerequisites for Aspire", "check prerequisites for Python", or "check prerequisites for Python agents"). Follow the instructions if the prerequisites are not met.
-4. Run a `create-workflow-<language>` or `create-agent-<language>` skill to scaffold the project (see the prompt examples below).
+4. Run a `create-workflow-<language>`, `create-agent-<language>` or `create-pubsub-<language>` skill to scaffold the project (see the prompt examples below).
 5. Depending on your access permissions, you may need to approve the usage of some tools during project generation.
 6. Inspect the `README.md` file in the new folder after the project is created.
 
@@ -162,6 +168,28 @@ Invoke a skill by asking your agent in natural language — the example phrases 
 | Skill | Example prompt |
 | --- | --- |
 | `add-workflow-dotnet` | "add a workflow to my .NET project", "add Dapr Workflow to this API" |
+
+### Create a pub/sub app
+
+| Skill | Example prompt |
+| --- | --- |
+| `create-pubsub-dotnet` | "create a pub/sub app in .NET named ..." |
+| `create-pubsub-python` | "create a pub/sub app in Python named ..." |
+
+### Add pub/sub to an existing project
+
+| Skill | Example prompt |
+| --- | --- |
+| `add-pubsub-dotnet` | "add pub/sub to my .NET project" |
+| `add-pubsub-python` | "add pub/sub to my FastAPI app" |
+
+### Review pub/sub
+
+| Skill | Example prompt |
+| --- | --- |
+| `review-pubsub-publishing` | "review my pub/sub publishing code" |
+| `review-pubsub-subscriptions` | "review my Dapr subscribers" |
+| `review-pubsub-components` | "review my pub/sub components" |
 
 ### Review an existing workflow
 
@@ -288,3 +316,19 @@ Migrate this app to Dapr. Start with a read-only assessment report — don't cha
 ### Example 12: Add a workflow to an existing .NET API
 
 Add a Dapr workflow to the OrdersApi project: when an order is placed it should reserve stock, charge the payment and send a confirmation email.
+
+### Example 13: Aspire pub/sub app with a declarative subscription
+
+Create an Aspire pub/sub app named OrderFlow where the subscriber uses a declarative subscription and routes orders over 1000 to a separate handler.
+
+### Example 14: Python streaming subscriber
+
+Create a Python streaming subscriber for the orders topic named shipping.
+
+### Example 15: FastAPI subscriber with content-based routing
+
+Create a Python pub/sub subscriber named risk-check that sends orders with an amount over 1000 to a separate handler.
+
+### Example 16: Review pub/sub
+
+Review the pub/sub subscriptions and components in this repo.

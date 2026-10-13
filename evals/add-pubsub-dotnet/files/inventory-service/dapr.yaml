@@ -1,0 +1,9 @@
+version: 1
+common:
+  resourcesPath: ./components
+apps:
+  - appID: inventory-service
+    appDirPath: .
+    appPort: 5200
+    daprHTTPPort: 3560
+    command: ["dotnet", "run"]

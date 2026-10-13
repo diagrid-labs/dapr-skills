@@ -1,0 +1,9 @@
+version: 1
+common:
+  resourcesPath: ./resources
+apps:
+  - appID: notify
+    appDirPath: .
+    appPort: 8010
+    daprHTTPPort: 3510
+    command: ["python", "-m", "uvicorn", "main:app", "--port", "8010"]

@@ -1,0 +1,21 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: pubsub
+  # SEED DPS-CFG-004 (no scopes: and no publishingScopes/subscriptionScopes/allowedTopics/protectedTopics)
+spec:
+  type: pubsub.redis
+  version: v1
+  metadata:
+    - name: redisHost
+      value: redis.prod.internal:6379
+    # SEED DPS-CFG-001
+    - name: redisPassword
+      value: s3cret
+    - name: enableTLS
+      value: "true"
+    - name: maxLenApprox
+      value: "10000"
+    # SEED DPS-CFG-005
+    - name: consumerID
+      value: billing
