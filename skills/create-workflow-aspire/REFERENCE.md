@@ -2,7 +2,7 @@
 
 ## AppHost.cs
 
-The AppHost orchestrates all resources: Dapr, Valkey cache, the ApiService with a Dapr sidecar, and the Diagrid Dashboard.
+The AppHost orchestrates all resources: Dapr, Valkey cache, the ApiService with a Dapr sidecar, and the locally installed Diagrid Dapr Dev Dashboard.
 
 ```csharp
 using System.Reflection;
@@ -34,14 +34,9 @@ var apiService = builder
 
 apiService.WaitFor(cache);
 
-builder
-    .AddContainer("diagrid-dashboard", "ghcr.io/diagridio/diagrid-dashboard:latest")
-    .WithContainerName("diagrid-dashboard")
-    .WithBindMount(Path.Join(executingPath, "Resources"), "/app/components")
-    .WithEnvironment("COMPONENT_FILE", "/app/components/statestore-dashboard.yaml")
-    .WithEnvironment("APP_ID", "diagrid-dashboard")
-    .WithHttpEndpoint(targetPort: 8080)
-    .WithReference(cache);
+builder.AddExecutable("dapr-dev-dashboard", "diagrid-dev-dashboard", ".",
+        "--port", "9090", "--no-open")
+    .WithHttpEndpoint(port: 9090, isProxied: false);
 
 builder.Build().Run();
 ```
@@ -52,8 +47,9 @@ builder.Build().Run();
 - `AddValkey("cache", 16379, cachePassword)` creates a Valkey container on port 16379, replacing the Redis that `dapr init` would normally provide.
 - `WithDaprSidecar()` attaches a Dapr sidecar to the ApiService. The `ResourcesPaths` option points to the `Resources` folder containing component YAML files.
 - `apiService.WaitFor(cache)` ensures the Valkey container is ready before the ApiService starts.
-- The Diagrid Dashboard is added as a generic container resource with a bind mount to the Resources folder so it can read the state store component file.
-- `host.docker.internal` is used in `statestore-dashboard.yaml` because the dashboard container needs to reach Valkey running on the host network.
+- The [Diagrid Dapr Dev Dashboard](https://github.com/diagridio/dev-dashboard) runs as an executable resource (`AddExecutable`): Aspire starts the locally installed `diagrid-dev-dashboard` binary on port 9090 (its default), and `--no-open` stops it from opening its own browser tab. `isProxied: false` keeps the real port, so http://localhost:9090 works directly.
+- The dashboard is optional and installed by the user (install commands in [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md)). If it is not installed, only the `dapr-dev-dashboard` resource fails to start; the ApiService, its sidecar and Valkey run normally.
+- It discovers the Aspire-managed sidecar itself. If its Workflows page shows no instances, add `"--statestore", Path.Join(executingPath, "Resources", "statestore.yaml")` to the arguments.
 - Replace `<SolutionRoot>` with the actual solution name (e.g., `Projects.MyApp_ApiService`).
 
 ## AppHost .csproj
@@ -126,34 +122,6 @@ spec:
 - `actorStateStore` must be `true` because Dapr Workflow uses the actor framework internally.
 - The component name `workflow-store` is used by the Dapr runtime to identify this state store.
 
-## Resources/statestore-dashboard.yaml
-
-State store component used by the Diagrid Dashboard container:
-
-```yaml
-apiVersion: dapr.io/v1alpha1
-kind: Component
-metadata:
-  name: workflow-store
-scopes:
-  - diagrid-dashboard
-spec:
-  type: state.redis
-  version: v1
-  metadata:
-    - name: redisHost
-      value: "host.docker.internal:16379"
-    - name: redisPassword
-      value: "state-store-123"
-    - name: actorStateStore
-      value: true
-```
-
-### Key points
-
-- `redisHost` uses `host.docker.internal:16379` instead of `localhost:16379` because the dashboard runs inside a Docker container and needs to reach the Valkey container exposed on the host.
-- `scopes` restricts this component to only the `diagrid-dashboard` app ID, preventing conflicts with the apiservice state store component.
-- The component name must match the one in `statestore.yaml` (`workflow-store`) so the dashboard can read workflow state.
 
 ## ApiService Program.cs
 
@@ -480,6 +448,6 @@ aspire run
 This launches the Aspire AppHost, which orchestrates:
 - A Valkey container for workflow state persistence (port 16379)
 - The ApiService with a Dapr sidecar
-- The Diagrid Dev Dashboard container
+- The Diagrid Dapr Dev Dashboard (`dapr-dev-dashboard` executable resource, http://localhost:9090) — when it is installed
 
-The Aspire dashboard opens automatically in the browser, showing all resources and their status. Click on the Diagrid Dashboard endpoint to view workflow instances, their status, and execution history.
+The Aspire dashboard opens automatically in the browser, showing all resources and their status. Open the `dapr-dev-dashboard` resource link (or http://localhost:9090) to view workflow instances, their status and execution history, plus the sidecar, components and logs.

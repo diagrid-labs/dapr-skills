@@ -79,6 +79,6 @@ Accompanying files placed in `./observability/`:
 ### Port assignments
 
 - Zipkin: host `9411` → container `9411` (wrapper variant: Jaeger UI `16686`, OTLP `4317` / `4318`)
-- Prometheus: host `9099` → container `9090` (host port moved to `9099` so it does not conflict with Dapr sidecar metrics ports `9090`, `9091`, …)
+- Prometheus: host `9099` → container `9090` (host port moved to `9099` so it does not conflict with Dapr sidecar metrics ports `9091`, `9092`, … and the Diagrid Dapr Dev Dashboard on `9090`)
 - Grafana: host `3000` → container `3000`
-- Dapr sidecar metrics ports (`9090`, `9091`, `9092`, …) are reserved for the sidecars themselves and scraped via `host.docker.internal` from inside the Prometheus container.
+- Dapr sidecar metrics ports (`9091`, `9092`, `9093`, …; `9090` is left free for the Diagrid Dapr Dev Dashboard) are reserved for the sidecars themselves and scraped via `host.docker.internal` from inside the Prometheus container.

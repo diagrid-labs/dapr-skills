@@ -5,18 +5,20 @@
       "id": 1,
       "name": "device-provisioning-task-chaining",
       "prompt": "Build a Dapr workflow app with .NET Aspire called DeviceProvisioning. When a new IoT gateway is registered (input: device id, serial number, site code) the workflow runs these steps in order: RegisterDevice, IssueCertificate, PushConfiguration, ActivateDevice. Each step uses the previous step's output. Output: device id, certificate thumbprint, and activation status.",
-      "expected_output": "A DeviceProvisioning Aspire solution scaffolded with aspire new (including --suppress-agent-init), Web project removed, ApiService with a task-chaining workflow, AppHost wiring Dapr + Valkey + Diagrid Dashboard, correct package versions, successful build, README.md and the exact final message.",
+      "expected_output": "A DeviceProvisioning Aspire solution scaffolded with aspire new (including --suppress-agent-init), Web project removed, ApiService with a task-chaining workflow, AppHost wiring Dapr + Valkey + Diagrid Dapr Dev Dashboard executable, correct package versions, successful build, README.md and the exact final message.",
       "files": [],
       "expectations": [
         "The agent runs `aspire new aspire-starter -n DeviceProvisioning -o DeviceProvisioning` including all three flags --non-interactive, --test-framework none and --suppress-agent-init",
         "The DeviceProvisioning.Web folder does not exist after setup and neither DeviceProvisioning.AppHost.csproj nor the solution file references the Web project",
         "The Sdk attribute in DeviceProvisioning.AppHost/DeviceProvisioning.AppHost.csproj keeps the Aspire.AppHost.Sdk version written by aspire new, and the Aspire.Hosting.Valkey PackageReference uses that same version; CommunityToolkit.Aspire.Hosting.Dapr is version 13.0.0",
         "DeviceProvisioning.ApiService.csproj references Dapr.Workflow version 1.18.10 and the ServiceDefaults project",
-        "AppHost.cs calls builder.AddDapr(), AddValkey(\"cache\", 16379, ...), WithDaprSidecar(...) on the ApiService project, and adds the ghcr.io/diagridio/diagrid-dashboard container",
+        "AppHost.cs calls builder.AddDapr(), AddValkey(\"cache\", 16379, ...), WithDaprSidecar(...) on the ApiService project, and adds the Dev Dashboard with builder.AddExecutable(\"dapr-dev-dashboard\", \"diagrid-dev-dashboard\", \".\", \"--port\", \"9090\", \"--no-open\").WithHttpEndpoint(port: 9090, isProxied: false) — no dashboard container",
         "The workflow class awaits RegisterDevice, IssueCertificate, PushConfiguration and ActivateDevice activities sequentially via context.CallActivityAsync, passing each output into the next call",
         "ApiService Program.cs calls builder.AddServiceDefaults(), builder.Services.AddDaprWorkflow() and app.MapDefaultEndpoints(), and maps POST /start and GET /status/{instanceId}",
         "DeviceProvisioning.ApiService/DeviceProvisioning.ApiService.http sets @host to the ApiService launchSettings.json http port and contains start, status, pause, resume and terminate requests matching the Program.cs endpoints; it has no leftover /weatherforecast request, and it has a raise-event request only if Program.cs maps a raise-event endpoint",
-        "The agent runs dotnet build on the solution file and it succeeds; the last output is exactly: The DeviceProvisioning workflow application is created. Open the README.md file in the DeviceProvisioning folder for a summary and instructions for running locally."
+        "The agent runs dotnet build on the solution file and it succeeds; the last output is exactly: The DeviceProvisioning workflow application is created. Open the README.md file in the DeviceProvisioning folder for a summary and instructions for running locally.",
+        "Dev Dashboard: before creating project files the agent runs `diagrid-dev-dashboard --version` once, does not ask about it, install it or stop because of it, and ends the final output with the matching Diagrid Dapr Dev Dashboard recommendation: if the command succeeded, that `aspire run` starts it as the `dapr-dev-dashboard` resource on http://localhost:9090; if it failed, how to install it (the install.sh and install.ps1 commands) — in both cases with a short reason it is useful and the link https://github.com/diagridio/dev-dashboard. No `--port 8080` and no container image is suggested",
+        "The generated README has a Diagrid Dapr Dev Dashboard section with the link https://github.com/diagridio/dev-dashboard, a short reason it is useful, the macOS / Linux install command (install.sh) and the Windows PowerShell install command (install.ps1), and how to run it (`aspire run` starts it as the `dapr-dev-dashboard` resource, http://localhost:9090); it does not mention a dashboard container image"
       ]
     },
     {
@@ -27,13 +29,13 @@
       "files": [],
       "expectations": [
         "TripBooking.AppHost/Resources/statestore.yaml defines a component named workflow-store of type state.redis with redisHost localhost:16379 and actorStateStore true",
-        "TripBooking.AppHost/Resources/statestore-dashboard.yaml defines workflow-store with redisHost host.docker.internal:16379, actorStateStore true, and scopes containing diagrid-dashboard",
         "The redisPassword in both statestore files equals the cache-password parameter value configured in AppHost.cs",
         "Activities exist for reserving flight, hotel and car and for a dedicated compensating (cancel/undo) activity for each forward step",
         "The workflow wraps the forward steps in try/catch, calls the compensating activities in reverse order of the completed forward steps, and returns a result record with a success flag instead of rethrowing",
         "Workflow and activity classes are internal sealed and placed in the TripBooking.ApiService Workflows and Activities folders respectively",
         "No dapr.yaml multi-app run file is created and the README instructs to start the app with `aspire run` without telling the user to start Redis or Valkey separately",
-        "No .agents/ folder is created inside TripBooking and the agent does not modify ~/.claude/settings.json"
+        "No .agents/ folder is created inside TripBooking and the agent does not modify ~/.claude/settings.json",
+        "No Resources/statestore-dashboard.yaml file exists and no file references a Diagrid dashboard container image"
       ]
     },
     {

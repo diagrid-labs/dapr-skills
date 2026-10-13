@@ -6,22 +6,24 @@ allowed-tools:
   - Bash(aspire new:*)
   - Bash(~/.aspire/bin/aspire new:*)
   - mcp__ide__getDiagnostics
+  - Bash(diagrid-dev-dashboard --version)
 ---
 
 # Create Dapr Workflow .NET Aspire Application
 
 ## Overview
 
-This skill describes how to create a Dapr Workflow application using Aspire. The generated solution uses Aspire to orchestrate the Dapr sidecar, a Valkey state store, and the Diagrid Dev Dashboard as container resources.
+This skill describes how to create a Dapr Workflow application using Aspire. The generated solution uses Aspire to orchestrate the Dapr sidecar, a Valkey state store (container resource), and the locally installed Diagrid Dapr Dev Dashboard (executable resource).
 
 ## Execution Order
 
 You MUST follow these phases in strict order:
 1. **Check specification** - Check if the user specified what needs to be built.
-2. **Project Setup** — Create all files and folders.
-3. **Verify** — Verify that the project builds.
-4. **Create README.md** — Create a readme that summarizes what is built and how to run & test the application. Do not provide instructions at the end of this phase.
-5. **Show final message** - Your LAST output MUST be EXACTLY the message defined in the `## Show final message` section. Do NOT add any other text, summary, or commentary after it.
+2. **Check optional tools** — Check whether the Diagrid Dapr Dev Dashboard is installed and remember the result. Never stop, ask or install for this.
+3. **Project Setup** — Create all files and folders.
+4. **Verify** — Verify that the project builds.
+5. **Create README.md** — Create a readme that summarizes what is built and how to run & test the application. Do not provide instructions at the end of this phase.
+6. **Show final message** - Your LAST output MUST be EXACTLY the message defined in the `## Show final message` section: the closing sentence followed by the Dev Dashboard recommendation. Do NOT add any other text, summary, or commentary.
 
 ## Check specification
 
@@ -46,6 +48,11 @@ Additional runtime dependencies (handled during project setup):
 - NuGet package: `Dapr.Workflow` version `1.18.10` (ApiService)
 - NuGet package: `CommunityToolkit.Aspire.Hosting.Dapr` version `13.0.0` (AppHost)
 - NuGet package: `Aspire.Hosting.Valkey` version `<AspireVersion>` (AppHost) — the same version as the `Aspire.AppHost.Sdk` that `aspire new` writes
+- Optional: the [Diagrid Dapr Dev Dashboard](https://github.com/diagridio/dev-dashboard) for inspecting workflow runs locally. The skill only checks whether it is installed (see `## Check optional tools`); it never installs it and never stops without it.
+
+## Check optional tools
+
+Check once whether the optional [Diagrid Dapr Dev Dashboard](https://github.com/diagridio/dev-dashboard) is installed by following the **Check** section of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md) (`diagrid-dev-dashboard --version`). Remember the result (`DevDashboardInstalled`) for the final message. This check never stops the skill: do not ask the user about it, do not install anything, and continue with the next step whether or not the dashboard is installed.
 
 ## Project Setup
 
@@ -101,8 +108,7 @@ After scaffolding:
 │   ├── Properties/
 │   │   └── launchSettings.json
 │   └── Resources/
-│       ├── statestore.yaml
-│       └── statestore-dashboard.yaml
+│       └── statestore.yaml
 └── <SolutionRoot>.ServiceDefaults/
     ├── <SolutionRoot>.ServiceDefaults.csproj
     └── Extensions.cs
@@ -118,7 +124,7 @@ Visual Studio style `.gitignore` file in the solution root. Ignores build output
 
 ### AppHost.cs
 
-Configures Dapr via `AddDapr()`, adds a Valkey cache container on port 16379, registers the ApiService project with `WithDaprSidecar()`, and adds the Diagrid Dashboard as a container resource. See `REFERENCE.md` for full example and key points.
+Configures Dapr via `AddDapr()`, adds a Valkey cache container on port 16379, registers the ApiService project with `WithDaprSidecar()`, and adds the Diagrid Dapr Dev Dashboard as an executable resource (`AddExecutable("dapr-dev-dashboard", "diagrid-dev-dashboard", ...)` on port 9090). See `REFERENCE.md` for full example and key points.
 
 ### AppHost .csproj
 
@@ -127,10 +133,6 @@ Uses `Aspire.AppHost.Sdk`, references `CommunityToolkit.Aspire.Hosting.Dapr` and
 ### Resources/statestore.yaml
 
 State store component for the apiservice Dapr sidecar. Uses `localhost:16379` to connect to the Valkey container managed by Aspire. See `REFERENCE.md` for full example and key points.
-
-### Resources/statestore-dashboard.yaml
-
-State store component for the Diagrid Dashboard container. Uses `host.docker.internal:16379` because the dashboard runs in a Docker container and needs to reach Valkey on the host. Scoped to `diagrid-dashboard`. See `REFERENCE.md` for full example and key points.
 
 ### ApiService Program.cs
 
@@ -179,10 +181,12 @@ The README contains the following sections:
 3. A mermaid diagram that explains the workflow.
 4. How to start the application using `aspire run`.
 5. List the available endpoints in the ApiService `Program.cs` file and provide examples how to call these using curl. Also include a link to the `<SolutionRoot>.ApiService/<SolutionRoot>.ApiService.http` file.
-6. How to inspect the workflow execution using the Diagrid Dev Dashboard (managed by Aspire, accessible via the Aspire dashboard resource links).
+6. The **Diagrid Dapr Dev Dashboard** section from the **README section** of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md), in its Aspire form: why it is useful, the install command for each OS (macOS / Linux and Windows), that `aspire run` starts it as the `dapr-dev-dashboard` resource (http://localhost:9090), and that only that resource fails when it is not installed.
 
 ## Show final message
 
-**IMPORTANT: This is the LAST step. After Create README.md, your final output MUST be ONLY the message below — no preamble, no summary, no additional commentary, only replace the <SolutionRoot> with the actual value:**
+**IMPORTANT: This is the LAST step. After Create README.md, your final output MUST be ONLY the message below followed by the Dev Dashboard recommendation — no preamble, no summary, no additional commentary, only replace the <SolutionRoot> with the actual value:**
 
 The <SolutionRoot> workflow application is created. Open the README.md file in the <SolutionRoot> folder for a summary and instructions for running locally.
+
+Then add, as a separate paragraph, the block from the **Final recommendation** section of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md) that matches `DevDashboardInstalled` (installed → start it; not installed → install it), in its Aspire form (`aspire run` starts it as the `dapr-dev-dashboard` resource). Use it as written, including the link and the commands. Nothing may follow it.

@@ -485,11 +485,7 @@ For specialists running as separate apps, add one `POST /run` per specialist por
 
 See [`../dapr-shared/running-locally-dapr.md`](../dapr-shared/running-locally-dapr.md).
 
-To inspect workflow runs, start the Diagrid Dev Dashboard yourself — it is a separate container, not something `dapr init` installs:
-
-```shell
-docker run -p 8080:8080 ghcr.io/diagridio/diagrid-dashboard:latest
-```
+The generated README gets the **Diagrid Dapr Dev Dashboard** section from the **README section** of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md): an optional tool the reader installs (install command per OS), not something `dapr init` or the compose file provides. It is started in a second terminal with `diagrid-dev-dashboard` and opens http://localhost:9090.
 
 ## Running with Diagrid Catalyst
 

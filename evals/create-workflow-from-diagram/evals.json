@@ -23,7 +23,9 @@
         "The agent does not run `uv sync`, `pip install`, `dapr run` or `dapr init`",
         "rentalBooking/README.md contains a mermaid diagram and `dapr run -f .` (or `dapr run -f dapr.yaml`), and the last output is exactly: The rentalBooking workflow application is created from the diagram. Open the README.md file in the rentalBooking folder for a summary and instructions for running locally. The extracted IR is stored at `rentalBooking/.workflow.ir.jsonl` for reference.",
         "The returns back-edge (waitForReturns -> checkAvailability) is a bounded loop: no `while True`, a `MAX_..._ITERATIONS` constant limits the iterations, and the README records the limit and its exit path under \"Open questions\"",
-        "The agent writes .gitignore itself (no curl/wget/download of a .gitignore) and creates no virtual environment (no .venv folder, no uv.lock)"
+        "The agent writes .gitignore itself (no curl/wget/download of a .gitignore) and creates no virtual environment (no .venv folder, no uv.lock)",
+        "Dev Dashboard: before creating project files the agent runs `diagrid-dev-dashboard --version` once, does not ask about it, install it or stop because of it, and ends the final output with the matching Diagrid Dapr Dev Dashboard recommendation: if the command succeeded, how to start it (`diagrid-dev-dashboard`, http://localhost:9090); if it failed, how to install it (the install.sh and install.ps1 commands) — in both cases with a short reason it is useful and the link https://github.com/diagridio/dev-dashboard. No `--port 8080` and no container image is suggested",
+        "The generated README has a Diagrid Dapr Dev Dashboard section with the link https://github.com/diagridio/dev-dashboard, a short reason it is useful, the macOS / Linux install command (install.sh) and the Windows PowerShell install command (install.ps1), and how to run it (`diagrid-dev-dashboard`, http://localhost:9090); it does not mention a dashboard container image"
       ]
     },
     {

@@ -16,7 +16,9 @@
         "appPort in dapr.yaml equals the port passed to uvicorn.run in main.py and the port in the @host line of local.http, and dapr.yaml uses command [\"uv\", \"run\", \"main.py\"]",
         "main.py's GET /status/{instance_id} route returns 404 (HTTPException) when get_workflow_state returns None and otherwise returns a {\"state\": ..., \"output\": ...} envelope (state.to_json() plus the deserialized output), not state.__dict__",
         "The agent runs `uv venv` and `uv sync` in the tickettriage-app folder and creates tickettriage/README.md with a mermaid diagram",
-        "The agent does not invoke the check-prereq-python skill, and its last output is exactly: The tickettriage workflow application is created. Open the README.md file in the tickettriage folder for a summary and instructions for running locally."
+        "The agent does not invoke the check-prereq-python skill, and its last output is exactly: The tickettriage workflow application is created. Open the README.md file in the tickettriage folder for a summary and instructions for running locally.",
+        "Dev Dashboard: before creating project files the agent runs `diagrid-dev-dashboard --version` once, does not ask about it, install it or stop because of it, and ends the final output with the matching Diagrid Dapr Dev Dashboard recommendation: if the command succeeded, how to start it (`diagrid-dev-dashboard`, http://localhost:9090); if it failed, how to install it (the install.sh and install.ps1 commands) — in both cases with a short reason it is useful and the link https://github.com/diagridio/dev-dashboard. No `--port 8080` and no container image is suggested",
+        "The generated README has a Diagrid Dapr Dev Dashboard section with the link https://github.com/diagridio/dev-dashboard, a short reason it is useful, the macOS / Linux install command (install.sh) and the Windows PowerShell install command (install.ps1), and how to run it (`diagrid-dev-dashboard`, http://localhost:9090); it does not mention a dashboard container image"
       ]
     },
     {

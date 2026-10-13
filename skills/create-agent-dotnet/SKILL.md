@@ -8,6 +8,7 @@ allowed-tools:
   - Bash(dotnet:*)
   - Bash(dapr:*)
   - mcp__ide__getDiagnostics
+  - Bash(diagrid-dev-dashboard --version)
 ---
 
 # Create a .NET Agent Application
@@ -26,10 +27,11 @@ Observability: the Dapr sidecar emits workflow and conversation metrics and trac
 
 You MUST follow these phases in strict order:
 1. **Check specification** — Check if the user specified what needs to be built.
-2. **Project Setup** — Create all files and folders.
-3. **Verify** — Verify that the project builds.
-4. **Create README.md** — Create a readme that summarizes what is built and how to run & test the application. Do not provide instructions at the end of this phase.
-5. **Show final message** — Your LAST output MUST be EXACTLY the message defined in the `## Show final message` section. Do NOT add any other text, summary, or commentary after it.
+2. **Check optional tools** — Check whether the Diagrid Dapr Dev Dashboard is installed and remember the result. Never stop, ask or install for this.
+3. **Project Setup** — Create all files and folders.
+4. **Verify** — Verify that the project builds.
+5. **Create README.md** — Create a readme that summarizes what is built and how to run & test the application. Do not provide instructions at the end of this phase.
+6. **Show final message** — Your LAST output MUST be EXACTLY the message defined in the `## Show final message` section: the closing sentence followed by the Dev Dashboard recommendation. Do NOT add any other text, summary, or commentary.
 
 ## Check specification
 
@@ -58,7 +60,11 @@ Additional runtime dependencies (handled during project setup):
 
 Optional, for inspecting workflow runs locally:
 
-- The [Diagrid Dev Dashboard](https://www.diagrid.io/blog/improving-the-local-dapr-workflow-experience-diagrid-dashboard) is a separate container the user starts themselves — `dapr init` does not provision it: `docker run -p 8080:8080 ghcr.io/diagridio/diagrid-dashboard:latest`
+- Optional: the [Diagrid Dapr Dev Dashboard](https://github.com/diagridio/dev-dashboard) for inspecting workflow runs locally. The skill only checks whether it is installed (see `## Check optional tools`); it never installs it and never stops without it.
+
+## Check optional tools
+
+Check once whether the optional [Diagrid Dapr Dev Dashboard](https://github.com/diagridio/dev-dashboard) is installed by following the **Check** section of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md) (`diagrid-dev-dashboard --version`). Remember the result (`DevDashboardInstalled`) for the final message. This check never stops the skill: do not ask the user about it, do not install anything, and continue with the next step whether or not the dashboard is installed.
 
 ## Project Setup
 
@@ -186,7 +192,7 @@ Create a README.md file inside the <ProjectRoot> folder with the sections:
 3. A mermaid diagram of the agent(s), tools, and (if multi-agent) the coordinating workflow.
 4. How to start with `dapr run -f .`.
 5. How to call the `POST /run` endpoint via curl (and, for coordinator + specialists, `GET /status/{instanceId}`) and link to `local.http`.
-6. How to inspect workflow execution with the Diagrid Dev Dashboard — stating that it is a separate `docker run` the user starts, not something `dapr init` provisions.
+6. The **Diagrid Dapr Dev Dashboard** section, copied from the **README section** of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md): why it is useful, the install command for each OS (macOS / Linux and Windows) and the run command (`diagrid-dev-dashboard`, http://localhost:9090).
 7. How to run with Diagrid Catalyst: [`../dapr-shared/running-with-catalyst.md`](../dapr-shared/running-with-catalyst.md).
 8. A short "License" note: `Diagrid.AI.Microsoft.AgentFramework` is licensed under the Business Source License 1.1, with a link to its `LICENSE.md` (see "License and usage analytics" in `REFERENCE.md`).
 
@@ -194,6 +200,8 @@ See `REFERENCE.md` for Program.cs, Tools, and model templates.
 
 ## Show final message
 
-**IMPORTANT: This is the LAST step. After Create README.md, your final output MUST be ONLY the message below — no preamble, no summary, no additional commentary, only replace the <ProjectRoot> with the actual value:**
+**IMPORTANT: This is the LAST step. After Create README.md, your final output MUST be ONLY the message below followed by the Dev Dashboard recommendation — no preamble, no summary, no additional commentary, only replace the <ProjectRoot> with the actual value:**
 
 The <ProjectRoot> agent application is created. Open the README.md file in the <ProjectRoot> folder for a summary and instructions for running locally.
+
+Then add, as a separate paragraph, the block from the **Final recommendation** section of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md) that matches `DevDashboardInstalled` (installed → start it; not installed → install it). Use it as written, including the link and the commands. Nothing may follow it.

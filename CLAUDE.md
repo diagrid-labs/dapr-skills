@@ -87,6 +87,7 @@ All skills require:
 
 - [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation)
 - [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.18+)
+- Optional: [Diagrid Dapr Dev Dashboard](https://github.com/diagridio/dev-dashboard) to inspect workflow runs, sidecars, components and logs locally. The `create-*` skills check whether it is installed (`diagrid-dev-dashboard --version`) without ever stopping, and end with a tip to install or start it.
 
 ### .NET skills
 

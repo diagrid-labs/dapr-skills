@@ -525,11 +525,7 @@ Everything in this list is started by the generated `docker-compose.observabilit
 - Grafana at `http://localhost:3000` — pre-seeded dashboard covering workflow throughput, conversation-API call rate (native only), and activity latency
 - Prometheus at `http://localhost:9099` — raw metrics (ad-hoc queries)
 
-Separately, and **not** provisioned by `dapr init` or by the compose file, the [Diagrid Dev Dashboard](https://www.diagrid.io/blog/improving-the-local-dapr-workflow-experience-diagrid-dashboard) gives a Dapr-native workflow inspector at `http://localhost:8080`. The reader starts it themselves:
-
-```shell
-docker run -p 8080:8080 ghcr.io/diagridio/diagrid-dashboard:latest
-```
+The generated README gets the **Diagrid Dapr Dev Dashboard** section from the **README section** of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md): an optional tool the reader installs (install command per OS), not something `dapr init` or the compose file provides. It is started in a second terminal with `diagrid-dev-dashboard` and opens http://localhost:9090.
 
 `dapr init` provisions four containers — `dapr_scheduler`, `dapr_placement`, `dapr_redis` and `dapr_zipkin` — and nothing else. Say so in the generated README rather than listing the dashboard alongside the containers the project brings up for itself.
 

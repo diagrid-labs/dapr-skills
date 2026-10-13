@@ -17,8 +17,10 @@
         "ticket-triage-agent/pyproject.toml declares requires-python \">=3.11,<3.14\" and \"dapr-agents>=1.0.9\" with >= floors (no == pins); the agent runs `uv venv` and `uv sync` in ticket-triage-agent and ticket-triage-agent/uv.lock exists; .gitignore does not list uv.lock",
         "local.http has a POST to /agent/run and a GET to /agent/instances/<instance id>",
         "README.md contains a mermaid diagram, `dapr run -f .`, a curl example for POST /agent/run, the Zipkin URL http://localhost:9411, describes the Diagrid Dev Dashboard as a separate `docker run` that dapr init does not provision, and states that conversation history is kept per run (workflow instance) rather than across runs",
-        "The final output is exactly: The ticket-triage agent application is created. Open the README.md file in the ticket-triage folder for a summary and instructions for running locally.",
-        "resources/llm-provider.yaml sets the model to gpt-4o-mini (a `model` metadata entry with value gpt-4o-mini), as the prompt asked"
+        "the final output starts with exactly: The ticket-triage agent application is created. Open the README.md file in the ticket-triage folder for a summary and instructions for running locally. — followed only by the Diagrid Dapr Dev Dashboard recommendation",
+        "resources/llm-provider.yaml sets the model to gpt-4o-mini (a `model` metadata entry with value gpt-4o-mini), as the prompt asked",
+        "Dev Dashboard: before creating project files the agent runs `diagrid-dev-dashboard --version` once, does not ask about it, install it or stop because of it, and ends the final output with the matching Diagrid Dapr Dev Dashboard recommendation: if the command succeeded, how to start it (`diagrid-dev-dashboard`, http://localhost:9090); if it failed, how to install it (the install.sh and install.ps1 commands) — in both cases with a short reason it is useful and the link https://github.com/diagridio/dev-dashboard. No `--port 8080` and no container image is suggested",
+        "The generated README has a Diagrid Dapr Dev Dashboard section with the link https://github.com/diagridio/dev-dashboard, a short reason it is useful, the macOS / Linux install command (install.sh) and the Windows PowerShell install command (install.ps1), and how to run it (`diagrid-dev-dashboard`, http://localhost:9090); it does not mention a dashboard container image"
       ]
     },
     {
@@ -38,7 +40,7 @@
         "The project contains no resources/tracing.yaml, logging_config.py, docker-compose.observability.yaml, agent-pubsub.yaml or agent-registry.yaml, and dapr.yaml has no configFilePath",
         "local.http and README.md use POST /agent/run with a JSON body containing \"task\" and GET /agent/run/<workflow id>; neither mentions /agent/instances",
         "README.md mentions the diagrid licence (BUSL-1.1) and the anonymous usage analytics with at least one of DO_NOT_TRACK, SCARF_NO_ANALYTICS or DIAGRID_NO_ANALYTICS as the opt-out, and no generated file sets any of those variables",
-        "The agent runs `uv sync` in iot-alerts-agent; it succeeds, so a uv.lock file exists in each of iot-alerts-agent (a failed sync, even for environment reasons, does not pass); and the final output is exactly: The iot-alerts agent application is created. Open the README.md file in the iot-alerts folder for a summary and instructions for running locally.",
+        "The agent runs `uv sync` in iot-alerts-agent; it succeeds, so a uv.lock file exists in each of iot-alerts-agent (a failed sync, even for environment reasons, does not pass); and the final output starts with exactly: The iot-alerts agent application is created. Open the README.md file in the iot-alerts folder for a summary and instructions for running locally. — followed only by the Diagrid Dapr Dev Dashboard recommendation",
         "The graph can actually call the tool: main.py binds get_device_readings to the Anthropic model (bind_tools([...]) or create_react_agent(model, tools=[...])) and routes tool calls to a node that executes it (ToolNode + tools_condition, or an equivalent conditional edge), so the tool is not just imported"
       ]
     },
@@ -58,7 +60,7 @@
         "dapr.yaml lists three apps (coordinator, accounts, equipment) whose appPort, daprHTTPPort, daprGRPCPort and metricsPort values are all unique, and each appPort equals the port passed to runner.serve(...) in that app's main.py",
         "README.md describes the coordinator dispatching to the specialists through the agent registry (as child workflows), not by publishing tasks to specialist topics",
         "Observability is skipped: no resources/tracing.yaml, no configFilePath in dapr.yaml, no logging_config.py and no docker-compose.observability.yaml",
-        "The agent runs `uv sync` in each of coordinator, accounts and equipment,; it succeeds, so a uv.lock file exists in each of coordinator, accounts, equipment (a failed sync, even for environment reasons, does not pass); and the final output is exactly: The onboarding-crew agent application is created. Open the README.md file in the onboarding-crew folder for a summary and instructions for running locally."
+        "The agent runs `uv sync` in each of coordinator, accounts and equipment,; it succeeds, so a uv.lock file exists in each of coordinator, accounts, equipment (a failed sync, even for environment reasons, does not pass); and the final output starts with exactly: The onboarding-crew agent application is created. Open the README.md file in the onboarding-crew folder for a summary and instructions for running locally. — followed only by the Diagrid Dapr Dev Dashboard recommendation"
       ]
     },
     {
@@ -76,7 +78,7 @@
         "dapr.yaml lists three apps whose appPort, daprHTTPPort, daprGRPCPort and metricsPort values are all unique, and no main.py passes a Dapr host or gRPC port to a runner",
         "README.md explains that the coordinator finds the specialists in the agent registry and calls them as child workflows, and tells the reader to verify the coordinator-to-specialist dispatch end to end",
         "README.md mentions the diagrid BUSL-1.1 licence and the usage analytics opt-out variables, and no generated file sets DO_NOT_TRACK, SCARF_NO_ANALYTICS or DIAGRID_NO_ANALYTICS",
-        "The agent runs `uv sync` in coordinator, flights and hotels,; it succeeds, so a uv.lock file exists in each of coordinator, flights, hotels (a failed sync, even for environment reasons, does not pass); and the final output is exactly: The trip-planner agent application is created. Open the README.md file in the trip-planner folder for a summary and instructions for running locally."
+        "The agent runs `uv sync` in coordinator, flights and hotels,; it succeeds, so a uv.lock file exists in each of coordinator, flights, hotels (a failed sync, even for environment reasons, does not pass); and the final output starts with exactly: The trip-planner agent application is created. Open the README.md file in the trip-planner folder for a summary and instructions for running locally. — followed only by the Diagrid Dapr Dev Dashboard recommendation"
       ]
     }
   ]

@@ -20,6 +20,7 @@ This repository contains skill definitions that can be used with Claude Code, Gi
 - One of: [Claude Code](https://claude.com/product/claude-code), [GitHub Copilot CLI](https://docs.github.com/en/copilot/how-tos/set-up/install-copilot-cli), or [OpenAI Codex CLI](https://developers.openai.com/codex/cli)
 - [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation)
 - [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.18+)
+- Optional: [Diagrid Dapr Dev Dashboard](https://github.com/diagridio/dev-dashboard) to inspect workflow runs, sidecars, components and logs locally. The `create-*` skills check whether it is installed (`diagrid-dev-dashboard --version`) without ever stopping, and end with a tip to install or start it.
 
 ### For .NET skills
 

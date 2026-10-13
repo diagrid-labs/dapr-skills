@@ -5,6 +5,7 @@ allowed-tools:
   - Bash(dotnet:*)
   - Bash(dapr:*)
   - mcp__ide__getDiagnostics
+  - Bash(diagrid-dev-dashboard --version)
 ---
 
 # Create Dapr Workflow .NET Application
@@ -17,10 +18,11 @@ This skill describes how to create a Dapr Workflow application using .NET.
 
 You MUST follow these phases in strict order:
 1. **Check specification** - Check if the user specified what needs to be built.
-2. **Project Setup** — Create all files and folders.
-3. **Verify** — Verify that the project builds.
-4. **Create README.md** — Create a readme that summarizes what is built and how to run & test the application. Do not provide instructions at the end of this phase.
-5. **Show final message** - Your LAST output MUST be EXACTLY the message defined in the `## Show final message` section. Do NOT add any other text, summary, or commentary after it.
+2. **Check optional tools** — Check whether the Diagrid Dapr Dev Dashboard is installed and remember the result. Never stop, ask or install for this.
+3. **Project Setup** — Create all files and folders.
+4. **Verify** — Verify that the project builds.
+5. **Create README.md** — Create a readme that summarizes what is built and how to run & test the application. Do not provide instructions at the end of this phase.
+6. **Show final message** - Your LAST output MUST be EXACTLY the message defined in the `## Show final message` section: the closing sentence followed by the Dev Dashboard recommendation. Do NOT add any other text, summary, or commentary.
 
 ## Prerequisites
 
@@ -33,7 +35,11 @@ The following must be installed by the user before this skill can run:
 Additional runtime dependencies (handled during project setup):
 
 - NuGet package: `Dapr.Workflow` version `1.18.10`
-- Start the [Diagrid Dev Dashboard](https://www.diagrid.io/blog/improving-the-local-dapr-workflow-experience-diagrid-dashboard): `docker run -p 8080:8080 ghcr.io/diagridio/diagrid-dashboard:latest`
+- Optional: the [Diagrid Dapr Dev Dashboard](https://github.com/diagridio/dev-dashboard) for inspecting workflow runs locally. The skill only checks whether it is installed (see `## Check optional tools`); it never installs it and never stops without it.
+
+## Check optional tools
+
+Check once whether the optional [Diagrid Dapr Dev Dashboard](https://github.com/diagridio/dev-dashboard) is installed by following the **Check** section of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md) (`diagrid-dev-dashboard --version`). Remember the result (`DevDashboardInstalled`) for the final message. This check never stops the skill: do not ask the user about it, do not install anything, and continue with the next step whether or not the dashboard is installed.
 
 ## Check specification
 
@@ -139,13 +145,15 @@ The README contains the following sections:
 3. A mermaid diagram that explains the workflow.
 4. How to start the application using the Dapr CLI.
 5. List the available endpoints in the Program.cs file and provide examples how to call these using curl. Also include a link to the `local.http` file.
-6. How to inspect the workflow execution using the Diagrid Dev Dashboard.
+6. The **Diagrid Dapr Dev Dashboard** section, copied from the **README section** of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md): why it is useful, the install command for each OS (macOS / Linux and Windows) and the run command (`diagrid-dev-dashboard`, http://localhost:9090).
 7. How to run the application with Diagrid Catalyst to visually inspect the workflow.
 
 See `REFERENCE.md` for additional instructions on running locally and running with Catalyst.
 
 ## Show final message
 
-**IMPORTANT: This is the LAST step. After Create README.md, your final output MUST be ONLY the message below — no preamble, no summary, no additional commentary, only replace the <ProjectRoot> with the actual value:**
+**IMPORTANT: This is the LAST step. After Create README.md, your final output MUST be ONLY the message below followed by the Dev Dashboard recommendation — no preamble, no summary, no additional commentary, only replace the <ProjectRoot> with the actual value:**
 
 The <ProjectRoot> workflow application is created. Open the README.md file in the <ProjectRoot> folder for a summary and instructions for running locally.
+
+Then add, as a separate paragraph, the block from the **Final recommendation** section of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md) that matches `DevDashboardInstalled` (installed → start it; not installed → install it). Use it as written, including the link and the commands. Nothing may follow it.

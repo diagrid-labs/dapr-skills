@@ -6,6 +6,7 @@ allowed-tools:
   - Write
   - Bash(mkdir:*)
   - Bash(ls:*)
+  - Bash(diagrid-dev-dashboard --version)
 model: opus
 ---
 
@@ -25,12 +26,13 @@ Both paths produce the same intermediate representation (IR, JSON Lines) defined
 You MUST follow these phases in strict order:
 
 1. **Check specification** — Confirm you have the input diagram + target language. Ask clarifying questions only if missing.
-2. **Phase 0: Detect input type** — Decide between the image path and the BPMN path.
-3. **Phase 1: Diagram → IR** — Emit JSON Lines IR per `prompts/ir-schema.md`.
-4. **Phase 2: Validate IR** — Check the stream outcome and structure per `prompts/ir-schema.md` (Steps 4–6 and "Consuming the IR"); resolve open questions with the user.
-5. **Phase 3: IR → code** — Render the project for the target language using `prompts/languages/<lang>.md`.
-6. **Create README.md** — Summarise the generated project + how to run it.
-7. **Show final message** — Your LAST output MUST be EXACTLY the message defined in `## Show final message`. No extra text.
+2. **Check optional tools** — Check whether the Diagrid Dapr Dev Dashboard is installed and remember the result. Never stop, ask or install for this.
+3. **Phase 0: Detect input type** — Decide between the image path and the BPMN path.
+4. **Phase 1: Diagram → IR** — Emit JSON Lines IR per `prompts/ir-schema.md`.
+5. **Phase 2: Validate IR** — Check the stream outcome and structure per `prompts/ir-schema.md` (Steps 4–6 and "Consuming the IR"); resolve open questions with the user.
+6. **Phase 3: IR → code** — Render the project for the target language using `prompts/languages/<lang>.md`.
+7. **Create README.md** — Summarise the generated project + how to run it.
+8. **Show final message** — Your LAST output MUST be EXACTLY the message defined in `## Show final message`: the closing sentence followed by the Dev Dashboard recommendation. Do NOT add any other text, summary, or commentary.
 
 ## Check specification
 
@@ -46,10 +48,15 @@ The following must be installed by the user before running the generated project
 
 - [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation)
 - [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.18+)
+- Optional: the [Diagrid Dapr Dev Dashboard](https://github.com/diagridio/dev-dashboard) for inspecting workflow runs locally. The skill only checks whether it is installed (see `## Check optional tools`); it never installs it and never stops without it.
 
 Plus the language toolchain for the chosen target. See the matching `../dapr-shared/prereq-check-*.md` for the full list.
 
 The skill **does not auto-install** anything and does not run builds: no `uv sync`, `npm install`, `dotnet restore` / `build`, `go mod tidy` or `mvn`, and no remote downloads (the `.gitignore` is written locally). The generated project's README tells the user what to install and run. These rules override the install and download steps of the `create-workflow-*` conventions this skill reuses.
+
+## Check optional tools
+
+Check once whether the optional [Diagrid Dapr Dev Dashboard](https://github.com/diagridio/dev-dashboard) is installed by following the **Check** section of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md) (`diagrid-dev-dashboard --version`). Remember the result (`DevDashboardInstalled`) for the final message. This check never stops the skill: do not ask the user about it, do not install anything, and continue with the next step whether or not the dashboard is installed.
 
 ## Phase 0: Detect input type
 
@@ -132,12 +139,14 @@ Create a `README.md` in `<ProjectRoot>` containing:
 4. How to run locally with `dapr run -f .` from `<ProjectRoot>` (picks up `dapr.yaml`).
 5. Endpoints (if the generated language produces an HTTP surface — Python, .NET and JavaScript do by default).
 6. Open questions — every remaining `unrecognized_item` from the IR (if any).
-7. How to inspect executions with the [Diagrid Dev Dashboard](https://www.diagrid.io/blog/improving-the-local-dapr-workflow-experience-diagrid-dashboard).
+7. The **Diagrid Dapr Dev Dashboard** section, copied from the **README section** of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md): why it is useful, the install command for each OS (macOS / Linux and Windows) and the run command (`diagrid-dev-dashboard`, http://localhost:9090).
 
 See `../dapr-shared/running-locally-dapr.md` and `../dapr-shared/running-with-catalyst.md` in this repo for snippets to include.
 
 ## Show final message
 
-**IMPORTANT: This is the LAST step. After Create README.md, your final output MUST be ONLY the message below — no preamble, no summary, no additional commentary. Replace `<ProjectRoot>` with the actual value:**
+**IMPORTANT: This is the LAST step. After Create README.md, your final output MUST be ONLY the message below followed by the Dev Dashboard recommendation — no preamble, no summary, no additional commentary. Replace `<ProjectRoot>` with the actual value:**
 
 The <ProjectRoot> workflow application is created from the diagram. Open the README.md file in the <ProjectRoot> folder for a summary and instructions for running locally. The extracted IR is stored at `<ProjectRoot>/.workflow.ir.jsonl` for reference.
+
+Then add, as a separate paragraph, the block from the **Final recommendation** section of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md) that matches `DevDashboardInstalled` (installed → start it; not installed → install it). Use it as written, including the link and the commands. Nothing may follow it.

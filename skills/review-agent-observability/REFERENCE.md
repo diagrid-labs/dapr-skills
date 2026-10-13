@@ -28,7 +28,7 @@ Found: 0 critical, 4 warnings, 2 suggestions, 0 to verify
 ## Suggestions
 - [DAG-OBS-006] `dapr.yaml:1` — metricsPort not set on any app
   Why: Sidecar metrics port is not stable; Prometheus scrape config cannot be asserted.
-  Fix: Add `metricsPort: 9090` on the app.
+  Fix: Add `metricsPort: 9091` on the app (9090 is the Dev Dashboard default port).
 - [DAG-OBS-007] `README.md:1` — no Diagrid Dev Dashboard or trace UI link
   Why: Users do not discover the trace UI.
   Fix: Add a short section linking http://localhost:9411 (Zipkin) and the Diagrid Dev Dashboard.
@@ -69,7 +69,7 @@ Found: 0 critical, 3 warnings, 4 suggestions, 0 to verify
 ## Suggestions
 - [DAG-OBS-006] `dapr.yaml:5` — metricsPort not set on any app
   Why: Sidecar metrics port is not stable; Prometheus scrape config cannot be asserted.
-  Fix: Add `metricsPort: 9090` on the app.
+  Fix: Add `metricsPort: 9091` on the app (9090 is the Dev Dashboard default port).
 - [DAG-OBS-007] `dapr.yaml:1` — no README.md with a trace UI link
   Why: Users do not discover the trace UI.
   Fix: Add a README section linking http://localhost:9411 (Zipkin) and the Diagrid Dev Dashboard.

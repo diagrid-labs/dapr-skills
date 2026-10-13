@@ -16,21 +16,21 @@ apps:
     appPort: 8000
     daprHTTPPort: 3500
     daprGRPCPort: 50001
-    metricsPort: 9090
+    metricsPort: 9091
     command: ["uv", "run", "main.py"]
   - appID: <specialist-1>
     appDirPath: <specialist-1>
     appPort: 8001
     daprHTTPPort: 3501
     daprGRPCPort: 50002
-    metricsPort: 9091
+    metricsPort: 9092
     command: ["uv", "run", "main.py"]
   - appID: <specialist-2>
     appDirPath: <specialist-2>
     appPort: 8002
     daprHTTPPort: 3502
     daprGRPCPort: 50003
-    metricsPort: 9092
+    metricsPort: 9093
     command: ["uv", "run", "main.py"]
 ```
 
@@ -63,14 +63,14 @@ apps:
     appPort: 5100
     daprHTTPPort: 3500
     daprGRPCPort: 50001
-    metricsPort: 9090
+    metricsPort: 9091
     command: ["dotnet", "run"]
   - appID: <specialist-1>
     appDirPath: <Specialist1Project>
     appPort: 5101
     daprHTTPPort: 3501
     daprGRPCPort: 50002
-    metricsPort: 9091
+    metricsPort: 9092
     command: ["dotnet", "run"]
 ```
 
