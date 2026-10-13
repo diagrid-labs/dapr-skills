@@ -6,7 +6,7 @@ This skill is read-only and operates entirely on existing source. The detailed r
 
 The canonical baseline for the management surface comes from the existing authoring skills:
 
-- `Program.cs` example in [`../create-workflow-dotnet/REFERENCE.md`](../create-workflow-dotnet/REFERENCE.md).
+- `Program.cs` example in [the canonical endpoints in `dotnet-workflow-endpoints.md`](../dapr-shared/dotnet-workflow-endpoints.md).
 - `main.py` example in [`../create-workflow-python/REFERENCE.md`](../create-workflow-python/REFERENCE.md).
 - Request shapes in [`../dapr-shared/dotnet-local-http.md`](../dapr-shared/dotnet-local-http.md) and [`../dapr-shared/python-local-http.md`](../dapr-shared/python-local-http.md).
 

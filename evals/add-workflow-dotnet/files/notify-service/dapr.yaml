@@ -1,0 +1,10 @@
+version: 1
+common:
+  resourcesPath: ./components
+apps:
+  - appID: notify-service
+    appDirPath: ./src/NotifyService
+    appPort: 5260
+    daprHTTPPort: 3510
+    daprGRPCPort: 50011
+    command: ["dotnet", "run"]

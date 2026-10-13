@@ -2,126 +2,15 @@
 
 ## AppHost.cs
 
-The AppHost orchestrates all resources: Dapr, Valkey cache, the ApiService with a Dapr sidecar, and the locally installed Diagrid Dapr Dev Dashboard.
-
-```csharp
-using System.Reflection;
-using CommunityToolkit.Aspire.Hosting.Dapr;
-
-var builder = DistributedApplication.CreateBuilder(args);
-
-builder.AddDapr();
-
-string executingPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
-    ?? throw new("Where am I?");
-
-var cachePassword = builder.AddParameter("cache-password", "state-store-123", secret: true);
-var cache = builder
-    .AddValkey("cache", 16379, cachePassword)
-    .WithContainerName("workflow-state")
-    .WithDataVolume("workflow-state-data");
-
-var apiService = builder
-    .AddProject<Projects.<SolutionRoot>_ApiService>("apiservice")
-    .WithDaprSidecar(new DaprSidecarOptions
-    {
-        LogLevel = "debug",
-        ResourcesPaths =
-        [
-            Path.Join(executingPath, "Resources"),
-        ],
-    });
-
-apiService.WaitFor(cache);
-
-builder.AddExecutable("dapr-dev-dashboard", "diagrid-dev-dashboard", ".",
-        "--port", "9090", "--no-open")
-    .WithHttpEndpoint(port: 9090, isProxied: false);
-
-builder.Build().Run();
-```
-
-### Key points
-
-- `AddDapr()` registers the Dapr hosting integration with Aspire.
-- `AddValkey("cache", 16379, cachePassword)` creates a Valkey container on port 16379, replacing the Redis that `dapr init` would normally provide.
-- `WithDaprSidecar()` attaches a Dapr sidecar to the ApiService. The `ResourcesPaths` option points to the `Resources` folder containing component YAML files.
-- `apiService.WaitFor(cache)` ensures the Valkey container is ready before the ApiService starts.
-- The [Diagrid Dapr Dev Dashboard](https://github.com/diagridio/dev-dashboard) runs as an executable resource (`AddExecutable`): Aspire starts the locally installed `diagrid-dev-dashboard` binary on port 9090 (its default), and `--no-open` stops it from opening its own browser tab. `isProxied: false` keeps the real port, so http://localhost:9090 works directly.
-- The dashboard is optional and installed by the user (install commands in [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md)). If it is not installed, only the `dapr-dev-dashboard` resource fails to start; the ApiService, its sidecar and Valkey run normally.
-- It discovers the Aspire-managed sidecar itself. If its Workflows page shows no instances, add `"--statestore", Path.Join(executingPath, "Resources", "statestore.yaml")` to the arguments.
-- Replace `<SolutionRoot>` with the actual solution name (e.g., `Projects.MyApp_ApiService`).
+See **AppHost.cs (new solution)** in [`../dapr-shared/dotnet-aspire-dapr-wiring.md`](../dapr-shared/dotnet-aspire-dapr-wiring.md).
 
 ## AppHost .csproj
 
-```xml
-<Project Sdk="Aspire.AppHost.Sdk/<AspireVersion>">
-
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <UserSecretsId>auto-generated-id</UserSecretsId>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\<SolutionRoot>.ApiService\<SolutionRoot>.ApiService.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.Valkey" Version="<AspireVersion>" />
-    <PackageReference Include="CommunityToolkit.Aspire.Hosting.Dapr" Version="13.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="Resources\**\*.*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>Resources\%(RecursiveDir)%(Filename)%(Extension)</Link>
-    </Content>
-  </ItemGroup>
-
-</Project>
-```
-
-### Key points
-
-- Uses `Aspire.AppHost.Sdk/<AspireVersion>` instead of the standard .NET SDK. `<AspireVersion>` is the version `aspire new` writes into the `Sdk` attribute (e.g. `13.6.1`); keep it unchanged.
-- Keep the scaffolded `PropertyGroup` as generated. Newer templates may add properties not shown here (e.g. `<AspireUseCliBundle>true</AspireUseCliBundle>`); do not remove them.
-- `Aspire.Hosting.Valkey` uses the same `<AspireVersion>` as the AppHost SDK so all Aspire hosting packages stay on one release.
-- `CommunityToolkit.Aspire.Hosting.Dapr` provides the `AddDapr()` and `WithDaprSidecar()` extension methods.
-- `Aspire.Hosting.Valkey` provides the `AddValkey()` extension method.
-- The `Content` item group copies the `Resources` folder (containing Dapr component YAML files) to the build output directory.
-- Remove any project reference to the Web project that was deleted during scaffolding.
+See **AppHost .csproj** in [`../dapr-shared/dotnet-aspire-dapr-wiring.md`](../dapr-shared/dotnet-aspire-dapr-wiring.md).
 
 ## Resources/statestore.yaml
 
-State store component used by the workflow in ApiService:
-
-```yaml
-apiVersion: dapr.io/v1alpha1
-kind: Component
-metadata:
-  name: workflow-store
-spec:
-  type: state.redis
-  version: v1
-  metadata:
-    - name: redisHost
-      value: "localhost:16379"
-    - name: redisPassword
-      value: "state-store-123"
-    - name: actorStateStore
-      value: true
-```
-
-### Key points
-
-- `redisHost` uses `localhost:16379` because the Dapr sidecar runs on the host and the Valkey container exposes port 16379.
-- `redisPassword` must match the password configured in `AppHost.cs` via `AddParameter("cache-password", ...)`.
-- `actorStateStore` must be `true` because Dapr Workflow uses the actor framework internally.
-- The component name `workflow-store` is used by the Dapr runtime to identify this state store.
-
+See **Resources/statestore.yaml** in [`../dapr-shared/dotnet-aspire-dapr-wiring.md`](../dapr-shared/dotnet-aspire-dapr-wiring.md).
 
 ## ApiService Program.cs
 

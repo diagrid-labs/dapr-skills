@@ -20,6 +20,8 @@ This repository contains Claude Code skill definitions for building Dapr Workflo
   - `create-workflow-typescript/REFERENCE.md` — Detailed reference examples for the TypeScript skill
   - `migrate-workflow-typescript/SKILL.md` — Skill for migrating an existing TypeScript/Node.js application to Dapr incrementally
   - `migrate-workflow-typescript/REFERENCE.md` — Detection heuristics, infra-to-component mapping, and verified before/after code for the migration skill
+  - `add-workflow-dotnet/SKILL.md` — Skill for adding Dapr Workflow to an existing ASP.NET Core project (plain or Aspire) after a plan the user approves
+  - `add-workflow-dotnet/REFERENCE.md` — Detection heuristics, plan template, edit recipes and run-doc template for the add skill
   - `create-workflow-aspire/SKILL.md` — Skill for creating Dapr Workflow apps with Aspire
   - `create-workflow-aspire/REFERENCE.md` — Detailed reference examples for the Aspire skill
   - `create-workflow-from-diagram/SKILL.md` — Skill for scaffolding a Dapr Workflow app from a diagram image (PNG/JPG/GIF/WebP) or a BPMN 2.0 XML file, in Go, Python, .NET, Java, or JavaScript
@@ -61,6 +63,10 @@ Run the appropriate `create-workflow-xxx` skill to scaffold the project: `create
 **Migrate an existing application to Dapr:**
 
 Run `migrate-workflow-typescript` on an existing TypeScript/Node.js application — it is not a scaffolder. It reads the codebase first (no changes), maps existing service calls, messaging, scheduled jobs, secrets, and state access onto Dapr building blocks, presents a Migration Assessment Report for approval, and only then applies confirmed changes one integration point at a time, verifying after each with the project's own build/test commands. It works on a dedicated git branch and never commits or pushes unless the user opts into per-step commits. This is a fundamentally different kind of skill from the `create-workflow-xxx` family: it never assumes a fixed scenario and never rewrites whole files.
+
+**Add Dapr Workflow to an existing .NET project:**
+
+Run `add-workflow-dotnet` on an existing ASP.NET Core project (net8.0, net9.0 or net10.0, optionally inside an Aspire solution). It inspects the solution, shows an Add Workflow Plan for approval, then adds `Dapr.Workflow`, the Dapr wiring, the workflow and its activities, and the management endpoints with targeted edits, building after each step and running the existing tests at the end. It never changes git state and writes a `DAPR-WORKFLOW.md` instead of editing the README.
 
 **Build a new agent application:**
 

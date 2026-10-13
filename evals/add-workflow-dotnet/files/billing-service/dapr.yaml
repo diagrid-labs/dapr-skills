@@ -1,0 +1,10 @@
+version: 1
+common:
+  resourcesPath: ./components
+apps:
+  - appID: billing-service
+    appDirPath: ./src/BillingService
+    appPort: 5240
+    daprHTTPPort: 3500
+    daprGRPCPort: 50001
+    command: ["dotnet", "run"]

@@ -2,7 +2,7 @@
 
 Apply each rule below to every file in `management_files` produced by `review-detect-target.md` (typically `Program.cs`, or in Aspire solutions the ApiService's `Program.cs`).
 
-The reference baseline for the canonical management surface is the `Program.cs` in [`../create-workflow-dotnet/REFERENCE.md`](../create-workflow-dotnet/REFERENCE.md) and the request shapes in [`dotnet-local-http.md`](dotnet-local-http.md).
+The reference baseline for the canonical management surface is the `Program.cs` in [the canonical endpoints in `dotnet-workflow-endpoints.md`](../dapr-shared/dotnet-workflow-endpoints.md) and the request shapes in [`dotnet-local-http.md`](dotnet-local-http.md).
 
 ## Required endpoint coverage
 
@@ -39,7 +39,7 @@ If the workflow uses `WaitForExternalEventAsync`, additionally require:
 | DWF-MGT-011 | critical | Endpoint awaits `WaitForWorkflowCompletionAsync` (or `WaitForWorkflowStartAsync`) without a `CancellationToken` that carries a timeout (`new CancellationTokenSource(TimeSpan)` or `CancelAfter`) | Long-running workflows block the HTTP request indefinitely and exhaust the connection pool. | Pass a `CancellationToken` with a finite timeout, or expose status polling instead. |
 | DWF-MGT-012 | warning | `purge` endpoint calls `PurgeInstanceAsync` without first checking the instance (`GetWorkflowStateAsync` → `Exists` / `IsWorkflowCompleted`) and without handling `RpcException` | The runtime only purges instances in a terminal state (Completed, Failed, Terminated). For an unknown or still-running instance it returns a gRPC error, which `PurgeInstanceAsync` surfaces as an `RpcException` — an unhandled 500 instead of a 404/409. Purge also deletes all child workflows recursively. | Check the state first: `!state.Exists` → `Results.NotFound(...)`, `!state.IsWorkflowCompleted` → `Results.Conflict(...)` (or terminate first), then purge; alternatively catch `RpcException`. Treat a `false` result (nothing deleted) as not found. |
 | DWF-MGT-013 | warning  | Endpoint returns 500 on bad input (e.g., missing field, deserialization error)                                              | Client errors get charged to the server; alerting noise.                                                 | Validate input before calling `ScheduleNewWorkflowAsync` and return `Results.BadRequest(...)`. |
-| DWF-MGT-014 | info     | Status response shape differs from the canonical `{ state, output }` envelope                                               | Diverging response shapes break shared dashboards and tooling.                                            | Match the envelope used in `create-workflow-dotnet/REFERENCE.md`.                              |
+| DWF-MGT-014 | info     | Status response shape differs from the canonical `{ state, output }` envelope                                               | Diverging response shapes break shared dashboards and tooling.                                            | Match the envelope used in `dapr-shared/dotnet-workflow-endpoints.md`.                              |
 | DWF-MGT-015 | info     | Endpoints lack OpenAPI / Swagger metadata (`WithName`, `Produces<T>`, etc.)                                                 | Reduces discoverability for ops tooling.                                                                  | Annotate routes with `WithName` and `Produces<T>`.                                             |
 
 ## Purge behaviour note

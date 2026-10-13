@@ -8,6 +8,7 @@ This repository contains skill definitions that can be used with Claude Code, Gi
 - Building-blocks skill: `create-workflow-typescript` — scaffolds a TypeScript Dapr Workflow whose activities also exercise service invocation, pub/sub, bindings, jobs, state, and secrets, plus a small second service invoked over service invocation.
 - Diagram-input skill: `create-workflow-from-diagram` — provide a workflow diagram (PNG / JPG / JPEG / GIF / WebP) or a BPMN 2.0 XML file; the skill extracts structure and generates code for Go, Python, .NET, Java, or JavaScript.
 - Migration skill: `migrate-workflow-typescript` — analyzes an **existing** TypeScript/Node.js application (not a scaffold), proposes a Dapr building-block mapping for approval, and applies confirmed changes incrementally with verification between each.
+- Add skill: `add-workflow-dotnet` — adds Dapr Workflow to an **existing** ASP.NET Core project (plain or Aspire) after you approve a plan, with targeted edits and a build after each step.
 - Review skills: `review-workflow-determinism`, `review-workflow-activity`, `review-workflow-management` — audit an existing project.
 
 ### Agent skills
@@ -98,7 +99,7 @@ npx skills update
 To remove the skills, run `npx skills remove` and select the Dapr skills in the interactive list, or remove them by name (add `-g` if you installed them with `-g`):
 
 ```shell
-npx skills remove check-prereq-agent-dotnet check-prereq-agent-python check-prereq-aspire check-prereq-dotnet check-prereq-python create-agent-dotnet create-agent-python create-workflow-aspire create-workflow-dotnet create-workflow-from-diagram create-workflow-python create-workflow-typescript dapr-shared migrate-workflow-typescript review-agent-memory review-agent-observability review-agent-orchestration review-agent-tools review-workflow-activity review-workflow-determinism review-workflow-management -y
+npx skills remove add-workflow-dotnet check-prereq-agent-dotnet check-prereq-agent-python check-prereq-aspire check-prereq-dotnet check-prereq-python create-agent-dotnet create-agent-python create-workflow-aspire create-workflow-dotnet create-workflow-from-diagram create-workflow-python create-workflow-typescript dapr-shared migrate-workflow-typescript review-agent-memory review-agent-observability review-agent-orchestration review-agent-tools review-workflow-activity review-workflow-determinism review-workflow-management -y
 ```
 
 Do not use `npx skills remove --skill "*"`: it removes **every** installed skill, including skills from other sources.
@@ -111,7 +112,7 @@ If you install only some skills (`--skill <name>`), also install their dependenc
 | --- | --- |
 | any skill | `dapr-shared` |
 | `review-workflow-activity`, `review-workflow-determinism` | `create-workflow-python` |
-| `review-workflow-management` | `create-workflow-dotnet`, `create-workflow-python` |
+| `review-workflow-management` | `create-workflow-python` |
 | `review-agent-memory`, `review-agent-observability`, `review-agent-orchestration`, `review-agent-tools` | `create-agent-dotnet`, `create-agent-python` |
 | `migrate-workflow-typescript` | `create-workflow-typescript` |
 
@@ -119,7 +120,7 @@ If you install only some skills (`--skill <name>`), also install their dependenc
 
 ## How to use this
 
-1. Start your agent (Claude Code, Copilot CLI, or Codex) in the directory where you want the generated project to be created.
+1. Start your agent (Claude Code, Copilot CLI, or Codex) in the directory where you want the generated project to be created, or in your existing project for `add-workflow-dotnet` and `migrate-workflow-typescript`.
 2. Make sure the skills are installed (see [Installation](#installation)).
 3. OPTIONAL: Run a `check-prereq-<language>` skill to verify your environment (e.g., "check prerequisites for .NET", "check prerequisites for Aspire", "check prerequisites for Python", or "check prerequisites for Python agents"). Follow the instructions if the prerequisites are not met.
 4. Run a `create-workflow-<language>` or `create-agent-<language>` skill to scaffold the project (see the prompt examples below).
@@ -155,6 +156,12 @@ Invoke a skill by asking your agent in natural language — the example phrases 
 | Skill | Example prompt |
 | --- | --- |
 | `migrate-workflow-typescript` | "migrate this app to Dapr", "add Dapr to my existing Node.js app" |
+
+### Add a workflow to an existing project
+
+| Skill | Example prompt |
+| --- | --- |
+| `add-workflow-dotnet` | "add a workflow to my .NET project", "add Dapr Workflow to this API" |
 
 ### Review an existing workflow
 
@@ -277,3 +284,7 @@ Create a Dapr building blocks app in TypeScript named OrderFlow. Use the default
 ### Example 11: Migrate an existing Node.js service to Dapr
 
 Migrate this app to Dapr. Start with a read-only assessment report — don't change anything until I approve the plan.
+
+### Example 12: Add a workflow to an existing .NET API
+
+Add a Dapr workflow to the OrdersApi project: when an order is placed it should reserve stock, charge the payment and send a confirmation email.

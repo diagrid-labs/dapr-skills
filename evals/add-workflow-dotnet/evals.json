@@ -1,0 +1,126 @@
+{
+  "skill_name": "add-workflow-dotnet",
+  "evals": [
+    {
+      "id": 1,
+      "name": "minimal-api-net8-with-tests",
+      "prompt": "Add a Dapr workflow to the OrdersApi project in ./orders-api. When an order is placed it should reserve stock, charge the payment and then send a confirmation email, one after the other. Show me your plan first, then go ahead without waiting for my approval.",
+      "expected_output": "A plan, then targeted edits to OrdersApi: Dapr.Workflow 1.18.10, AddDaprWorkflow() registration, a chained workflow with three activities, workflow endpoints under /workflows/<route>, POST /orders also starting the workflow (default Yes), dapr.yaml and resources/statestore.yaml, an .http file, DAPR-WORKFLOW.md; the solution builds and both existing tests pass; README untouched.",
+      "files": [
+        "evals/add-workflow-dotnet/files/orders-api/README.md"
+      ],
+      "expectations": [
+        "Before the first file change, the response (or transcript) contains an Add Workflow Plan that names the target project OrdersApi, the target framework net8.0, the hosting mode `dapr run`, the endpoint style minimal API, and lists every file it will add or edit; before the first file change it asks whether `POST /orders` should also start the workflow, with Yes as the default",
+        "src/OrdersApi/OrdersApi.csproj references Dapr.Workflow version 1.18.10 and its TargetFramework is still net8.0",
+        "src/OrdersApi/Program.cs still contains the existing `builder.Services.AddSingleton<OrderService>()` and `app.MapGet(\"/orders/{id}\"` lines unchanged and exactly one `AddDaprWorkflow()` call; the `app.MapPost(\"/orders\"` handler still adds the order through OrderService and returns `Results.Created(...)`, and (the default Yes answer) now also calls `ScheduleNewWorkflowAsync` for the workflow with the order id as instance id after the order is added",
+        "A workflow class derived from Workflow<TInput, TOutput> calls three activities in sequence (reserve stock, charge payment, send confirmation) and contains no DateTime.Now, DateTime.UtcNow, Guid.NewGuid, HttpClient, Task.Delay or Thread.Sleep",
+        "Workflow management endpoints exist for start and status at minimum (start schedules the workflow with DaprWorkflowClient.ScheduleNewWorkflowAsync; status checks state.Exists)",
+        "dapr.yaml at the solution root has an app entry with appDirPath pointing to src/OrdersApi and appPort 5180, and resources/statestore.yaml has actorStateStore \"true\"",
+        "README.md is byte-for-byte unchanged and DAPR-WORKFLOW.md exists at the solution root with how to start (`dapr run -f .`), request examples and a Diagrid Dapr Dev Dashboard section with the macOS/Linux and Windows install commands",
+        "The transcript shows `dotnet build` on the solution after the code steps, a final `dotnet test` with 2 passed and 0 failed, and the build succeeding",
+        "No files outside the plan were changed: tests/OrdersApi.Tests/* and src/OrdersApi/Services/OrderService.cs and src/OrdersApi/Models/Order.cs are unchanged",
+        "No git command other than `git status` was run",
+        "Dev Dashboard: before changing files the agent runs `diagrid-dev-dashboard --version` once without stopping, and the final output ends with exactly `Dapr Workflow is added to OrdersApi. Open DAPR-WORKFLOW.md in the solution root for what changed and how to run it.` followed only by the matching Diagrid Dapr Dev Dashboard recommendation"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "controllers-cpm-existing-dapr",
+      "prompt": "In ./billing-service, add a Dapr workflow for invoice reminders: when started for an invoice it waits 3 days, then checks whether the invoice is paid and, if not, emails a reminder; it repeats at most 3 times. Show the plan, then proceed without asking me.",
+      "expected_output": "Version in Directory.Packages.props, version alignment of Dapr.Client/Dapr.AspNetCore offered as a separate item, a controller (not minimal API), existing billing-store actor store reused under components/, dapr.yaml app entry kept, solution builds.",
+      "files": [
+        "evals/add-workflow-dotnet/files/billing-service/dapr.yaml"
+      ],
+      "expectations": [
+        "Directory.Packages.props gets `<PackageVersion Include=\"Dapr.Workflow\" Version=\"1.18.10\" />` and BillingService.csproj gets a version-less `<PackageReference Include=\"Dapr.Workflow\" />`",
+        "Before the first file change the plan says newer packages are available (Dapr.Client and Dapr.AspNetCore 1.17.9 → 1.18.10) and asks whether to update them with Yes as the default; with that default, Directory.Packages.props declares Dapr.Client, Dapr.AspNetCore and Dapr.Workflow at 1.18.10",
+        "Program.cs still calls `AddDaprClient()` and `AddControllers().AddDapr()`, and gains exactly one `AddDaprWorkflow()` call",
+        "The workflow endpoints are a new controller class in src/BillingService/Controllers (decorated with [ApiController]), not minimal API Map* calls",
+        "The workflow waits with context.CreateTimer (3 days), not Task.Delay, and the reminder loop is bounded (at most 3 iterations, no `while (true)`)",
+        "No new component with actorStateStore \"true\" is created: components/statestore.yaml is unchanged, no resources/ folder is created, and the plan says the existing billing-store is reused",
+        "dapr.yaml still has resourcesPath ./components and the billing-service app entry with appPort 5240 (unchanged or extended, never replaced)",
+        "The transcript shows a successful `dotnet build` of the solution",
+        "No git command other than `git status` was run",
+        "Before the first file change the plan asks whether `POST /invoices` should also start the workflow, with Yes as the default; InvoicesController.Create still saves the invoice with SaveStateAsync and returns CreatedAtAction, and now also calls `ScheduleNewWorkflowAsync` for the reminder workflow with the invoice id as instance id after saving"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "aspire-solution",
+      "prompt": "Add a durable workflow to the Catalog API in the Aspire solution in ./aspire-catalog that imports a product feed: fetch the feed, validate the items in parallel and then publish the catalog. Show the plan, then continue without asking.",
+      "expected_output": "Aspire mode: AppHost gets CommunityToolkit.Aspire.Hosting.Dapr 13.0.0 and Aspire.Hosting.Valkey 13.6.0, AddDapr, Valkey, WithDaprSidecar with a Resources folder, the Dev Dashboard executable; ApiService gets Dapr.Workflow and a fan-out/fan-in workflow; no dapr.yaml; solution builds.",
+      "files": [
+        "evals/add-workflow-dotnet/files/aspire-catalog/Catalog.AppHost/AppHost.cs"
+      ],
+      "expectations": [
+        "The plan names the hosting mode Aspire and the AppHost project Catalog.AppHost",
+        "Catalog.AppHost.csproj references CommunityToolkit.Aspire.Hosting.Dapr 13.0.0 and Aspire.Hosting.Valkey 13.6.0, and copies a Resources folder with a statestore component (actorStateStore true, redisHost localhost:16379) to the output",
+        "AppHost.cs keeps the existing `AddProject<Projects.Catalog_ApiService>(\"catalog-api\")` resource name and adds `.WithDaprSidecar(...)` to it, plus `AddValkey(...)` and `builder.AddExecutable(\"dapr-dev-dashboard\", \"diagrid-dev-dashboard\", \".\", \"--port\", \"9090\", \"--no-open\").WithHttpEndpoint(port: 9090, isProxied: false)`",
+        "Catalog.ApiService references Dapr.Workflow 1.18.10, Program.cs keeps the existing `/products` endpoint and gains one AddDaprWorkflow() call, and the workflow fans out validation activities and awaits them with Task.WhenAll",
+        "No dapr.yaml is created",
+        "The transcript shows a successful `dotnet build` of the solution",
+        "DAPR-WORKFLOW.md says to start with `aspire run` and describes the Dev Dashboard as the `dapr-dev-dashboard` resource on http://localhost:9090",
+        "The plan asks no endpoint question for the read-only `/products` endpoint (it says no existing endpoint starts the workflow) and no package-update question (Catalog.ApiService has no Dapr packages and the AppHost is on Aspire 13.6.0)"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "approval-gate",
+      "prompt": "Add a Dapr workflow to the OrdersApi project in ./orders-api that reserves stock, charges the payment and sends a confirmation email when an order is placed.",
+      "expected_output": "An Add Workflow Plan and a request for approval; no file in orders-api is changed.",
+      "files": [
+        "evals/add-workflow-dotnet/files/orders-api/README.md"
+      ],
+      "expectations": [
+        "The response contains an Add Workflow Plan listing the files to add and edit, and ends by asking the user to approve, change or stop",
+        "The plan has a Questions section asking whether `POST /orders` should also start the workflow (default Yes), and no package-update question because the project has no Dapr packages",
+        "No file in the orders-api fixture is added, changed or deleted (hash check), and no `dotnet add`, `dotnet build` or file write was run on the fixture",
+        "No git command other than `git status` was run"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "unsupported-net6",
+      "prompt": "Add a Dapr workflow to ./legacy-api that runs a nightly data export.",
+      "expected_output": "Stops before planning: explains Dapr.Workflow 1.18 needs net8.0 or later; no changes.",
+      "files": [
+        "evals/add-workflow-dotnet/files/legacy-api/src/LegacyApi/LegacyApi.csproj"
+      ],
+      "expectations": [
+        "The response says the project targets net6.0 and that Dapr.Workflow 1.18 needs net8.0, net9.0 or net10.0, and suggests upgrading the target framework or creating a separate workflow service with create-workflow-dotnet",
+        "No file in the legacy-api fixture is added, changed or deleted, and no `dotnet add` or `dotnet build` was run"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "components-without-actor-store",
+      "prompt": "In ./notify-service, add a Dapr workflow that sends a daily digest to a user: once a day it collects the user's unread notifications and emails one digest, and it stops after 7 days. Show the plan, then proceed without asking.",
+      "expected_output": "The existing Dapr setup (dapr.yaml with resourcesPath ./components and a pub/sub component, Dapr.AspNetCore 1.17.9) is extended: a new actor state store goes into components/, nothing else in components/ or dapr.yaml changes, the Dapr packages are updated to 1.18.10 (default Yes), and the workflow uses a bounded durable-timer loop.",
+      "files": [],
+      "expectations": [
+        "Before the first file change the plan says newer packages are available (Dapr.AspNetCore 1.17.9 → 1.18.10) and asks whether to update with Yes as the default; with that default, NotifyService.csproj references Dapr.AspNetCore 1.18.10 and Dapr.Workflow 1.18.10",
+        "A new state store component with actorStateStore \"true\" (quoted or unquoted) is added inside the existing components/ folder; no resources/ folder is created and the plan says the existing folder has no actor state store",
+        "components/pubsub.yaml and dapr.yaml are byte-for-byte unchanged",
+        "Program.cs still calls `AddDaprClient()` and keeps the `MapPost(\"/notifications\"` endpoint, and gains exactly one `AddDaprWorkflow()` call",
+        "The workflow waits with context.CreateTimer (one day), not Task.Delay, and the loop is bounded to at most 7 iterations (no `while (true)`)",
+        "The transcript shows a successful `dotnet build` of NotifyService.slnx",
+        "No git command other than `git status` was run"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "aspire9-apphost",
+      "prompt": "Add a Dapr workflow to the Shop API in the Aspire solution in ./aspire9-shop: when a checkout is created it should reserve the items, charge the customer and then ship the order. Show the plan, then continue without asking.",
+      "expected_output": "An Aspire 9.5.2 AppHost declared with the <Sdk Name=\"Aspire.AppHost.Sdk\" .../> element is detected as Aspire mode; the AppHost gets CommunityToolkit.Aspire.Hosting.Dapr 9.9.0 and Aspire.Hosting.Valkey 9.5.2, a Dapr sidecar on the existing shop-api resource and the Dev Dashboard resource; no dapr.yaml; POST /checkouts starts the workflow (default Yes).",
+      "files": [],
+      "expectations": [
+        "The plan names the hosting mode Aspire and the AppHost project Shop.AppHost (the `<Sdk Name=\"Aspire.AppHost.Sdk\" Version=\"9.5.2\" />` form is detected), and no dapr.yaml is created anywhere in the solution",
+        "Shop.AppHost.csproj references CommunityToolkit.Aspire.Hosting.Dapr 9.9.0 and Aspire.Hosting.Valkey 9.5.2 (not 13.x), and Aspire.Hosting.AppHost stays at 9.5.2",
+        "Shop.AppHost/Program.cs keeps the `AddProject<Projects.Shop_Api>(\"shop-api\")` resource name, adds `.WithDaprSidecar(...)` to it, adds a Valkey resource, and adds `builder.AddExecutable(\"dapr-dev-dashboard\", \"diagrid-dev-dashboard\", ...)`; a Resources statestore component with actorStateStore true is created",
+        "Before the first file change the plan asks whether `POST /checkouts` should also start the workflow, with Yes as the default; the handler still returns BadRequest for an empty checkout and Created otherwise, and now calls `ScheduleNewWorkflowAsync` with the checkout id as instance id only after the checkout is stored",
+        "The transcript shows a successful `dotnet build` of Shop.slnx",
+        "DAPR-WORKFLOW.md says to start with `aspire run` and has no `dapr run -f` or `diagrid dev run -f dapr.yaml` instructions"
+      ]
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "name": "dapr-skills",
   "description": "Skills to create, migrate, and review Dapr Workflow and durable AI agent applications",
-  "version": "1.23.0",
+  "version": "1.24.0",
   "author": {
     "name": "Diagrid"
   },
