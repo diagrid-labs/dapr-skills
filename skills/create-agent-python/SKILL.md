@@ -1,6 +1,6 @@
 ---
 name: create-agent-python
-description: This skill creates a durable AI agent application in Python with the Dapr Agents SDK or a Diagrid framework wrapper. Use this skill when the user asks to "create an agent in Python", "write a Python Dapr agent", "build an agent app in Python", "scaffold a Dapr Agents project", or "create a multi-agent orchestrator in Python".
+description: This skill creates a durable AI agent application in Python, running locally with the Dapr CLI (`dapr run`), using the Dapr Agents SDK or a Diagrid framework wrapper. Use this skill when the user asks to "create an agent in Python", "write a Python Dapr agent", "build an agent app in Python", "scaffold a Dapr Agents project", or "create a multi-agent orchestrator in Python". For a Durable Agent that runs on Diagrid Catalyst, use the catalyst-ai plugin instead.
 allowed-tools:
   - Write
   - Edit

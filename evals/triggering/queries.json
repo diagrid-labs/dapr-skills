@@ -1,0 +1,139 @@
+{
+  "name": "cross-plugin-triggering",
+  "description": "Checks WHICH skill fires for a request when both the dapr-skills and catalyst-ai plugins are installed. Unlike the per-skill evals, this grades skill selection, not the files a skill produces.",
+  "why": "Claude Code namespaces skill names per plugin, but skill TRIGGERING is decided by the description text and the docs specify no precedence between two plugins whose descriptions match the same request. Five skill pairs across these two plugins overlap, so a wording change on either side can silently re-route requests. The per-skill evals under evals/<skill-name>/ cannot catch that: they assume the right skill already ran.",
+  "plugins": {
+    "dapr-skills": {
+      "repo": "diagrid-labs/dapr-skills",
+      "descriptions": "skills/*/SKILL.md front matter in this repository"
+    },
+    "catalyst-ai": {
+      "repo": "diagridio/catalyst-ai",
+      "descriptions": "skills/*/SKILL.md front matter in an installed copy",
+      "note": "Not vendored here. Install the plugin, or read the marketplace cache, e.g. ~/.claude/plugins/marketplaces/diagrid/skills/*/SKILL.md. Because this half lives in a repository we do not control, re-run this check when catalyst-ai releases."
+    }
+  },
+  "method": [
+    "Collect the `description:` field from the YAML front matter of every SKILL.md in BOTH plugins. Ignore skill bodies - they play no part in triggering.",
+    "Give a model those descriptions and nothing else: no skill bodies, no expected answers, no hint that a particular plugin is preferred.",
+    "For each query, ask for the single skill it would invoke as `plugin:skill-name`, or AMBIGUOUS with candidates if it cannot justify one pick, or NONE.",
+    "Ask for a confidence rating per answer. Medium or low confidence on a query whose `expect` still matched is an early warning, not a pass to ignore.",
+    "Compare each answer against `expect`, or against `accept` where present. Update the `baseline` block when the result changes."
+  ],
+  "baseline": {
+    "date": "2026-10-14",
+    "model": "sonnet (Claude Sonnet 5.5)",
+    "dapr_skills_version": "1.25.0",
+    "catalyst_ai_version": "0.6.1",
+    "result": "14 of 15 matched `expect` outright; query 14 matched `accept`. Three answers came back at medium confidence.",
+    "known_risk": "All three medium-confidence answers (queries 2, 10, 11) trace to the single phrase \"writing or reviewing\" in catalyst-ai's catalyst-workflow-determinism and catalyst-activity-idempotency descriptions. Narrowing it to the authoring case should lift them to high. See docs/catalyst-ai-description-proposal.md."
+  },
+  "queries": [
+    {
+      "id": 1,
+      "query": "review my workflow for determinism problems",
+      "expect": "dapr-skills:review-workflow-determinism",
+      "rationale": "Audit of code that already exists, not guidance while writing it.",
+      "baseline": { "picked": "dapr-skills:review-workflow-determinism", "confidence": "high" }
+    },
+    {
+      "id": 2,
+      "query": "audit the activities in this repo for idempotency",
+      "expect": "dapr-skills:review-workflow-activity",
+      "rationale": "\"audit\" and \"this repo\" both point at a pass over an existing codebase.",
+      "baseline": { "picked": "dapr-skills:review-workflow-activity", "confidence": "medium", "note": "catalyst-activity-idempotency also says \"reviewing\"" }
+    },
+    {
+      "id": 3,
+      "query": "create a Dapr workflow in Python I can run locally",
+      "expect": "dapr-skills:create-workflow-python",
+      "rationale": "Explicit local runtime.",
+      "baseline": { "picked": "dapr-skills:create-workflow-python", "confidence": "high" }
+    },
+    {
+      "id": 4,
+      "query": "build a workflow app in C#",
+      "expect": "dapr-skills:create-workflow-dotnet",
+      "rationale": "Verbatim trigger phrase, no Catalyst signal.",
+      "baseline": { "picked": "dapr-skills:create-workflow-dotnet", "confidence": "high" }
+    },
+    {
+      "id": 5,
+      "query": "add Dapr Workflow to my existing ASP.NET Core API",
+      "expect": "dapr-skills:add-workflow-dotnet",
+      "rationale": "Existing project, and catalyst-workflow-scaffold also claims \"add\".",
+      "baseline": { "picked": "dapr-skills:add-workflow-dotnet", "confidence": "high" }
+    },
+    {
+      "id": 6,
+      "query": "check the workflow HTTP management endpoints my app exposes",
+      "expect": "dapr-skills:review-workflow-management",
+      "rationale": "Audits endpoints an app exposes, rather than operating runs on Catalyst.",
+      "baseline": { "picked": "dapr-skills:review-workflow-management", "confidence": "high" }
+    },
+    {
+      "id": 7,
+      "query": "build an agent app in Python using the Dapr Agents SDK",
+      "expect": "dapr-skills:create-agent-python",
+      "rationale": "Names the OSS SDK, no Catalyst signal.",
+      "baseline": { "picked": "dapr-skills:create-agent-python", "confidence": "high" }
+    },
+    {
+      "id": 8,
+      "query": "migrate my Node.js service to Dapr incrementally",
+      "expect": "dapr-skills:migrate-workflow-typescript",
+      "rationale": "Adopting Dapr in code, not hosting an existing Dapr app on Catalyst.",
+      "baseline": { "picked": "dapr-skills:migrate-workflow-typescript", "confidence": "high" }
+    },
+    {
+      "id": 9,
+      "query": "I'm writing a workflow body right now - how do I avoid replay issues with timestamps and random ids?",
+      "expect": "catalyst-ai:catalyst-workflow-determinism",
+      "rationale": "Inline rails while authoring. Must NOT route to the audit skill.",
+      "baseline": { "picked": "catalyst-ai:catalyst-workflow-determinism", "confidence": "high" }
+    },
+    {
+      "id": 10,
+      "query": "is this activity safe to retry? it charges a credit card",
+      "expect": "catalyst-ai:catalyst-activity-idempotency",
+      "rationale": "A single activity body under the author's hands, not a codebase sweep.",
+      "baseline": { "picked": "catalyst-ai:catalyst-activity-idempotency", "confidence": "medium", "note": "pulled toward the audit skill by the shared word \"reviewing\"" }
+    },
+    {
+      "id": 11,
+      "query": "create a Dapr workflow and deploy it to Catalyst",
+      "expect": "catalyst-ai:catalyst-workflow-scaffold",
+      "rationale": "Explicit Catalyst target.",
+      "baseline": { "picked": "catalyst-ai:catalyst-workflow-scaffold", "confidence": "medium", "note": "resolved via the dapr-skills deferral sentence rather than on its own strength" }
+    },
+    {
+      "id": 12,
+      "query": "my workflow run on Catalyst is stuck, help me debug it",
+      "expect": "catalyst-ai:catalyst-debug",
+      "rationale": "Operating a running system, which dapr-skills does not cover.",
+      "baseline": { "picked": "catalyst-ai:catalyst-debug", "confidence": "high" }
+    },
+    {
+      "id": 13,
+      "query": "stand up a durable agent on Diagrid Catalyst",
+      "expect": "catalyst-ai:catalyst-agent-scaffold",
+      "rationale": "Explicit Catalyst target.",
+      "baseline": { "picked": "catalyst-ai:catalyst-agent-scaffold", "confidence": "high" }
+    },
+    {
+      "id": 14,
+      "query": "scaffold a workflow from this BPMN file",
+      "expect": "dapr-skills:create-workflow-from-diagram",
+      "accept": ["AMBIGUOUS"],
+      "rationale": "Genuinely shared ground: both plugins accept BPMN. With no Catalyst signal the local skill is the safer default, since it needs no cloud auth. A Catalyst user has to say Catalyst. Either answer is defensible, so AMBIGUOUS also passes.",
+      "baseline": { "picked": "dapr-skills:create-workflow-from-diagram", "confidence": "medium" }
+    },
+    {
+      "id": 15,
+      "query": "create a Dapr workflow",
+      "expect": "AMBIGUOUS",
+      "rationale": "No language and no runtime. Picking silently is the failure mode here; the right move is to ask or state the assumption.",
+      "baseline": { "picked": "AMBIGUOUS", "candidates": ["dapr-skills:create-workflow-python", "dapr-skills:create-workflow-dotnet", "catalyst-ai:catalyst-workflow-scaffold"], "confidence": "low" }
+    }
+  ]
+}

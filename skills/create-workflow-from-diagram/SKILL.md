@@ -1,6 +1,6 @@
 ---
 name: create-workflow-from-diagram
-description: This skill creates a Dapr workflow application from a diagram. Use this skill when the user provides a workflow image (PNG, JPG, JPEG, GIF, WebP) or a BPMN 2.0 XML file (.bpmn, .bpmn20.xml) and asks to "create a workflow from this diagram", "generate a Dapr workflow from this image", "scaffold a workflow from this BPMN", or similar. Output language is Go, Python, .NET (C#), Java, or JavaScript — selected by the user or inferred from the prompt.
+description: This skill creates a Dapr workflow application from a diagram, scaffolded to run locally with the Dapr CLI (`dapr run`). Use this skill when the user provides a workflow image (PNG, JPG, JPEG, GIF, WebP) or a BPMN 2.0 XML file (.bpmn, .bpmn20.xml) and asks to "create a workflow from this diagram", "generate a Dapr workflow from this image", "scaffold a workflow from this BPMN", or similar. Output language is Go, Python, .NET (C#), Java, or JavaScript — selected by the user or inferred from the prompt. For a diagram turned into a workflow on Diagrid Catalyst, or from a Mermaid or hand-drawn sketch, use the catalyst-ai plugin instead.
 allowed-tools:
   - Read
   - Write

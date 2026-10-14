@@ -1,6 +1,6 @@
 ---
 name: migrate-workflow-typescript
-description: This skill migrates an existing TypeScript/Node.js application to Dapr incrementally. It scans the existing codebase for service-call, messaging, scheduling, secrets, state, and saga patterns, maps each onto the matching Dapr building block, presents a plan for approval, and applies confirmed changes one at a time with verification between each. Use this skill when the user asks to "migrate this app to Dapr", "add Dapr to my existing Node.js app", "convert this TypeScript service to use Dapr", "help me adopt Dapr incrementally", or similar.
+description: This skill migrates an existing TypeScript/Node.js application to Dapr incrementally. It scans the existing codebase for service-call, messaging, scheduling, secrets, state, and saga patterns, maps each onto the matching Dapr building block, presents a plan for approval, and applies confirmed changes one at a time with verification between each. Use this skill when the user asks to "migrate this app to Dapr", "add Dapr to my existing Node.js app", "convert this TypeScript service to use Dapr", "help me adopt Dapr incrementally", or similar. It adopts Dapr building blocks in the code and runs locally with the Dapr CLI (`dapr run`); to host an application that already uses Dapr on Diagrid Catalyst, use the catalyst-ai plugin instead.
 allowed-tools:
   - Read
   - Grep

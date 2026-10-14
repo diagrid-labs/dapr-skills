@@ -6,14 +6,17 @@ Test prompts and checks for every task skill in [`skills/`](../skills), in the [
 
 ```text
 evals/
-└── <skill-name>/
-    ├── evals.json      # 3 evals: happy path, variant, edge case
-    └── files/          # input fixtures (projects to review or migrate), when needed
+├── <skill-name>/
+│   ├── evals.json      # 3-5 evals: happy path, variants, edge case
+│   └── files/          # input fixtures (projects to review or migrate), when needed
+└── triggering/
+    └── queries.json    # which skill fires, across this plugin and catalyst-ai
 ```
 
 - The evals live here, **not** inside `skills/<skill-name>/`, because installers (`npx skills`, the Claude Code and Copilot plugins) copy whole skill folders. Keeping evals out of them means users never install test fixtures, some of which contain deliberately broken code.
 - `files` paths in `evals.json` are relative to the **repository root**.
 - `dapr-shared` has no evals: it is a support skill that other skills read files from, not a skill that is invoked.
+- `triggering/` is a different kind of check — see [Triggering check](#triggering-check) below. The per-skill evals grade what a skill *produces*; the triggering check grades which skill *fires*.
 
 ## evals.json
 
@@ -53,3 +56,19 @@ Notes:
 - The `review-pubsub-*` fixtures contain deliberate violations marked `SEED <rule id>`; the `clean-*` fixtures must produce no critical or warning findings.
 - The .NET `add-pubsub-dotnet` fixtures build; `inventory-service` is used for a hash check.
 - Scaffolding and prerequisite evals need the prerequisites from the main [README](../README.md) (.NET 10, Python/uv, Node.js, Dapr CLI, Docker). Agent evals that run the generated app also need an LLM provider key.
+
+## Triggering check
+
+[`triggering/queries.json`](triggering/queries.json) checks **which** skill fires for a request when both this plugin and [catalyst-ai](https://github.com/diagridio/catalyst-ai) are installed. Five skill pairs across the two plugins overlap (workflow scaffolding, from-diagram, agent scaffolding, determinism, activity idempotency), and skill triggering is decided by the `description` front matter — Claude Code namespaces skill *names* per plugin, but defines no precedence when two descriptions match the same request.
+
+The per-skill evals cannot catch a mis-route, because they assume the right skill already ran.
+
+To run it, follow the `method` array in the file: collect the `description:` field from every SKILL.md in **both** plugins, give a model those descriptions and nothing else, and ask which single skill it would invoke per query. Give it no hint of the expected answer — the `expect` values are for you to compare against afterwards. Watch the confidence ratings as well as the verdicts: a medium-confidence answer that still matched `expect` is an early warning that two descriptions are drifting together.
+
+Re-run it when:
+
+- any `description` in this repo changes, especially on the five overlapping skills;
+- `catalyst-ai` publishes a release, since that half of the wording lives in a repository we do not control;
+- you add a skill whose purpose is close to one of theirs.
+
+Update the `baseline` block with the date, model and result whenever the outcome changes. `docs/catalyst-ai-description-proposal.md` tracks the reciprocal wording changes suggested to the `catalyst-ai` maintainers.

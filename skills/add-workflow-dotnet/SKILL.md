@@ -1,6 +1,6 @@
 ---
 name: add-workflow-dotnet
-description: This skill adds Dapr Workflow to an existing .NET (ASP.NET Core) project, including projects in an Aspire solution. It inspects the project, shows a plan for approval, then adds the Dapr.Workflow package, the Dapr wiring, the workflow and activity classes and the management endpoints with small targeted edits, building after every step and running the existing tests at the end. Use this skill when the user asks to "add a workflow to my .NET project", "add Dapr Workflow to this API", "make this process a durable workflow in my ASP.NET app" or similar. For a new project use create-workflow-dotnet or create-workflow-aspire instead.
+description: This skill adds Dapr Workflow to an existing .NET (ASP.NET Core) project, including projects in an Aspire solution. It inspects the project, shows a plan for approval, then adds the Dapr.Workflow package, the Dapr wiring, the workflow and activity classes and the management endpoints with small targeted edits, building after every step and running the existing tests at the end. Use this skill when the user asks to "add a workflow to my .NET project", "add Dapr Workflow to this API", "make this process a durable workflow in my ASP.NET app" or similar. The workflow is wired to run locally with the Dapr CLI (`dapr run`) or through an existing Aspire AppHost. For a new project use create-workflow-dotnet or create-workflow-aspire instead; for a workflow that runs on Diagrid Catalyst, use the catalyst-ai plugin.
 allowed-tools:
   - Read
   - Grep

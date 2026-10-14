@@ -1,6 +1,6 @@
 ---
 name: create-agent-dotnet
-description: This skill creates a durable AI agent application in .NET using Microsoft Agent Framework on Dapr Workflow. Use this skill when the user asks to "create an agent in .NET", "build an agent app in C#", or "scaffold a .NET agent with Microsoft Agent Framework".
+description: This skill creates a durable AI agent application in .NET, running locally with the Dapr CLI (`dapr run`), using Microsoft Agent Framework on Dapr Workflow. Use this skill when the user asks to "create an agent in .NET", "build an agent app in C#", or "scaffold a .NET agent with Microsoft Agent Framework". For a Durable Agent that runs on Diagrid Catalyst, use the catalyst-ai plugin instead.
 allowed-tools:
   - Write
   - Edit

@@ -1,6 +1,6 @@
 ---
 name: create-workflow-typescript
-description: This skill creates a Dapr application in TypeScript that demonstrates the core Dapr building blocks — Workflow, service invocation, pub/sub, bindings, jobs, state management, and secrets. Use this skill when the user asks to "create a workflow in TypeScript", "create a Dapr app in Node.js", "write a TypeScript Dapr workflow application", "build a Dapr building blocks demo in TypeScript/JavaScript", or similar.
+description: This skill creates a Dapr application in TypeScript that runs locally with the Dapr CLI (`dapr run`) and demonstrates the core Dapr building blocks — Workflow, service invocation, pub/sub, bindings, jobs, state management, and secrets. Use this skill when the user asks to "create a workflow in TypeScript", "create a Dapr app in Node.js", "write a TypeScript Dapr workflow application", "build a Dapr building blocks demo in TypeScript/JavaScript", or similar. For an application that runs on Diagrid Catalyst, use the catalyst-ai plugin instead.
 allowed-tools:
   - Bash(npm:*)
   - Bash(npx:*)

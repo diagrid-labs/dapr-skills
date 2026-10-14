@@ -1,6 +1,6 @@
 ---
 name: create-workflow-aspire
-description: This skill creates a Dapr workflow application with .NET Aspire. Use this skill when the user asks to "create a workflow with Aspire", "write an Aspire workflow application" or "build a workflow app with .NET Aspire".
+description: This skill creates a Dapr workflow application with .NET Aspire that runs locally through the Aspire AppHost. Use this skill when the user asks to "create a workflow with Aspire", "write an Aspire workflow application" or "build a workflow app with .NET Aspire". For a workflow that runs on Diagrid Catalyst, use the catalyst-ai plugin instead.
 allowed-tools:
   - Bash(dotnet:*)
   - Bash(aspire new:*)
