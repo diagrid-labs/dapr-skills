@@ -177,6 +177,33 @@ export function checkVocabularyLinks(skillsDir) {
   return failures;
 }
 
+// A CEL `match` comparing a field with a number must wrap it in int(): JSON numbers are
+// doubles, so an uncast comparison never fires. double() fires but breaks the convention,
+// so the corpus must not show it either (see pubsub-placeholders.md).
+const CEL_COMPARISON = /event\.data\.[A-Za-z_][A-Za-z0-9_]*\s*(?:>=|<=|>|<|==|!=)\s*-?\d/;
+const CEL_DOUBLE = /double\s*\(\s*event\.data\./;
+
+/**
+ * Check — every CEL match example in the pub/sub corpus casts a numeric comparison with
+ * int(), and none uses double(). Returns an array of failure strings.
+ */
+export function checkCelCasts(skillsDir) {
+  const failures = [];
+  for (const file of pubsubMarkdown(skillsDir)) {
+    const where = relative(skillsDir, file).split(sep).join('/');
+    readFileSync(file, 'utf8').split(/\r?\n/).forEach((line, index) => {
+      if (CEL_DOUBLE.test(line)) {
+        failures.push(`${where}:${index + 1} -> double(event.data...) — use int()`);
+        return;
+      }
+      if (CEL_COMPARISON.test(line) && !line.includes('int(event.data.')) {
+        failures.push(`${where}:${index + 1} -> numeric match on event.data without int()`);
+      }
+    });
+  }
+  return failures;
+}
+
 const EVAL_KEYS = ['id', 'name', 'prompt', 'expected_output', 'files', 'expectations'];
 
 /**

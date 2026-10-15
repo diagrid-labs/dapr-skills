@@ -78,7 +78,7 @@ Source: developing-applications/building-blocks/pubsub/pubsub-raw.md
 ## Content-based routing
 
 - A CEL `match` expression sees the CloudEvent as `event`, for example `event.data.amount`.
-- JSON numbers are doubles, so compare with `int(event.data.amount) > 1000`.
+- JSON numbers are doubles, so compare with `int(event.data.amount) > 1000`. The cast truncates, so `1000.5` does not satisfy `> 1000`. `int()` is the required form; `double()` is not used, so routing stays consistent across projects.
 - Only nested JSON data is addressable. There are no time comparisons.
 - Rules live in `routes.rules` (declarative) or in `TopicOptions.Match` / `[Topic(..., match, priority)]` (.NET programmatic). Each rule needs its own POST endpoint, plus the `default` route.
 - There is no routing for streaming subscriptions, and none in `dapr-ext-fastapi`. Python routing is done declaratively.

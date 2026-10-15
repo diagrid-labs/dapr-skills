@@ -48,7 +48,13 @@ Two more are used only when the user asks for content-based routing:
 | Placeholder | Meaning | Example |
 |---|---|---|
 | `<RuleName>` | short lowercase name of the case a routing rule selects | `express` |
-| `<MatchExpression>` | the CEL expression over `event.data` | `event.data.carrier == "air"` |
+| `<MatchExpression>` | the CEL expression over `event.data`. A numeric comparison MUST wrap the field in `int()`; a string comparison needs no cast | `int(event.data.amount) > 1000`, or `event.data.carrier == "air"` |
+
+`int()` is required on every numeric `match` because JSON numbers arrive as doubles and an uncast
+comparison never fires. `int()` truncates, so `int(event.data.amount) > 1000` does **not** match an amount
+of `1000.5` — choose the threshold with that in mind (use `> 1000` to mean "1001 or more"). Never substitute
+`double()` to dodge the truncation: the Dapr docs, the generated code and `DPS-SUB-012` all expect `int()`,
+and a project that mixes the two routes inconsistently.
 
 ### Python forms
 

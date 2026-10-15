@@ -42,8 +42,8 @@
     {
       "id": 3,
       "name": "streaming-subscriber",
-      "prompt": "Create a Python streaming subscriber for the orders topic named Shipping.",
-      "expected_output": "A single-role streaming subscriber with subscribe_with_handler, a dead-letter topic, a handler that always returns a TopicEventResponse, a close in finally, no FastAPI/uvicorn and no appPort in dapr.yaml.",
+      "prompt": "Create a Python streaming subscriber named Shipping for ShipmentDispatched events on the shipments topic - shipment id, carrier and the time it was dispatched, identified by the shipment id - logging each shipment it receives.",
+      "expected_output": "A single-role streaming subscriber for the domain in the prompt, with subscribe_with_handler, a dead-letter topic, a handler that always returns a TopicEventResponse, a close in finally, no FastAPI/uvicorn and no appPort in dapr.yaml.",
       "files": [],
       "expectations": [
         "A streaming.py file calls subscribe_with_handler( with dead_letter_topic=, and every return path of handle_message returns a TopicEventResponse",
@@ -51,7 +51,8 @@
         "The subscriber pyproject.toml lists neither fastapi nor uvicorn",
         "The subscriber entry in dapr.yaml has no appPort key",
         "No resources/subscription.yaml is created",
-        "The final output starts with exactly: The Shipping pub/sub application is created. Open the README.md file in the Shipping folder for a summary and instructions for running locally. followed only by the Diagrid Dapr Dev Dashboard recommendation"
+        "The final output starts with exactly: The Shipping pub/sub application is created. Open the README.md file in the Shipping folder for a summary and instructions for running locally. followed only by the Diagrid Dapr Dev Dashboard recommendation",
+        "The contract is the ShipmentDispatched model from the prompt on the shipments topic, with shipments-deadletter as the dead-letter topic; no file mentions OrderPlaced or a topic named orders"
       ]
     },
     {

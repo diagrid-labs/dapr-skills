@@ -179,6 +179,7 @@ The pub/sub skills build an application from the domain the user describes. Ever
 - **no sample domain in instructions** — order-processing identifiers (`OrderPlaced`, `OrdersTopic`, `handle_order_event`, …) may appear only after a `## Worked example` heading. Adding one to an instruction means the file has stopped being a template.
 - **placeholders are defined and used** — every placeholder a pub/sub file uses is defined in the vocabulary, and every defined placeholder is used. Project and infrastructure placeholders (`<solution-path>`, `<app-id>`, `<route-prefix>`, …) are exempt via `LOCAL_PLACEHOLDERS`.
 - **templates link the placeholder vocabulary** — a `dapr-shared` pub/sub template that uses placeholders points at `pubsub-placeholders.md`.
+- **pubsub: CEL matches cast with int()** — a routing `match` comparing `event.data.<field>` with a number wraps the field in `int()`. `double()` is rejected too: it fires, but mixing the two routes inconsistently across a project.
 - **evals: manifests are well-formed** — each `evals/<skill>/evals.json` is valid JSON, names its folder, numbers cases from 1, and gives every case the six keys and at least one expectation.
 
 ## Review report counts

@@ -22,6 +22,7 @@ import {
   checkPlaceholderVocabulary,
   checkVocabularyLinks,
   checkEvalManifests,
+  checkCelCasts,
 } from './lib/pubsub-validation.mjs';
 import { checkReportExampleCounts } from './lib/review-validation.mjs';
 
@@ -50,6 +51,7 @@ report('links: references resolve in the repository', checkLinks(skillsDir));
 report('pubsub: no sample domain in instructions', checkNoSampleDomain(skillsDir));
 report('pubsub: placeholders are defined and used', checkPlaceholderVocabulary(skillsDir));
 report('pubsub: templates link the placeholder vocabulary', checkVocabularyLinks(skillsDir));
+report('pubsub: CEL matches cast with int()', checkCelCasts(skillsDir));
 report('reviews: example Found: lines match their findings', checkReportExampleCounts(skillsDir));
 report('evals: manifests are well-formed', checkEvalManifests(evalsDir));
 

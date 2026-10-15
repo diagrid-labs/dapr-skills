@@ -14,6 +14,7 @@ import {
   checkPlaceholderVocabulary,
   checkVocabularyLinks,
   checkEvalManifests,
+  checkCelCasts,
 } from '../lib/pubsub-validation.mjs';
 
 /** Create a temporary folder from { 'relative/path': 'content' }. */
@@ -209,4 +210,40 @@ test('checkEvalManifests reports missing keys, extra keys and empty expectations
 
 test('checkEvalManifests ignores a missing evals folder', () => {
   assert.deepEqual(checkEvalManifests(join(tmpdir(), 'pubsub-validation-no-such-dir')), []);
+});
+
+test('checkCelCasts passes when every numeric match casts with int()', (t) => {
+  const dir = fixture({
+    [VOCABULARY]: vocabulary('MatchExpression'),
+    'dapr-shared/a-pubsub.md': [
+      'pubsub-placeholders.md',
+      '- match: int(event.data.amount) > 1000',
+      '- match: event.data.carrier == "air"',
+      'Prose mentioning event.data.amount without a comparison.',
+    ].join('\n'),
+  });
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  assert.deepEqual(checkCelCasts(dir), []);
+});
+
+test('checkCelCasts reports an uncast numeric comparison', (t) => {
+  const dir = fixture({
+    [VOCABULARY]: vocabulary('MatchExpression'),
+    'dapr-shared/a-pubsub.md': 'pubsub-placeholders.md\n- match: event.data.amount > 1000\n',
+  });
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const failures = checkCelCasts(dir);
+  assert.equal(failures.length, 1);
+  assert.match(failures[0], /numeric match on event\.data without int\(\)/);
+});
+
+test('checkCelCasts reports double() even though it would fire', (t) => {
+  const dir = fixture({
+    [VOCABULARY]: vocabulary('MatchExpression'),
+    'dapr-shared/a-pubsub.md': 'pubsub-placeholders.md\n- match: double(event.data.amount) > 1000.0\n',
+  });
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const failures = checkCelCasts(dir);
+  assert.equal(failures.length, 1);
+  assert.match(failures[0], /double\(event\.data\.\.\.\) — use int\(\)/);
 });
