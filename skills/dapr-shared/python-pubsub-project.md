@@ -1,5 +1,7 @@
 # Python pub/sub project files
 
+Placeholders are resolved from the specification interview; the vocabulary is in [pubsub-placeholders.md](pubsub-placeholders.md).
+
 ## Workspace root pyproject.toml
 
 ```toml

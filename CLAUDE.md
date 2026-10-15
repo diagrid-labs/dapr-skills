@@ -171,3 +171,14 @@ All skills require:
 - Shared content goes in `skills/dapr-shared/`; SKILL.md and REFERENCE.md files reference it as `../dapr-shared/<file>` to avoid duplication. Do not reference files outside the `skills/` folder from skill files — installers copy only the `skills/<name>/` folders.
 - Every folder under `skills/` must contain a `SKILL.md` whose `name` equals the folder name and that has a `description`.
 - Run `node scripts/validate-skills.mjs` (and `node --test "scripts/test/*.test.mjs"` when changing the scripts) before committing skill changes; CI runs both.
+
+## Pub/sub placeholder contract
+
+The pub/sub skills build an application from the domain the user describes. Every template is written against the placeholder vocabulary in `skills/dapr-shared/pubsub-placeholders.md`, and there is no default scenario: when a prompt names no domain, the skill asks. `scripts/validate-skills.mjs` enforces this with four checks (`scripts/lib/pubsub-validation.mjs`, unit-tested in `scripts/test/pubsub-validation.test.mjs`):
+
+- **no sample domain in instructions** — order-processing identifiers (`OrderPlaced`, `OrdersTopic`, `handle_order_event`, …) may appear only after a `## Worked example` heading. Adding one to an instruction means the file has stopped being a template.
+- **placeholders are defined and used** — every placeholder a pub/sub file uses is defined in the vocabulary, and every defined placeholder is used. Project and infrastructure placeholders (`<solution-path>`, `<app-id>`, `<route-prefix>`, …) are exempt via `LOCAL_PLACEHOLDERS`.
+- **templates link the placeholder vocabulary** — a `dapr-shared` pub/sub template that uses placeholders points at `pubsub-placeholders.md`.
+- **evals: manifests are well-formed** — each `evals/<skill>/evals.json` is valid JSON, names its folder, numbers cases from 1, and gives every case the six keys and at least one expectation.
+
+When adding a placeholder, define it in the vocabulary in the same change, or the build fails.

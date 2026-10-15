@@ -4,8 +4,8 @@
     {
       "id": 1,
       "name": "both-declarative",
-      "prompt": "Create a Python pub/sub app named order-flow where one FastAPI service publishes order-placed events and another processes them.",
-      "expected_output": "An order-flow uv workspace with contracts, publisher and subscriber packages, a declarative subscription (default) with a Dapr-free subscriber, a handler that drops invalid messages, a successful uv sync, a README.md and the exact final message plus the Dev Dashboard recommendation.",
+      "prompt": "Create a Python pub/sub app named order-flow. One FastAPI service publishes an OrderPlaced event on the orders topic - order id, customer id, amount and the time it was placed, identified by the order id - and another logs each order it receives.",
+      "expected_output": "An order-flow uv workspace with contracts, publisher and subscriber packages built from the domain in the prompt, a declarative subscription (default) with a Dapr-free subscriber, a handler that drops invalid messages, a successful uv sync, a README.md and the exact final message plus the Dev Dashboard recommendation.",
       "files": [],
       "expectations": [
         "The root pyproject.toml has a [tool.uv.workspace] table with members contracts, publisher and subscriber",
@@ -16,6 +16,7 @@
         "dapr.yaml has appID order-flow-publisher with appPort 8001 and daprHTTPPort 3501, and appID order-flow-subscriber with appPort 8002 and daprHTTPPort 3502",
         "The publisher calls publish_event( with data_content_type=\"application/json\"",
         "The agent ran uv sync --all-packages in the project root and it succeeded",
+        "The agent restated the resolved event, topic, fields and identifying field before creating any file, and no generated file contains an unresolved placeholder such as <EventName>, <TopicName> or <id_field>",
         "The agent ran `diagrid-dev-dashboard --version` once and did not stop, ask or install because of the result",
         "order-flow/README.md has sections for running and trying the app, the Diagrid Dapr Dev Dashboard (link https://github.com/diagridio/dev-dashboard) and running with Catalyst, plus a Switching the message broker paragraph that links https://docs.dapr.io/reference/components-reference/supported-pubsub/ and keeps metadata.name pubsub",
         "The final output starts with exactly: The order-flow pub/sub application is created. Open the README.md file in the order-flow folder for a summary and instructions for running locally. followed only by the matching Diagrid Dapr Dev Dashboard recommendation"
@@ -24,8 +25,8 @@
     {
       "id": 2,
       "name": "programmatic-publisher-ttl-raw",
-      "prompt": "Create a Python pub/sub app named Notifier with a programmatic subscription (dapr-ext-fastapi) and a publisher that sends messages with a 60-second TTL and as raw payload.",
-      "expected_output": "A Notifier workspace with a DaprApp-based programmatic subscriber using a dead-letter topic and raw payload metadata, a publisher with string-valued TTL and rawPayload metadata, and a handler that decodes data_base64.",
+      "prompt": "Create a Python pub/sub app named Notifier with a programmatic subscription (dapr-ext-fastapi). It publishes an AlertRaised event on the alerts topic - alert id, severity and message, identified by the alert id - the subscriber logs each alert, and the publisher sends messages with a 60-second TTL and as raw payload.",
+      "expected_output": "A Notifier workspace with a DaprApp-based programmatic subscriber for the alerts topic using a dead-letter topic and raw payload metadata, a publisher with string-valued TTL and rawPayload metadata, and a handler that decodes data_base64.",
       "files": [],
       "expectations": [
         "The subscriber code contains DaprApp(app) exactly once",
@@ -34,7 +35,8 @@
         "subscriber/handler.py decodes data_base64 (base64.b64decode)",
         "subscriber/pyproject.toml depends on dapr-ext-fastapi==1.18.3",
         "No resources/subscription.yaml is created, and no file contains isRawPayload",
-        "The agent asked no question about the subscription type, because the prompt specified programmatic"
+        "The agent asked no question about the subscription type, because the prompt specified programmatic",
+        "The contract is the AlertRaised model from the prompt on the alerts topic, with alerts-deadletter as the dead-letter topic; no file mentions OrderPlaced or a topic named orders"
       ]
     },
     {
@@ -55,7 +57,7 @@
     {
       "id": 4,
       "name": "edge-programmatic-routing",
-      "prompt": "Create a Python pub/sub subscriber project named OrderRisk, using programmatic subscriptions, that routes orders with an amount over 1000 to a separate handler called `large`, and use Kafka.",
+      "prompt": "Create a Python pub/sub subscriber project named OrderRisk using programmatic subscriptions. It subscribes to OrderPlaced events on the orders topic - order id, customer id and amount, identified by the order id - logs each one, routes orders with an amount over 1000 to a separate handler called `large`, and uses Kafka.",
       "expected_output": "The agent explains that dapr-ext-fastapi cannot route by content and offers a declarative subscription instead (default yes). The project is named OrderRisk (folder OrderRisk, app ids order-risk-*). The result is a declarative subscription.yaml with a CEL rule and a /events/pubsub/orders/large route, and no programmatic subscription for orders.",
       "files": [],
       "expectations": [
@@ -64,6 +66,21 @@
         "The subscriber has a route for /events/pubsub/orders/large and no file contains a DaprApp(...).subscribe registration for the orders topic",
         "resources/subscription.yaml scopes contain order-risk-subscriber, matching the appID order-risk-subscriber in dapr.yaml (the kebab-case form of the project name OrderRisk)",
         "resources/pubsub.yaml is a component of type pubsub.redis, and the README says: You asked for Kafka; this scaffold runs on Redis locally so it works without extra infrastructure, and explains how to switch by replacing the pubsub component file with a pubsub.kafka component"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "no-domain-must-ask",
+      "prompt": "Create a Python pub/sub app named Signals.",
+      "expected_output": "The agent asks what the application publishes before it creates anything: the event and its topic, the message fields and which one identifies a message, and what the subscriber should do with it. It does not invent a domain and does not fall back to an order-processing example.",
+      "files": [],
+      "expectations": [
+        "Before any file or folder is created, the agent asks which event the application publishes and on which topic",
+        "Before any file or folder is created, the agent asks which fields the message carries and which single field uniquely identifies it",
+        "Before any file or folder is created, the agent asks what the subscriber should do when it receives the event",
+        "The transcript shows no mkdir, no uv init and no file write before those domain questions are answered",
+        "The transcript contains none of OrderPlaced, ORDERS_TOPIC, handle_order_event, orders-deadletter or a topic named orders: the prompt names no domain and the skill must not invent one",
+        "The wiring questions (role and subscription type) may still be asked; the project name is not asked again, because the prompt already gives it as Signals"
       ]
     }
   ]

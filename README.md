@@ -18,7 +18,7 @@ This repository contains skill definitions that can be used with Claude Code, Gi
 
 ### Pub/sub skills
 
-- Create skills: `create-pubsub-dotnet`, `create-pubsub-python` — scaffold a Dapr pub/sub publisher and subscriber app (`dapr run`, or Aspire for .NET; Python uses FastAPI). You choose the role and the subscription type (declarative by default, programmatic or streaming).
+- Create skills: `create-pubsub-dotnet`, `create-pubsub-python` — scaffold a Dapr pub/sub publisher and subscriber app (`dapr run`, or Aspire for .NET; Python uses FastAPI) from the event you describe. You choose the role and the subscription type (declarative by default, programmatic or streaming); the skills ask what the app publishes — the event, its topic, its fields and what the subscriber does with it — and never scaffold a built-in sample scenario.
 - Add skills: `add-pubsub-dotnet`, `add-pubsub-python` — add Dapr pub/sub to an **existing** project (ASP.NET Core, or a FastAPI app for Python) after you approve a plan, keeping the subscription type the project already uses.
 - Review skills: `review-pubsub-publishing`, `review-pubsub-subscriptions`, `review-pubsub-components` — audit publishing code, subscriptions and handlers, and pub/sub components and wiring on an existing .NET or Python project.
 
@@ -187,15 +187,19 @@ Invoke a skill by asking your agent in natural language — the example phrases 
 
 | Skill | Example prompt |
 | --- | --- |
-| `create-pubsub-dotnet` | "create a pub/sub app in .NET named ..." |
-| `create-pubsub-python` | "create a pub/sub app in Python named ..." |
+| `create-pubsub-dotnet` | "create a pub/sub app in .NET named ... that publishes a ... event on the ... topic" |
+| `create-pubsub-python` | "create a pub/sub app in Python named ... that publishes a ... event on the ... topic" |
+
+Describe the event, its fields and what the subscriber should do with it. Anything you leave out, the skill asks for — it never falls back to a sample domain. See [Example 13](#example-13-aspire-pubsub-app-with-a-declarative-subscription) and [Example 14](#example-14-python-streaming-subscriber).
 
 ### Add pub/sub to an existing project
 
 | Skill | Example prompt |
 | --- | --- |
-| `add-pubsub-dotnet` | "add pub/sub to my .NET project" |
-| `add-pubsub-python` | "add pub/sub to my FastAPI app" |
+| `add-pubsub-dotnet` | "add pub/sub to my .NET project: publish a ... event when ..." |
+| `add-pubsub-python` | "add pub/sub to my FastAPI app: publish a ... event when ..." |
+
+Both reuse a domain type the project already has when one fits, and ask for the event and its fields when none does.
 
 ### Review pub/sub
 
@@ -333,15 +337,34 @@ Add a Dapr workflow to the OrdersApi project: when an order is placed it should 
 
 ### Example 13: Aspire pub/sub app with a declarative subscription
 
-Create an Aspire pub/sub app named OrderFlow where the subscriber uses a declarative subscription and routes orders over 1000 to a separate handler.
+Create an Aspire pub/sub app named OrderFlow. The publisher publishes an OrderPlaced event on the orders topic. The subscriber uses a declarative subscription, logs each order it receives, and routes orders with an amount over 1000 to a separate handler called `large`.
+
+The OrderPlaced message contains the following fields:
+
+- Order id (identifies the message)
+- Customer id
+- Amount
+- Placed at
 
 ### Example 14: Python streaming subscriber
 
-Create a Python streaming subscriber for the orders topic named shipping.
+Create a Python streaming subscriber named shipping for ShipmentDispatched events on the shipments topic. The subscriber logs each shipment it receives.
+
+The ShipmentDispatched message contains the following fields:
+
+- Shipment id (identifies the message)
+- Carrier
+- Dispatched at
 
 ### Example 15: FastAPI subscriber with content-based routing
 
-Create a Python pub/sub subscriber named risk-check that sends orders with an amount over 1000 to a separate handler.
+Create a Python pub/sub subscriber named risk-check for OrderPlaced events on the orders topic. It logs each order and sends orders with an amount over 1000 to a separate handler called `large`.
+
+The OrderPlaced message contains the following fields:
+
+- Order id (identifies the message)
+- Customer id
+- Amount
 
 ### Example 16: Review pub/sub
 

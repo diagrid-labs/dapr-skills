@@ -1,5 +1,7 @@
 ## DAPR-PUBSUB.md template
 
+Placeholders are resolved from the specification interview; the vocabulary is in [pubsub-placeholders.md](pubsub-placeholders.md).
+
 ```markdown
 # Dapr pub/sub in <ProjectName>
 

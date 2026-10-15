@@ -14,7 +14,9 @@ allowed-tools:
 
 ## Overview
 
-This skill creates a new Dapr pub/sub application in .NET: a publisher, a subscriber or both, sharing one message contract (`OrderPlaced`) and one Redis-backed `pubsub` component. The subscriber uses a declarative (default), programmatic or streaming subscription, and the app runs with `dapr run -f .` or with .NET Aspire.
+This skill creates a new Dapr pub/sub application in .NET: a publisher, a subscriber or both, sharing the message contract the user described and one Redis-backed `pubsub` component. The subscriber uses a declarative (default), programmatic or streaming subscription, and the app runs with `dapr run -f .` or with .NET Aspire.
+
+The application is built from the user's own domain. There is no built-in sample scenario: the event, its fields, its topic and what the subscriber does with it all come from the **Check specification** interview, and every template is filled in from the placeholder vocabulary in [`../dapr-shared/pubsub-placeholders.md`](../dapr-shared/pubsub-placeholders.md).
 
 ## Execution Order
 
@@ -43,25 +45,60 @@ Packages (added during project setup):
 - Optional: the [Diagrid Dapr Dev Dashboard](https://github.com/diagridio/dev-dashboard). The skill only checks whether it is installed; it never installs it and never stops without it.
 
 Concepts (CloudEvents, dead-letter, routing, TTL, raw payload, subscription types): [`../dapr-shared/pubsub-concepts.md`](../dapr-shared/pubsub-concepts.md).
+Placeholder vocabulary used by every template: [`../dapr-shared/pubsub-placeholders.md`](../dapr-shared/pubsub-placeholders.md).
 
 ## Check specification
 
-Infer everything the prompt already says. Ask only what is missing, one question at a time, waiting for each answer:
+**Never build a default scenario.** The application is about the user's domain, and the templates are
+placeholders waiting for it. Infer everything the prompt already says, then ask only what is missing, one
+question at a time, waiting for each answer. If the prompt gives no domain at all, ask for it — do not
+invent one and do not fall back to an order-processing example.
 
-1. "Should this app publish, subscribe, or both? (default: both)"
-2. Only if the role includes a subscriber: "Which subscription type? **declarative** (default — a Subscription YAML file, no Dapr code in the subscriber), **programmatic** (`[Topic]`/`WithTopic` in code) or **streaming** (the app pulls messages; no inbound port)". Inference: "streaming", "no inbound port" or "pull" → streaming; "programmatic", `[Topic]` or `WithTopic` → programmatic; "declarative" or "subscription YAML" → declarative.
-3. "Run it with the Dapr CLI (`dapr run`, default) or with .NET Aspire?"
-4. "Minimal APIs (default) or controllers?" **Skip** this when the subscriber is streaming and the role is `subscriber`.
-5. "What's the name of this project? It is used as the folder and solution name. Don't use any spaces."
+Domain, first:
+
+1. "What is the purpose of this pub/sub application?"
+2. "Which event does it publish, and on which topic?" Accept several if the user describes several; one is
+   the normal case. The topic name is lowercase and hyphenated; the event type is PascalCase.
+3. For each event: "Which fields does the message carry, and which one uniquely identifies it?" The
+   identifying field becomes `<IdProperty>`: the handler deduplicates on it, so there must be exactly one
+   per event. Ask for the type of each field when the name does not make it obvious.
+4. "What should the subscriber do when it receives this event?" If the user wants nothing beyond receiving
+   it, say that the handler will log it and move on; never invent a side effect.
+
+Then the wiring:
+
+5. "Should this app publish, subscribe, or both? (default: both)"
+6. Only if the role includes a subscriber: "Which subscription type? **declarative** (default — a Subscription YAML file, no Dapr code in the subscriber), **programmatic** (`[Topic]`/`WithTopic` in code) or **streaming** (the app pulls messages; no inbound port)". Inference: "streaming", "no inbound port" or "pull" → streaming; "programmatic", `[Topic]` or `WithTopic` → programmatic; "declarative" or "subscription YAML" → declarative.
+7. "Run it with the Dapr CLI (`dapr run`, default) or with .NET Aspire?"
+8. "Minimal APIs (default) or controllers?" **Skip** this when the subscriber is streaming and the role is `subscriber`.
+9. "What's the name of this project? It is used as the folder and solution name. Don't use any spaces."
 
 Feature rules:
 
-- The dead-letter topic (`orders-deadletter`) is on unless the user declines it.
+- The dead-letter topic (`<TopicName>-deadletter`) is on unless the user declines it.
 - Routing (CEL), message TTL and raw payload are added only when the user mentions them. See `REFERENCE.md` → **Routing, TTL and raw payload**.
 - If the user asks for a broker other than Redis (for example Kafka), still scaffold Redis locally and say so in the README; the README explains how to switch.
 - Routing combined with streaming is unsupported. Ask: "Streaming subscriptions cannot route by content. Use a declarative subscription for this topic instead? (default: yes)". On yes, switch the type to declarative.
 
-Names used everywhere: component `pubsub`, topic `orders`, dead-letter topic `orders-deadletter`, contract `OrderPlaced`, constants class `PubSubNames` (`PubSubName`, `OrdersTopic`, `OrdersDeadLetterTopic`). `<root-kebab>` is `<ProjectRoot>` in kebab-case (`OrderFlow` → `orderflow`); app ids are `<root-kebab>-publisher` and `<root-kebab>-subscriber`.
+### Resolving the placeholders
+
+Before creating any file, write out the resolved values and restate them to the user in two or three
+lines, so a wrong reading is caught before it is scaffolded. Resolve them exactly as
+[`../dapr-shared/pubsub-placeholders.md`](../dapr-shared/pubsub-placeholders.md) defines them:
+
+| Placeholder | Resolved from |
+|---|---|
+| `<EventName>`, `<EventFields>`, `<IdProperty>` | questions 2 and 3 |
+| `<eventVar>`, `<EventDescription>` | `<EventName>`, in camelCase and as a lowercase noun phrase |
+| `<TopicName>`, `<DeadLetterTopicName>` | question 2; the dead-letter topic is `<TopicName>-deadletter` |
+| `<TopicConstant>`, `<DeadLetterTopicConstant>`, `<TopicResource>` | PascalCase of `<TopicName>` |
+| `<PublishRoute>`, `<PublishResource>`, `<SubscribeRoute>`, `<DeadLetterRoute>` | `<TopicName>`; the subscribe route is `/events/pubsub/<TopicName>` |
+| `<ValidationCondition>`, `<HandlerBody>` | questions 3 and 4 |
+
+Fixed, never derived from the domain: the component name `pubsub`, the class `PubSubNames`, the
+idempotency store `IProcessedEvents` / `InMemoryProcessedEvents`, and `PublishFeatures`. `<root-kebab>` is
+`<ProjectRoot>` in kebab-case (`ShipTrack` → `shiptrack`); app ids are `<root-kebab>-publisher` and
+`<root-kebab>-subscriber`.
 
 ## Check optional tools
 
@@ -113,9 +150,11 @@ See `REFERENCE.md` → **Folder structures** for the four trees (dapr run both /
 
 ### Files
 
-Each file below comes from a shared file. Copy it, replace the placeholders, and keep the names above.
+Each file below comes from a shared file. Copy it and replace every placeholder with the value resolved in
+**Resolving the placeholders**. A file is never written with a placeholder left in it: after writing each
+one, check it for a stray `<` ... `>` that is not valid C# generics or XML.
 
-**Namespaces.** `<ProjectNamespace>` is `<ProjectRoot>.<Role>` for a web project (`OrderFlow.Publisher`, `OrderFlow.Subscriber`) and `<ProjectRoot>.Contracts` for the classlib. Single role: the contract files keep the project namespace (they live in `Models/` but declare `namespace <ProjectNamespace>;`). Wire them up with global usings in each web project's `.csproj`, not per-file `using` lines (this works for minimal APIs, controllers and Aspire):
+**Namespaces.** `<ProjectNamespace>` is `<ProjectRoot>.<Role>` for a web project (`ShipTrack.Publisher`, `ShipTrack.Subscriber`) and `<ProjectRoot>.Contracts` for the classlib. Single role: the contract files keep the project namespace (they live in `Models/` but declare `namespace <ProjectNamespace>;`). Wire them up with global usings in each web project's `.csproj`, not per-file `using` lines (this works for minimal APIs, controllers and Aspire):
 
 ```xml
 <ItemGroup>
@@ -128,13 +167,13 @@ Each file below comes from a shared file. Copy it, replace the placeholders, and
 - **`resources/pubsub.yaml`** — [`../dapr-shared/dapr-pubsub-redis.md`](../dapr-shared/dapr-pubsub-redis.md) (Aspire: use the version in the wiring file, which has a different host and password).
 - **`resources/resiliency.yaml`** — [`../dapr-shared/dapr-pubsub-resiliency.md`](../dapr-shared/dapr-pubsub-resiliency.md) (dead-letter on).
 - **`resources/subscription.yaml`** (declarative only) — [`../dapr-shared/dapr-pubsub-subscription.md`](../dapr-shared/dapr-pubsub-subscription.md). The `scopes` value MUST be the subscriber app id (`<root-kebab>-subscriber`), identical to the `appID` in `dapr.yaml` or `DaprSidecarOptions.AppId` in the AppHost.
-- **Contracts** (`OrderPlaced`, `PubSubNames`) — [`../dapr-shared/dotnet-pubsub-publisher.md`](../dapr-shared/dotnet-pubsub-publisher.md) → **Message contract**.
-- **Publisher** (`OrderPublisher`, `POST /orders`, minimal API or controller, registration) — [`../dapr-shared/dotnet-pubsub-publisher.md`](../dapr-shared/dotnet-pubsub-publisher.md).
+- **Contracts** (`<EventName>`, `PubSubNames`) — [`../dapr-shared/dotnet-pubsub-publisher.md`](../dapr-shared/dotnet-pubsub-publisher.md) → **Message contract**.
+- **Publisher** (`<EventName>Publisher`, `POST /<PublishRoute>`, minimal API or controller, registration) — [`../dapr-shared/dotnet-pubsub-publisher.md`](../dapr-shared/dotnet-pubsub-publisher.md).
 - **Subscriber**, by type:
   - declarative — [`../dapr-shared/dotnet-pubsub-subscriber-declarative.md`](../dapr-shared/dotnet-pubsub-subscriber-declarative.md). `app.UseCloudEvents()` MUST come before the endpoint mappings; otherwise the typed body binds the CloudEvent envelope and every field is null.
   - programmatic — [`../dapr-shared/dotnet-pubsub-subscriber-programmatic.md`](../dapr-shared/dotnet-pubsub-subscriber-programmatic.md) (also `UseCloudEvents()` first).
   - streaming — [`../dapr-shared/dotnet-pubsub-messaging.md`](../dapr-shared/dotnet-pubsub-messaging.md) → **Streaming subscriber**.
-- **Handler** (`OrderPlacedHandler`, dead-letter handler) — [`../dapr-shared/dotnet-pubsub-handler.md`](../dapr-shared/dotnet-pubsub-handler.md).
+- **Handler** (`<EventName>Handler`, dead-letter handler) — [`../dapr-shared/dotnet-pubsub-handler.md`](../dapr-shared/dotnet-pubsub-handler.md).
 - **`pubsub.http`** — [`../dapr-shared/pubsub-local-http.md`](../dapr-shared/pubsub-local-http.md), using the `launchSettings.json` ports.
 - **`.gitignore`** — [`../dapr-shared/dotnet-gitignore.md`](../dapr-shared/dotnet-gitignore.md).
 - **`Properties/launchSettings.json`** — `dotnet new web` generates this file with random ports and an https profile; replace its profiles with a single `http` profile (omit `launchUrl`) with `applicationUrl` `http://localhost:5110` (publisher) and `http://localhost:5120` (subscriber). The port MUST equal `appPort` in `dapr.yaml`; a streaming-only subscriber has no `appPort`, so its port is only used by `dotnet run`.
@@ -156,7 +195,7 @@ For the `Program.cs` of each type and style, see `REFERENCE.md` → **Program.cs
 Create a README.md inside `<ProjectRoot>` with these sections:
 
 1. Summary of what this folder contains.
-2. Architecture: the roles, the subscription type and why, the technology stack and prerequisites, and a mermaid sequence diagram showing who opens the connection (sidecar pushes to the app for declarative and programmatic; the app pulls over a stream for streaming). **DO NOT suggest running Redis separately; `dapr init` provides it (Aspire: the Valkey container).**
+2. Architecture: what the application does in the user's own domain terms, the roles, the subscription type and why, the technology stack and prerequisites, and a mermaid sequence diagram showing who opens the connection (sidecar pushes to the app for declarative and programmatic; the app pulls over a stream for streaming). **DO NOT suggest running Redis separately; `dapr init` provides it (Aspire: the Valkey container).**
 3. Run and try it: the start command, curl examples for the endpoints in the publisher `Program.cs`, and a link to `pubsub.http`.
 4. How to see the subscriptions: `GET /v1.0/metadata` on the sidecar and the Dev Dashboard's subscriptions view.
 5. Declarative only: the subscription file hot-reloads, so editing `subscription.yaml` needs no restart.

@@ -1,6 +1,6 @@
 # Python programmatic subscriber
 
-A FastAPI app that declares its subscriptions in code with `dapr-ext-fastapi`. The sidecar discovers them by calling `GET /dapr/subscribe` at start-up. It uses `handler.py` from `python-pubsub-handler.md`.
+A FastAPI app that declares its subscriptions in code with `dapr-ext-fastapi`. The sidecar discovers them by calling `GET /dapr/subscribe` at start-up. It uses `handler.py` from `python-pubsub-handler.md`. Resolve every placeholder from the specification interview before copying this file; the vocabulary is in [pubsub-placeholders.md](pubsub-placeholders.md).
 
 ## main.py
 
@@ -11,23 +11,23 @@ import uvicorn
 from dapr.ext.fastapi import DaprApp
 from fastapi import Body, FastAPI
 
-from contracts import ORDERS_DEAD_LETTER_TOPIC, ORDERS_TOPIC, PUBSUB_NAME
-from handler import handle_dead_letter, handle_order_event
+from contracts import <DEAD_LETTER_TOPIC_CONST>, <TOPIC_CONST>, PUBSUB_NAME
+from handler import handle_dead_letter, handle_<event_name>_event
 
 logging.basicConfig(level=logging.INFO)
 app = FastAPI()
 dapr_app = DaprApp(app)
 
 
-@dapr_app.subscribe(pubsub=PUBSUB_NAME, topic=ORDERS_TOPIC,
-                    route="/events/pubsub/orders", dead_letter_topic=ORDERS_DEAD_LETTER_TOPIC)
-def orders(event: dict = Body(...)) -> dict:
-    return {"status": handle_order_event(event)}
+@dapr_app.subscribe(pubsub=PUBSUB_NAME, topic=<TOPIC_CONST>,
+                    route="<subscribe_route>", dead_letter_topic=<DEAD_LETTER_TOPIC_CONST>)
+def <event_name>_events(event: dict = Body(...)) -> dict:
+    return {"status": handle_<event_name>_event(event)}
 
 
-@dapr_app.subscribe(pubsub=PUBSUB_NAME, topic=ORDERS_DEAD_LETTER_TOPIC,
-                    route="/events/pubsub/orders-deadletter")
-def orders_dead_letter(event: dict = Body(...)) -> dict:
+@dapr_app.subscribe(pubsub=PUBSUB_NAME, topic=<DEAD_LETTER_TOPIC_CONST>,
+                    route="<dead_letter_route>")
+def <event_name>_dead_letter(event: dict = Body(...)) -> dict:
     return {"status": handle_dead_letter(event)}
 
 
@@ -35,9 +35,11 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8002)
 ```
 
+With several events, repeat the `@dapr_app.subscribe` pair per topic and keep one `DaprApp`.
+
 ## Raw payload
 
-Add `metadata={"rawPayload": "true"}` to `subscribe(...)`. The handler then receives `data_base64`, which `parse_order` decodes.
+Add `metadata={"rawPayload": "true"}` to `subscribe(...)`. The handler then receives `data_base64`, which `parse_<event_name>` decodes.
 
 ## Routing
 
@@ -59,10 +61,10 @@ from dapr.ext.grpc import App, Rule
 app = App()
 
 
-@app.subscribe(pubsub_name="pubsub", topic="orders",
-               rule=Rule("int(event.data.amount) > 1000", 1),
-               dead_letter_topic="orders-deadletter")
-def large_orders(event: v1.Event) -> TopicEventResponse:
+@app.subscribe(pubsub_name="pubsub", topic="<TopicName>",
+               rule=Rule("<MatchExpression>", 1),
+               dead_letter_topic="<DeadLetterTopicName>")
+def <event_name>_<RuleName>(event: v1.Event) -> TopicEventResponse:
     return TopicEventResponse("success")
 ```
 

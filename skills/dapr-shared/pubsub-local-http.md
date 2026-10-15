@@ -1,30 +1,31 @@
 ## pubsub.http
 
+Resolve every placeholder from the specification interview before writing this file; the vocabulary is in
+[pubsub-placeholders.md](pubsub-placeholders.md). The JSON bodies below must carry the fields of
+`<EventName>` as the interview defined them, with a plausible value for each — `{{$guid}}` for the
+identifier, and values that exercise the handler's validity check on both sides when the domain has one.
+
 ```http
 @publisherHost=http://localhost:<publisher-port>
 @subscriberHost=http://localhost:<subscriber-port>
 @daprHost=http://localhost:<publisher-dapr-http-port>
 
-### Place an order (the publisher publishes OrderPlaced)
+### Publish through the app (the publisher publishes <EventName>)
 POST {{publisherHost}}<publish-route>
 Content-Type: application/json
 
 {
-  "orderId": "{{$guid}}",
-  "customerId": "customer-1",
-  "amount": 1500,
-  "placedAt": "2026-10-13T10:00:00Z"
+  "<idField>": "{{$guid}}",
+  <eventFieldsJson>
 }
 
 ### Publish directly through the Dapr sidecar
-POST {{daprHost}}/v1.0/publish/pubsub/orders
+POST {{daprHost}}/v1.0/publish/pubsub/<TopicName>
 Content-Type: application/json
 
 {
-  "orderId": "{{$guid}}",
-  "customerId": "customer-2",
-  "amount": 10,
-  "placedAt": "2026-10-13T10:00:00Z"
+  "<idField>": "{{$guid}}",
+  <eventFieldsJson>
 }
 
 ### Subscriptions and components loaded by the sidecar (all subscription types)
@@ -34,7 +35,7 @@ GET {{daprHost}}/v1.0/metadata
 GET {{subscriberHost}}/dapr/subscribe
 
 ### Call the subscriber endpoint directly with a CloudEvent (declarative and programmatic only)
-POST {{subscriberHost}}/events/pubsub/orders
+POST {{subscriberHost}}<SubscribeRoute>
 Content-Type: application/cloudevents+json
 
 {
@@ -43,17 +44,18 @@ Content-Type: application/cloudevents+json
   "source": "pubsub-http-test",
   "type": "com.dapr.event.sent",
   "datacontenttype": "application/json",
-  "data": { "orderId": "{{$guid}}", "customerId": "customer-3", "amount": 42, "placedAt": "2026-10-13T10:00:00Z" }
+  "data": { "<idField>": "{{$guid}}", <eventFieldsJson> }
 }
 ```
 
 ## Variants
 
-- Python uses snake_case JSON keys (`order_id`, `customer_id`, `placed_at`) and ports 8001, 8002 and 3501.
+- `<idField>` and `<eventFieldsJson>` are the JSON forms of `<IdProperty>` and the rest of `<EventFields>`. .NET serializes with `JsonSerializerDefaults.Web`, so the keys are camelCase; Python uses the snake_case field names of the Pydantic model and ports 8001, 8002 and 3501.
 - Drop the `/dapr/subscribe` request unless the subscription is programmatic.
 - Drop the last request for streaming, and drop `@subscriberHost` too.
 - Drop requests for a role that is absent.
 - Aspire: drop the sidecar publish request and use the `launchSettings.json` port of each project.
+- With several events, repeat the first two requests per event and point them at that event's route and topic.
 
 ## Key points
 

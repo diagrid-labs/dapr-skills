@@ -17,6 +17,12 @@ import {
   dependencyReport,
   installCommand,
 } from './lib/skills-validation.mjs';
+import {
+  checkNoSampleDomain,
+  checkPlaceholderVocabulary,
+  checkVocabularyLinks,
+  checkEvalManifests,
+} from './lib/pubsub-validation.mjs';
 
 // Pinned on purpose; bump deliberately after checking the CLI's install layout.
 export const SKILLS_CLI = 'skills@1.7.2';
@@ -24,6 +30,7 @@ const AGENTS = ['claude-code', 'codex', 'github-copilot'];
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const skillsDir = join(repoRoot, 'skills');
+const evalsDir = join(repoRoot, 'evals');
 const skipInstall = process.argv.includes('--skip-install');
 
 let failed = false;
@@ -39,6 +46,10 @@ function report(title, failures) {
 
 report('manifests: every skill folder has a valid SKILL.md', checkManifests(skillsDir));
 report('links: references resolve in the repository', checkLinks(skillsDir));
+report('pubsub: no sample domain in instructions', checkNoSampleDomain(skillsDir));
+report('pubsub: placeholders are defined and used', checkPlaceholderVocabulary(skillsDir));
+report('pubsub: templates link the placeholder vocabulary', checkVocabularyLinks(skillsDir));
+report('evals: manifests are well-formed', checkEvalManifests(evalsDir));
 
 if (!skipInstall) {
   const tmp = mkdtempSync(join(tmpdir(), 'skills-install-'));

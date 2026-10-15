@@ -11,6 +11,8 @@ Target detection, including how `scopes` in a Subscription file are resolved to 
 - [`../dapr-shared/review-pubsub-subscriptions-dotnet.md`](../dapr-shared/review-pubsub-subscriptions-dotnet.md)
 - [`../dapr-shared/review-pubsub-subscriptions-python.md`](../dapr-shared/review-pubsub-subscriptions-python.md)
 
+The checklists match structural patterns, not identifiers: reviewed code uses the names of its own domain, so never report a finding because a type, topic or route is named differently from an authoring template. The worked examples below use one concrete domain for readability only.
+
 ## Worked example (declarative .NET)
 
 Given this `resources/subscription.yaml`:

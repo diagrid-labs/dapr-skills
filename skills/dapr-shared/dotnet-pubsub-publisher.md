@@ -1,15 +1,20 @@
 # Publisher (.NET)
 
-Code for publishing `OrderPlaced` events to the `orders` topic with `DaprClient` from `Dapr.AspNetCore` 1.18.10. Replace `<ProjectNamespace>` with the namespace of the project the file lives in.
+Code for publishing `<EventName>` events to the `<TopicName>` topic with `DaprClient` from
+`Dapr.AspNetCore` 1.18.10. Resolve every placeholder from the specification interview before copying
+this file; the vocabulary is in [pubsub-placeholders.md](pubsub-placeholders.md). Replace
+`<ProjectNamespace>` with the namespace of the project the file lives in.
 
 ## Message contract
 
-In a create skill with role `both`, the contract goes in `<ProjectRoot>.Contracts/OrderPlaced.cs` and `<ProjectRoot>.Contracts/PubSubNames.cs`. In every other case it goes in the `Models` folder of the project.
+In a create skill with role `both`, the contract goes in `<ProjectRoot>.Contracts/<EventName>.cs` and
+`<ProjectRoot>.Contracts/PubSubNames.cs`. In every other case it goes in the `Models` folder of the
+project.
 
 ```csharp
 namespace <ProjectNamespace>;
 
-public sealed record OrderPlaced(string OrderId, string CustomerId, decimal Amount, DateTimeOffset PlacedAt);
+public sealed record <EventName>(<EventFields>);
 ```
 
 ```csharp
@@ -18,14 +23,19 @@ namespace <ProjectNamespace>;
 public static class PubSubNames
 {
     public const string PubSubName = "pubsub";
-    public const string OrdersTopic = "orders";
-    public const string OrdersDeadLetterTopic = "orders-deadletter";
+    public const string <TopicConstant> = "<TopicName>";
+    public const string <DeadLetterTopicConstant> = "<DeadLetterTopicName>";
 }
 ```
 
+`<EventFields>` comes from the interview: one positional member per field the user described, with
+`<IdProperty>` among them. Records are serialized by `System.Text.Json`, so every member must be a
+serializable type. When the interview produced several events, add one record per event and one
+`<TopicConstant>`/`<DeadLetterTopicConstant>` pair per topic; keep a single `PubSubNames` class.
+
 When an add skill reuses an existing pub/sub component with another name, `PubSubName` takes that name.
 
-## OrderPublisher
+## <EventName>Publisher
 
 ```csharp
 using Dapr.Client;
@@ -34,12 +44,12 @@ namespace <ProjectNamespace>;
 
 public sealed record PublishFeatures(int? TtlInSeconds = null, bool RawPayload = false);
 
-public sealed class OrderPublisher(DaprClient daprClient, ILogger<OrderPublisher> logger)
+public sealed class <EventName>Publisher(DaprClient daprClient, ILogger<<EventName>Publisher> logger)
 {
-    public Task PublishOrderPlacedAsync(OrderPlaced order, CancellationToken cancellationToken = default) =>
-        PublishOrderPlacedAsync(order, new PublishFeatures(), cancellationToken);
+    public Task Publish<EventName>Async(<EventName> <eventVar>, CancellationToken cancellationToken = default) =>
+        Publish<EventName>Async(<eventVar>, new PublishFeatures(), cancellationToken);
 
-    public async Task PublishOrderPlacedAsync(OrderPlaced order, PublishFeatures features, CancellationToken cancellationToken = default)
+    public async Task Publish<EventName>Async(<EventName> <eventVar>, PublishFeatures features, CancellationToken cancellationToken = default)
     {
         var metadata = new Dictionary<string, string>();
         if (features.TtlInSeconds is { } ttl)
@@ -51,27 +61,30 @@ public sealed class OrderPublisher(DaprClient daprClient, ILogger<OrderPublisher
             metadata["rawPayload"] = "true";
         }
 
-        await daprClient.PublishEventAsync(PubSubNames.PubSubName, PubSubNames.OrdersTopic, order, metadata, cancellationToken);
-        logger.LogInformation("Published order {OrderId} to {Topic}", order.OrderId, PubSubNames.OrdersTopic);
+        await daprClient.PublishEventAsync(PubSubNames.PubSubName, PubSubNames.<TopicConstant>, <eventVar>, metadata, cancellationToken);
+        logger.LogInformation("Published <EventDescription> {<IdProperty>} to {Topic}", <eventVar>.<IdProperty>, PubSubNames.<TopicConstant>);
     }
 }
 ```
+
+With several events, give the class one `Publish<EventName>Async` pair per event and keep one
+`PublishFeatures` record.
 
 ## Publish endpoint (minimal API)
 
 In `Program.cs`, after `var app = builder.Build();`:
 
 ```csharp
-app.MapPost("/orders", async (OrderPlaced order, OrderPublisher publisher, CancellationToken cancellationToken) =>
+app.MapPost("/<PublishRoute>", async (<EventName> <eventVar>, <EventName>Publisher publisher, CancellationToken cancellationToken) =>
 {
     try
     {
-        await publisher.PublishOrderPlacedAsync(order, cancellationToken);
-        return Results.Accepted($"/orders/{order.OrderId}", new { order.OrderId });
+        await publisher.Publish<EventName>Async(<eventVar>, cancellationToken);
+        return Results.Accepted($"/<PublishRoute>/{<eventVar>.<IdProperty>}", new { <eventVar>.<IdProperty> });
     }
     catch (Dapr.DaprException ex)
     {
-        return Results.Problem(title: "Publishing the order failed", detail: ex.Message,
+        return Results.Problem(title: "Publishing the <EventDescription> failed", detail: ex.Message,
             statusCode: StatusCodes.Status503ServiceUnavailable);
     }
 });
@@ -79,7 +92,7 @@ app.MapPost("/orders", async (OrderPlaced order, OrderPublisher publisher, Cance
 
 ## Publish endpoint (controller)
 
-`Controllers/OrdersController.cs`:
+`Controllers/<PublishResource>Controller.cs`:
 
 ```csharp
 using Microsoft.AspNetCore.Mvc;
@@ -87,20 +100,20 @@ using Microsoft.AspNetCore.Mvc;
 namespace <ProjectNamespace>.Controllers;
 
 [ApiController]
-[Route("orders")]
-public sealed class OrdersController(OrderPublisher publisher) : ControllerBase
+[Route("<PublishRoute>")]
+public sealed class <PublishResource>Controller(<EventName>Publisher publisher) : ControllerBase
 {
     [HttpPost]
-    public async Task<IActionResult> PlaceAsync(OrderPlaced order, CancellationToken cancellationToken)
+    public async Task<IActionResult> PostAsync(<EventName> <eventVar>, CancellationToken cancellationToken)
     {
         try
         {
-            await publisher.PublishOrderPlacedAsync(order, cancellationToken);
-            return Accepted($"/orders/{order.OrderId}", new { order.OrderId });
+            await publisher.Publish<EventName>Async(<eventVar>, cancellationToken);
+            return Accepted($"/<PublishRoute>/{<eventVar>.<IdProperty>}", new { <eventVar>.<IdProperty> });
         }
         catch (Dapr.DaprException ex)
         {
-            return Problem(title: "Publishing the order failed", detail: ex.Message,
+            return Problem(title: "Publishing the <EventDescription> failed", detail: ex.Message,
                 statusCode: StatusCodes.Status503ServiceUnavailable);
         }
     }
@@ -109,29 +122,29 @@ public sealed class OrdersController(OrderPublisher publisher) : ControllerBase
 
 ## Registration
 
-- Minimal API: `builder.Services.AddDaprClient();` and `builder.Services.AddSingleton<OrderPublisher>();`.
-- Controllers: `builder.Services.AddControllers().AddDapr();` (this also registers `DaprClient`) and `builder.Services.AddSingleton<OrderPublisher>();`.
+- Minimal API: `builder.Services.AddDaprClient();` and `builder.Services.AddSingleton<<EventName>Publisher>();`.
+- Controllers: `builder.Services.AddControllers().AddDapr();` (this also registers `DaprClient`) and `builder.Services.AddSingleton<<EventName>Publisher>();`.
 - In an add skill, skip `AddDaprClient()` when the project already has `AddDaprClient(` or `.AddDapr(`.
 
 ## Adding to an existing Program.cs or Startup.cs
 
 - `Program.cs`: put the registrations after the last `builder.Services.Add*` line, and the endpoint after the last `app.Map*` line.
 - `Startup.cs`: put the registrations in `ConfigureServices`, and the endpoint inside `app.UseEndpoints(endpoints => { ... })` as `endpoints.MapPost(...)`.
-- In an add skill the route is `/pubsub/orders`. When the user accepts "publish from the existing endpoint", the existing handler gains an `OrderPublisher publisher` parameter and calls `await publisher.PublishOrderPlacedAsync(new OrderPlaced(...), cancellationToken)` after its existing work succeeds. Its existing response stays unchanged.
+- In an add skill the route is `/pubsub/<PublishRoute>`, to keep it clear of the routes the project already serves. When the user accepts "publish from the existing endpoint", the existing handler gains an `<EventName>Publisher publisher` parameter and calls `await publisher.Publish<EventName>Async(new <EventName>(...), cancellationToken)` after its existing work succeeds. Its existing response stays unchanged.
 
 ## Recipe: bulk publish
 
 Not scaffolded. Use it when the user asks for it:
 
 ```csharp
-var response = await daprClient.BulkPublishEventAsync(PubSubNames.PubSubName, PubSubNames.OrdersTopic, orders, cancellationToken: cancellationToken);
+var response = await daprClient.BulkPublishEventAsync(PubSubNames.PubSubName, PubSubNames.<TopicConstant>, <eventVar>s, cancellationToken: cancellationToken);
 if (response.FailedEntries.Count > 0)
 {
     foreach (var failed in response.FailedEntries)
     {
         logger.LogError("Bulk publish failed for entry {EntryId}: {Error}", failed.Entry.EntryId, failed.ErrorMessage);
     }
-    throw new InvalidOperationException($"{response.FailedEntries.Count} orders were not published.");
+    throw new InvalidOperationException($"{response.FailedEntries.Count} <EventDescription> events were not published.");
 }
 ```
 

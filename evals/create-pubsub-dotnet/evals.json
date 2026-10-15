@@ -4,8 +4,8 @@
     {
       "id": 1,
       "name": "both-declarative-dapr-run",
-      "prompt": "Create a .NET pub/sub app named OrderFlow where one service publishes order-placed events and another processes them.",
-      "expected_output": "An OrderFlow folder with a Publisher, a Subscriber and a Contracts project, a declarative subscription (default), resiliency with dead-letter, a dapr.yaml with the .NET ports, a successful dotnet build, a README.md and the exact final message plus the Dev Dashboard recommendation.",
+      "prompt": "Create a .NET pub/sub app named OrderFlow. One service publishes an OrderPlaced event on the orders topic - order id, customer id, amount and the time it was placed, identified by the order id - and another service logs each order it receives.",
+      "expected_output": "An OrderFlow folder with a Publisher, a Subscriber and a Contracts project built from the domain in the prompt, a declarative subscription (default), resiliency with dead-letter, a dapr.yaml with the .NET ports, a successful dotnet build, a README.md and the exact final message plus the Dev Dashboard recommendation.",
       "files": [],
       "expectations": [
         "OrderFlow/OrderFlow.slnx exists and lists the projects OrderFlow.Publisher, OrderFlow.Subscriber and OrderFlow.Contracts",
@@ -19,6 +19,7 @@
         "The appPort values in dapr.yaml equal the ports in applicationUrl of each project's Properties/launchSettings.json",
         "The publisher awaits PublishEventAsync and catches DaprException, mapping it to an HTTP 503 response",
         "Contracts declare the OrderPlaced record and a PubSubNames class with PubSubName, OrdersTopic and OrdersDeadLetterTopic",
+        "The agent restated the resolved event, topic, fields and identifying field before creating any file, and no generated file contains an unresolved placeholder such as <EventName>, <TopicName> or <IdProperty>",
         "The agent ran dotnet build \"OrderFlow.slnx\" (not .sln) and the build succeeded",
         "OrderFlow/README.md has sections for running and trying the app, the Diagrid Dapr Dev Dashboard (link https://github.com/diagridio/dev-dashboard) and running with Catalyst, plus a Switching the message broker paragraph that links https://docs.dapr.io/reference/components-reference/supported-pubsub/ and keeps metadata.name pubsub",
         "The transcript shows the `diagrid-dev-dashboard --version` check was run and the final message carries the matching installed/not-installed Dev Dashboard tip; the agent did not ask about it, did not install it, and did not invoke any check-prereq skill",
@@ -28,7 +29,7 @@
     {
       "id": 2,
       "name": "aspire-controllers-programmatic-routing",
-      "prompt": "Create an Aspire subscriber app named Billing using controllers and programmatic [Topic] subscriptions; orders with an amount over 1000 go to a separate handler.",
+      "prompt": "Create an Aspire subscriber app named Billing using controllers and programmatic [Topic] subscriptions. It subscribes to OrderPlaced events on the orders topic - order id, customer id and amount, identified by the order id - logs each one, and orders with an amount over 1000 go to a separate handler called `large`.",
       "expected_output": "A Billing Aspire solution (Billing.sln) with a controller-based subscriber using [Topic] attributes with a CEL rule routing large orders to /events/pubsub/orders/large, an AppHost that wires the Dapr sidecar with explicit app id billing-subscriber, and no dapr.yaml or subscription.yaml.",
       "files": [],
       "expectations": [
@@ -46,7 +47,7 @@
     {
       "id": 3,
       "name": "streaming-subscriber-only",
-      "prompt": "Create a .NET streaming subscriber for the orders topic named Shipping.",
+      "prompt": "Create a .NET streaming subscriber named Shipping for OrderPlaced events on the orders topic - order id, customer id and amount, identified by the order id - logging each order it receives.",
       "expected_output": "A Shipping project with a single streaming subscriber built on Dapr.Messaging 1.18.10: an ITopicHandler<OrderPlaced> with [DaprTopic] using streaming delivery and a dead-letter topic, no HTTP routing attributes, a dapr.yaml entry without appPort, and a successful build.",
       "files": [],
       "expectations": [
@@ -65,7 +66,7 @@
     {
       "id": 4,
       "name": "edge-streaming-with-routing",
-      "prompt": "Create a .NET streaming subscriber named Fulfilment that routes large orders to a separate handler, using Kafka.",
+      "prompt": "Create a .NET streaming subscriber named Fulfilment for OrderPlaced events on the orders topic - order id, customer id and amount, identified by the order id - that routes orders with an amount over 1000 to a separate handler called `large`, using Kafka.",
       "expected_output": "The agent explains that streaming subscriptions cannot route by content and asks whether to use a declarative subscription instead (default yes). With the default (and the skill's default answers for the remaining questions: minimal APIs, dapr run hosting) it creates a declarative subscription with a CEL rule and a default route, keeps the Redis pubsub component, and the README explains how to switch to Kafka by replacing the component.",
       "files": [],
       "expectations": [
@@ -75,6 +76,21 @@
         "resources/pubsub.yaml is a component of type pubsub.redis (Kafka is not configured as the local component)",
         "The README states how to switch to Kafka by replacing the pubsub component file with a pubsub.kafka component, and says: You asked for Kafka; this scaffold runs on Redis locally so it works without extra infrastructure.",
         "The subscriber Program.cs calls app.UseCloudEvents() before MapPost"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "no-domain-must-ask",
+      "prompt": "Create a .NET pub/sub app named Signals.",
+      "expected_output": "The agent asks what the application publishes before it creates anything: the event and its topic, the message fields and which one identifies a message, and what the subscriber should do with it. It does not invent a domain and does not fall back to an order-processing example.",
+      "files": [],
+      "expectations": [
+        "Before any file or folder is created, the agent asks which event the application publishes and on which topic",
+        "Before any file or folder is created, the agent asks which fields the message carries and which single field uniquely identifies it",
+        "Before any file or folder is created, the agent asks what the subscriber should do when it receives the event",
+        "The transcript shows no mkdir, no dotnet new and no file write before those domain questions are answered",
+        "The transcript contains none of OrderPlaced, OrderPublisher, OrderPlacedHandler, OrdersTopic, orders-deadletter or a topic named orders: the prompt names no domain and the skill must not invent one",
+        "The wiring questions (role, subscription type, dapr run versus Aspire, minimal APIs versus controllers) may still be asked; the project name is not asked again, because the prompt already gives it as Signals"
       ]
     }
   ]

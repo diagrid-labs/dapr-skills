@@ -25,7 +25,7 @@
 | CloudEvents middleware | `Grep` `UseCloudEvents(`. Present but after `UseEndpoints(` (or after a terminal `app.Run(` delegate) → plan item "move `UseCloudEvents()`". |
 | Subscribe wiring | `Grep` `MapSubscribeHandler(`, `AddDaprMessaging(`, `MapDaprMessaging(`. Present → reuse, never duplicate. |
 | Subscribed pairs | Every `(pubsub, topic)` from the markers below. Needed to detect clashes. |
-| Components | `Glob` `**/*.yaml` and `**/*.yml`; files with `type: pubsub.` (name, type, `scopes`) and files with `kind: Resiliency`. Also the folders named in `dapr.yaml` `resourcesPath` and the AppHost `Resources/` folder. A component named `pubsub` that has a `state.*` type → name the new one `orders-pubsub`. |
+| Components | `Glob` `**/*.yaml` and `**/*.yml`; files with `type: pubsub.` (name, type, `scopes`) and files with `kind: Resiliency`. Also the folders named in `dapr.yaml` `resourcesPath` and the AppHost `Resources/` folder. A component named `pubsub` that has a `state.*` type → name the new one `<TopicName>-pubsub`. |
 | Dapr run files | `dapr.yaml` and its apps, with their `appID`, `appPort`, `daprHTTPPort` and `daprGRPCPort` values. |
 | Publish calls | `Grep` `PublishEventAsync(`, `PublishByteEventAsync(`, `IDaprPublishSubscribeClient`. Existing publishing keeps working; reuse its pubsub name. |
 
@@ -78,16 +78,16 @@ A Subscription file whose `scopes` do not include this app-id is not a marker fo
 - <Uncommitted changes found: the edits will mix with them.>
 
 ### Risk
-- <Only when question 2 is Yes and an existing test calls the trigger endpoint over HTTP: `<test file / test names>` call `<POST /orders>` and will need a Dapr sidecar or a test double for the publisher (replace or override the registered `OrderPublisher`). This skill does not edit tests.>
+- <Only when question 2 is Yes and an existing test calls the trigger endpoint over HTTP: `<test file / test names>` call `<trigger endpoint>` and will need a Dapr sidecar or a test double for the publisher (replace or override the registered `<EventName>Publisher`). This skill does not edit tests.>
 
 ### Questions
 1. Newer packages are available: <list>. Update them? **Default: yes, update.**
-2. Should `<POST /orders>` also publish `OrderPlaced` after it saves the <order>? **Default: yes.** <(Default no when the request does not ask to publish from this action and `<TestName>` calls this endpoint over HTTP: it would need a running Dapr sidecar. When the request explicitly asks to publish from a named action or endpoint, the default stays yes and the Risk section above names the test.)>
+2. Should `<trigger endpoint>` also publish `<EventName>` after its existing work succeeds? **Default: yes.** <(Default no when the request does not ask to publish from this action and `<TestName>` calls this endpoint over HTTP: it would need a running Dapr sidecar. When the request explicitly asks to publish from a named action or endpoint, the default stays yes and the Risk section above names the test.)>
 
 Reply **yes** to apply with the defaults, answer a question differently (for example "1: no"), list items to drop, or **stop**.
 ```
 
-Leave out a question that does not apply. Without a trigger endpoint, write instead: No existing endpoint publishes the event; use the new `POST /pubsub/orders` endpoint. For the subscriber-only role, question 2 is never asked.
+Leave out a question that does not apply. Without a trigger endpoint, write instead: No existing endpoint publishes the event; use the new `POST /pubsub/<PublishRoute>` endpoint. For the subscriber-only role, question 2 is never asked.
 
 ## Package reference
 
@@ -103,9 +103,9 @@ Apply the shared-file section in the cell, with the project's style (minimal API
 
 | Type | Program.cs | Startup.cs |
 |---|---|---|
-| Declarative | [`dotnet-pubsub-subscriber-declarative.md`](../dapr-shared/dotnet-pubsub-subscriber-declarative.md) → **Minimal API form** or **Controller form**; `app.UseCloudEvents();` before the first `app.Map*`; plain `MapPost("/events/pubsub/orders", ...)` routes; no `MapSubscribeHandler`, `WithTopic` or `[Topic]`. YAML from [`dapr-pubsub-subscription.md`](../dapr-shared/dapr-pubsub-subscription.md), scoped to the app-id. | Same file → **Startup.cs placement**: `app.UseCloudEvents();` after `UseRouting()` and before `UseEndpoints`; routes via `endpoints.MapPost(...)`. |
+| Declarative | [`dotnet-pubsub-subscriber-declarative.md`](../dapr-shared/dotnet-pubsub-subscriber-declarative.md) → **Minimal API form** or **Controller form**; `app.UseCloudEvents();` before the first `app.Map*`; plain `MapPost("<SubscribeRoute>", ...)` routes; no `MapSubscribeHandler`, `WithTopic` or `[Topic]`. YAML from [`dapr-pubsub-subscription.md`](../dapr-shared/dapr-pubsub-subscription.md), scoped to the app-id. | Same file → **Startup.cs placement**: `app.UseCloudEvents();` after `UseRouting()` and before `UseEndpoints`; routes via `endpoints.MapPost(...)`. |
 | Programmatic | [`dotnet-pubsub-subscriber-programmatic.md`](../dapr-shared/dotnet-pubsub-subscriber-programmatic.md) → **Minimal API form** (`.WithTopic(...)`) or **Controller form** (`[Topic(...)]`); `app.UseCloudEvents(); app.MapSubscribeHandler();` before the first `app.Map*`, each only when missing. No Subscription file. | Same file → **Startup.cs placement**: `UseCloudEvents()` then `endpoints.MapSubscribeHandler()` inside `UseEndpoints`. |
-| Streaming | [`dotnet-pubsub-messaging.md`](../dapr-shared/dotnet-pubsub-messaging.md) → **Streaming subscriber**: `builder.Services.AddDaprMessaging(o => o.DaprGrpcEndpoint = ...)` (exact line in the shared file) plus an `ITopicHandler<OrderPlaced>` class with `[DaprTopic(..., Delivery = DeliveryMode.Streaming)]`. No endpoint mapping, no `Route`/`Match`/`Priority`. Keep the app's existing `appPort`. Publisher role: an `OrderPublisher` injecting `IDaprPublishSubscribeClient` and calling `PublishEventAsync` on it (**Publishing with IDaprPublishSubscribeClient** in the same file), not the `DaprClient`-based publisher file; register `AddDaprMessaging()` only, no `AddDaprClient()`; in a mixed project follow the existing publisher's stack and never register both for the same purpose. Set `options.DaprGrpcEndpoint` from `DAPR_GRPC_PORT` exactly as in the shared file; a bare `AddDaprMessaging()` never opens the stream under `dapr run`. In Aspire mode confirm `DAPR_GRPC_PORT` is available to the app (see the shared file). | Same registration in `ConfigureServices`; nothing in `Configure`. |
+| Streaming | [`dotnet-pubsub-messaging.md`](../dapr-shared/dotnet-pubsub-messaging.md) → **Streaming subscriber**: `builder.Services.AddDaprMessaging(o => o.DaprGrpcEndpoint = ...)` (exact line in the shared file) plus an `ITopicHandler<<EventName>>` class with `[DaprTopic(..., Delivery = DeliveryMode.Streaming)]`. No endpoint mapping, no `Route`/`Match`/`Priority`. Keep the app's existing `appPort`. Publisher role: an `<EventName>Publisher` injecting `IDaprPublishSubscribeClient` and calling `PublishEventAsync` on it (**Publishing with IDaprPublishSubscribeClient** in the same file), not the `DaprClient`-based publisher file; register `AddDaprMessaging()` only, no `AddDaprClient()`; in a mixed project follow the existing publisher's stack and never register both for the same purpose. Set `options.DaprGrpcEndpoint` from `DAPR_GRPC_PORT` exactly as in the shared file; a bare `AddDaprMessaging()` never opens the stream under `dapr run`. In Aspire mode confirm `DAPR_GRPC_PORT` is available to the app (see the shared file). | Same registration in `ConfigureServices`; nothing in `Configure`. |
 
 Publisher registration for all types: [`dotnet-pubsub-publisher.md`](../dapr-shared/dotnet-pubsub-publisher.md) → **Registration** and **Adding to an existing Program.cs or Startup.cs**.
 
@@ -127,7 +127,7 @@ Verbatim from the design (§9):
 | Unsupported TFM (below net8.0, .NET Framework, or a multi-target list containing one) | Stop before planning. No changes. |
 | Several candidate projects | Ask which one. |
 | Existing pubsub component (any `pubsub.*`) | Reuse it, and use its name in `PubSubNames.PubSubName`. If there are several, ask. |
-| Component named `pubsub` that is a `state.*` type | Name the new component `orders-pubsub`, and say so in the plan. |
+| Component named `pubsub` that is a `state.*` type | Name the new component `<TopicName>-pubsub`, and say so in the plan. |
 | Existing `DaprClient` registration (`AddDaprClient(` or `.AddDapr(`) | Reuse it. |
 | Existing `UseCloudEvents()` after `UseEndpoints` | Plan item to move it (fixes `DPS-SUB-003`). |
 | Existing `MapSubscribeHandler()` or `AddDaprMessaging()` | Reuse it; never duplicate. |
@@ -139,15 +139,15 @@ Verbatim from the design (§9):
 | App-id or port already used | Use the next free value, and state it in the plan. |
 | Existing `dapr.yaml` / resiliency file | Append to it; never replace it. |
 | Older `Dapr.*` packages | Question 1. If declined, add a "Mixed `Dapr.*` versions" warning to `DAPR-PUBSUB.md`. |
-| Trigger endpoint covered by an HTTP test | When the request explicitly asks to publish from a named action or endpoint ("when an order is created/placed", "from POST /orders"), question 2 defaults to **yes** and the plan carries a **Risk** line naming the test file(s)/test(s), saying they will need a Dapr sidecar or a test double for the publisher (replace or override the registered `OrderPublisher`) and that the skill does not edit tests. When the request does not mention publishing from an existing action, question 2 defaults to no. If declined, leave it unchanged and add "Publish from `<endpoint>`" to Next steps in `DAPR-PUBSUB.md`. |
+| Trigger endpoint covered by an HTTP test | When the request explicitly asks to publish from a named action or endpoint (for example "when an order is created", "from POST /orders"), question 2 defaults to **yes** and the plan carries a **Risk** line naming the test file(s)/test(s), saying they will need a Dapr sidecar or a test double for the publisher (replace or override the registered `<EventName>Publisher`) and that the skill does not edit tests. When the request does not mention publishing from an existing action, question 2 defaults to no. If declined, leave it unchanged and add "Publish from `<endpoint>`" to Next steps in `DAPR-PUBSUB.md`. |
 | Build fails after a step | Fix or undo that step, report it, and stop. |
-| Tests fail at the end | Report them; never edit tests. If the baseline passed and a test that calls the changed endpoint now fails because of the publish call (timeout or connection to the sidecar, e.g. `DaprException`), report it as an expected consequence of the approved Risk line and name the one-line fix (a test double: replace or override the registered `OrderPublisher`); unrelated failures are regressions. |
+| Tests fail at the end | Report them; never edit tests. If the baseline passed and a test that calls the changed endpoint now fails because of the publish call (timeout or connection to the sidecar, e.g. `DaprException`), report it as an expected consequence of the approved Risk line and name the one-line fix (a test double: replace or override the registered `<EventName>Publisher`); unrelated failures are regressions. |
 | Long Windows paths (`path longer than allowed`, `os error 206`) | Report them, and suggest a shorter path or long-path support. Never use `subst`. |
 | Aspire AppHost older than 9.5, or an existing Redis/Valkey resource | As in `## Pub/sub apps` and `## Adding to an existing AppHost` of [`../dapr-shared/dotnet-aspire-dapr-wiring.md`](../dapr-shared/dotnet-aspire-dapr-wiring.md). |
 
 ## Requests file
 
-Follow [`../dapr-shared/pubsub-local-http.md`](../dapr-shared/pubsub-local-http.md). In an add skill the publish route is `/pubsub/orders`, or the existing trigger endpoint when question 2 was answered yes. Use the project's real ports (`launchSettings.json`, `dapr.yaml`).
+Follow [`../dapr-shared/pubsub-local-http.md`](../dapr-shared/pubsub-local-http.md). In an add skill the publish route is `/pubsub/<PublishRoute>`, or the existing trigger endpoint when question 2 was answered yes. Use the project's real ports (`launchSettings.json`, `dapr.yaml`).
 
 ## DAPR-PUBSUB.md
 

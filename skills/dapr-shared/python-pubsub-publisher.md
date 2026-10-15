@@ -1,6 +1,6 @@
 # Python pub/sub publisher
 
-A FastAPI publisher that accepts an `OrderPlaced` and publishes it to the `orders` topic through the Dapr sidecar.
+A FastAPI publisher that accepts an `<EventName>` and publishes it to the `<TopicName>` topic through the Dapr sidecar. Resolve every placeholder from the specification interview before copying this file; the vocabulary is in [pubsub-placeholders.md](pubsub-placeholders.md).
 
 ## Contracts
 
@@ -12,16 +12,19 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 PUBSUB_NAME = "pubsub"
-ORDERS_TOPIC = "orders"
-ORDERS_DEAD_LETTER_TOPIC = "orders-deadletter"
+<TOPIC_CONST> = "<TopicName>"
+<DEAD_LETTER_TOPIC_CONST> = "<DeadLetterTopicName>"
 
 
-class OrderPlaced(BaseModel):
-    order_id: str = Field(min_length=1)
-    customer_id: str
-    amount: float = Field(gt=0)
-    placed_at: datetime
+class <EventName>(BaseModel):
+    <event_fields>
 ```
+
+`<event_fields>` comes from the interview: one annotated attribute per field the user described, with
+`<id_field>` among them. Add the `Field` constraints the domain implies (`Field(min_length=1)` on the
+identifier, `Field(gt=0)` on a quantity that must be positive) so invalid messages fail validation in the
+handler instead of reaching the business logic. When the interview produced several events, add one model
+per event and one `<TOPIC_CONST>`/`<DEAD_LETTER_TOPIC_CONST>` pair per topic.
 
 ## Publish endpoint
 
@@ -31,32 +34,32 @@ from dapr.clients import DaprClient
 from dapr.clients.exceptions import DaprGrpcError
 from fastapi import FastAPI, HTTPException
 
-from contracts import ORDERS_TOPIC, PUBSUB_NAME, OrderPlaced
+from contracts import <TOPIC_CONST>, PUBSUB_NAME, <EventName>
 
 app = FastAPI()
 
 
-@app.post("/orders", status_code=202)
-def place_order(order: OrderPlaced) -> dict:
+@app.post("/<publish_route>", status_code=202)
+def publish_<event_name>(<event_name>: <EventName>) -> dict:
     try:
         with DaprClient() as client:
             client.publish_event(
                 pubsub_name=PUBSUB_NAME,
-                topic_name=ORDERS_TOPIC,
-                data=order.model_dump_json(),
+                topic_name=<TOPIC_CONST>,
+                data=<event_name>.model_dump_json(),
                 data_content_type="application/json",
             )
     except (DaprGrpcError, TimeoutError) as err:
         detail = err.details() if isinstance(err, DaprGrpcError) else err
-        raise HTTPException(status_code=503, detail=f"Publishing the order failed: {detail}") from err
-    return {"order_id": order.order_id}
+        raise HTTPException(status_code=503, detail=f"Publishing the <EventDescription> failed: {detail}") from err
+    return {"<id_field>": <event_name>.<id_field>}
 
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8001)
 ```
 
-A single service uses `from models import ...`. In an add skill the route is `/pubsub/orders`.
+A single service uses `from models import ...`. In an add skill the route is `/pubsub/<publish_route>`.
 
 `TimeoutError` is what the SDK raises when no sidecar is reachable: it waits for the sidecar health check and then times out; it does not raise `DaprGrpcError`. Set the `DAPR_HEALTH_TIMEOUT` environment variable (seconds) to shorten that wait.
 
@@ -67,8 +70,8 @@ Add message metadata with `publish_metadata`. Values are **strings**.
 ```python
 client.publish_event(
     pubsub_name=PUBSUB_NAME,
-    topic_name=ORDERS_TOPIC,
-    data=order.model_dump_json(),
+    topic_name=<TOPIC_CONST>,
+    data=<event_name>.model_dump_json(),
     data_content_type="application/json",
     publish_metadata={"ttlInSeconds": "60"},
 )
@@ -86,17 +89,17 @@ from dapr.aio.clients import DaprClient
 async with DaprClient() as client:
     await client.publish_event(
         pubsub_name=PUBSUB_NAME,
-        topic_name=ORDERS_TOPIC,
-        data=order.model_dump_json(),
+        topic_name=<TOPIC_CONST>,
+        data=<event_name>.model_dump_json(),
         data_content_type="application/json",
     )
 ```
 
 ## Adding to an existing FastAPI app
 
-Add the route to the module that creates `FastAPI()`, with the path `/pubsub/orders` so it does not collide with existing routes. Import `OrderPlaced` and the constants from `models.py` (or from `contracts`). Reuse an existing `DaprClient` if the app already has one.
+Add the route to the module that creates `FastAPI()`, with the path `/pubsub/<publish_route>` so it does not collide with existing routes. Import `<EventName>` and the constants from `models.py` (or from `contracts`). Reuse an existing `DaprClient` if the app already has one.
 
-When an existing endpoint (for example `POST /orders`) also publishes, inject the publisher through a FastAPI dependency so tests can replace it with `app.dependency_overrides[get_order_publisher]`. Never call a module-level publish function directly from the endpoint, because `dependency_overrides` cannot replace that.
+When an existing endpoint also publishes, inject the publisher through a FastAPI dependency so tests can replace it with `app.dependency_overrides[get_<event_name>_publisher]`. Never call a module-level publish function directly from the endpoint, because `dependency_overrides` cannot replace that.
 
 ```python
 from collections.abc import Callable
@@ -104,31 +107,31 @@ from collections.abc import Callable
 from fastapi import Depends
 
 
-def publish_order_placed(order: OrderPlaced) -> None:
+def publish_<event_name>(<event_name>: <EventName>) -> None:
     try:
         with DaprClient() as client:
             client.publish_event(
                 pubsub_name=PUBSUB_NAME,
-                topic_name=ORDERS_TOPIC,
-                data=order.model_dump_json(),
+                topic_name=<TOPIC_CONST>,
+                data=<event_name>.model_dump_json(),
                 data_content_type="application/json",
             )
     except (DaprGrpcError, TimeoutError) as err:
         detail = err.details() if isinstance(err, DaprGrpcError) else err
-        raise HTTPException(status_code=503, detail=f"Publishing the order failed: {detail}") from err
+        raise HTTPException(status_code=503, detail=f"Publishing the <EventDescription> failed: {detail}") from err
 
 
-def get_order_publisher() -> Callable[[OrderPlaced], None]:
-    return publish_order_placed
+def get_<event_name>_publisher() -> Callable[[<EventName>], None]:
+    return publish_<event_name>
 
 
 # existing endpoint: add only the parameter and the call after its existing work
-def create_order(..., publisher: Callable[[OrderPlaced], None] = Depends(get_order_publisher)):
+def <existing_endpoint>(..., publisher: Callable[[<EventName>], None] = Depends(get_<event_name>_publisher)):
     ...
-    publisher(OrderPlaced(...))
+    publisher(<EventName>(...))
 ```
 
-In a test: `app.dependency_overrides[get_order_publisher] = lambda: (lambda order: None)`.
+In a test: `app.dependency_overrides[get_<event_name>_publisher] = lambda: (lambda <event_name>: None)`.
 
 ## Recipe: bulk publish
 
@@ -136,12 +139,12 @@ In a test: `app.dependency_overrides[get_order_publisher] = lambda: (lambda orde
 with DaprClient() as client:
     resp = client.publish_events(
         pubsub_name=PUBSUB_NAME,
-        topic_name=ORDERS_TOPIC,
-        data=[o.model_dump_json() for o in orders],
+        topic_name=<TOPIC_CONST>,
+        data=[e.model_dump_json() for e in <event_name>s],
         data_content_type="application/json",
     )
     if resp.failed_entries:
-        raise HTTPException(status_code=502, detail=f"{len(resp.failed_entries)} orders were not published")
+        raise HTTPException(status_code=502, detail=f"{len(resp.failed_entries)} messages were not published")
 ```
 
 Check `resp.failed_entries`: a bulk publish can succeed partially.

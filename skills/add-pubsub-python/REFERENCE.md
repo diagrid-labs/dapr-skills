@@ -29,7 +29,7 @@
 **Target:** `<module path>` (Python <version>, <uv | pip + requirements.txt | pip + pyproject>)
 **Role:** <publisher | subscriber | both>
 **Subscription type:** <declarative | programmatic | streaming> — <default | follows existing `DaprApp` subscriptions | follows existing `resources/subscription.yaml` | follows existing `subscribe_with_handler` | requested>
-**Topics:** <pubsub>/<topic> (<OrderPlaced | existing model>), dead-letter `<topic>-deadletter`
+**Topics:** <pubsub>/<topic> (`<EventName>`, new or an existing model), dead-letter `<topic>-deadletter`
 
 ### Packages
 - `dapr==<v>` → <pyproject.toml | requirements.txt> (publisher, programmatic, streaming)
@@ -62,11 +62,11 @@
 - <Uncommitted changes found: the edits will mix with them.>
 
 ### Risk
-- <Only when question 2 is Yes and an existing test calls the trigger endpoint over HTTP: `<test file / test names>` call `<POST /orders>` and will need a Dapr sidecar or a test double for the publisher via `app.dependency_overrides[get_order_publisher]`; without a sidecar run them with `DAPR_HEALTH_TIMEOUT=2` (seconds) so they fail in seconds instead of waiting 60 s per call. This skill does not edit tests.>
+- <Only when question 2 is Yes and an existing test calls the trigger endpoint over HTTP: `<test file / test names>` call `<trigger endpoint>` and will need a Dapr sidecar or a test double for the publisher via `app.dependency_overrides[get_<event_name>_publisher]`; without a sidecar run them with `DAPR_HEALTH_TIMEOUT=2` (seconds) so they fail in seconds instead of waiting 60 s per call. This skill does not edit tests.>
 
 ### Questions
 1. Newer packages are available: <dapr 1.18.0 → 1.18.3, dapr-ext-fastapi 1.18.0 → 1.18.3>. Update them? **Default: yes, update.**
-2. Should `<POST /orders>` also publish `<OrderPlaced>` after it saves the <order>? **Default: yes.** <(Default no when the request does not ask to publish from this action and `<test name>` calls this endpoint over HTTP: it would need a running Dapr sidecar. When the request explicitly asks to publish from a named action or endpoint, the default stays yes and the Risk section above names the test.)>
+2. Should `<trigger endpoint>` also publish `<EventName>` after its existing work succeeds? **Default: yes.** <(Default no when the request does not ask to publish from this action and `<test name>` calls this endpoint over HTTP: it would need a running Dapr sidecar. When the request explicitly asks to publish from a named action or endpoint, the default stays yes and the Risk section above names the test.)>
 
 <Leave out a question that does not apply. Without a trigger endpoint, write instead: No existing endpoint publishes; use the new publish endpoint.>
 
@@ -131,12 +131,12 @@ Use [`../dapr-shared/pubsub-run-doc.md`](../dapr-shared/pubsub-run-doc.md) with 
 - Several FastAPI modules: ask which one.
 - Declarative subscriber: `appPort` must exist in `dapr.yaml`; add it when missing and say so in the plan.
 - Older `dapr*` packages and question 1 answered no: keep the new package at 1.18.3 and add a "Mixed `dapr*` versions" warning to `DAPR-PUBSUB.md`.
-- Trigger endpoint covered by an HTTP test: when the request explicitly asks to publish from a named action or endpoint ("when an order is created/placed", "from POST /orders"), question 2 defaults to **yes** and the plan carries a **Risk** line naming the test file(s)/test(s), saying they will need a Dapr sidecar or a test double for the publisher (`app.dependency_overrides`) and that the skill does not edit tests. When the request does not mention publishing from an existing action, question 2 defaults to no. When declined, leave the endpoint unchanged and add "Publish from `<endpoint>`" to Next steps in `DAPR-PUBSUB.md`.
+- Trigger endpoint covered by an HTTP test: when the request explicitly asks to publish from a named action or endpoint (for example "when an order is created", "from POST /orders"), question 2 defaults to **yes** and the plan carries a **Risk** line naming the test file(s)/test(s), saying they will need a Dapr sidecar or a test double for the publisher (`app.dependency_overrides`) and that the skill does not edit tests. When the request does not mention publishing from an existing action, question 2 defaults to no. When declined, leave the endpoint unchanged and add "Publish from `<endpoint>`" to Next steps in `DAPR-PUBSUB.md`.
 - No sidecar at publish time: `publish_event` raises `TimeoutError` after the health-check wait (not `DaprGrpcError`); the publisher template maps both to 503. `DAPR_HEALTH_TIMEOUT` shortens the wait. Do not "fix" this in the app's existing error handling.
 - A `HotReload: false` Configuration: tell the run doc that declarative changes need a restart.
 - No venv for pip projects: ask for the interpreter path; never create a venv on your own.
 - Import check fails after a step: fix or undo that step, report it and stop.
-- Tests fail at the end: report them; never edit tests. If the baseline passed and a test that calls the changed endpoint now fails because of the publish call (`publish_event` `TimeoutError`), report it as an expected consequence of the approved Risk line and name the one-line fix (`app.dependency_overrides[get_order_publisher] = ...`) and the quick-failure env var `DAPR_HEALTH_TIMEOUT=2`; unrelated failures are regressions. Failures that also failed in the baseline are reported as pre-existing.
+- Tests fail at the end: report them; never edit tests. If the baseline passed and a test that calls the changed endpoint now fails because of the publish call (`publish_event` `TimeoutError`), report it as an expected consequence of the approved Risk line and name the one-line fix (`app.dependency_overrides[get_<event_name>_publisher] = ...`) and the quick-failure env var `DAPR_HEALTH_TIMEOUT=2`; unrelated failures are regressions. Failures that also failed in the baseline are reported as pre-existing.
 - Long Windows paths (`path longer than allowed`, `os error 206`): report and suggest a shorter path or long-path support. Never use `subst`.
 - Edits keep the existing line endings of each file.
 

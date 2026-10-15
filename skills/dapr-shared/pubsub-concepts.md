@@ -6,7 +6,7 @@ Background note for the create, add and review pub/sub skills (`create-pubsub-*`
 
 - Dapr pub/sub delivers each message **at least once**.
 - Dapr does not deduplicate. A message can arrive twice after a retry, a restart, or a broker redelivery.
-- Subscribers must be idempotent. Deduplicate on the CloudEvent `id` (together with `source`), or on a business key such as `OrderId`.
+- Subscribers must be idempotent. Deduplicate on the CloudEvent `id` (together with `source`), or on the business key the message carries (`<IdProperty>`).
 - A publisher that retries creates a second message with a new CloudEvent `id`, so the business key is the only reliable dedupe key.
 
 Source: developing-applications/building-blocks/pubsub/pubsub-overview.md; developing-applications/building-blocks/pubsub/pubsub-cloudevents.md
@@ -15,7 +15,7 @@ Source: developing-applications/building-blocks/pubsub/pubsub-overview.md; devel
 
 - Dapr wraps every published payload in a CloudEvent. The fields Dapr sets are `id`, `source`, `specversion`, `type`, `traceparent`, `traceid`, `tracestate`, `topic`, `pubsubname`, `time` and `datacontenttype`.
 - HTTP delivery to the app uses `Content-Type: application/cloudevents+json`, for every subscription type that pushes over HTTP.
-- .NET: `app.UseCloudEvents()` replaces the request body with the envelope's `data`, so a plain endpoint can bind `OrderPlaced`. Without it, a typed endpoint binds the envelope and every field is null or default.
+- .NET: `app.UseCloudEvents()` replaces the request body with the envelope's `data`, so a plain endpoint can bind `<EventName>`. Without it, a typed endpoint binds the envelope and every field is null or default.
 - Python: FastAPI parses the `+json` body. A plain route taking `event: dict = Body(...)` receives the whole envelope, and the handler reads `event["data"]`.
 - Never override the `cloudevent.trace*` metadata keys on publish. They carry the trace context.
 
@@ -51,7 +51,7 @@ Source: reference/api/pubsub_api.md; developing-applications/building-blocks/pub
 - The dead-letter topic needs its own subscription (and its own route for HTTP delivery), otherwise the dead-lettered messages are never read.
 - The runtime docs do not say that DROP dead-letters. **Verified at runtime** (.NET HTTP and Python streaming): a DROP response is not redelivered, but when a dead-letter topic is configured the message is also forwarded to it; without a dead-letter topic it is discarded. Never describe DROP as silently discarded when a dead-letter topic exists.
 - A payload that cannot be parsed by the sidecar (for example a malformed raw payload) is sent to the dead-letter topic if one is set, and never reaches the app.
-- .NET streaming (`Dapr.Messaging`): the body is deserialized in generated code before the handler runs. A body that cannot be deserialized to the message type faults the stream and is redelivered after each reconnect, so one poison message delays the later ones. The handler can only Drop semantically invalid orders (empty `OrderId`, amount <= 0); it cannot Drop malformed JSON. Keep the contract lenient (nullable members) and rely on the sidecar's retry and dead-letter policy.
+- .NET streaming (`Dapr.Messaging`): the body is deserialized in generated code before the handler runs. A body that cannot be deserialized to the message type faults the stream and is redelivered after each reconnect, so one poison message delays the later ones. The handler can only Drop messages that are well-formed JSON but semantically invalid (a missing `<IdProperty>`, a quantity that must be positive); it cannot Drop malformed JSON. Keep the contract lenient (nullable members) and rely on the sidecar's retry and dead-letter policy.
 
 > Not verified at runtime: the Python scenarios ran on the in-memory pub/sub component, not Redis (consumer groups, redelivery timing after a restart, exact retry timing).
 

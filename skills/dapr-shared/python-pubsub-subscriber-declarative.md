@@ -1,6 +1,6 @@
 # Python declarative subscriber
 
-A plain FastAPI app. The subscription is declared in `resources/subscription.yaml`; the app has no Dapr dependency. It uses `handler.py` from `python-pubsub-handler.md`.
+A plain FastAPI app. The subscription is declared in `resources/subscription.yaml`; the app has no Dapr dependency. It uses `handler.py` from `python-pubsub-handler.md`. Resolve every placeholder from the specification interview before copying this file; the vocabulary is in [pubsub-placeholders.md](pubsub-placeholders.md).
 
 ## main.py
 
@@ -10,19 +10,19 @@ import logging
 import uvicorn
 from fastapi import Body, FastAPI
 
-from handler import handle_dead_letter, handle_order_event
+from handler import handle_dead_letter, handle_<event_name>_event
 
 logging.basicConfig(level=logging.INFO)
 app = FastAPI()
 
 
-@app.post("/events/pubsub/orders")
-def orders(event: dict = Body(...)) -> dict:
-    return {"status": handle_order_event(event)}
+@app.post("<subscribe_route>")
+def <event_name>_events(event: dict = Body(...)) -> dict:
+    return {"status": handle_<event_name>_event(event)}
 
 
-@app.post("/events/pubsub/orders-deadletter")
-def orders_dead_letter(event: dict = Body(...)) -> dict:
+@app.post("<dead_letter_route>")
+def <event_name>_dead_letter(event: dict = Body(...)) -> dict:
     return {"status": handle_dead_letter(event)}
 
 
@@ -30,14 +30,16 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8002)
 ```
 
+With several events, add one route and one handler import per event, and one `Subscription` block per topic.
+
 ## Routing rules
 
-For content-based routing, add one route per rule that calls the same handler:
+Only when the user asks for content-based routing. Add one route per rule that calls the same handler. `<RuleName>` is a short lowercase name for the case the rule selects and `<MatchExpression>` is the CEL expression over `event.data`, both taken from what the user described.
 
 ```python
-@app.post("/events/pubsub/orders/large")
-def orders_large(event: dict = Body(...)) -> dict:
-    return {"status": handle_order_event(event)}
+@app.post("<subscribe_route>/<RuleName>")
+def <event_name>_<RuleName>(event: dict = Body(...)) -> dict:
+    return {"status": handle_<event_name>_event(event)}
 ```
 
 and add a `rules` block to the `routes` section of the Subscription YAML. Rules are evaluated in order; `default` receives everything that matched no rule.
@@ -45,9 +47,9 @@ and add a `rules` block to the `routes` section of the Subscription YAML. Rules 
 ```yaml
 routes:
   rules:
-    - match: int(event.data.amount) > 1000
-      path: /events/pubsub/orders/large
-  default: /events/pubsub/orders
+    - match: <MatchExpression>
+      path: <subscribe_route>/<RuleName>
+  default: <subscribe_route>
 ```
 
 ## Raw payload
@@ -59,7 +61,7 @@ metadata:
   rawPayload: "true"
 ```
 
-The handler then receives the envelope with `data_base64` (and no `data`); `parse_order` in `handler.py` decodes it. Publish with `publish_metadata={"rawPayload": "true"}` to match.
+The handler then receives the envelope with `data_base64` (and no `data`); `parse_<event_name>` in `handler.py` decodes it. Publish with `publish_metadata={"rawPayload": "true"}` to match.
 
 ## Adding to an existing FastAPI app
 

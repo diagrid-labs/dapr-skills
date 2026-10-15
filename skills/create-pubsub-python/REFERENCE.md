@@ -1,6 +1,6 @@
 # Create Dapr Pub/Sub Python Application — Reference
 
-All code and YAML lives in [`../dapr-shared/`](../dapr-shared/SKILL.md); this file says which section to copy for each case and shows the resulting layouts.
+All code and YAML lives in [`../dapr-shared/`](../dapr-shared/SKILL.md); this file says which section to copy for each case and shows the resulting layouts. File and type names below are placeholders resolved from the specification interview; the vocabulary is in [`pubsub-placeholders.md`](../dapr-shared/pubsub-placeholders.md).
 
 ## Folder structures
 
@@ -19,7 +19,7 @@ Role both, declarative subscriber:
 │   └── subscription.yaml
 ├── contracts/
 │   ├── pyproject.toml
-│   └── contracts/__init__.py   # OrderPlaced, PUBSUB_NAME, ORDERS_TOPIC, ORDERS_DEAD_LETTER_TOPIC
+│   └── contracts/__init__.py   # <EventName>, PUBSUB_NAME, <TOPIC_CONST>, <DEAD_LETTER_TOPIC_CONST>
 ├── publisher/
 │   ├── pyproject.toml
 │   └── main.py
@@ -65,7 +65,7 @@ Single role (publisher or subscriber only): one service folder, no workspace and
 │   └── subscription.yaml       # subscriber, declarative only
 └── <service>/                  # publisher or subscriber
     ├── pyproject.toml          # single-service form
-    ├── models.py               # OrderPlaced and constants; imports use `from models import ...`
+    ├── models.py               # <EventName> and constants; imports use `from models import ...`
     └── main.py                 # plus handler.py or streaming.py for a subscriber
 ```
 
@@ -96,7 +96,7 @@ Add these only when the user asks for them. The dead-letter topic and the inboun
 
 | Feature | Declarative | Programmatic | Streaming |
 |---|---|---|---|
-| Content-based routing | `dapr-pubsub-subscription.md` → **With routing rules**, plus one route per rule from `python-pubsub-subscriber-declarative.md` → **Routing rules** (`/events/pubsub/orders/<rule-name>`, for example `/events/pubsub/orders/large`) | Not supported by `dapr-ext-fastapi`. Ask: "dapr-ext-fastapi cannot route by content. Use a declarative subscription for this topic instead? (default: yes)" | Not supported. Ask: "Streaming subscriptions cannot route by content. Use a declarative subscription for this topic instead? (default: yes)" |
+| Content-based routing | `dapr-pubsub-subscription.md` → **With routing rules**, plus one route per rule from `python-pubsub-subscriber-declarative.md` → **Routing rules** (`<subscribe_route>/<RuleName>`) | Not supported by `dapr-ext-fastapi`. Ask: "dapr-ext-fastapi cannot route by content. Use a declarative subscription for this topic instead? (default: yes)" | Not supported. Ask: "Streaming subscriptions cannot route by content. Use a declarative subscription for this topic instead? (default: yes)" |
 | Message TTL | Publisher side: `python-pubsub-publisher.md` → **TTL and raw payload** (`publish_metadata={"ttlInSeconds": "60"}`, a string) | same | same |
 | Raw payload | Publisher `rawPayload` per `python-pubsub-publisher.md` → **TTL and raw payload**; subscriber: `dapr-pubsub-subscription.md` → **With raw payload** and `python-pubsub-subscriber-declarative.md` → **Raw payload** | `python-pubsub-subscriber-programmatic.md` → **Raw payload** | `python-pubsub-subscriber-streaming.md` → **Raw payload** |
 
@@ -109,7 +109,7 @@ Notes:
 ## README key points
 
 - Start with `dapr run -f .` from the project root. Ports: publisher 8001 (Dapr 3501), subscriber 8002 (Dapr 3502; streaming has no app port).
-- Try it: `curl -X POST http://localhost:8001/orders -H "Content-Type: application/json" -d '{"order_id":"o-1","customer_id":"c-1","amount":1500,"placed_at":"2026-10-13T10:00:00Z"}'`, then look for `Order o-1 received` in the subscriber log. Link to `pubsub.http`. Python uses snake_case keys.
+- Try it: a `curl -X POST http://localhost:8001/<publish_route>` with a JSON body carrying the fields of `<EventName>`, then the line `<handler_body>` logs in the subscriber. Link to `pubsub.http`. Python uses snake_case keys.
 - List subscriptions with `GET http://localhost:3502/v1.0/metadata` and in the Dev Dashboard's subscriptions view.
 - Declarative: the Subscription YAML hot-reloads. Programmatic subscriptions are read once at start-up. Streaming subscriptions live in code.
 - Mermaid sequence diagram: publisher -> publisher sidecar -> Redis; then for declarative and programmatic, subscriber sidecar -> subscriber (HTTP POST); for streaming, subscriber -> subscriber sidecar (opens the gRPC stream) and the sidecar pushes messages over it.
@@ -120,9 +120,20 @@ Notes:
 - Never suggest running Redis separately.
 - Finish with the Dev Dashboard section, the Catalyst section and the three review skills.
 
-## Worked example
+## Worked example: one resolved scenario
 
-`order-flow`, role both, declarative subscriber.
+This is **not** a default. It shows what the placeholders look like once one particular interview has been
+answered. A different prompt resolves them differently, and a prompt that names no domain is answered by
+asking, never by reusing the values below.
+
+Prompt: "Create a Python pub/sub app called order-flow that publishes an `OrderPlaced` event — order id,
+customer id, amount, placed-at — on the `orders` topic, with a declarative subscriber that logs each order."
+
+Resolved: role both, declarative. `<EventName>` = `OrderPlaced`, `<event_name>` = `order`,
+`<EventDescription>` = `order`, `<id_field>` = `order_id`, `<TopicName>` = `orders`,
+`<TOPIC_CONST>` = `ORDERS_TOPIC`, `<DEAD_LETTER_TOPIC_CONST>` = `ORDERS_DEAD_LETTER_TOPIC`,
+`<publish_route>` = `orders`, `<subscribe_route>` = `/events/pubsub/orders`,
+`<handler_body>` = `logger.info("Order %s received: %s for customer %s", order.order_id, order.amount, order.customer_id)`.
 
 Files:
 

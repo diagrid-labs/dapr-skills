@@ -1,5 +1,7 @@
 # dapr.yaml for pub/sub apps
 
+Placeholders are resolved from the specification interview; the vocabulary is in [pubsub-placeholders.md](pubsub-placeholders.md).
+
 ## Two apps (publisher and subscriber)
 
 .NET values:
@@ -63,5 +65,5 @@ One entry under `apps:` with the values of the role (publisher or subscriber) fr
 - Programmatic subscriber: `appPort` required.
 - Streaming subscriber in a create skill: omit `appPort`.
 - Streaming subscriber added to an existing web app: keep the existing `appPort`, because the app still serves HTTP.
-- A publisher that exposes an HTTP API (the create skills' `POST /orders`) also keeps its `appPort`.
+- A publisher that exposes an HTTP API (the create skills' `POST <publish-route>`) also keeps its `appPort`.
 - The `launchSettings.json` `http` profile port (.NET) must equal `appPort`.

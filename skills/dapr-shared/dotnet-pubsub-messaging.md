@@ -1,6 +1,6 @@
 # Streaming subscriber with Dapr.Messaging (.NET)
 
-The streaming subscriber uses `Dapr.Messaging` 1.18.10 (`[DaprTopic]`, `ITopicHandler<T>`). The app opens an outbound gRPC stream to the sidecar, so no inbound HTTP port is needed. Replace `<ProjectNamespace>` with the namespace of the project the file lives in. The contract and `PubSubNames` are in [dotnet-pubsub-publisher.md](dotnet-pubsub-publisher.md).
+The streaming subscriber uses `Dapr.Messaging` 1.18.10 (`[DaprTopic]`, `ITopicHandler<T>`). The app opens an outbound gRPC stream to the sidecar, so no inbound HTTP port is needed. Resolve every placeholder from the specification interview before copying this file; the vocabulary is in [pubsub-placeholders.md](pubsub-placeholders.md). Replace `<ProjectNamespace>` with the namespace of the project the file lives in. The contract and `PubSubNames` are in [dotnet-pubsub-publisher.md](dotnet-pubsub-publisher.md).
 
 ## Streaming subscriber
 
@@ -13,14 +13,14 @@ csproj:
 `Program.cs`:
 
 ```csharp
-builder.Services.AddSingleton<IProcessedOrders, InMemoryProcessedOrders>();
+builder.Services.AddSingleton<IProcessedEvents, InMemoryProcessedEvents>();
 builder.Services.AddDaprMessaging(options =>
     options.DaprGrpcEndpoint = $"http://localhost:{Environment.GetEnvironmentVariable("DAPR_GRPC_PORT") ?? "50001"}");
 ```
 
 No `Map*` call is needed for streaming. In a create skill the subscriber's `dapr.yaml` entry has no `appPort`; the `dapr run` command exports `DAPR_GRPC_PORT` to the app, and so does the Aspire Dapr integration.
 
-Order handler:
+Event handler:
 
 ```csharp
 using Dapr.Messaging;
@@ -28,29 +28,31 @@ using Dapr.Messaging.PublishSubscribe;
 
 namespace <ProjectNamespace>;
 
-[DaprTopic(PubSubNames.PubSubName, PubSubNames.OrdersTopic, Delivery = DeliveryMode.Streaming, DeadLetterTopic = PubSubNames.OrdersDeadLetterTopic)]
-public sealed class OrderPlacedTopicHandler(IProcessedOrders processedOrders, ILogger<OrderPlacedTopicHandler> logger) : ITopicHandler<OrderPlaced>
+[DaprTopic(PubSubNames.PubSubName, PubSubNames.<TopicConstant>, Delivery = DeliveryMode.Streaming, DeadLetterTopic = PubSubNames.<DeadLetterTopicConstant>)]
+public sealed class <EventName>TopicHandler(IProcessedEvents processedEvents, ILogger<<EventName>TopicHandler> logger) : ITopicHandler<<EventName>>
 {
-    public Task<TopicResponseAction> HandleAsync(OrderPlaced order, TopicContext context, CancellationToken cancellationToken)
+    public Task<TopicResponseAction> HandleAsync(<EventName> <eventVar>, TopicContext context, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(order.OrderId) || order.Amount <= 0)
+        if (<ValidationCondition>)
         {
-            logger.LogWarning("Dropping invalid order event {MessageId}", context.MessageId);
+            logger.LogWarning("Dropping invalid <EventDescription> event {MessageId}", context.MessageId);
             return Task.FromResult(TopicResponseAction.Drop);
         }
 
-        if (processedOrders.IsProcessed(order.OrderId))
+        if (processedEvents.IsProcessed(<eventVar>.<IdProperty>))
         {
-            logger.LogInformation("Order {OrderId} was already processed; acknowledging the duplicate", order.OrderId);
+            logger.LogInformation("<EventDescription> {<IdProperty>} was already processed; acknowledging the duplicate", <eventVar>.<IdProperty>);
             return Task.FromResult(TopicResponseAction.Success);
         }
 
-        logger.LogInformation("Order {OrderId} received via streaming: {Amount} for customer {CustomerId}", order.OrderId, order.Amount, order.CustomerId);
-        processedOrders.MarkProcessed(order.OrderId);
+        <HandlerBody>
+        processedEvents.MarkProcessed(<eventVar>.<IdProperty>);
         return Task.FromResult(TopicResponseAction.Success);
     }
 }
 ```
+
+`<ValidationCondition>` and `<HandlerBody>` come from the interview and mean the same as in [dotnet-pubsub-handler.md](dotnet-pubsub-handler.md). With several events, add one handler class per event and share the single `IProcessedEvents` store.
 
 Dead-letter handler:
 
@@ -60,12 +62,12 @@ using Dapr.Messaging.PublishSubscribe;
 
 namespace <ProjectNamespace>;
 
-[DaprTopic(PubSubNames.PubSubName, PubSubNames.OrdersDeadLetterTopic, Delivery = DeliveryMode.Streaming)]
-public sealed class OrdersDeadLetterTopicHandler(ILogger<OrdersDeadLetterTopicHandler> logger) : ITopicHandler<OrderPlaced>
+[DaprTopic(PubSubNames.PubSubName, PubSubNames.<DeadLetterTopicConstant>, Delivery = DeliveryMode.Streaming)]
+public sealed class <TopicResource>DeadLetterTopicHandler(ILogger<<TopicResource>DeadLetterTopicHandler> logger) : ITopicHandler<<EventName>>
 {
-    public Task<TopicResponseAction> HandleAsync(OrderPlaced order, TopicContext context, CancellationToken cancellationToken)
+    public Task<TopicResponseAction> HandleAsync(<EventName> <eventVar>, TopicContext context, CancellationToken cancellationToken)
     {
-        logger.LogError("Dead-lettered order {OrderId} (message {MessageId})", order.OrderId, context.MessageId);
+        logger.LogError("Dead-lettered <EventDescription> {<IdProperty>} (message {MessageId})", <eventVar>.<IdProperty>, context.MessageId);
         return Task.FromResult(TopicResponseAction.Success);
     }
 }
@@ -75,9 +77,9 @@ Raw payload: set `EnableRawPayload = true` on `[DaprTopic]`.
 
 Notes from verification:
 
-- `Dapr.Messaging` 1.18.10 with a bare `AddDaprMessaging()` never opened the gRPC stream when running under `dapr run` (observed on Windows): the sidecar never logged `Subscribing to pubsub`. Setting `DaprGrpcEndpoint` from `DAPR_GRPC_PORT` fixes it, and the sidecar then logs `Subscribing to pubsub 'pubsub' topic 'orders'`. Setting only the `DAPR_GRPC_ENDPOINT` environment variable did not help.
+- `Dapr.Messaging` 1.18.10 with a bare `AddDaprMessaging()` never opened the gRPC stream when running under `dapr run` (observed on Windows): the sidecar never logged `Subscribing to pubsub`. Setting `DaprGrpcEndpoint` from `DAPR_GRPC_PORT` fixes it, and the sidecar then logs `Subscribing to pubsub 'pubsub' topic '<TopicName>'`. Setting only the `DAPR_GRPC_ENDPOINT` environment variable did not help.
 - `MapDaprMessaging()` is not needed for streaming.
-- A body that cannot be deserialized into `OrderPlaced` throws in the generated dispatcher, before `HandleAsync` runs. The handler cannot return `Drop` for it: the subscription faults (`The streaming subscription ... faulted; reconnecting in 00:00:05`), the message is not acknowledged, and it is redelivered after every reconnect, delaying later messages. The handler can only `Drop` semantically invalid orders (empty `OrderId`, amount <= 0). Mitigate by keeping the contract lenient (nullable members) and by relying on the sidecar's resiliency and dead-letter policy. Raw non-JSON bytes never reach the app: the sidecar logs a deserialization error and dead-letters the message.
+- A body that cannot be deserialized into `<EventName>` throws in the generated dispatcher, before `HandleAsync` runs. The handler cannot return `Drop` for it: the subscription faults (`The streaming subscription ... faulted; reconnecting in 00:00:05`), the message is not acknowledged, and it is redelivered after every reconnect, delaying later messages. The handler can only `Drop` messages that are well-formed JSON but semantically invalid, which is what `<ValidationCondition>` tests. Mitigate by keeping the contract lenient (nullable members) and by relying on the sidecar's resiliency and dead-letter policy. Raw non-JSON bytes never reach the app: the sidecar logs a deserialization error and dead-letters the message.
 - The build warning `DAPR1612` (message type not registered in a `JsonSerializerContext`) only matters for native AOT and is harmless here.
 - `TopicResponseAction.Drop` is not redelivered, and is also forwarded to the dead-letter topic when one is configured.
 
@@ -88,22 +90,22 @@ Use this when one project both publishes and uses `Dapr.Messaging`, so only one 
 ```csharp
 using Dapr.Messaging;
 
-app.MapPost("/pubsub/orders", async (OrderPlaced order, IDaprPublishSubscribeClient client, CancellationToken cancellationToken) =>
+app.MapPost("/pubsub/<PublishRoute>", async (<EventName> <eventVar>, IDaprPublishSubscribeClient client, CancellationToken cancellationToken) =>
 {
     try
     {
-        await client.PublishEventAsync(PubSubNames.PubSubName, PubSubNames.OrdersTopic, order, cancellationToken);
-        return Results.Accepted($"/orders/{order.OrderId}", new { order.OrderId });
+        await client.PublishEventAsync(PubSubNames.PubSubName, PubSubNames.<TopicConstant>, <eventVar>, cancellationToken);
+        return Results.Accepted($"/<PublishRoute>/{<eventVar>.<IdProperty>}", new { <eventVar>.<IdProperty> });
     }
     catch (Dapr.DaprException ex)
     {
-        return Results.Problem(title: "Publishing the order failed", detail: ex.Message,
+        return Results.Problem(title: "Publishing the <EventDescription> failed", detail: ex.Message,
             statusCode: StatusCodes.Status503ServiceUnavailable);
     }
 });
 ```
 
-For a trigger-endpoint edit or a controller, wrap the client in the same `OrderPublisher` shape as the `DaprClient` publisher, so the endpoints in [dotnet-pubsub-publisher.md](dotnet-pubsub-publisher.md) work unchanged:
+For a trigger-endpoint edit or a controller, wrap the client in the same `<EventName>Publisher` shape as the `DaprClient` publisher, so the endpoints in [dotnet-pubsub-publisher.md](dotnet-pubsub-publisher.md) work unchanged:
 
 ```csharp
 using Dapr.Messaging;
@@ -112,12 +114,12 @@ namespace <ProjectNamespace>;
 
 public sealed record PublishFeatures(int? TtlInSeconds = null, bool RawPayload = false);
 
-public sealed class OrderPublisher(IDaprPublishSubscribeClient client, ILogger<OrderPublisher> logger)
+public sealed class <EventName>Publisher(IDaprPublishSubscribeClient client, ILogger<<EventName>Publisher> logger)
 {
-    public Task PublishOrderPlacedAsync(OrderPlaced order, CancellationToken cancellationToken = default) =>
-        PublishOrderPlacedAsync(order, new PublishFeatures(), cancellationToken);
+    public Task Publish<EventName>Async(<EventName> <eventVar>, CancellationToken cancellationToken = default) =>
+        Publish<EventName>Async(<eventVar>, new PublishFeatures(), cancellationToken);
 
-    public async Task PublishOrderPlacedAsync(OrderPlaced order, PublishFeatures features, CancellationToken cancellationToken = default)
+    public async Task Publish<EventName>Async(<EventName> <eventVar>, PublishFeatures features, CancellationToken cancellationToken = default)
     {
         var options = new PublishOptions();
         if (features.TtlInSeconds is { } ttl)
@@ -129,13 +131,13 @@ public sealed class OrderPublisher(IDaprPublishSubscribeClient client, ILogger<O
             options.Metadata["rawPayload"] = "true";
         }
 
-        await client.PublishEventAsync(PubSubNames.PubSubName, PubSubNames.OrdersTopic, order, options, cancellationToken);
-        logger.LogInformation("Published order {OrderId} to {Topic}", order.OrderId, PubSubNames.OrdersTopic);
+        await client.PublishEventAsync(PubSubNames.PubSubName, PubSubNames.<TopicConstant>, <eventVar>, options, cancellationToken);
+        logger.LogInformation("Published <EventDescription> {<IdProperty>} to {Topic}", <eventVar>.<IdProperty>, PubSubNames.<TopicConstant>);
     }
 }
 ```
 
-Register it with `builder.Services.AddSingleton<OrderPublisher>();` next to `AddDaprMessaging(...)`; no `AddDaprClient()`. Failures surface as `Dapr.DaprException`, so the 503 mapping in the publish endpoints is unchanged.
+Register it with `builder.Services.AddSingleton<<EventName>Publisher>();` next to `AddDaprMessaging(...)`; no `AddDaprClient()`. Failures surface as `Dapr.DaprException`, so the 503 mapping in the publish endpoints is unchanged.
 
 ## Following an existing Http or Programmatic delivery project
 

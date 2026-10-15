@@ -1,6 +1,6 @@
 # Create Dapr Pub/Sub .NET Application — Reference
 
-Detailed reference for the `create-pubsub-dotnet` skill. All code and YAML live in `../dapr-shared/`; this file says which section to copy and where it goes.
+Detailed reference for the `create-pubsub-dotnet` skill. All code and YAML live in `../dapr-shared/`; this file says which section to copy and where it goes. File and type names below are placeholders resolved from the specification interview; the vocabulary is in [`pubsub-placeholders.md`](../dapr-shared/pubsub-placeholders.md).
 
 ## Folder structures
 
@@ -16,24 +16,24 @@ Detailed reference for the `create-pubsub-dotnet` skill. All code and YAML live 
 ├── resources/
 │   ├── pubsub.yaml
 │   ├── resiliency.yaml
-│   └── subscription.yaml           # declarative only (orders + orders-deadletter)
-├── <ProjectRoot>.Contracts/        # classlib: OrderPlaced, PubSubNames
+│   └── subscription.yaml           # declarative only (<TopicName> + <DeadLetterTopicName>)
+├── <ProjectRoot>.Contracts/        # classlib: <EventName>, PubSubNames
 │   └── <ProjectRoot>.Contracts.csproj
-├── <ProjectRoot>.Publisher/        # web: OrderPublisher, POST /orders
+├── <ProjectRoot>.Publisher/        # web: <EventName>Publisher, POST /<PublishRoute>
 │   ├── <ProjectRoot>.Publisher.csproj
 │   ├── Program.cs
-│   ├── OrderPublisher.cs
+│   ├── <EventName>Publisher.cs
 │   └── Properties/launchSettings.json   # http://localhost:5110
 └── <ProjectRoot>.Subscriber/       # web: endpoints or handler classes
     ├── <ProjectRoot>.Subscriber.csproj
     ├── Program.cs
-    ├── OrderPlacedHandler.cs
+    ├── <EventName>Handler.cs
     └── Properties/launchSettings.json   # http://localhost:5120
 ```
 
 ### Dapr CLI, single role
 
-Same tree with one service project (`<ProjectRoot>.Publisher` or `<ProjectRoot>.Subscriber`), no `.Contracts` project and no second `dapr.yaml` entry. `OrderPlaced` and `PubSubNames` live in the project's `Models/` folder (namespace `<ProjectRoot>.<Role>`, folder `Models/`). `subscription.yaml` exists only for a declarative subscriber; `pubsub.http` keeps only the requests that apply.
+Same tree with one service project (`<ProjectRoot>.Publisher` or `<ProjectRoot>.Subscriber`), no `.Contracts` project and no second `dapr.yaml` entry. `<EventName>` and `PubSubNames` live in the project's `Models/` folder (namespace `<ProjectRoot>.<Role>`, folder `Models/`). `subscription.yaml` exists only for a declarative subscriber; `pubsub.http` keeps only the requests that apply.
 
 ### Aspire, role both
 
@@ -69,7 +69,7 @@ There is no `dapr.yaml` and no root `resources/` folder. The `Resources/*.yaml` 
 └── <ProjectRoot>.Subscriber/
     ├── <ProjectRoot>.Subscriber.csproj   # Dapr.Messaging 1.18.10, no Dapr.AspNetCore
     ├── Program.cs                  # AddDaprMessaging(...), no Map* calls
-    └── OrderPlacedHandler.cs       # ITopicHandler<OrderPlaced>
+    └── <EventName>TopicHandler.cs  # ITopicHandler<<EventName>>
 ```
 
 The streaming subscriber has no `subscription.yaml` (the subscription lives in the `[DaprTopic]` attribute) and no `appPort`; the publisher entry keeps its `appPort` 5110. The subscriber app reaches the sidecar over gRPC using `DAPR_GRPC_PORT`, which `dapr run` injects.
@@ -85,13 +85,13 @@ Each row names the section to copy from `../dapr-shared/`.
 | Subscriber | programmatic, minimal API | [`dotnet-pubsub-subscriber-programmatic.md`](../dapr-shared/dotnet-pubsub-subscriber-programmatic.md) → **Minimal API form** |
 | Subscriber | programmatic, controllers | [`dotnet-pubsub-subscriber-programmatic.md`](../dapr-shared/dotnet-pubsub-subscriber-programmatic.md) → **Controller form** |
 | Subscriber | streaming (handler class, no style choice) | [`dotnet-pubsub-messaging.md`](../dapr-shared/dotnet-pubsub-messaging.md) → **Streaming subscriber** |
-| Publisher | minimal API / controllers | [`dotnet-pubsub-publisher.md`](../dapr-shared/dotnet-pubsub-publisher.md) → **Publish endpoint (minimal API)** / **Publish endpoint (controller)**, plus **Registration** and **OrderPublisher** |
+| Publisher | minimal API / controllers | [`dotnet-pubsub-publisher.md`](../dapr-shared/dotnet-pubsub-publisher.md) → **Publish endpoint (minimal API)** / **Publish endpoint (controller)**, plus **Registration** and **<EventName>Publisher** |
 
 Rules that apply to every row:
 
 - Namespaces: `<ProjectNamespace>` is `<ProjectRoot>.<Role>` (Contracts: `<ProjectRoot>.Contracts`). Each web project's `.csproj` carries `<Using Include="<ProjectRoot>.Contracts" />` (role both) and `<Using Include="<ProjectRoot>.<Role>" />`, so the top-level-statement `Program.cs` and the Contracts types resolve without `using` lines.
 
-- The handler logic is [`dotnet-pubsub-handler.md`](../dapr-shared/dotnet-pubsub-handler.md) → **OrderPlacedHandler** and **Dead-letter handler**. The streaming handler maps the same decisions to `TopicResponseAction`. A streaming subscriber copies only `IProcessedOrders` and `InMemoryProcessedOrders` from that file; its handlers are the `[DaprTopic]` classes in `dotnet-pubsub-messaging.md`.
+- The handler logic is [`dotnet-pubsub-handler.md`](../dapr-shared/dotnet-pubsub-handler.md) → **<EventName>Handler** and **Dead-letter handler**. The streaming handler maps the same decisions to `TopicResponseAction`. A streaming subscriber copies only `IProcessedEvents` and `InMemoryProcessedEvents` from that file; its handlers are the `[DaprTopic]` classes in `dotnet-pubsub-messaging.md`.
 - Declarative and programmatic subscribers call `app.UseCloudEvents()` before any `Map*` subscriber route. Without it the typed body binds the CloudEvent envelope and every field is null.
 - A declarative subscriber has no `MapSubscribeHandler`, `WithTopic` or `[Topic]`: the subscription is the YAML file. A programmatic subscriber adds `MapSubscribeHandler()` and `WithTopic`/`[Topic]`, and has no `subscription.yaml`. A topic is subscribed through one type only.
 - Controllers: add `builder.Services.AddControllers()` and `app.MapControllers()`; a programmatic controller subscriber uses `AddControllers().AddDapr()`; a declarative one adds `.AddDapr()` only when the same project also publishes.
@@ -112,8 +112,8 @@ Add these only when the user asked for them. They are rows of the compatibility 
 
 | Feature | Declarative | Programmatic | Streaming |
 |---|---|---|---|
-| CEL routing | `routes.rules[{match, path}]` plus `routes.default` in `subscription.yaml` ([`dapr-pubsub-subscription.md`](../dapr-shared/dapr-pubsub-subscription.md) → **With routing rules**), and a second endpoint at `/events/pubsub/orders/<rule-name>` (see **Routing rules** in the declarative file) | `TopicOptions.Match` / `Priority` (minimal API) or `[Topic(pubsub, topic, match, priority)]` (controllers); see **Routing rules** in the programmatic file | Not supported. Offer a declarative subscription instead (default yes) |
-| Message TTL | Publisher side: `ttlInSeconds` metadata in `OrderPublisher` (see the publisher file), so it works with every type | same | same |
+| CEL routing | `routes.rules[{match, path}]` plus `routes.default` in `subscription.yaml` ([`dapr-pubsub-subscription.md`](../dapr-shared/dapr-pubsub-subscription.md) → **With routing rules**), and a second endpoint at `<SubscribeRoute>/<RuleName>` (see **Routing rules** in the declarative file) | `TopicOptions.Match` / `Priority` (minimal API) or `[Topic(pubsub, topic, match, priority)]` (controllers); see **Routing rules** in the programmatic file | Not supported. Offer a declarative subscription instead (default yes) |
+| Message TTL | Publisher side: `ttlInSeconds` metadata in `<EventName>Publisher` (see the publisher file), so it works with every type | same | same |
 | Raw payload | `spec.metadata.rawPayload: "true"` ([`dapr-pubsub-subscription.md`](../dapr-shared/dapr-pubsub-subscription.md) → **With raw payload**); no code change | `EnableRawPayload = true` or `[Topic(pubsub, topic, true)]` | `[DaprTopic(EnableRawPayload = true)]` |
 
 The metadata key is always `rawPayload`, never `isRawPayload`.
@@ -129,9 +129,30 @@ Local-only items to list in the README, so the user knows what to change before 
 - **Switching the message broker** (README paragraph, always included): any supported broker works by replacing the component file (`resources/pubsub.yaml`; Aspire: `Resources/pubsub.yaml`) with that broker's component, for example a `pubsub.kafka` component, while keeping `metadata.name: pubsub`. No code changes are needed because the code only uses the name `pubsub`. The local default stays Redis. Link https://docs.dapr.io/reference/components-reference/supported-pubsub/ for the metadata of each broker, and never put secrets inline: use `secretKeyRef`. When the user asked for another broker, add: "You asked for <broker>; this scaffold runs on Redis locally so it works without extra infrastructure."
 - Streaming subscribers have no inbound port, so `GET /dapr/subscribe` does not apply; use `GET /v1.0/metadata` or the Dev Dashboard instead.
 
-## Worked example
+## Worked example: one resolved scenario
 
-Prompt: "Create a pub/sub app called OrderFlow in .NET with a declarative subscriber, using the Dapr CLI and minimal APIs." Resolved choices: role both, declarative, dapr run, minimal APIs, dead-letter on.
+This is **not** a default. It shows what the placeholders look like once one particular interview has been
+answered, so the shape of the output is concrete. A different prompt resolves them differently, and a
+prompt that names no domain is answered by asking, never by reusing the values below.
+
+Prompt: "Create a pub/sub app called OrderFlow in .NET. It publishes an `OrderPlaced` event — order id,
+customer id, amount, placed-at — on the `orders` topic, and the subscriber logs each order it receives.
+Use a declarative subscriber, the Dapr CLI and minimal APIs."
+
+Resolved wiring: role both, declarative, dapr run, minimal APIs, dead-letter on. Resolved placeholders:
+
+| Placeholder | Value |
+|---|---|
+| `<ProjectRoot>` / `<root-kebab>` | `OrderFlow` / `orderflow` |
+| `<EventName>` / `<eventVar>` / `<EventDescription>` | `OrderPlaced` / `order` / `order` |
+| `<EventFields>` | `string OrderId, string CustomerId, decimal Amount, DateTimeOffset PlacedAt` |
+| `<IdProperty>` | `OrderId` |
+| `<TopicName>` / `<DeadLetterTopicName>` | `orders` / `orders-deadletter` |
+| `<TopicConstant>` / `<DeadLetterTopicConstant>` / `<TopicResource>` | `OrdersTopic` / `OrdersDeadLetterTopic` / `Orders` |
+| `<PublishRoute>` / `<PublishResource>` | `orders` / `Orders` |
+| `<SubscribeRoute>` / `<DeadLetterRoute>` | `/events/pubsub/orders` / `/events/pubsub/orders-deadletter` |
+| `<ValidationCondition>` | `string.IsNullOrWhiteSpace(order.OrderId) \|\| order.Amount <= 0` |
+| `<HandlerBody>` | `logger.LogInformation("Order {OrderId} received: {Amount} for customer {CustomerId}", order.OrderId, order.Amount, order.CustomerId);` |
 
 Files:
 

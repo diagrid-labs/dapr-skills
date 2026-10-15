@@ -9,6 +9,8 @@ The baseline for correct publishing comes from the pub/sub authoring templates:
 - .NET publisher: [`../dapr-shared/dotnet-pubsub-publisher.md`](../dapr-shared/dotnet-pubsub-publisher.md)
 - Python publisher: [`../dapr-shared/python-pubsub-publisher.md`](../dapr-shared/python-pubsub-publisher.md)
 
+Those templates are written with placeholders ([`../dapr-shared/pubsub-placeholders.md`](../dapr-shared/pubsub-placeholders.md)), so the baseline is their *shape* — awaited publish, shared topic constants, 503 on a Dapr failure, string metadata values — never the identifiers in them. Reviewed code uses the names of its own domain; never report a finding because a type, topic or method is named differently from a template. The worked examples below use one concrete domain for readability only.
+
 The per-language checklist shards translate those expectations into greppable patterns and stable rule ids. Each shard states that its baseline publisher produces no finding:
 
 - [`../dapr-shared/review-pubsub-publishing-dotnet.md`](../dapr-shared/review-pubsub-publishing-dotnet.md)

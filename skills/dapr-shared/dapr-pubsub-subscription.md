@@ -1,5 +1,10 @@
 # resources/subscription.yaml (declarative subscription)
 
+This file uses its own kebab-case placeholders, which map onto the shared vocabulary in
+[pubsub-placeholders.md](pubsub-placeholders.md): `<topic>` is `<TopicName>`, `<dead-letter-topic>` is
+`<DeadLetterTopicName>`, and `<route-prefix>/<topic>` is `<SubscribeRoute>`. All of them come from the
+specification interview; there is no default topic.
+
 ## resources/subscription.yaml
 
 ```yaml
@@ -34,8 +39,8 @@ scopes:
 ```yaml
   routes:
     rules:
-      - match: int(event.data.amount) > 1000
-        path: <route-prefix>/<topic>/large
+      - match: <MatchExpression>
+        path: <route-prefix>/<topic>/<RuleName>
     default: <route-prefix>/<topic>
 ```
 
@@ -49,7 +54,7 @@ spec:
 
 ## Key points
 
-- Defaults: `<pubsub-name>` = `pubsub`, `<topic>` = `orders`, `<dead-letter-topic>` = `orders-deadletter`, `<route-prefix>` = `/events/pubsub`.
+- Fixed values: `<pubsub-name>` = `pubsub`, `<route-prefix>` = `/events/pubsub`, and `<dead-letter-topic>` = `<topic>-deadletter`. `<topic>` itself comes from the interview and has no default.
 - `<subscriber-app-id>` must equal the `appID` in `dapr.yaml`, or `DaprSidecarOptions.AppId` in Aspire, character for character. Otherwise the subscriber receives nothing.
 - Every route path must exist as a POST endpoint in that app, because Dapr gets a 404 otherwise and **drops** the message.
 - Declarative subscriptions hot-reload by default.

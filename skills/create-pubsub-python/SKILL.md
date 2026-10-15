@@ -12,7 +12,9 @@ allowed-tools:
 
 ## Overview
 
-This skill creates a Dapr pub/sub application in Python: a FastAPI publisher, a subscriber or both, sharing one message contract (`OrderPlaced`) and one `dapr.yaml`. The subscriber uses a declarative (default), programmatic or streaming subscription.
+This skill creates a Dapr pub/sub application in Python: a FastAPI publisher, a subscriber or both, sharing the message contract the user described and one `dapr.yaml`. The subscriber uses a declarative (default), programmatic or streaming subscription.
+
+The application is built from the user's own domain. There is no built-in sample scenario: the event, its fields, its topic and what the subscriber does with it all come from the **Check specification** interview, and every template is filled in from the placeholder vocabulary in [`../dapr-shared/pubsub-placeholders.md`](../dapr-shared/pubsub-placeholders.md).
 
 ## Execution Order
 
@@ -36,24 +38,60 @@ The following must be installed by the user before this skill can run. Do not ru
 Python packages (handled during project setup): `dapr` 1.18.3, `dapr-ext-fastapi` 1.18.3 (programmatic subscriber only), `fastapi` 0.118.2, `pydantic` 2.12.0, `uvicorn` 0.37.0. Optional: the [Diagrid Dapr Dev Dashboard](https://github.com/diagridio/dev-dashboard).
 
 Background on delivery guarantees, CloudEvents and the subscription types: [`../dapr-shared/pubsub-concepts.md`](../dapr-shared/pubsub-concepts.md).
+Placeholder vocabulary used by every template: [`../dapr-shared/pubsub-placeholders.md`](../dapr-shared/pubsub-placeholders.md).
 
 ## Check specification
 
-Infer everything the prompt already says. Ask only what is missing, one question at a time, waiting for each answer:
+**Never build a default scenario.** The application is about the user's domain, and the templates are
+placeholders waiting for it. Infer everything the prompt already says, then ask only what is missing, one
+question at a time, waiting for each answer. If the prompt gives no domain at all, ask for it — do not
+invent one and do not fall back to an order-processing example.
 
-1. "Should this app publish, subscribe, or both? (default: both)"
-2. Only if the role includes a subscriber: "Which subscription type? **declarative** (default — a Subscription YAML file, no Dapr code in the subscriber), **programmatic** (`DaprApp(app).subscribe(...)` in code) or **streaming** (the app pulls messages; no inbound port)". Inference: "streaming", "no inbound port" or "pull" → streaming; "programmatic", `DaprApp` or "dapr-ext-fastapi" → programmatic; "declarative" or "subscription YAML" → declarative.
-3. The name of the project (no spaces). It becomes `<ProjectRoot>` (the folder) and `<root-kebab>` (lowercase, hyphen-separated, used for app ids and package names).
+Domain, first:
+
+1. "What is the purpose of this pub/sub application?"
+2. "Which event does it publish, and on which topic?" Accept several if the user describes several; one is
+   the normal case. The topic name is lowercase and hyphenated; the event type is PascalCase.
+3. For each event: "Which fields does the message carry, and which one uniquely identifies it?" The
+   identifying field becomes `<id_field>`: the handler deduplicates on it, so there must be exactly one per
+   event. Ask for the type of each field when the name does not make it obvious, and note any constraint
+   the domain implies — it becomes a Pydantic `Field(...)` rule.
+4. "What should the subscriber do when it receives this event?" If the user wants nothing beyond receiving
+   it, say that the handler will log it and move on; never invent a side effect.
+
+Then the wiring:
+
+5. "Should this app publish, subscribe, or both? (default: both)"
+6. Only if the role includes a subscriber: "Which subscription type? **declarative** (default — a Subscription YAML file, no Dapr code in the subscriber), **programmatic** (`DaprApp(app).subscribe(...)` in code) or **streaming** (the app pulls messages; no inbound port)". Inference: "streaming", "no inbound port" or "pull" → streaming; "programmatic", `DaprApp` or "dapr-ext-fastapi" → programmatic; "declarative" or "subscription YAML" → declarative.
+7. The name of the project (no spaces). It becomes `<ProjectRoot>` (the folder) and `<root-kebab>` (lowercase, hyphen-separated, used for app ids and package names).
 
 There is no hosting or style question: Python uses `dapr run` and FastAPI.
 
 Feature rules:
 
-- The dead-letter topic (`orders-deadletter`) is on unless the user declines, and always comes with the inbound retry policy.
+- The dead-letter topic (`<TopicName>-deadletter`) is on unless the user declines, and always comes with the inbound retry policy.
 - Content-based routing, message TTL and raw payload are added only when the user mentions them (see `REFERENCE.md` → **Routing, TTL and raw payload**).
 - The broker is always Redis locally. If the user names another broker (for example Kafka), still scaffold Redis and explain in the README how to switch (see **Create README.md**).
 - Routing with a streaming subscriber → ask: "Streaming subscriptions cannot route by content. Use a declarative subscription for this topic instead? (default: yes)".
 - Routing with a programmatic subscriber → ask: "dapr-ext-fastapi cannot route by content. Use a declarative subscription for this topic instead? (default: yes)".
+
+### Resolving the placeholders
+
+Before creating any file, write out the resolved values and restate them to the user in two or three
+lines, so a wrong reading is caught before it is scaffolded. Resolve them exactly as
+[`../dapr-shared/pubsub-placeholders.md`](../dapr-shared/pubsub-placeholders.md) defines them:
+
+| Placeholder | Resolved from |
+|---|---|
+| `<EventName>`, `<event_fields>`, `<id_field>` | questions 2 and 3 |
+| `<event_name>`, `<EventDescription>` | `<EventName>`, in snake_case and as a lowercase noun phrase |
+| `<TopicName>`, `<DeadLetterTopicName>` | question 2; the dead-letter topic is `<TopicName>-deadletter` |
+| `<TOPIC_CONST>`, `<DEAD_LETTER_TOPIC_CONST>` | UPPER_SNAKE_CASE of `<TopicName>` |
+| `<publish_route>`, `<subscribe_route>`, `<dead_letter_route>` | `<TopicName>`; the subscribe route is `/events/pubsub/<TopicName>` |
+| `<validation_condition>`, `<handler_body>` | questions 3 and 4 |
+
+Fixed, never derived from the domain: the component name `pubsub`, the constant `PUBSUB_NAME`, and the
+`_processed_event_ids` idempotency set.
 
 ## Check optional tools
 
@@ -99,7 +137,10 @@ A streaming subscriber has `main.py` and `streaming.py` instead of `handler.py`,
 
 ### Files
 
-Copy each file from its shared file and replace the `<placeholders>`. Ports: publisher `appPort` 8001 / `daprHTTPPort` 3501, subscriber `appPort` 8002 / `daprHTTPPort` 3502.
+Copy each file from its shared file and replace every placeholder with the value resolved in **Resolving
+the placeholders**. A file is never written with a placeholder left in it: after writing each one, check it
+for a stray `<` ... `>`. Ports: publisher `appPort` 8001 / `daprHTTPPort` 3501, subscriber `appPort` 8002 /
+`daprHTTPPort` 3502.
 
 - **`.gitignore`**: Python style, from https://raw.githubusercontent.com/github/gitignore/refs/heads/main/Python.gitignore.
 - **`pyproject.toml` files** (workspace root, `contracts`, services): [`../dapr-shared/python-pubsub-project.md`](../dapr-shared/python-pubsub-project.md). Take the subscriber dependencies from its table for the chosen type (declarative has no `dapr`; programmatic adds `dapr-ext-fastapi`; streaming has no FastAPI).
@@ -118,7 +159,7 @@ Copy each file from its shared file and replace the `<placeholders>`. Ports: pub
 
 Rules that matter:
 
-- One subscription type per topic per app. Never combine `subscription.yaml` with `DaprApp` or `subscribe_with_handler` for `orders`.
+- One subscription type per topic per app. Never combine `subscription.yaml` with `DaprApp` or `subscribe_with_handler` for the same topic.
 - The subscriber answers `{"status": ...}` and never returns 404 (Dapr drops the message).
 - Raw payload metadata key is `rawPayload`.
 
@@ -138,7 +179,7 @@ Rules that matter:
 Create a README.md file inside the <ProjectRoot> folder. See `REFERENCE.md` → **README key points**. It contains:
 
 1. Summary of what this folder contains.
-2. Architecture: the roles, the subscription type and why, and a mermaid sequence diagram showing who opens the connection (sidecar push for declarative and programmatic, app pull for streaming). **DO NOT suggest to run Redis separately; `dapr init` provides it and it is already running in a container.**
+2. Architecture: what the application does in the user's own domain terms, the roles, the subscription type and why, and a mermaid sequence diagram showing who opens the connection (sidecar push for declarative and programmatic, app pull for streaming). **DO NOT suggest to run Redis separately; `dapr init` provides it and it is already running in a container.**
 3. How to run: `dapr run -f .` from the project root, and how to try it with curl plus a link to `pubsub.http`.
 4. How to see subscriptions: `GET http://localhost:3502/v1.0/metadata` and the Dev Dashboard's subscriptions view.
 5. Declarative only: the subscription hot-reloads.
