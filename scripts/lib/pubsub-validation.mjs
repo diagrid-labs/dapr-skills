@@ -6,7 +6,8 @@
 // contract: no sample domain leaks back into the instructions, every
 // placeholder is defined and used, and the eval manifests stay well-formed.
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
-import { join, relative, sep, basename } from 'node:path';
+import { join, relative, sep } from 'node:path';
+import { checkFamilyVocabulary, checkFamilyVocabularyLinks, FAMILIES } from './family-validation.mjs';
 
 /** The file that defines the placeholder vocabulary, relative to skillsDir. */
 export const VOCABULARY = 'dapr-shared/pubsub-placeholders.md';
@@ -39,20 +40,8 @@ export const SAMPLE_DOMAIN = [
  * dapr-pubsub-subscription.md). They describe the project or the
  * infrastructure, never the message the application publishes.
  */
-export const LOCAL_PLACEHOLDERS = new Set([
-  'app-id',
-  'dead-letter-topic',
-  'http-file',
-  'project-path',
-  'publisher-dapr-http-port',
-  'publisher-port',
-  'pubsub-name',
-  'route-prefix',
-  'scope_root',
-  'solution-path',
-  'subscriber-app-id',
-  'subscriber-port',
-]);
+// Re-exported from the family module so there is one live set, not two that drift.
+export const LOCAL_PLACEHOLDERS = FAMILIES.get('pubsub').localPlaceholders;
 
 const WORKED_EXAMPLE = /^#{1,6}\s+Worked example/im;
 
@@ -105,14 +94,7 @@ export function checkNoSampleDomain(skillsDir) {
  * Placeholder names defined in the vocabulary file, read from its tables
  * (rows that start with a single backticked `<Name>` cell).
  */
-export function definedPlaceholders(vocabularyText) {
-  const names = new Set();
-  for (const line of vocabularyText.split(/\r?\n/)) {
-    if (!line.startsWith('|')) continue;
-    for (const m of line.split('|')[1].matchAll(/`<([A-Za-z_][A-Za-z0-9_-]*)>`/g)) names.add(m[1]);
-  }
-  return names;
-}
+export { definedPlaceholders } from './family-validation.mjs';
 
 // Angle-bracketed tokens that cannot be a C# generic argument or an XML tag,
 // so finding one is unambiguous: it starts lowercase, or contains _ or -.
@@ -127,34 +109,7 @@ const UNAMBIGUOUS = /<([a-z][A-Za-z0-9]*[_-][A-Za-z0-9_-]*|[a-z][a-z0-9]*(?:[_-]
  * Returns an array of failure strings.
  */
 export function checkPlaceholderVocabulary(skillsDir) {
-  const vocabularyPath = join(skillsDir, VOCABULARY);
-  if (!existsSync(vocabularyPath)) return [`${VOCABULARY} is missing`];
-  const defined = definedPlaceholders(readFileSync(vocabularyPath, 'utf8'));
-  if (defined.size === 0) return [`${VOCABULARY} defines no placeholders`];
-
-  const failures = [];
-  const used = new Set();
-  for (const file of pubsubMarkdown(skillsDir)) {
-    const where = relative(skillsDir, file).split(sep).join('/');
-    const text = readFileSync(file, 'utf8');
-    text.split(/\r?\n/).forEach((line, index) => {
-      for (const m of line.matchAll(UNAMBIGUOUS)) {
-        // The vocabulary's own tables are definitions, not uses.
-        if (where !== VOCABULARY) used.add(m[1]);
-        if (LOCAL_PLACEHOLDERS.has(m[1])) continue;
-        if (where !== VOCABULARY && !defined.has(m[1])) {
-          failures.push(`${where}:${index + 1} -> <${m[1]}> is not defined in ${VOCABULARY}`);
-        }
-      }
-    });
-    // PascalCase placeholders only count as "used" when the file is not the vocabulary itself.
-    if (where === VOCABULARY) continue;
-    for (const name of defined) if (text.includes(`<${name}>`)) used.add(name);
-  }
-  for (const name of [...defined].sort()) {
-    if (!used.has(name)) failures.push(`${VOCABULARY} defines <${name}> but no pub/sub file uses it`);
-  }
-  return failures;
+  return checkFamilyVocabulary(skillsDir, 'pubsub');
 }
 
 /**
@@ -163,18 +118,7 @@ export function checkPlaceholderVocabulary(skillsDir) {
  * Returns an array of failure strings.
  */
 export function checkVocabularyLinks(skillsDir) {
-  const failures = [];
-  for (const file of pubsubMarkdown(skillsDir)) {
-    const where = relative(skillsDir, file).split(sep).join('/');
-    if (!where.startsWith('dapr-shared/') || where === VOCABULARY) continue;
-    const text = readFileSync(file, 'utf8');
-    const hasPlaceholder = [...text.matchAll(UNAMBIGUOUS)].length > 0;
-    if (!hasPlaceholder) continue;
-    if (!text.includes('pubsub-placeholders.md')) {
-      failures.push(`${where} uses placeholders but does not link ${basename(VOCABULARY)}`);
-    }
-  }
-  return failures;
+  return checkFamilyVocabularyLinks(skillsDir, 'pubsub');
 }
 
 // A CEL `match` comparing a field with a number must wrap it in int(): JSON numbers are

@@ -92,6 +92,33 @@ See [`../dapr-shared/dotnet-local-http.md`](../dapr-shared/dotnet-local-http.md)
 
 See [`../dapr-shared/dotnet-gitignore.md`](../dapr-shared/dotnet-gitignore.md) for instructions.
 
+## Deeper reference
+
+These are not needed to scaffold the project, but answer the questions that come next:
+
+- [`../dapr-shared/references/core/patterns.md`](../dapr-shared/references/core/patterns.md) — the pattern catalogue.
+- [`../dapr-shared/references/core/child-workflows.md`](../dapr-shared/references/core/child-workflows.md) — composing workflows.
+- [`../dapr-shared/references/core/timers.md`](../dapr-shared/references/core/timers.md) — durable timers.
+- [`../dapr-shared/references/core/external-events.md`](../dapr-shared/references/core/external-events.md) — human-in-the-loop and waiting.
+- [`../dapr-shared/references/core/testing.md`](../dapr-shared/references/core/testing.md) — how to test a workflow.
+- [`../dapr-shared/references/core/versioning.md`](../dapr-shared/references/core/versioning.md) — changing a workflow already in flight.
+- [`../dapr-shared/references/core/gotchas.md`](../dapr-shared/references/core/gotchas.md) — the mistakes that bite first.
+- [`../dapr-shared/references/core/troubleshooting.md`](../dapr-shared/references/core/troubleshooting.md) — diagnosing a stuck run.
+- [`../dapr-shared/references/core/error-reference.md`](../dapr-shared/references/core/error-reference.md) — the error taxonomy.
+- [`../dapr-shared/references/core/activity-patterns.md`](../dapr-shared/references/core/activity-patterns.md) — activity shapes.
+- [`../dapr-shared/references/core/determinism.md`](../dapr-shared/references/core/determinism.md) — why replay constrains the workflow body.
+- [`../dapr-shared/references/ops/monitoring.md`](../dapr-shared/references/ops/monitoring.md) — what to watch in production.
+- [`../dapr-shared/references/ops/scaling.md`](../dapr-shared/references/ops/scaling.md) — scaling the workers.
+- [`../dapr-shared/references/ops/state-store-selection.md`](../dapr-shared/references/ops/state-store-selection.md) — choosing a state store.
+- [`../dapr-shared/references/ops/troubleshooting-ops.md`](../dapr-shared/references/ops/troubleshooting-ops.md) — operational failure modes.
+- [`../dapr-shared/references/dotnet/dotnet.md`](../dapr-shared/references/dotnet/dotnet.md) — the dotnet SDK reference.
+- [`../dapr-shared/references/dotnet/patterns.md`](../dapr-shared/references/dotnet/patterns.md) — patterns in dotnet.
+- [`../dapr-shared/references/dotnet/determinism.md`](../dapr-shared/references/dotnet/determinism.md) — determinism in dotnet.
+- [`../dapr-shared/references/dotnet/error-handling.md`](../dapr-shared/references/dotnet/error-handling.md) — error handling in dotnet.
+- [`../dapr-shared/references/dotnet/data-handling.md`](../dapr-shared/references/dotnet/data-handling.md) — data handling in dotnet.
+- [`../dapr-shared/references/dotnet/gotchas.md`](../dapr-shared/references/dotnet/gotchas.md) — dotnet gotchas.
+- [`../dapr-shared/references/dotnet/testing.md`](../dapr-shared/references/dotnet/testing.md) — testing in dotnet.
+
 ## Running Locally
 
 See [`../dapr-shared/running-locally-dapr.md`](../dapr-shared/running-locally-dapr.md) for instructions.

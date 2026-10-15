@@ -1,5 +1,8 @@
 # Activity Class
 
+Resolve every placeholder from the specification interview before copying this file; the vocabulary is in
+[workflow-placeholders.md](workflow-placeholders.md).
+
 An activity class inherits from `WorkflowActivity<TInput, TOutput>` and overrides the `RunAsync` method. Activities contain the actual business logic. Use record types from the `Models` folder for input and output. Activity class names should have an `Activity` suffix.
 
 ```csharp
@@ -8,26 +11,26 @@ using <ProjectNamespace>.Models;
 
 namespace <ProjectNamespace>.Activities;
 
-internal sealed partial class MyActivity(ILogger<MyActivity> logger) : WorkflowActivity<ActivityInput, ActivityOutput>
+internal sealed partial class <ActivityName>(ILogger<<ActivityName>> logger) : WorkflowActivity<<ActivityInput>, <ActivityOutput>>
 {
-    public override Task<ActivityOutput> RunAsync(WorkflowActivityContext context, ActivityInput input)
+    public override Task<<ActivityOutput>> RunAsync(WorkflowActivityContext context, <ActivityInput> input)
     {
         LogInput(logger, input.Data);
 
         // TODO: implement actual functionality
 
-        return Task.FromResult(new ActivityOutput($"Processed: {input.Data}"));
+        return Task.FromResult(new <ActivityOutput>($"Processed: {input.Data}"));
     }
 
-    [LoggerMessage(LogLevel.Information, "MyActivity: {Data}")]
+    [LoggerMessage(LogLevel.Information, "<ActivityName>: {Data}")]
     static partial void LogInput(ILogger logger, string Data);
 }
 ```
 
 ### Key points
 
-- The first generic type parameter (`TInput`) is the activity input type (e.g., `ActivityInput`).
-- The second generic type parameter (`TOutput`) is the activity output type (e.g., `ActivityOutput`).
+- The first generic type parameter (`TInput`) is the activity input type (e.g., `<ActivityInput>`).
+- The second generic type parameter (`TOutput`) is the activity output type (e.g., `<ActivityOutput>`).
 - The `RunAsync` method receives a `WorkflowActivityContext` and the input.
 - Activities should be `internal sealed partial`. The `partial` modifier is required when the class declares `[LoggerMessage]` partial methods (otherwise the build fails with `CS0751`).
 - Place activity classes in an `Activities` folder/namespace for organization.

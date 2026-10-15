@@ -25,6 +25,13 @@ import {
   checkCelCasts,
 } from './lib/pubsub-validation.mjs';
 import { checkReportExampleCounts } from './lib/review-validation.mjs';
+import { checkFamilyVocabulary, checkFamilyVocabularyLinks } from './lib/family-validation.mjs';
+import {
+  checkVerifyRuns,
+  checkDeclaredTools,
+  checkReviewCrossLinks,
+  checkNoOrphanedShared,
+} from './lib/authoring-validation.mjs';
 
 // Pinned on purpose; bump deliberately after checking the CLI's install layout.
 export const SKILLS_CLI = 'skills@1.7.2';
@@ -52,8 +59,14 @@ report('pubsub: no sample domain in instructions', checkNoSampleDomain(skillsDir
 report('pubsub: placeholders are defined and used', checkPlaceholderVocabulary(skillsDir));
 report('pubsub: templates link the placeholder vocabulary', checkVocabularyLinks(skillsDir));
 report('pubsub: CEL matches cast with int()', checkCelCasts(skillsDir));
+report('workflow: placeholders are defined and used', checkFamilyVocabulary(skillsDir, 'workflow'));
+report('workflow: templates link the placeholder vocabulary', checkFamilyVocabularyLinks(skillsDir, 'workflow'));
 report('reviews: example Found: lines match their findings', checkReportExampleCounts(skillsDir));
 report('evals: manifests are well-formed', checkEvalManifests(evalsDir));
+report('authoring: create skills verify their output', checkVerifyRuns(skillsDir));
+report('authoring: create skills declare Write and Edit', checkDeclaredTools(skillsDir));
+report('authoring: create skills point at their review skills', checkReviewCrossLinks(skillsDir));
+report('authoring: shared reference files are linked', checkNoOrphanedShared(skillsDir));
 
 if (!skipInstall) {
   const tmp = mkdtempSync(join(tmpdir(), 'skills-install-'));

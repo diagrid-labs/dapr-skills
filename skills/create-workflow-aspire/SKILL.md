@@ -2,6 +2,8 @@
 name: create-workflow-aspire
 description: This skill creates a Dapr workflow application with .NET Aspire that runs locally through the Aspire AppHost. Use this skill when the user asks to "create a workflow with Aspire", "write an Aspire workflow application" or "build a workflow app with .NET Aspire". For a workflow that runs on Diagrid Catalyst, use the catalyst-ai plugin instead.
 allowed-tools:
+  - Write
+  - Edit
   - Bash(dotnet:*)
   - Bash(aspire new:*)
   - Bash(~/.aspire/bin/aspire new:*)
@@ -33,6 +35,14 @@ If you don't have enough context what to build, ask the user the following clari
 2. Describe how workflow should work. Which patterns should be used?
 3. Specify the input and output objects of the workflow.
 4. What's the name of this project? This will be used as the folder name and solution name. Don't use any spaces in this name.
+
+### Resolving the names
+
+Before creating any file, write out the resolved names and restate them to the user in two or three lines,
+so a wrong reading is caught before it is scaffolded. Resolve them exactly as
+[`../dapr-shared/workflow-placeholders.md`](../dapr-shared/workflow-placeholders.md) defines them:
+`<WorkflowName>` from the purpose, `<WorkflowInput>` and `<WorkflowOutput>` from its stem, and one
+`<ActivityName>` per step with its `<ActivityInput>` and `<ActivityOutput>`.
 
 ## Prerequisites
 
@@ -164,10 +174,11 @@ HTTP request file for testing the workflow endpoints: `start`, `status`, `pause`
 
 ## Verify
 
-**IMPORTANT: After Project Setup you MUST show these exact verification instructions:**
+**IMPORTANT: After Project Setup you MUST run these checks:**
 
-1. Run `dotnet build` on the `.sln` file to check for build errors.
-2. Instruct the user to start the application with `aspire run` in the solution root to start the Aspire-orchestrated workflow app.
+1. Run `dotnet build` on the `.sln` file (`aspire new` writes a `.sln`, not a `.slnx`). It must succeed; fix any errors and rebuild until it does. Never report the solution as created while the build fails.
+2. When `mcp__ide__getDiagnostics` is available, check the new files with it as well.
+3. Tell the user how to start the solution: `aspire run` in the solution root.
 
 ## Create README.md
 
@@ -182,6 +193,7 @@ The README contains the following sections:
 4. How to start the application using `aspire run`.
 5. List the available endpoints in the ApiService `Program.cs` file and provide examples how to call these using curl. Also include a link to the `<SolutionRoot>.ApiService/<SolutionRoot>.ApiService.http` file.
 6. The **Diagrid Dapr Dev Dashboard** section from the **README section** of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md), in its Aspire form: why it is useful, the install command for each OS (macOS / Linux and Windows), that `aspire run` starts it as the `dapr-dev-dashboard` resource (http://localhost:9090), and that only that resource fails when it is not installed.
+7. Next steps: run the `review-workflow-determinism`, `review-workflow-activity` and `review-workflow-management` skills to audit the generated code.
 
 ## Show final message
 

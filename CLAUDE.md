@@ -177,10 +177,21 @@ All skills require:
 The pub/sub skills build an application from the domain the user describes. Every template is written against the placeholder vocabulary in `skills/dapr-shared/pubsub-placeholders.md`, and there is no default scenario: when a prompt names no domain, the skill asks. `scripts/validate-skills.mjs` enforces this with four checks (`scripts/lib/pubsub-validation.mjs`, unit-tested in `scripts/test/pubsub-validation.test.mjs`):
 
 - **no sample domain in instructions** — order-processing identifiers (`OrderPlaced`, `OrdersTopic`, `handle_order_event`, …) may appear only after a `## Worked example` heading. Adding one to an instruction means the file has stopped being a template.
-- **placeholders are defined and used** — every placeholder a pub/sub file uses is defined in the vocabulary, and every defined placeholder is used. Project and infrastructure placeholders (`<solution-path>`, `<app-id>`, `<route-prefix>`, …) are exempt via `LOCAL_PLACEHOLDERS`.
+- **placeholders are defined and used** — every placeholder a pub/sub file uses is defined in the vocabulary, and every defined placeholder is used. Project and infrastructure placeholders (`<solution-path>`, `<app-id>`, `<route-prefix>`, …) are exempt via that family's `localPlaceholders` set in `scripts/lib/family-validation.mjs` (`FAMILIES`), which is where every vocabulary check now lives; `scripts/lib/pubsub-validation.mjs` only re-exports it.
 - **templates link the placeholder vocabulary** — a `dapr-shared` pub/sub template that uses placeholders points at `pubsub-placeholders.md`.
 - **pubsub: CEL matches cast with int()** — a routing `match` comparing `event.data.<field>` with a number wraps the field in `int()`. `double()` is rejected too: it fires, but mixing the two routes inconsistently across a project.
 - **evals: manifests are well-formed** — each `evals/<skill>/evals.json` is valid JSON, names its folder, numbers cases from 1, and gives every case the six keys and at least one expectation.
+
+## Authoring checks
+
+`scripts/validate-skills.mjs` enforces these rules (`scripts/lib/authoring-validation.mjs`). The first three apply to every `create-*` skill; the last is repo-wide:
+
+- **create skills verify their output** — a `## Verify` section that runs, not shows, and includes a command that compiles or builds. `create-workflow-from-diagram` is exempt in `BUILD_EXEMPT` because it deliberately runs no builds.
+- **create skills declare Write and Edit** — a skill that constrains `allowed-tools` must declare the tools it writes files with.
+- **create skills point at their review skills** — so a user who scaffolds a project discovers the audit skills.
+- **shared reference files are linked** — no Markdown file under `dapr-shared/references/` is unreferenced by any skill. (Non-Markdown files there are not checked.)
+
+Placeholder vocabularies are per family (`scripts/lib/family-validation.mjs`, `FAMILIES`): pub/sub uses `dapr-shared/pubsub-placeholders.md`, workflow uses `dapr-shared/workflow-placeholders.md`. Adding a family means adding a row there, not a second copy of the checks.
 
 ## Review report counts
 

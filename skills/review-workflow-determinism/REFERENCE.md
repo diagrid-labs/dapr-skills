@@ -4,7 +4,13 @@ This skill is read-only and operates entirely on existing source. The detailed r
 
 ## Source rule corpus
 
-The canonical rule sources for this skill are the determinism sections of the existing authoring skills:
+The canonical rule sources for this skill are the dedicated determinism references, then the determinism sections of the authoring skills:
+
+- [`../dapr-shared/references/core/determinism.md`](../dapr-shared/references/core/determinism.md) — the replay mechanism and why each hazard breaks it.
+- [`../dapr-shared/references/dotnet/determinism.md`](../dapr-shared/references/dotnet/determinism.md) — the .NET rules.
+- [`../dapr-shared/references/python/determinism.md`](../dapr-shared/references/python/determinism.md) — the Python rules.
+- [`../dapr-shared/references/core/gotchas.md`](../dapr-shared/references/core/gotchas.md) — symptoms a finding should name.
+- [`../dapr-shared/references/core/troubleshooting.md`](../dapr-shared/references/core/troubleshooting.md) — how a stuck run presents.
 
 - [`../dapr-shared/dotnet-workflow-class.md`](../dapr-shared/dotnet-workflow-class.md) — section "Workflow determinism".
 - [`../create-workflow-python/REFERENCE.md`](../create-workflow-python/REFERENCE.md) — section "Workflow determinism".

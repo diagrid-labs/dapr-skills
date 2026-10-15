@@ -2,6 +2,8 @@
 name: create-pubsub-dotnet
 description: This skill creates a Dapr pub/sub application in .NET — a publisher, a subscriber or both — with declarative (default), programmatic or streaming subscriptions, run with the Dapr CLI or .NET Aspire, using minimal APIs or controllers. Use this skill when the user asks to "create a pub/sub app in .NET", "build a Dapr publisher and subscriber in C#", "create a pub/sub app with Aspire" or "create a .NET streaming subscriber". For an existing project use add-pubsub-dotnet instead.
 allowed-tools:
+  - Write
+  - Edit
   - Bash(dotnet:*)
   - Bash(dapr:*)
   - Bash(aspire new:*)

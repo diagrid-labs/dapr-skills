@@ -1,5 +1,8 @@
 # Dapr Workflow management endpoints (.NET)
 
+Resolve every placeholder from the specification interview before copying this file; the vocabulary is in
+[workflow-placeholders.md](workflow-placeholders.md).
+
 These endpoints are the canonical management surface used by the `create-workflow-*` and `add-workflow-dotnet` skills and checked by `review-workflow-management`.
 
 ## Minimal API form

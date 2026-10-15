@@ -213,7 +213,9 @@ HTTP request file for testing the agent endpoints. Native: `POST /agent/run` ret
 1. Run `uv venv` in each `<ProjectName>` folder to create a virtual environment.
 2. Run `uv sync` in each `<ProjectName>` folder to resolve and install dependencies. This writes `uv.lock` next to `pyproject.toml`.
 3. Confirm `uv.lock` exists and instruct the user to commit it — the `>=` floors in `pyproject.toml` keep the project on supported versions, and `uv.lock` is what makes a checkout reproduce byte-for-byte.
-4. **Windows path length.** If `uv venv` / `uv sync` fails with a path-length error (`path longer than allowed`, `os error 206`, `os error 87`, or a DLL that will not load from `.venv`), the project folder is too deep for the 260-character Windows limit. Do not work around it by mapping drives (`subst`), creating virtual environments outside the project, or running `uv` from another folder — those leave files behind on the user's machine. Stop, tell the user that Verify did not complete and why, and suggest either moving the project to a shorter path (for example `C:\src\<ProjectRoot>`) or enabling long paths (Windows `LongPathsEnabled`), then re-running `uv sync`. Never report the build as verified when `uv.lock` was not written.
+4. Run `uv run python -m compileall -q <ProjectName>` in each project folder. It must exit with code 0; fix any error and re-run.
+5. Check with `mcp__ide__getDiagnostics` when it is available, then remove any `__pycache__` folders the compile step created.
+6. **Windows path length.** If `uv venv` / `uv sync` fails with a path-length error (`path longer than allowed`, `os error 206`, `os error 87`, or a DLL that will not load from `.venv`), the project folder is too deep for the 260-character Windows limit. Do not work around it by mapping drives (`subst`), creating virtual environments outside the project, or running `uv` from another folder — those leave files behind on the user's machine. Stop, tell the user that Verify did not complete and why, and suggest either moving the project to a shorter path (for example `C:\src\<ProjectRoot>`) or enabling long paths (Windows `LongPathsEnabled`), then re-running `uv sync`. Never report the build as verified when `uv.lock` was not written.
 
 ## Create README.md
 
@@ -232,6 +234,7 @@ The README contains the following sections:
 8. **Wrapper and mixed projects:** the `diagrid` licence note and the usage analytics note with the opt-out variables (`DO_NOT_TRACK`, `SCARF_NO_ANALYTICS`, `DIAGRID_NO_ANALYTICS`); do not set an opt-out in the generated files. Mixed projects also get the "verify this end to end" note for the coordinator → specialist dispatch. Text for all three is in `REFERENCE.md`.
 9. How to run with Diagrid Catalyst: [`../dapr-shared/running-with-catalyst.md`](../dapr-shared/running-with-catalyst.md). For wrapper projects, also mention `diagridpy init` as an alternative (see `REFERENCE.md`).
 10. The **Diagrid Dapr Dev Dashboard** section, copied from the **README section** of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md): why it is useful, the install command for each OS (macOS / Linux and Windows) and the run command (`diagrid-dev-dashboard`, http://localhost:9090).
+11. Next steps: run the `review-agent-tools`, `review-agent-memory`, `review-agent-orchestration` and `review-agent-observability` skills to audit the generated agent.
 
 See `REFERENCE.md` for the pyproject.toml templates, the native `main.py`, the wrapper entry-point table, the multi-agent topologies, tool patterns, and observability wiring.
 

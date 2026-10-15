@@ -1,14 +1,17 @@
 # Models
 
+Resolve every placeholder from the specification interview before copying this file; the vocabulary is in
+[workflow-placeholders.md](workflow-placeholders.md).
+
 Define record types for workflow and activity input/output in a `Models` folder. Record types must be serializable since Dapr persists workflow state.
 
 ```csharp
 namespace <ProjectNamespace>.Models;
 
-public record WorkflowInput(string Id, string Message);
-public record WorkflowOutput(string Result);
-public record ActivityInput(string Data);
-public record ActivityOutput(string ProcessedData);
+public record <WorkflowInput>(string Id, string Message);
+public record <WorkflowOutput>(string Result);
+public record <ActivityInput>(string Data);
+public record <ActivityOutput>(string ProcessedData);
 ```
 
 ### Key points
@@ -18,4 +21,4 @@ public record ActivityOutput(string ProcessedData);
 - Use `record` types for immutability and built-in serialization support.
 - Define separate input and output types for workflows and activities to keep contracts clear.
 - Record types should be `public` so they can be referenced across namespaces.
-- `WorkflowInput.Id` is used as the workflow instance ID by the `/start` endpoint in `Program.cs`. The JSON payload of the `start` request in `local.http` must match the `WorkflowInput` properties (`id`, `message`).
+- `<WorkflowInput>.Id` is used as the workflow instance ID by the `/start` endpoint in `Program.cs`. The JSON payload of the `start` request in `local.http` must match the `<WorkflowInput>` properties (`id`, `message`).

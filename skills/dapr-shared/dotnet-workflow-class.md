@@ -1,5 +1,8 @@
 # Workflow Class
 
+Resolve every placeholder from the specification interview before copying this file; the vocabulary is in
+[workflow-placeholders.md](workflow-placeholders.md).
+
 A workflow class inherits from `Workflow<TInput, TOutput>` and overrides the `RunAsync` method. The workflow orchestrates one or more activities by calling `context.CallActivityAsync`. Use record types from the `Models` folder for input and output. Workflow class names should have a `Workflow` suffix.
 
 ```csharp
@@ -10,19 +13,19 @@ using <ProjectNamespace>.Models;
 
 namespace <ProjectNamespace>.Workflows;
 
-internal sealed partial class MyWorkflow : Workflow<WorkflowInput, WorkflowOutput>
+internal sealed partial class <WorkflowName> : Workflow<<WorkflowInput>, <WorkflowOutput>>
 {
-    public override async Task<WorkflowOutput> RunAsync(WorkflowContext context, WorkflowInput input)
+    public override async Task<<WorkflowOutput>> RunAsync(WorkflowContext context, <WorkflowInput> input)
     {
-        var logger = context.CreateReplaySafeLogger<MyWorkflow>();
+        var logger = context.CreateReplaySafeLogger<<WorkflowName>>();
         LogStart(logger, context.InstanceId);
         
-        var activityInput = new ActivityInput(input.Message);
-        var activityOutput = await context.CallActivityAsync<ActivityOutput>(
-            nameof(MyActivity),
+        var activityInput = new <ActivityInput>(input.Message);
+        var activityOutput = await context.CallActivityAsync<<ActivityOutput>>(
+            nameof(<ActivityName>),
             activityInput);
 
-        return new WorkflowOutput(activityOutput.ProcessedData);
+        return new <WorkflowOutput>(activityOutput.ProcessedData);
     }
 
     [LoggerMessage(LogLevel.Information, "Starting workflow with ID: {Id}")]
@@ -32,11 +35,11 @@ internal sealed partial class MyWorkflow : Workflow<WorkflowInput, WorkflowOutpu
 
 ### Key points
 
-- The first generic type parameter (`TInput`) is the workflow input type (e.g., `WorkflowInput`).
-- The second generic type parameter (`TOutput`) is the workflow output type (e.g., `WorkflowOutput`).
+- The first generic type parameter (`TInput`) is the workflow input type (e.g., `<WorkflowInput>`).
+- The second generic type parameter (`TOutput`) is the workflow output type (e.g., `<WorkflowOutput>`).
 - Use `context.CallActivityAsync<TOutput>(activityName, input)` to call an activity.
 - Use `nameof()` to reference activity names to avoid magic strings.
-- Place workflow classes in a `Workflows` folder and the `<ProjectNamespace>.Workflows` namespace. `Program.cs` must import this namespace (`using <ProjectNamespace>.Workflows;`) so `nameof(MyWorkflow)` resolves.
+- Place workflow classes in a `Workflows` folder and the `<ProjectNamespace>.Workflows` namespace. `Program.cs` must import this namespace (`using <ProjectNamespace>.Workflows;`) so `nameof(<WorkflowName>)` resolves.
 - Use the `CreateReplaySafeLogger`method on the workflow context to create an ILogger that is safe to use in workflows.
 - Activities can be chained by passing the output of one activity as the input to the next.
 - Map between workflow and activity model types as needed.

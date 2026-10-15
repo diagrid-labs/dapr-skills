@@ -59,3 +59,12 @@ The expected report excerpt:
 - Workflow body code (`Workflow<>` `RunAsync`, `@wfr.workflow` functions) — covered by `review-workflow-determinism`.
 - Management endpoints / `Program.cs` / `main.py` — covered by `review-workflow-management`.
 - Workflow versioning (`IsPatched` / `is_patched` and named workflow versions), error-handling policy, operations, and pattern-level design reviews — not covered by the review skills.
+
+## Deeper reference
+
+- [`../dapr-shared/references/core/activity-patterns.md`](../dapr-shared/references/core/activity-patterns.md) — idempotency and compensation shapes.
+- [`../dapr-shared/references/core/error-reference.md`](../dapr-shared/references/core/error-reference.md) — the error taxonomy a finding should cite.
+- [`../dapr-shared/references/dotnet/error-handling.md`](../dapr-shared/references/dotnet/error-handling.md) — the .NET rules.
+- [`../dapr-shared/references/python/error-handling.md`](../dapr-shared/references/python/error-handling.md) — the Python rules.
+- [`../dapr-shared/references/dotnet/data-handling.md`](../dapr-shared/references/dotnet/data-handling.md) — payload and serialization limits (.NET).
+- [`../dapr-shared/references/python/data-handling.md`](../dapr-shared/references/python/data-handling.md) — payload and serialization limits (Python).

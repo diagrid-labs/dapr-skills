@@ -195,6 +195,7 @@ Create a README.md file inside the <ProjectRoot> folder with the sections:
 6. The **Diagrid Dapr Dev Dashboard** section, copied from the **README section** of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md): why it is useful, the install command for each OS (macOS / Linux and Windows) and the run command (`diagrid-dev-dashboard`, http://localhost:9090).
 7. How to run with Diagrid Catalyst: [`../dapr-shared/running-with-catalyst.md`](../dapr-shared/running-with-catalyst.md).
 8. A short "License" note: `Diagrid.AI.Microsoft.AgentFramework` is licensed under the Business Source License 1.1, with a link to its `LICENSE.md` (see "License and usage analytics" in `REFERENCE.md`).
+9. Next steps: run the `review-agent-tools`, `review-agent-memory`, `review-agent-orchestration` and `review-agent-observability` skills to audit the generated agent.
 
 See `REFERENCE.md` for Program.cs, Tools, and model templates.
 

@@ -426,6 +426,33 @@ def step1(ctx, activity_input: ActivityInput) -> ActivityOutput:
 
 Create a `.gitignore` file in the project root with common Python ignore patterns.Use this as the source: https://raw.githubusercontent.com/github/gitignore/refs/heads/main/Python.gitignore
 
+## Deeper reference
+
+These are not needed to scaffold the project, but answer the questions that come next:
+
+- [`../dapr-shared/references/core/patterns.md`](../dapr-shared/references/core/patterns.md) — the pattern catalogue.
+- [`../dapr-shared/references/core/child-workflows.md`](../dapr-shared/references/core/child-workflows.md) — composing workflows.
+- [`../dapr-shared/references/core/timers.md`](../dapr-shared/references/core/timers.md) — durable timers.
+- [`../dapr-shared/references/core/external-events.md`](../dapr-shared/references/core/external-events.md) — human-in-the-loop and waiting.
+- [`../dapr-shared/references/core/testing.md`](../dapr-shared/references/core/testing.md) — how to test a workflow.
+- [`../dapr-shared/references/core/versioning.md`](../dapr-shared/references/core/versioning.md) — changing a workflow already in flight.
+- [`../dapr-shared/references/core/gotchas.md`](../dapr-shared/references/core/gotchas.md) — the mistakes that bite first.
+- [`../dapr-shared/references/core/troubleshooting.md`](../dapr-shared/references/core/troubleshooting.md) — diagnosing a stuck run.
+- [`../dapr-shared/references/core/error-reference.md`](../dapr-shared/references/core/error-reference.md) — the error taxonomy.
+- [`../dapr-shared/references/core/activity-patterns.md`](../dapr-shared/references/core/activity-patterns.md) — activity shapes.
+- [`../dapr-shared/references/core/determinism.md`](../dapr-shared/references/core/determinism.md) — why replay constrains the workflow body.
+- [`../dapr-shared/references/ops/monitoring.md`](../dapr-shared/references/ops/monitoring.md) — what to watch in production.
+- [`../dapr-shared/references/ops/scaling.md`](../dapr-shared/references/ops/scaling.md) — scaling the workers.
+- [`../dapr-shared/references/ops/state-store-selection.md`](../dapr-shared/references/ops/state-store-selection.md) — choosing a state store.
+- [`../dapr-shared/references/ops/troubleshooting-ops.md`](../dapr-shared/references/ops/troubleshooting-ops.md) — operational failure modes.
+- [`../dapr-shared/references/python/python.md`](../dapr-shared/references/python/python.md) — the python SDK reference.
+- [`../dapr-shared/references/python/patterns.md`](../dapr-shared/references/python/patterns.md) — patterns in python.
+- [`../dapr-shared/references/python/determinism.md`](../dapr-shared/references/python/determinism.md) — determinism in python.
+- [`../dapr-shared/references/python/error-handling.md`](../dapr-shared/references/python/error-handling.md) — error handling in python.
+- [`../dapr-shared/references/python/data-handling.md`](../dapr-shared/references/python/data-handling.md) — data handling in python.
+- [`../dapr-shared/references/python/gotchas.md`](../dapr-shared/references/python/gotchas.md) — python gotchas.
+- [`../dapr-shared/references/python/testing.md`](../dapr-shared/references/python/testing.md) — testing in python.
+
 ## Running Locally
 
 See [`../dapr-shared/running-locally-dapr.md`](../dapr-shared/running-locally-dapr.md) for instructions.

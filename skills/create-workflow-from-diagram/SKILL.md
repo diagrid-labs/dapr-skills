@@ -4,6 +4,7 @@ description: This skill creates a Dapr workflow application from a diagram, scaf
 allowed-tools:
   - Read
   - Write
+  - Edit
   - Bash(mkdir:*)
   - Bash(ls:*)
   - Bash(diagrid-dev-dashboard --version)
@@ -140,6 +141,7 @@ Create a `README.md` in `<ProjectRoot>` containing:
 5. Endpoints (if the generated language produces an HTTP surface — Python, .NET and JavaScript do by default).
 6. Open questions — every remaining `unrecognized_item` from the IR (if any).
 7. The **Diagrid Dapr Dev Dashboard** section, copied from the **README section** of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md): why it is useful, the install command for each OS (macOS / Linux and Windows) and the run command (`diagrid-dev-dashboard`, http://localhost:9090).
+8. Next steps: run the `review-workflow-determinism`, `review-workflow-activity` and `review-workflow-management` skills to audit the generated code.
 
 See `../dapr-shared/running-locally-dapr.md` and `../dapr-shared/running-with-catalyst.md` in this repo for snippets to include.
 

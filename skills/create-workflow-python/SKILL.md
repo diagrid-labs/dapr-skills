@@ -2,6 +2,8 @@
 name: create-workflow-python
 description: This skill creates a Dapr workflow application in Python that runs locally with the Dapr CLI (`dapr run`). Use this skill when the user asks to "create a workflow in Python", "write a Python workflow application" or "build a workflow app in Python". For a workflow that runs on Diagrid Catalyst, use the catalyst-ai plugin instead.
 allowed-tools:
+  - Write
+  - Edit
   - Bash(uv venv:*)
   - Bash(uv sync:*)
   - Bash(dapr:*)
@@ -33,6 +35,14 @@ If you don't have enough context what to build, ask the user the following clari
 2. Describe how workflow should work. Which patterns should be used?
 3. Specify the input and output objects of the workflow.
 4. What's the name of this project? This will be used as the folder name. Don't use any spaces in this name.
+
+### Resolving the names
+
+Before creating any file, write out the resolved names and restate them to the user in two or three lines,
+so a wrong reading is caught before it is scaffolded. Resolve them exactly as
+[`../dapr-shared/workflow-placeholders.md`](../dapr-shared/workflow-placeholders.md) defines them:
+`<WorkflowName>` from the purpose, `<WorkflowInput>` and `<WorkflowOutput>` from its stem, and one
+`<ActivityName>` per step with its `<ActivityInput>` and `<ActivityOutput>`.
 
 ## Prerequisites
 
@@ -127,6 +137,9 @@ HTTP request file for testing the workflow endpoints. Contains a `start` request
 
 1. Run `uv venv` in the `<ProjectName>` folder to create a virtual environment.
 2. Run `uv sync` in the `<ProjectName>` folder to install dependencies.
+3. Run `uv run python -m compileall -q <ProjectName>`. It must exit with code 0; fix any error and re-run.
+4. Check with `mcp__ide__getDiagnostics` when it is available.
+5. Remove any `__pycache__` folders created by the compile step.
 
 ## Create README.md
 
@@ -142,6 +155,7 @@ The README contains the following sections:
 5. List the available endpoints in the main.py file and provide examples how to call these using curl. Also include a link to the `local.http` file.
 6. The **Diagrid Dapr Dev Dashboard** section, copied from the **README section** of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md): why it is useful, the install command for each OS (macOS / Linux and Windows) and the run command (`diagrid-dev-dashboard`, http://localhost:9090).
 7. How to run the application with Diagrid Catalyst to visually inspect the workflow.
+8. Next steps: run the `review-workflow-determinism`, `review-workflow-activity` and `review-workflow-management` skills to audit the generated code.
 
 See `REFERENCE.md` for additional instructions on running locally and running with Catalyst.
 
