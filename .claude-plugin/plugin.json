@@ -1,7 +1,7 @@
 {
   "name": "dapr-skills",
   "description": "Create, add, and review Dapr applications that use Workflow, Pub/Sub, Dapr Agents or a Diagrid agent framework wrapper for durable agent applications.",
-  "version": "1.27.0",
+  "version": "1.28.0",
   "author": {
     "name": "Diagrid"
   },

@@ -10,6 +10,22 @@ Every `review-workflow-*`, `review-agent-*` and `review-pubsub-*` skill emits a 
 
 A separate **Please verify** section collects findings the rule heuristic flagged with low confidence (for example, a name that matches a pattern but cannot be statically proven). Never mix low-confidence findings into Critical.
 
+**A rule's declared severity fixes the section it is reported in. Do not re-judge it per finding.** The
+severity column of the rule table is the whole decision:
+
+| Declared severity | Section |
+|---|---|
+| critical | `## Critical` |
+| warning | `## Warnings` |
+| info | `## Suggestions` |
+| any severity marked "reported under Please verify" | `## Please verify` |
+
+The descriptions above explain why a rule carries the severity it does; they are not an invitation to
+move a finding. A `warning` rule stays in `## Warnings` even when the offending code looks like a typo,
+a one-character fix or a stylistic nit — the severity reflects the consequence, not the size of the fix.
+Moving a finding also makes the `Found:` counts disagree with the rule tables, which is what makes two
+reports of the same project impossible to diff.
+
 ## Rule ids
 
 Each rule has a stable id of the form `<PREFIX>-<AREA>-<NNN>`. Three prefix families are in use:

@@ -32,7 +32,7 @@ Apply each rule to every file in `publisher_files` from [`review-detect-target-p
 | DPS-PUB-007 | warning | `publish_events(` whose result is not assigned, or whose `failed_entries` is never read | Partial failures are lost | Inspect the failed entries | `pubsub-bulk.md` |
 | DPS-PUB-008 | warning | Metadata keys `cloudevent.traceparent`, `cloudevent.traceid`, `cloudevent.tracestate` | Breaks tracing | Remove them | `pubsub-cloudevents.md` |
 | DPS-PUB-009 | info | The same pubsub or topic string literal at 2 or more publish/subscribe sites | Typos create other topics silently (names are case-sensitive) | Shared constants (`PUBSUB_NAME` and one topic constant per topic) | `pubsub_api.md`; `pubsub-scopes.md` |
-| DPS-PUB-010 | warning, reported under Please verify | The published data is a collection (`list[`, a query result) or file/stream bytes | Request body limit 4Mi (`--max-body-size`) | One event per item, or a reference | `reference/arguments-annotations-overview.md`; `pubsub-bulk.md` |
+| DPS-PUB-010 | warning, reported under Please verify | The `data` of a single-message `publish_event(` is a collection (`list[`, a query result) or file/stream bytes. **Never the `data=` of a bulk `publish_events(`**, even when it is a list comprehension: those entries are separate messages, so the Fix below is already satisfied | Request body limit 4Mi (`--max-body-size`) | One event per item, or a reference | `reference/arguments-annotations-overview.md`; `pubsub-bulk.md` |
 | DPS-PUB-011 | info | A sync `DaprClient().publish_event(` inside `async def` | Blocks the event loop | A `def` route, or `dapr.aio` with `await` | `dapr/aio/clients/grpc/client.py` |
 | DPS-PUB-012 | info, reported under Please verify | Metadata `rawPayload` = `"true"` | Loses tracing, dedupe id and content type | Confirm the consumers are non-Dapr | `pubsub-raw.md` |
 
@@ -41,7 +41,7 @@ Apply each rule to every file in `publisher_files` from [`review-detect-target-p
 - DPS-PUB-002 — A handler that logs and continues, or that returns a non-2xx status on only some paths, is reported under Please verify. Verified behaviour: with no sidecar running, `publish_event` waits for the health check and raises `TimeoutError` (`DAPR_HEALTH_TIMEOUT` shortens the wait); `isinstance(e, DaprGrpcError)` is false for it, so an `except DaprGrpcError` alone does not turn a missing sidecar into a 503. Say so in `Fix:`.
 - DPS-PUB-003 — When `component_files` is empty (the component lives outside the scope) report under Please verify, not Critical. Resolve constants before comparing.
 - DPS-PUB-004 — `publish_metadata={"ttlInSeconds": "60"}` and `{"rawPayload": "true"}` are valid; an int value raises `TypeError`.
-- DPS-PUB-010 — Always report under Please verify: the payload size cannot be proven statically.
+- DPS-PUB-010 — Always report under Please verify: the payload size cannot be proven statically. Applies to `publish_event(` only. The `data=[...]` of a bulk `publish_events(` is a list of separate messages, not one oversized payload, so never report DPS-PUB-010 (or DPS-PUB-004) for it; a bulk call whose result is unchecked is DPS-PUB-007.
 - DPS-PUB-012 — Always report under Please verify; raw publishing is legitimate when the consumers are non-Dapr.
 
 ## Baseline

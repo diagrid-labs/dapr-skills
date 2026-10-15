@@ -31,14 +31,14 @@ Apply each rule to every file in `publisher_files` from [`review-detect-target-p
 | DPS-PUB-007 | warning | `BulkPublishEventAsync(` whose result is not assigned, or whose `FailedEntries` is never read | Partial failures are lost | Inspect the failed entries | `pubsub-bulk.md`; `BulkPublishResponse.cs` |
 | DPS-PUB-008 | warning | Metadata keys `cloudevent.traceparent`, `cloudevent.traceid`, `cloudevent.tracestate`; `PublishOptions { TraceParent =` / `TraceState =` | Breaks tracing | Remove them | `pubsub-cloudevents.md` |
 | DPS-PUB-009 | info | The same pubsub or topic string literal at 2 or more publish/subscribe sites | Typos create other topics silently (names are case-sensitive) | Shared constants (`PubSubNames`) | `pubsub_api.md`; `pubsub-scopes.md` |
-| DPS-PUB-010 | warning, reported under Please verify | The published data is a collection (`List<`, `IEnumerable<`, `.ToList()`, a query result) or file/stream bytes | Request body limit 4Mi (`--max-body-size`) | One event per item, or a reference | `reference/arguments-annotations-overview.md`; `pubsub-bulk.md` |
+| DPS-PUB-010 | warning, reported under Please verify | The payload of a single-message `PublishEventAsync(` is a collection (`List<`, `IEnumerable<`, `.ToList()`, a query result) or file/stream bytes. **Never the collection passed to a bulk `BulkPublishEventAsync(`**, even when it is a LINQ projection: those entries are separate messages, so the Fix below is already satisfied | Request body limit 4Mi (`--max-body-size`) | One event per item, or a reference | `reference/arguments-annotations-overview.md`; `pubsub-bulk.md` |
 | DPS-PUB-012 | info, reported under Please verify | Metadata `rawPayload` = `"true"` | Loses tracing, dedupe id and content type | Confirm the consumers are non-Dapr | `pubsub-raw.md` |
 
 ## Confidence notes
 
 - DPS-PUB-002 — A catch that logs and continues, or that returns a non-2xx status on only some paths, is reported under Please verify. An empty catch or one that returns 2xx is critical.
 - DPS-PUB-003 — When `component_files` is empty (the component lives outside the scope) report under Please verify, not Critical. Resolve constants (`PubSubNames.PubSubName`) before comparing.
-- DPS-PUB-010 — Always report under Please verify: the payload size cannot be proven statically.
+- DPS-PUB-010 — Always report under Please verify: the payload size cannot be proven statically. Applies to `PublishEventAsync(` only. The collection passed to a bulk `BulkPublishEventAsync(` is a list of separate messages, not one oversized payload, so never report DPS-PUB-010 for it; a bulk call whose `FailedEntries` is unchecked is DPS-PUB-007.
 - DPS-PUB-012 — Always report under Please verify; raw publishing is legitimate when the consumers are non-Dapr.
 
 ## Baseline
