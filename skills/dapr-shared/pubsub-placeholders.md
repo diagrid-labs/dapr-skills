@@ -32,12 +32,12 @@ scenario; they are illustrations, not defaults.
 | `<IdProperty>` | the field that uniquely identifies a message; the handler deduplicates on it | `ShipmentId` |
 | `<EventDescription>` | lowercase noun phrase used in log and error text | `shipment` |
 | `<TopicName>` | the topic string | `shipments` |
-| `<TopicResource>` | PascalCase of `<TopicName>`, used for a subscriber controller or handler name | `Shipments` |
-| `<TopicConstant>` | the `PubSubNames` constant holding `<TopicName>` | `ShipmentsTopic` |
+| `<TopicResource>` | `<TopicName>` in PascalCase, used for a subscriber controller or handler name | `Shipments` |
+| `<TopicConstant>` | `<TopicResource>` plus the suffix `Topic`. The suffix is required, so the constant reads as a topic at every call site | `ShipmentsTopic` |
 | `<DeadLetterTopicName>` | the dead-letter topic string, `<TopicName>-deadletter` | `shipments-deadletter` |
-| `<DeadLetterTopicConstant>` | the constant holding it | `ShipmentsDeadLetterTopic` |
+| `<DeadLetterTopicConstant>` | `<TopicResource>` plus the suffix `DeadLetterTopic` | `ShipmentsDeadLetterTopic` |
 | `<PublishRoute>` | the publisher's route segment | `shipments` |
-| `<PublishResource>` | PascalCase of `<PublishRoute>`, used for a controller name | `Shipments` |
+| `<PublishResource>` | `<PublishRoute>` in PascalCase, used for a controller name | `Shipments` |
 | `<SubscribeRoute>` | the subscriber's route path, `/events/pubsub/<TopicName>` | `/events/pubsub/shipments` |
 | `<DeadLetterRoute>` | `/events/pubsub/<DeadLetterTopicName>` | `/events/pubsub/shipments-deadletter` |
 | `<ValidationCondition>` | the handler's domain validity check, from the interview | `string.IsNullOrWhiteSpace(shipment.ShipmentId)` |
@@ -79,6 +79,13 @@ Python uses the same concepts with Python casing.
 `<HandlerBody>` / `<handler_body>` is whatever the user said the subscriber should do. When they described
 no action beyond receiving the event, log it at information level with its identifying fields and nothing
 else — never invent a side effect the user did not ask for.
+
+### Deriving a name
+
+Every derived name follows its rule exactly; the examples illustrate the rule, they do not replace it. A
+topic of `payment-settled` gives `<TopicResource>` `PaymentSettled`, `<TopicConstant>` `PaymentSettledTopic`
+and `<DeadLetterTopicConstant>` `PaymentSettledDeadLetterTopic`. Dropping the `Topic` suffix, or inventing
+another shortening, breaks the convention the add and `review-pubsub-*` skills expect to find.
 
 ## Names that are not placeholders
 

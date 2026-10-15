@@ -181,4 +181,8 @@ The pub/sub skills build an application from the domain the user describes. Ever
 - **templates link the placeholder vocabulary** — a `dapr-shared` pub/sub template that uses placeholders points at `pubsub-placeholders.md`.
 - **evals: manifests are well-formed** — each `evals/<skill>/evals.json` is valid JSON, names its folder, numbers cases from 1, and gives every case the six keys and at least one expectation.
 
+## Review report counts
+
+Every review skill's `Found:` line must equal the findings printed beneath its section headings. `scripts/validate-skills.mjs` enforces this for the example reports in the review skills' documentation (`reviews: example Found: lines match their findings`, from `scripts/lib/review-validation.mjs`), because an example whose counts drift teaches the error to the model that patterns off it. The rule itself lives in `skills/dapr-shared/review-report-format.md`: write the sections first, count the bullets, then copy the four numbers into the line.
+
 When adding a placeholder, define it in the vocabulary in the same change, or the build fails.

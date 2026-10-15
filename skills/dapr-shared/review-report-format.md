@@ -94,6 +94,7 @@ Found: <n> critical, <n> warnings, <n> suggestions, <n> to verify
 - Commands and files in `Next steps` must exist in the reviewed project. Do not tell the user to run a script, compose file or endpoint the project does not have; point to the skill or doc that creates it instead.
 - The report is the whole reply. The `# Dapr review` heading comes first; the only text allowed before it is a single `Reviewing <path>` scope line. If the user asked a question, answer it inside the report — through the findings, or in one `Next steps` bullet when the answer is "this is expected" — never in prose above the heading.
 - Group findings by severity, then by rule id ascending, then by file path. This produces stable output across runs so users can diff reports.
+- **The `Found:` line is derived, never estimated.** Write the sections first, then count the `- [RULE-ID]` bullets under each of `## Critical`, `## Warnings`, `## Suggestions` and `## Please verify`, and copy those four numbers into the line. Each number must equal the bullets actually printed under its heading. Two findings that share a rule id count as two. A section with no findings is omitted and contributes `0`. Re-read the four counts against the sections before emitting the report: a `Found:` line that disagrees with its own bullets makes every downstream diff and total wrong.
 - Do not summarize what the skill did, do not editorialize, do not emit any text after the `Next steps` section.
 - If zero findings, the body is just `No issues found.` followed by `Next steps`.
 

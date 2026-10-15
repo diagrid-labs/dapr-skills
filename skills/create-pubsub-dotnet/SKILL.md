@@ -201,7 +201,7 @@ Create a README.md inside `<ProjectRoot>` with these sections:
 5. Declarative only: the subscription file hot-reloads, so editing `subscription.yaml` needs no restart.
 6. Local-only notes (see `REFERENCE.md` → **README key points**).
 7. The **Diagrid Dapr Dev Dashboard** section from the **README section** of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md) (Aspire form in Aspire mode).
-8. **Switching the message broker**: one short paragraph (see `REFERENCE.md` → **README key points**).
+8. **Switching the message broker**: one short paragraph. It MUST contain the link https://docs.dapr.io/reference/components-reference/supported-pubsub/ and MUST say that the component file is replaced while `metadata.name: pubsub` stays the same, so no code changes. A heading with no paragraph, or a paragraph without that link, is incomplete. See `REFERENCE.md` → **README key points** for the full wording.
 9. Dapr CLI mode only: running with Catalyst, from [`../dapr-shared/running-with-catalyst.md`](../dapr-shared/running-with-catalyst.md).
 10. Next steps: run the `review-pubsub-publishing`, `review-pubsub-subscriptions` and `review-pubsub-components` skills.
 
