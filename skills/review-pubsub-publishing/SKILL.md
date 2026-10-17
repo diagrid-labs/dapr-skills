@@ -1,6 +1,6 @@
 ---
 name: review-pubsub-publishing
-description: This skill reviews Dapr pub/sub publishing code in .NET and Python for unawaited or swallowed publish failures, wrong pub/sub names, content types, client lifetime, bulk-publish partial failures, tracing overrides and payload size. Use this skill when the user asks to "review my pub/sub publishing code", "audit Dapr publish calls" or similar.
+description: Reviews Dapr pub/sub publishing code in .NET and Python for swallowed publish failures, wrong pub/sub names, content types, client lifetime, bulk-publish partial failures and payload size. Use for "review my pub/sub publishing code" or "audit Dapr publish calls".
 allowed-tools:
   - Read
   - Grep

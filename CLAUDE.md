@@ -198,8 +198,9 @@ The skills install into Claude Code, Codex CLI and Copilot CLI. `scripts/lib/fro
 - **frontmatter keys** — only `name`, `description`, `allowed-tools`. Support skills (`SUPPORT_SKILLS`, today `dapr-shared`) may also set `disable-model-invocation: true` and `user-invocable: false`, which Claude Code and Copilot CLI honour.
 - **support skills are hidden** — `dapr-shared` also ships `agents/openai.yaml` with `policy.allow_implicit_invocation: false`, the only way to stop Codex CLI selecting it. The check fails if any of the three settings is missing.
 - **allowed-tools** — no wildcard shell tools and no MCP tools.
-- **description budget** — descriptions are always in context, and Codex budgets its whole skill list at about 8,000 characters and shortens descriptions first. Hard limits (`MAX_DESCRIPTION_CHARS`, `MAX_TOTAL_DESCRIPTION_CHARS`) sit at today's values and only ratchet down. The build prints a `WARN` for descriptions above the targets (400 characters each, 8,000 in total).
-- **description similarity** — two descriptions that read alike compete for the same trigger. The hard limit sits just above the language twins; pairs above the 50% target are printed as `WARN`.
+- **description budget** — descriptions are always in context, and Codex budgets its whole skill list at about 8,000 characters and shortens descriptions first. Keep each description to 400 characters (hard limit `MAX_DESCRIPTION_CHARS`) and the total under 7,000 (`MAX_TOTAL_DESCRIPTION_CHARS`, which only ratchets down). Lead with the verb ("Creates ...", "Reviews ...") instead of "This skill ...".
+- **description YAML** — a description is an unquoted YAML value, so it must not contain `: `. Rephrase it.
+- **description similarity** — two descriptions that read alike compete for the same trigger. The hard limit (`MAX_DESCRIPTION_SIMILARITY`) sits just above the language twins; other pairs above the 50% target print a `WARN`. After changing a description, re-run the triggering check in `evals/README.md`.
 
 Lower the `MAX_*` constants whenever descriptions get shorter, never raise them.
 

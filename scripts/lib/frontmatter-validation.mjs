@@ -27,21 +27,23 @@ const SUPPORT_SKILL_KEYS = ['disable-model-invocation', 'user-invocable'];
 /**
  * Hard limits. They fail the build, so they sit at (or just above) today's
  * values and only ratchet down. TARGET_* are the goals; going over them is
- * reported as a warning until the descriptions have been shortened.
+ * reported as a warning. The length targets are met, so the hard limits now
+ * equal them (the total target is Codex's list budget; the hard total keeps a
+ * little headroom for new skills).
  */
-export const MAX_DESCRIPTION_CHARS = 1000;
-export const MAX_TOTAL_DESCRIPTION_CHARS = 12500;
+export const MAX_DESCRIPTION_CHARS = 400;
+export const MAX_TOTAL_DESCRIPTION_CHARS = 7000;
 export const TARGET_DESCRIPTION_CHARS = 400;
 export const TARGET_TOTAL_DESCRIPTION_CHARS = 8000;
 
 /**
  * Two descriptions this alike (Jaccard on distinctive words) fail the build. The
  * limit sits just above the worst pair today, the language twins that share one
- * template (check-prereq-aspire / check-prereq-dotnet, 0.91); it only ratchets
- * down. Language twins are expected to read alike, so the target is a warning
- * for pairs that should be told apart by subject, not just by language.
+ * template (check-prereq-aspire / check-prereq-dotnet, 0.90); it only ratchets
+ * down. Language twins (see isLanguageTwin) are expected to read alike, so the
+ * target warning skips them and flags pairs that should differ by subject.
  */
-export const MAX_DESCRIPTION_SIMILARITY = 0.92;
+export const MAX_DESCRIPTION_SIMILARITY = 0.91;
 export const TARGET_DESCRIPTION_SIMILARITY = 0.5;
 
 const STOPWORDS = new Set(
@@ -112,6 +114,24 @@ export function checkSupportSkillsHidden(skillsDir) {
     const text = existsSync(yaml) ? readFileSync(yaml, 'utf8') : '';
     if (!/^\s+allow_implicit_invocation:\s*false\s*$/m.test(text)) {
       failures.push(`${name}/agents/openai.yaml -> missing \`policy.allow_implicit_invocation: false\` (Codex CLI)`);
+    }
+  }
+  return failures;
+}
+
+/**
+ * Check — a description is a YAML plain scalar, and a colon followed by a space
+ * ends it: the frontmatter then fails to parse in a strict client although this
+ * repo's flat parser reads it. Returns failure strings.
+ */
+export function checkDescriptionYaml(skillsDir) {
+  const failures = [];
+  for (const name of skillFolders(skillsDir)) {
+    const text = readFileSync(join(skillsDir, name, 'SKILL.md'), 'utf8');
+    const raw = /^description:[ \t]*(.*)$/m.exec(text)?.[1].trim() ?? '';
+    const quoted = /^(['"])[\s\S]*\1$/.test(raw);
+    if (!quoted && /: |:$/.test(raw)) {
+      failures.push(`${name}/SKILL.md -> description has ': ' in an unquoted value, which is invalid YAML (rephrase it)`);
     }
   }
   return failures;
@@ -192,6 +212,13 @@ export function descriptionSimilarity(a, b) {
   return { similarity: union === 0 ? 0 : shared.length / union, shared };
 }
 
+const LANGUAGE_SUFFIX = /-(dotnet|python|aspire|typescript)$/;
+
+/** Skills that differ only by a language suffix (create-workflow-dotnet / -python) read alike on purpose. */
+export function isLanguageTwin(a, b) {
+  return a !== b && a.replace(LANGUAGE_SUFFIX, '') === b.replace(LANGUAGE_SUFFIX, '');
+}
+
 /** Every pair of skills with its similarity, most alike first. */
 export function similarityPairs(skillsDir) {
   const descriptions = readDescriptions(skillsDir);
@@ -211,9 +238,13 @@ export function similarityPairs(skillsDir) {
  * descriptions compete for the same trigger and the model picks by wording, not
  * subject. Returns failure strings that list the shared words.
  */
-export function checkDescriptionSimilarity(skillsDir, max = MAX_DESCRIPTION_SIMILARITY) {
+export function checkDescriptionSimilarity(
+  skillsDir,
+  max = MAX_DESCRIPTION_SIMILARITY,
+  { ignoreLanguageTwins = false } = {},
+) {
   return similarityPairs(skillsDir)
-    .filter((p) => p.similarity > max)
+    .filter((p) => p.similarity > max && !(ignoreLanguageTwins && isLanguageTwin(p.a, p.b)))
     .map(
       (p) =>
         `${p.a} / ${p.b} -> descriptions ${Math.round(p.similarity * 100)}% alike, over ${Math.round(max * 100)}% (shared: ${p.shared.join(', ')})`,

@@ -1,6 +1,6 @@
 ---
 name: review-pubsub-components
-description: This skill reviews Dapr pub/sub configuration — pub/sub components, declarative Subscription files, resiliency policies, dapr.yaml and Aspire AppHost wiring — for inline secrets, unauthenticated or unencrypted brokers, dead-letter topics without retry policies, scopes, consumer groups, stream limits, deprecated or mis-scoped subscriptions, ignored raw-payload keys and app-id or port collisions. Use this skill when the user asks to "review my pub/sub components", "audit Dapr pubsub YAML and resiliency" or similar.
+description: Reviews Dapr pub/sub configuration (components, Subscription files, resiliency, dapr.yaml and Aspire wiring) for inline secrets, unsecured brokers, dead-letter topics without retry policies, scopes and app-id or port collisions. Use for "review my pub/sub components" or "audit Dapr pubsub YAML".
 allowed-tools:
   - Read
   - Grep

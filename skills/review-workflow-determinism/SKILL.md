@@ -1,6 +1,6 @@
 ---
 name: review-workflow-determinism
-description: This skill runs a read-only audit of existing Dapr Workflow code for non-determinism hazards that would cause stuck workflows on replay, and emits a structured report of findings with stable DWF-DET-NNN rule ids and file-and-line citations. Use this skill when the user asks to "review workflow for determinism", "check non-determinism in workflow", "audit Dapr workflow replay safety", or similar. For inline guidance while writing a workflow body, rather than an audit of code that already exists, use the catalyst-ai plugin instead.
+description: Read-only audit of existing Dapr Workflow code for non-determinism that breaks replay, with DWF-DET-NNN findings. Use for "review workflow for determinism" or "audit Dapr workflow replay safety". For guidance while writing a workflow body use the catalyst-ai plugin.
 allowed-tools:
   - Read
   - Grep

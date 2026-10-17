@@ -1,6 +1,6 @@
 ---
 name: review-agent-memory
-description: This skill reviews agent memory and state-store configuration for correctness. Use this skill when the user asks to "review agent memory", "check state store config", "audit agent persistence", or similar.
+description: Reviews agent memory and state-store configuration for correctness. Use for "review agent memory", "check state store config" or "audit agent persistence".
 allowed-tools:
   - Read
   - Grep

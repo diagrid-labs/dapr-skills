@@ -38,6 +38,7 @@ import {
   checkSupportSkillsHidden,
   checkDescriptionBudget,
   checkDescriptionSimilarity,
+  checkDescriptionYaml,
   TARGET_DESCRIPTION_CHARS,
   TARGET_TOTAL_DESCRIPTION_CHARS,
   TARGET_DESCRIPTION_SIMILARITY,
@@ -83,14 +84,15 @@ report('cross-cli: frontmatter keys are name, description, allowed-tools (suppor
 report('cross-cli: support skills are hidden from model selection', checkSupportSkillsHidden(skillsDir));
 report('cross-cli: allowed-tools has no wildcard shell or MCP tools', checkAllowedTools(skillsDir));
 report('cross-cli: description length and total budget', checkDescriptionBudget(skillsDir));
+report('cross-cli: descriptions are valid YAML', checkDescriptionYaml(skillsDir));
 report('cross-cli: descriptions are distinct', checkDescriptionSimilarity(skillsDir));
 warn(
   `cross-cli: descriptions above the target (${TARGET_DESCRIPTION_CHARS} each, ${TARGET_TOTAL_DESCRIPTION_CHARS} total)`,
   checkDescriptionBudget(skillsDir, { maxEach: TARGET_DESCRIPTION_CHARS, maxTotal: TARGET_TOTAL_DESCRIPTION_CHARS }),
 );
 warn(
-  `cross-cli: descriptions more than ${TARGET_DESCRIPTION_SIMILARITY * 100}% alike`,
-  checkDescriptionSimilarity(skillsDir, TARGET_DESCRIPTION_SIMILARITY),
+  `cross-cli: descriptions more than ${TARGET_DESCRIPTION_SIMILARITY * 100}% alike (language twins excepted)`,
+  checkDescriptionSimilarity(skillsDir, TARGET_DESCRIPTION_SIMILARITY, { ignoreLanguageTwins: true }),
 );
 report('evals: manifests are well-formed', checkEvalManifests(evalsDir));
 report('authoring: create skills verify their output', checkVerifyRuns(skillsDir));

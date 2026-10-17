@@ -1,6 +1,6 @@
 ---
 name: create-pubsub-python
-description: This skill creates a Dapr pub/sub application in Python with FastAPI — a publisher, a subscriber or both — with declarative (default), programmatic (dapr-ext-fastapi) or streaming subscriptions. Use this skill when the user asks to "create a pub/sub app in Python", "build a FastAPI publisher and subscriber with Dapr" or "create a Python streaming subscriber". For an existing app use add-pubsub-python instead.
+description: Creates a Dapr pub/sub app in Python with FastAPI (publisher, subscriber or both) and declarative, programmatic or streaming subscriptions. Use for "create a pub/sub app in Python" or "build a FastAPI publisher and subscriber with Dapr". For an existing app use add-pubsub-python.
 allowed-tools:
   - Write
   - Edit

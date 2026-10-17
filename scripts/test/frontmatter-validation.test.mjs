@@ -13,6 +13,8 @@ import {
   distinctiveWords,
   descriptionSimilarity,
   checkDescriptionSimilarity,
+  checkDescriptionYaml,
+  isLanguageTwin,
 } from '../lib/frontmatter-validation.mjs';
 
 function fixture(files) {
@@ -107,4 +109,31 @@ test('checkSupportSkillsHidden needs the SKILL.md flags and the Codex policy', (
   assert.equal(checkSupportSkillsHidden(bare).length, 3);
   const yamlTrue = fixture({ 'dapr-shared/SKILL.md': skill('dapr-shared', 'd', hide), 'dapr-shared/agents/openai.yaml': 'policy:\n  allow_implicit_invocation: true\n' });
   assert.equal(checkSupportSkillsHidden(yamlTrue).length, 1);
+});
+
+test('isLanguageTwin matches skills that differ only by language suffix', () => {
+  assert.ok(isLanguageTwin('create-workflow-dotnet', 'create-workflow-python'));
+  assert.ok(isLanguageTwin('check-prereq-aspire', 'check-prereq-dotnet'));
+  assert.ok(!isLanguageTwin('check-prereq-agent-dotnet', 'check-prereq-dotnet'));
+  assert.ok(!isLanguageTwin('review-agent-tools', 'review-agent-tools'));
+});
+
+test('checkDescriptionSimilarity can skip language twins', () => {
+  const dir = fixture({
+    'create-x-dotnet/SKILL.md': skill('create-x-dotnet', 'creates workflow application locally'),
+    'create-x-python/SKILL.md': skill('create-x-python', 'creates workflow application locally'),
+  });
+  assert.equal(checkDescriptionSimilarity(dir, 0.5).length, 1);
+  assert.equal(checkDescriptionSimilarity(dir, 0.5, { ignoreLanguageTwins: true }).length, 0);
+});
+
+test('checkDescriptionYaml rejects an unquoted colon-space', () => {
+  const dir = fixture({
+    'a/SKILL.md': skill('a', 'Does a thing: carefully'),
+    'b/SKILL.md': skill('b', 'Does a thing, carefully'),
+    'c/SKILL.md': skill('c', '"Does a thing: carefully"'),
+  });
+  const failures = checkDescriptionYaml(dir);
+  assert.equal(failures.length, 1);
+  assert.match(failures[0], /^a\/SKILL.md/);
 });

@@ -1,6 +1,6 @@
 ---
 name: review-agent-observability
-description: This skill reviews agent projects for observability completeness — tracing, metrics, structured logging, and trace propagation. Use this skill when the user asks to "review agent observability", "audit agent tracing", "check agent metrics", or similar.
+description: Reviews agent projects for tracing, metrics, structured logging and trace propagation. Use for "review agent observability" or "audit agent tracing".
 allowed-tools:
   - Read
   - Grep

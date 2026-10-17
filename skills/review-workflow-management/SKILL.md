@@ -1,6 +1,6 @@
 ---
 name: review-workflow-management
-description: This skill runs a read-only audit of the HTTP management endpoints (start, status, terminate, pause, resume, raise-event, purge) that an app exposes for Dapr Workflows, and emits a structured report of findings with stable DWF-MGT-NNN rule ids and file-and-line citations. Use this skill when the user asks to "review workflow management", "audit workflow management API", "check workflow HTTP endpoints", or similar. To operate workflow runs on Diagrid Catalyst (pause, terminate, rerun, purge) rather than audit the endpoints an app exposes, use the catalyst-ai plugin instead.
+description: Read-only audit of the HTTP management endpoints (start, status, terminate, pause, resume, raise-event, purge) an app exposes for Dapr Workflows, with DWF-MGT-NNN findings. Use for "review workflow management" or "check workflow HTTP endpoints". To operate runs on Diagrid Catalyst use the catalyst-ai plugin.
 allowed-tools:
   - Read
   - Grep

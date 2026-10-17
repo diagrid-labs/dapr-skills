@@ -1,6 +1,6 @@
 ---
 name: review-agent-tools
-description: This skill reviews agent tool implementations for idempotency, input validation, docstring quality, and convention violations. Use this skill when the user asks to "review agent tools", "check tool idempotency", "audit Dapr agent tools", or similar.
+description: Reviews agent tool implementations for idempotency, input validation, docstring quality and conventions. Use for "review agent tools" or "check tool idempotency".
 allowed-tools:
   - Read
   - Grep

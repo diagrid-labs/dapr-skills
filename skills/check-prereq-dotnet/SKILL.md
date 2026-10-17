@@ -1,6 +1,6 @@
 ---
 name: check-prereq-dotnet
-description: This skill checks prerequisites for building Dapr Workflow apps in .NET. Use this skill when the user asks to "check prerequisites for .NET", "verify .NET environment", or "check .NET setup".
+description: Checks prerequisites for building Dapr Workflow apps in .NET. Use for "check prerequisites for .NET" or "verify .NET environment".
 allowed-tools:
   - Bash(uname -s)
   - Read

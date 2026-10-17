@@ -1,6 +1,6 @@
 ---
 name: create-workflow-dotnet
-description: This skill creates a Dapr workflow application in .NET that runs locally with the Dapr CLI (`dapr run`). Use this skill when the user asks to "create a workflow in .NET", "write a .NET workflow application" or "build a workflow app in C#". For a workflow that runs on Diagrid Catalyst, use the catalyst-ai plugin instead.
+description: Creates a Dapr workflow app in .NET, run locally with dapr run. Use for "create a workflow in .NET" or "build a workflow app in C#". For Diagrid Catalyst use the catalyst-ai plugin.
 allowed-tools:
   - Write
   - Edit

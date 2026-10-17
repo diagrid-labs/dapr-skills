@@ -1,6 +1,6 @@
 ---
 name: check-prereq-aspire
-description: This skill checks prerequisites for building Dapr Workflow apps with .NET Aspire. Use this skill when the user asks to "check prerequisites for Aspire", "verify Aspire environment", or "check Aspire setup".
+description: Checks prerequisites for building Dapr Workflow apps with .NET Aspire. Use for "check prerequisites for Aspire" or "verify Aspire environment".
 allowed-tools:
   - Bash(uname -s)
   - Bash(aspire --version)

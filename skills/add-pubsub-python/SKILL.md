@@ -1,6 +1,6 @@
 ---
 name: add-pubsub-python
-description: This skill adds Dapr pub/sub to an existing Python FastAPI app. It inspects the app, keeps the subscription type it already uses (declarative by default, programmatic with dapr-ext-fastapi, or streaming), shows a plan for approval, then adds the dependencies, Dapr wiring, publisher and subscriber code with small targeted edits, checking imports after every step and running the existing tests at the end. Use this skill when the user asks to "add pub/sub to my FastAPI app" or "make this Python service subscribe to a Dapr topic". For a new app use create-pubsub-python instead.
+description: Adds Dapr pub/sub to an existing Python FastAPI app. Keeps its subscription type, shows a plan for approval, then makes targeted edits and checks imports after each. Use for "add pub/sub to my FastAPI app" or "make this Python service subscribe to a Dapr topic". For a new app use create-pubsub-python.
 allowed-tools:
   - Read
   - Grep
