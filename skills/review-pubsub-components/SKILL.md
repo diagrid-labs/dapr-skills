@@ -24,7 +24,7 @@ You MUST follow these phases in strict order. Do not load files outside the agre
 3. **Load checklist** — Always read [`../dapr-shared/review-pubsub-components.md`](../dapr-shared/review-pubsub-components.md). The checklist is language-neutral, so there is one file for `dotnet`, `aspire` and `python`; apply its .NET / Aspire notes or Python notes for the detected `language`.
 4. **Apply rules** — Walk `component_files`, `subscription_files`, `resiliency_files` and `run_files` against rules `DPS-CFG-001` … `DPS-CFG-014`, using `subscriptions` as context (dead-letter topics, app ids, scopes). Respect each rule's severity conditions: `DPS-CFG-001` is info for a local host or an Aspire secret-parameter default, and `DPS-CFG-006` is reported under **Please verify**.
 5. **Report** — Format every finding using the canonical template from [`../dapr-shared/review-report-format.md`](../dapr-shared/review-report-format.md). The `Language:` line carries the detected language. Group by severity, then rule id, then file path. Never print credential values; name the metadata key only.
-6. **Show final message** — Your last output is the report. Do not append a summary, follow-up question, or next-action prompt other than the `## Next steps` block defined by the report format.
+6. **Show final message** — Your last output is the report. Do not append a summary or next-action prompt other than the `## Next steps` block defined by the report format. Clarifying questions are always allowed during the review (see the report format); once answered, the report is still your last output.
 
 ## Prerequisites
 

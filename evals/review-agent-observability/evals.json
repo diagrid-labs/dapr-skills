@@ -27,7 +27,7 @@
       "id": 2,
       "name": "dotnet-debug-logging-and-no-otel",
       "prompt": "Review the observability of claims-intake-dotnet before it goes to production. It's a Microsoft Agent Framework agent running on Dapr Workflow via Diagrid.AI.Microsoft.AgentFramework.",
-      "expected_output": "A review-agent-observability report with Language: dotnet. DAG-OBS-001 as a warning (not critical, because the .NET scaffold does not add tracing by default), DAG-OBS-009 for \"Diagrid.AI\": \"Debug\" in appsettings.json, and info DAG-OBS-010 because no OpenTelemetry is registered. appsettings.Development.json setting Default to Debug is not a finding; logLevel and metricsPort are set in dapr.yaml. Python-only ids are not used and the retired DAG-OBS-000 is not emitted.",
+      "expected_output": "A review-agent-observability report with Language: dotnet. DAG-OBS-001 as a warning (not critical, because the .NET scaffold does not add tracing by default), DAG-OBS-009 for \"Diagrid.AI\": \"Debug\" in appsettings.json, info DAG-OBS-010 because no OpenTelemetry is registered, and info DAG-OBS-007 when the project has no README.md. appsettings.Development.json setting Default to Debug is not a finding; logLevel and metricsPort are set in dapr.yaml. Python-only ids are not used and the retired DAG-OBS-000 is not emitted.",
       "files": [
         "evals/review-agent-observability/files/claims-intake-dotnet/"
       ],

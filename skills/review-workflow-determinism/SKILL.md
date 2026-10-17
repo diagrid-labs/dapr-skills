@@ -24,7 +24,7 @@ You MUST follow these phases in strict order. Do not load files outside the agre
    - `python` → [`../dapr-shared/review-determinism-python.md`](../dapr-shared/review-determinism-python.md)
 4. **Scan** — For each workflow file in scope, apply every rule from the loaded checklist using `Grep` and `Read`. For each match, capture `file:line`, the rule id, and a short evidence snippet. Confirm the match is inside workflow scope (see "Cross-reference" in each checklist) before promoting it from "Please verify" to a graded severity.
 5. **Report** — Format every finding using the canonical template from [`../dapr-shared/review-report-format.md`](../dapr-shared/review-report-format.md). Group by severity, then rule id, then file path.
-6. **Show final message** — Your last output is the report. Do not append a summary, follow-up question, or next-action prompt other than the `## Next steps` block defined by the report format.
+6. **Show final message** — Your last output is the report. Do not append a summary or next-action prompt other than the `## Next steps` block defined by the report format. Clarifying questions are always allowed during the review (see the report format); once answered, the report is still your last output.
 
 ## Prerequisites
 

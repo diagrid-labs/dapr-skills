@@ -36,6 +36,7 @@ Apply each rule to every file in `publisher_files` from [`review-detect-target-p
 
 ## Confidence notes
 
+- DPS-PUB-009 — Report once per project, citing the first site in path-then-line order and listing the other lines in the `what` text.
 - DPS-PUB-002 — A catch that logs and continues, or that returns a non-2xx status on only some paths, is reported under Please verify. An empty catch or one that returns 2xx is critical.
 - DPS-PUB-003 — When `component_files` is empty (the component lives outside the scope) report under Please verify, not Critical. Resolve constants (`PubSubNames.PubSubName`) before comparing.
 - DPS-PUB-010 — Always report under Please verify: the payload size cannot be proven statically. Applies to `PublishEventAsync(` only. The collection passed to a bulk `BulkPublishEventAsync(` is a list of separate messages, not one oversized payload, so never report DPS-PUB-010 for it; a bulk call whose `FailedEntries` is unchecked is DPS-PUB-007.

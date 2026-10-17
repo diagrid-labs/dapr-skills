@@ -38,6 +38,7 @@ Apply each rule to every file in `publisher_files` from [`review-detect-target-p
 
 ## Confidence notes
 
+- DPS-PUB-009 — Report once per project, citing the first site in path-then-line order and listing the other lines in the `what` text.
 - DPS-PUB-002 — A handler that logs and continues, or that returns a non-2xx status on only some paths, is reported under Please verify. Verified behaviour: with no sidecar running, `publish_event` waits for the health check and raises `TimeoutError` (`DAPR_HEALTH_TIMEOUT` shortens the wait); `isinstance(e, DaprGrpcError)` is false for it, so an `except DaprGrpcError` alone does not turn a missing sidecar into a 503. Say so in `Fix:`.
 - DPS-PUB-003 — When `component_files` is empty (the component lives outside the scope) report under Please verify, not Critical. Resolve constants before comparing.
 - DPS-PUB-004 — `publish_metadata={"ttlInSeconds": "60"}` and `{"rawPayload": "true"}` are valid; an int value raises `TypeError`.

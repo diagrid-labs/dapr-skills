@@ -57,4 +57,4 @@ In Aspire solutions:
 ## Confidence notes
 
 - DWF-MGT-006 — Only fires if at least one workflow file in `workflow_files` contains `WaitForExternalEventAsync`; if the workflow files were not in scope, downgrade to "Please verify".
-- DWF-MGT-010 — Many local-dev apps intentionally omit auth; ask the user whether the deployment target is local-only before raising as a critical for production-bound code.
+- DWF-MGT-010 — Many local-dev apps intentionally omit auth; ask the user whether the deployment target is local-only. If it is, do not report the finding; otherwise, or when no answer is available, report it as a warning, which is its declared severity.

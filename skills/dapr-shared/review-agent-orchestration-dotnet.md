@@ -19,6 +19,10 @@ See [`review-agent-orchestration-python.md`](./review-agent-orchestration-python
 | DAG-ORCH-007 | warning  | `dapr.yaml` has duplicate `appID` / port numbers across apps                                                           | Second sidecar fails to bind; race condition during `dapr run`.                       | Assign unique ports per app.                                                                 |
 | DAG-ORCH-009 | warning  | Any agent component YAML has `redisPassword: ""` AND the project references Redis endpoints other than `localhost` / `127.0.0.1` | Unauthenticated Redis outside localhost; pub/sub is open to any reachable process.    | Set `redisPassword` via `secretKeyRef`; configure Redis AUTH / ACLs.                         |
 
+## Confidence notes
+
+- DAG-ORCH-002 — Report once per file, citing the first `.Text` use of an unchecked response and naming the others.
+
 ## Cross-reference
 
 Tool-level rules: `review-agent-tools-dotnet.md`. Memory rules: `review-agent-memory-dotnet.md`.
