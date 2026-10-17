@@ -160,7 +160,7 @@ All skills require:
 
 - Skill files are Markdown documents in `skills/<skill-name>/SKILL.md`
 - Each skill directory should also include a `REFERENCE.md` with full code examples and detailed explanations
-- Skill front-matter fields: `name`, `description`, `model` (e.g. `opus`)
+- Skill front-matter fields: `name`, `description` and optionally `allowed-tools` — nothing else (the support skill `dapr-shared` additionally hides itself, see Cross-CLI checks). `allowed-tools` lists no wildcard shell tools (`Bash`, `Bash(dotnet:*)`) and no `mcp__` tools; exact commands such as `Bash(uname -s)` are fine. Other keys (`model`, `disable-model-invocation`, ...) mean different things in Claude Code, Codex CLI and Copilot CLI.
 - Each skill should include sections for: prerequisite checks, project setup, folder structure, verify, and a final message
 - Use `<PlaceholderName>` syntax for values the user should replace (e.g., `<ProjectName>`, `<ProjectNamespace>`)
 - Code examples should be complete and runnable, not snippets
@@ -190,6 +190,19 @@ The pub/sub skills build an application from the domain the user describes. Ever
 - **create skills declare Write and Edit** — a skill that constrains `allowed-tools` must declare the tools it writes files with.
 - **create skills point at their review skills** — so a user who scaffolds a project discovers the audit skills.
 - **shared reference files are linked** — no Markdown file under `dapr-shared/references/` is unreferenced by any skill. (Non-Markdown files there are not checked.)
+
+## Cross-CLI checks
+
+The skills install into Claude Code, Codex CLI and Copilot CLI. `scripts/lib/frontmatter-validation.mjs` (unit-tested in `scripts/test/frontmatter-validation.test.mjs`) enforces:
+
+- **frontmatter keys** — only `name`, `description`, `allowed-tools`. Support skills (`SUPPORT_SKILLS`, today `dapr-shared`) may also set `disable-model-invocation: true` and `user-invocable: false`, which Claude Code and Copilot CLI honour.
+- **support skills are hidden** — `dapr-shared` also ships `agents/openai.yaml` with `policy.allow_implicit_invocation: false`, the only way to stop Codex CLI selecting it. The check fails if any of the three settings is missing.
+- **allowed-tools** — no wildcard shell tools and no MCP tools.
+- **description budget** — descriptions are always in context, and Codex budgets its whole skill list at about 8,000 characters and shortens descriptions first. Keep each description to 400 characters (hard limit `MAX_DESCRIPTION_CHARS`) and the total under 7,000 (`MAX_TOTAL_DESCRIPTION_CHARS`, which only ratchets down). Lead with the verb ("Creates ...", "Reviews ...") instead of "This skill ...".
+- **description YAML** — a description is an unquoted YAML value, so it must not contain `: `. Rephrase it.
+- **description similarity** — two descriptions that read alike compete for the same trigger. The hard limit (`MAX_DESCRIPTION_SIMILARITY`) sits just above the language twins; other pairs above the 50% target print a `WARN`. After changing a description, re-run the triggering check in `evals/README.md`.
+
+Lower the `MAX_*` constants whenever descriptions get shorter, never raise them.
 
 Placeholder vocabularies are per family (`scripts/lib/family-validation.mjs`, `FAMILIES`): pub/sub uses `dapr-shared/pubsub-placeholders.md`, workflow uses `dapr-shared/workflow-placeholders.md`. Adding a family means adding a row there, not a second copy of the checks.
 

@@ -1,6 +1,6 @@
 ---
 name: review-agent-tools
-description: This skill reviews agent tool implementations for idempotency, input validation, docstring quality, and convention violations. Use this skill when the user asks to "review agent tools", "check tool idempotency", "audit Dapr agent tools", or similar.
+description: Reviews agent tool implementations for idempotency, input validation, docstring quality and conventions. Use for "review agent tools" or "check tool idempotency".
 allowed-tools:
   - Read
   - Grep
@@ -24,7 +24,7 @@ You MUST follow these phases in strict order. Do not load files outside the agre
    - `dotnet` → [`../dapr-shared/review-agent-tools-dotnet.md`](../dapr-shared/review-agent-tools-dotnet.md)
 4. **Scan** — For each tool file in scope, apply every rule from the loaded checklist using `Grep` and `Read`. For each match, capture `file:line`, the rule id, and a short evidence snippet. Confirm the match is inside a tool body (as defined in `review-detect-target-agent.md` for Python, or the method wrapped with `AIFunctionFactory.Create` for .NET) before promoting it from "Please verify" to a graded severity. In a `mixed` Python project, apply each rule with the flavor of the file being scanned.
 5. **Report** — Format every finding using the canonical template from [`../dapr-shared/review-report-format.md`](../dapr-shared/review-report-format.md). Group by severity, then rule id, then file path.
-6. **Show final message** — Your last output is the report. Do not append a summary, follow-up question, or next-action prompt other than the `## Next steps` block defined by the report format.
+6. **Show final message** — Your last output is the report. Do not append a summary or next-action prompt other than the `## Next steps` block defined by the report format. Clarifying questions are always allowed during the review (see the report format); once answered, the report is still your last output.
 
 ## Prerequisites
 

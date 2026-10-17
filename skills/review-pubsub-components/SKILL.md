@@ -1,6 +1,6 @@
 ---
 name: review-pubsub-components
-description: This skill reviews Dapr pub/sub configuration — pub/sub components, declarative Subscription files, resiliency policies, dapr.yaml and Aspire AppHost wiring — for inline secrets, unauthenticated or unencrypted brokers, dead-letter topics without retry policies, scopes, consumer groups, stream limits, deprecated or mis-scoped subscriptions, ignored raw-payload keys and app-id or port collisions. Use this skill when the user asks to "review my pub/sub components", "audit Dapr pubsub YAML and resiliency" or similar.
+description: Reviews Dapr pub/sub configuration (components, Subscription files, resiliency, dapr.yaml and Aspire wiring) for inline secrets, unsecured brokers, dead-letter topics without retry policies, scopes and app-id or port collisions. Use for "review my pub/sub components" or "audit Dapr pubsub YAML".
 allowed-tools:
   - Read
   - Grep
@@ -24,7 +24,7 @@ You MUST follow these phases in strict order. Do not load files outside the agre
 3. **Load checklist** — Always read [`../dapr-shared/review-pubsub-components.md`](../dapr-shared/review-pubsub-components.md). The checklist is language-neutral, so there is one file for `dotnet`, `aspire` and `python`; apply its .NET / Aspire notes or Python notes for the detected `language`.
 4. **Apply rules** — Walk `component_files`, `subscription_files`, `resiliency_files` and `run_files` against rules `DPS-CFG-001` … `DPS-CFG-014`, using `subscriptions` as context (dead-letter topics, app ids, scopes). Respect each rule's severity conditions: `DPS-CFG-001` is info for a local host or an Aspire secret-parameter default, and `DPS-CFG-006` is reported under **Please verify**.
 5. **Report** — Format every finding using the canonical template from [`../dapr-shared/review-report-format.md`](../dapr-shared/review-report-format.md). The `Language:` line carries the detected language. Group by severity, then rule id, then file path. Never print credential values; name the metadata key only.
-6. **Show final message** — Your last output is the report. Do not append a summary, follow-up question, or next-action prompt other than the `## Next steps` block defined by the report format.
+6. **Show final message** — Your last output is the report. Do not append a summary or next-action prompt other than the `## Next steps` block defined by the report format. Clarifying questions are always allowed during the review (see the report format); once answered, the report is still your last output.
 
 ## Prerequisites
 

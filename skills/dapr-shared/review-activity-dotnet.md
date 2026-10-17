@@ -21,7 +21,8 @@ Rule source: see [`dotnet-activity-class.md`](dotnet-activity-class.md).
 
 ## Confidence notes
 
-- DWF-ACT-002 — Treat as satisfied if any idempotency key is passed: a header (`Idempotency-Key`), an id carried in the activity input, a key derived from `context.InstanceId`, or `context.TaskExecutionKey`. If only `TaskExecutionKey` is used and the caller sets a `WorkflowRetryPolicy`, add a note that the key changes per retry attempt.
+- DWF-ACT-002 — Treat as satisfied if any idempotency key is passed: a header (`Idempotency-Key`), an id carried in the activity input, a key derived from `context.InstanceId`, or `context.TaskExecutionKey`. If only `TaskExecutionKey` is used and the caller sets a `WorkflowRetryPolicy`, mention in one `Next steps` bullet that the key changes per retry attempt.
+- DWF-ACT-005 — Report it only for I/O that can run for tens of seconds or longer (polling loops, large uploads or downloads, batch work, loops over many awaited calls). A single short HTTP or database call without a token is not reported.
 - DWF-ACT-011 — The SDK never resolves activity classes from the container (it uses `ActivatorUtilities.CreateInstance` per invocation), so `services.AddSingleton<TActivity>()` has no effect on the activity's lifetime. If you find such a registration, report it as info (dead registration), not as this rule.
 - DWF-ACT-003 — A `catch` that logs and rethrows is fine; only flag plain swallows.
 - DWF-ACT-006 — Heuristic only — accept any `TimeSpan` literal or constant. Long polling activities may be intentional; downgrade to "Please verify" when in doubt.

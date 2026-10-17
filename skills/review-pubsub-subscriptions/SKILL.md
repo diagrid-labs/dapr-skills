@@ -1,6 +1,6 @@
 ---
 name: review-pubsub-subscriptions
-description: This skill reviews Dapr pub/sub subscriptions and their handlers in .NET and Python — declarative Subscription files, programmatic subscriptions and streaming subscriptions — for CloudEvent handling, response statuses, idempotency, dead-letter handling, routing expressions, duplicate subscriptions across types and routes without endpoints. Use this skill when the user asks to "review my Dapr subscribers", "check pub/sub handlers for idempotency" or similar.
+description: Reviews Dapr pub/sub subscriptions and handlers in .NET and Python (declarative, programmatic, streaming) for CloudEvent handling, response statuses, idempotency, dead-letter handling and duplicate subscriptions. Use for "review my Dapr subscribers" or "check pub/sub handlers for idempotency".
 allowed-tools:
   - Read
   - Grep
@@ -26,7 +26,7 @@ You MUST follow these phases in strict order. Do not load files outside the agre
    - `DPS-SUB-014` — the same pubsub and topic subscribed through two or more types in one app. Resolve `scopes` to app ids first.
    - `DPS-SUB-015` — a declarative `routes.default` or `rules[].path` with no matching POST endpoint in the app it is scoped to.
 5. **Report** — Format every finding using the canonical template from [`../dapr-shared/review-report-format.md`](../dapr-shared/review-report-format.md). Group by severity, then rule id, then file path. Put low-confidence findings (indirect side effects, handler files outside the scope) under `## Please verify`.
-6. **Show final message** — Your last output is the report. Do not append a summary, follow-up question, or next-action prompt other than the `## Next steps` block defined by the report format.
+6. **Show final message** — Your last output is the report. Do not append a summary or next-action prompt other than the `## Next steps` block defined by the report format. Clarifying questions are always allowed during the review (see the report format); once answered, the report is still your last output.
 
 ## Prerequisites
 

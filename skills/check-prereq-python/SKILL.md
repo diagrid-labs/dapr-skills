@@ -1,24 +1,27 @@
 ---
 name: check-prereq-python
-description: This skill checks prerequisites for building Dapr Workflow apps in Python. Use this skill when the user asks to "check prerequisites for Python", "verify Python environment", or "check Python setup".
+description: Checks prerequisites for building Dapr Workflow apps in Python. Use for "check prerequisites for Python" or "verify Python environment".
 allowed-tools:
   - Bash(uname -s)
   - Bash(python --version)
   - Bash(python3 --version)
+  - Bash(powershell -Command "python --version")
   - Bash(uv --version)
-  - Bash(dapr:*)
-  - Bash(docker info:*)
-  - Bash(podman info:*)
-  - Bash(powershell:*)
+  - Bash(powershell -Command "uv --version")
+  - Bash(docker info)
+  - Bash(podman info)
+  - Bash(powershell -Command "docker info")
+  - Bash(powershell -Command "podman info")
+  - Bash(dapr --version)
+  - Bash(powershell -Command "dapr --version")
   - Read
-  - mcp__ide__getDiagnostics
 ---
 
 # Check Prerequisites for Dapr Workflow Python
 
 ## Overview
 
-This skill checks whether all prerequisites are installed for building Dapr Workflow applications in Python. Run this skill before using the `create-workflow-python` skill.
+This skill checks whether all prerequisites are installed for building Dapr Workflow applications in Python. Run it only when you ask for it, for example before using the `create-workflow-python` skill. It is never run automatically as a pre-step.
 
 ## Prerequisites
 
@@ -26,6 +29,7 @@ The following must be installed:
 
 - [Python 3.12+](https://www.python.org/downloads/)
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) (Astral)
+- [Pyright LSP Plugin](https://claude.com/plugins/pyright-lsp)
 - [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation)
 - [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.18+)
 

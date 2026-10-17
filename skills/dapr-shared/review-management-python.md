@@ -45,5 +45,5 @@ If the workflow uses `wait_for_external_event`, additionally require:
 ## Confidence notes
 
 - DWF-MGT-006 — Only fires if at least one workflow file in `workflow_files` contains `wait_for_external_event`; if the workflow files were not in scope, downgrade to "Please verify".
-- DWF-MGT-010 — Many local-dev apps intentionally omit auth; ask the user whether the deployment target is local-only before raising as a critical for production-bound code.
+- DWF-MGT-010 — Many local-dev apps intentionally omit auth; ask the user whether the deployment target is local-only. If it is, do not report the finding; otherwise, or when no answer is available, report it as a warning, which is its declared severity.
 - DWF-MGT-012 — Treat as satisfied if the route checks the state first (404 for `None`, 409 for a non-terminal status) or wraps `purge_workflow` in a `try` / `except grpc.RpcError` that maps the error to a 4xx response.

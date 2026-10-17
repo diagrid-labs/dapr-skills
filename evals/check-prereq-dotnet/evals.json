@@ -44,9 +44,9 @@
         "Runs `docker info` and, when it fails, also tries `podman info` before reporting the container-runtime check as failed",
         "If a direct bash command fails, retries it as `powershell -Command \"<cmd>\"` (e.g. `powershell -Command \"docker info\"`) before declaring it missing",
         "Still runs and reports the `dotnet --version`, `dapr --version` and C# LSP plugin checks; the Docker problem does not stop the run",
-        "If no container runtime is found, the report marks Docker/Podman as failed and includes https://www.docker.com/products/docker-desktop/ and https://podman.io/docs/installation",
+        "If no container runtime is found, the report marks Docker/Podman as failed (or as inconclusive, asking the user to run the command in PowerShell, when `powershell` is also not available in the Git Bash session) and includes https://www.docker.com/products/docker-desktop/ and https://podman.io/docs/installation",
         "Does not run any install command (e.g. `winget`, `choco`, `brew`, an installer download) and does not modify system settings",
-        "Does not tell the user they can proceed with `create-workflow-dotnet` while the Docker/Podman check is failing"
+        "Does not tell the user they can proceed with `create-workflow-dotnet` while the Docker/Podman check is failing or inconclusive"
       ]
     }
   ]

@@ -4,7 +4,7 @@ Run `aspire --version`. If the command is not found, retry with the default inst
 
 - `~/.aspire/bin/aspire --version` (installed via the aspire.dev install script)
 - `~/.dotnet/tools/aspire --version` (installed as a .NET global tool)
-- On Windows, also retry with `powershell -Command "aspire --version"`.
+- On Windows, the install script puts the CLI in `%USERPROFILE%\.aspire\bin\aspire.exe`, which is usually not on the `PATH` of Git Bash. Retry with `powershell -Command "aspire --version"`, which resolves both `PATH` and the default install directory.
 
 If none of these succeed, inform the user they need to install the [Aspire CLI](https://aspire.dev/get-started/install-cli/):
 

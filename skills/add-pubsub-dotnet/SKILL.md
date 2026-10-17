@@ -1,17 +1,13 @@
 ---
 name: add-pubsub-dotnet
-description: This skill adds Dapr pub/sub to an existing .NET (ASP.NET Core) project, including projects in an Aspire solution. It inspects the project, keeps the subscription type the project already uses (declarative by default, programmatic or streaming), shows a plan for approval, then adds the packages, Dapr wiring, publisher and subscriber code with small targeted edits, building after every step and running the existing tests at the end. Use this skill when the user asks to "add pub/sub to my .NET project", "make this API publish events with Dapr" or "subscribe this ASP.NET app to a topic". For a new project use create-pubsub-dotnet instead.
+description: Adds Dapr pub/sub to an existing .NET (ASP.NET Core, plain or Aspire) project. Keeps its subscription type, shows a plan for approval, then makes targeted edits and builds after each. Use for "add pub/sub to my .NET project" or "subscribe this ASP.NET app to a topic". For a new project use create-pubsub-dotnet.
 allowed-tools:
   - Read
   - Grep
   - Glob
   - Edit
   - Write
-  - Bash(dotnet:*)
-  - Bash(dapr:*)
-  - Bash(git status:*)
   - Bash(diagrid-dev-dashboard --version)
-  - mcp__ide__getDiagnostics
 ---
 
 # Add Dapr pub/sub to an existing .NET project

@@ -44,5 +44,6 @@ Content-Type: application/json
 - The `start` request matches the `@app.post("/start")` endpoint in `main.py`. The JSON payload should match the workflow input model.
 - The `instance_id` is extracted from the JSON response body of the `start` request.
 - The `status` request matches the `@app.get("/status/{instance_id}")` endpoint in `main.py`.
+- The `raise-event` request uses the placeholder event name `approval-event`: replace it with the event name the workflow waits for (`ctx.wait_for_external_event`), and remove the request when the workflow waits for no external event.
 - The `pause`, `resume`, `terminate`, and `raise-event` requests match the corresponding `@app.post` endpoints in `main.py`.
 - Use the VS Code REST Client extension or JetBrains HTTP Client to send requests directly from this file.

@@ -1,6 +1,6 @@
 ---
 name: review-workflow-activity
-description: This skill runs a read-only audit of existing Dapr Workflow activity implementations for idempotency, retries, error boundaries, and convention violations, and emits a structured report of findings with stable DWF-ACT-NNN rule ids and file-and-line citations. Use this skill when the user asks to "review workflow activities", "check activity idempotency", "audit Dapr activities", or similar. For inline guidance while writing a single activity body, rather than an audit of code that already exists, use the catalyst-ai plugin instead.
+description: Read-only audit of existing Dapr Workflow activities for idempotency, retries, error boundaries and conventions, with DWF-ACT-NNN findings. Use for "review workflow activities" or "audit Dapr activities". For guidance while writing an activity use the catalyst-ai plugin.
 allowed-tools:
   - Read
   - Grep
@@ -24,7 +24,7 @@ You MUST follow these phases in strict order. Do not load files outside the agre
    - `python` → [`../dapr-shared/review-activity-python.md`](../dapr-shared/review-activity-python.md)
 4. **Scan** — For each activity file in scope, apply every rule from the loaded checklist using `Grep` and `Read`. For each match, capture `file:line`, the rule id, and a short evidence snippet. Confirm the match is inside an activity body (see "Cross-reference" in each checklist) before promoting it from "Please verify" to a graded severity.
 5. **Report** — Format every finding using the canonical template from [`../dapr-shared/review-report-format.md`](../dapr-shared/review-report-format.md). Group by severity, then rule id, then file path.
-6. **Show final message** — Your last output is the report. Do not append a summary, follow-up question, or next-action prompt other than the `## Next steps` block defined by the report format.
+6. **Show final message** — Your last output is the report. Do not append a summary or next-action prompt other than the `## Next steps` block defined by the report format. Clarifying questions are always allowed during the review (see the report format); once answered, the report is still your last output.
 
 ## Prerequisites
 

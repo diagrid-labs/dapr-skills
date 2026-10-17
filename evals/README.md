@@ -50,6 +50,8 @@ Notes:
 
 - Run evals from a scratch folder, not from the repository root, so scaffolding skills don't create projects inside this repo.
 - For evals with `files`, copy the fixture into the scratch folder first and point the prompt at the copy, so review skills see a project root and migration skills can't modify the fixture.
+- The `Tool use` expectation in the review evals grades the run under test, not the harness. Copying the fixture into the scratch folder and saving the report use a shell and `Write`, and are excluded. Reading the project must use Read, Grep and Glob only: `cat` or `grep` through a shell fails the expectation. If a session has no Grep tool, fall back to Read and Glob instead of a shell.
+- Review skills may ask the user a clarifying question during a review (scope, deployment target). Evals run non-interactively, so a question counts as unanswered and the checklist's default applies. Do not grade an eval on whether a question was asked.
 - `migrate-workflow-typescript` needs a git repository: after copying `files/order-service/`, run `git init` and make one commit in the copy, because the skill checks for a clean working tree and creates a migration branch.
 - `review-agent-memory/files/helpdesk-dotnet` intentionally fails `dotnet build`/`restore` with `NU1605` (package downgrade). That is the seeded `DAG-MEM-006` violation; the other .NET fixtures build.
 - `create-pubsub-*` and `add-pubsub-*` have four evals each (one per subscription type plus an edge case).

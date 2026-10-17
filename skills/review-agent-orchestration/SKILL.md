@@ -1,6 +1,6 @@
 ---
 name: review-agent-orchestration
-description: This skill reviews multi-agent orchestration for pub/sub topic conventions, loop safety, and handoff correctness. Use this skill when the user asks to "review agent orchestration", "check multi-agent handoffs", "audit agent pub/sub", or similar.
+description: Reviews multi-agent orchestration for pub/sub topic conventions, loop safety and handoff correctness. Use for "review agent orchestration" or "check multi-agent handoffs".
 allowed-tools:
   - Read
   - Grep

@@ -1,6 +1,6 @@
 ---
 name: review-workflow-management
-description: This skill runs a read-only audit of the HTTP management endpoints (start, status, terminate, pause, resume, raise-event, purge) that an app exposes for Dapr Workflows, and emits a structured report of findings with stable DWF-MGT-NNN rule ids and file-and-line citations. Use this skill when the user asks to "review workflow management", "audit workflow management API", "check workflow HTTP endpoints", or similar. To operate workflow runs on Diagrid Catalyst (pause, terminate, rerun, purge) rather than audit the endpoints an app exposes, use the catalyst-ai plugin instead.
+description: Read-only audit of the HTTP management endpoints (start, status, terminate, pause, resume, raise-event, purge) an app exposes for Dapr Workflows, with DWF-MGT-NNN findings. Use for "review workflow management" or "check workflow HTTP endpoints". To operate runs on Diagrid Catalyst use the catalyst-ai plugin.
 allowed-tools:
   - Read
   - Grep
@@ -25,7 +25,7 @@ You MUST follow these phases in strict order. Do not load files outside the agre
 4. **Required-coverage pass** — Determine which of the canonical endpoints are present by grepping `management_files` for the SDK calls listed in the checklist's "Required endpoint coverage" table. Emit a finding for each missing endpoint using the rule id from that table. If `workflow_files` references `WaitForExternalEventAsync` / `wait_for_external_event`, also enforce the raise-event endpoint (`DWF-MGT-006`).
 5. **Per-endpoint pass** — For every endpoint that is present, walk the per-rule heuristics (`DWF-MGT-007` and onward) and emit findings for each match.
 6. **Report** — Format every finding using the canonical template from [`../dapr-shared/review-report-format.md`](../dapr-shared/review-report-format.md). Group by severity, then rule id, then file path.
-7. **Show final message** — Your last output is the report. Do not append a summary, follow-up question, or next-action prompt other than the `## Next steps` block defined by the report format.
+7. **Show final message** — Your last output is the report. Do not append a summary or next-action prompt other than the `## Next steps` block defined by the report format. Clarifying questions are always allowed during the review (see the report format); once answered, the report is still your last output.
 
 ## Prerequisites
 

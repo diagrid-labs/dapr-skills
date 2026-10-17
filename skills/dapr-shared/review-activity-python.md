@@ -20,7 +20,7 @@ Rule source: see [`../create-workflow-python/REFERENCE.md`](../create-workflow-p
 
 ## Confidence notes
 
-- DWF-ACT-002 — Treat as satisfied if any idempotency key is passed: a header (`Idempotency-Key`), an id carried in the activity input, a key derived from `ctx.workflow_id` (plus a step name), or `ctx.get_inner_context().task_execution_id`. A key derived from `ctx.task_id` alone does not satisfy the rule when the caller passes a `retry_policy`, because each retry attempt is scheduled with a new task id. Read-only calls (`GET`, queries) are not side effects and are out of scope.
+- DWF-ACT-002 — Treat as satisfied if any idempotency key is passed: a header (`Idempotency-Key`), an id carried in the activity input, a key derived from `ctx.workflow_id` (plus a step name), or `ctx.get_inner_context().task_execution_id`. A key derived from `ctx.task_id` alone does not satisfy the rule when the caller passes a `retry_policy`, because each retry attempt is scheduled with a new task id; mention that in one `Next steps` bullet. Read-only calls (`GET`, queries) are not side effects and are out of scope.
 - DWF-ACT-003 — An `except` block that logs and re-raises is fine; only flag plain swallows (`pass`, or a bare `return` / magic value that hides the failure from the workflow).
 - DWF-ACT-005 — `requests` inside a sync `def` activity is fine; only flag inside `async def` activities.
 - DWF-ACT-006 — Heuristic only; downgrade to "Please verify" when the wait is intentional (e.g., rate-limit backoff).

@@ -41,7 +41,7 @@
       "expectations": [
         "Runs `python --version` (with a `powershell -Command` retry on Windows if needed) instead of relying only on the user's statement",
         "States that Dapr Workflow Python projects need Python 3.12 or newer",
-        "If the detected version is 3.11.x, reports the Python check as failed and links https://www.python.org/downloads/; it does not accept 3.11 as passing",
+        "If the detected version is 3.11.x (on a machine whose default Python is newer, the run states that it simulates a 3.11.x result), reports the Python check as failed and links https://www.python.org/downloads/; it does not accept 3.11 as passing",
         "Still runs and reports uv, Docker/Podman, Dapr CLI and Pyright LSP plugin checks",
         "Does not install or change the Python version itself (no `uv python install`, `pyenv`, `winget` or similar)",
         "Does not tell the user they can proceed with `create-workflow-python` while the Python check is failing"

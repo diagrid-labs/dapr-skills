@@ -1,6 +1,6 @@
 ---
 name: review-pubsub-publishing
-description: This skill reviews Dapr pub/sub publishing code in .NET and Python for unawaited or swallowed publish failures, wrong pub/sub names, content types, client lifetime, bulk-publish partial failures, tracing overrides and payload size. Use this skill when the user asks to "review my pub/sub publishing code", "audit Dapr publish calls" or similar.
+description: Reviews Dapr pub/sub publishing code in .NET and Python for swallowed publish failures, wrong pub/sub names, content types, client lifetime, bulk-publish partial failures and payload size. Use for "review my pub/sub publishing code" or "audit Dapr publish calls".
 allowed-tools:
   - Read
   - Grep
@@ -24,7 +24,7 @@ You MUST follow these phases in strict order. Do not load files outside the agre
    - `python` → [`../dapr-shared/review-pubsub-publishing-python.md`](../dapr-shared/review-pubsub-publishing-python.md)
 4. **Apply rules** — Walk every file in `publisher_files` against `DPS-PUB-001` … `DPS-PUB-012` as the checklist defines them. Resolve constants (`PubSubNames.PubSubName`, `PUBSUB_NAME`) before comparing names with `component_files`. Rules marked "reserved" for the loaded language do not apply. Honour the checklist's confidence notes: low-confidence matches go under `## Please verify`, never under `## Critical`.
 5. **Report** — Format every finding using the canonical template from [`../dapr-shared/review-report-format.md`](../dapr-shared/review-report-format.md). Group by severity, then rule id, then file path. If the scope holds more than one language, produce one report per language.
-6. **Show final message** — Your last output is the report. Do not append a summary, follow-up question, or next-action prompt other than the `## Next steps` block defined by the report format.
+6. **Show final message** — Your last output is the report. Do not append a summary or next-action prompt other than the `## Next steps` block defined by the report format. Clarifying questions are always allowed during the review (see the report format); once answered, the report is still your last output.
 
 ## Prerequisites
 

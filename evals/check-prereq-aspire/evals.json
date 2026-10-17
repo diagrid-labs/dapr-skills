@@ -26,7 +26,7 @@
       "expectations": [
         "Runs `aspire --version` first",
         "If `aspire --version` fails, runs `~/.aspire/bin/aspire --version` before concluding the CLI is missing",
-        "If that also fails, runs `~/.dotnet/tools/aspire --version` (and on Windows `powershell -Command \"aspire --version\"`)",
+        "If `~/.aspire/bin/aspire --version` also fails, runs `~/.dotnet/tools/aspire --version` (and on Windows `powershell -Command \"aspire --version\"`); when `~/.aspire/bin/aspire` succeeds, no further fallback is needed",
         "If a fallback location succeeds, reports the Aspire CLI as passing (with the version found) and notes that its install directory is not on PATH",
         "If every location fails, the report includes https://aspire.dev/get-started/install-cli/ and the install commands `curl -sSL https://aspire.dev/install.sh | bash` and `irm https://aspire.dev/install.ps1 | iex` (or `dotnet tool install -g Aspire.Cli`)",
         "Still runs and reports the .NET SDK, Docker/Podman, Dapr CLI and C# LSP checks",

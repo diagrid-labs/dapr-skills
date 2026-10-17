@@ -1,15 +1,10 @@
 ---
 name: create-pubsub-dotnet
-description: This skill creates a Dapr pub/sub application in .NET — a publisher, a subscriber or both — with declarative (default), programmatic or streaming subscriptions, run with the Dapr CLI or .NET Aspire, using minimal APIs or controllers. Use this skill when the user asks to "create a pub/sub app in .NET", "build a Dapr publisher and subscriber in C#", "create a pub/sub app with Aspire" or "create a .NET streaming subscriber". For an existing project use add-pubsub-dotnet instead.
+description: Creates a Dapr pub/sub app in .NET (publisher, subscriber or both) with declarative, programmatic or streaming subscriptions, run with dapr run or Aspire. Use for "create a pub/sub app in .NET" or "build a Dapr publisher and subscriber in C#". For an existing project use add-pubsub-dotnet.
 allowed-tools:
   - Write
   - Edit
-  - Bash(dotnet:*)
-  - Bash(dapr:*)
-  - Bash(aspire new:*)
-  - Bash(~/.aspire/bin/aspire new:*)
   - Bash(diagrid-dev-dashboard --version)
-  - mcp__ide__getDiagnostics
 ---
 
 # Create Dapr Pub/Sub .NET Application
@@ -187,8 +182,7 @@ For the `Program.cs` of each type and style, see `REFERENCE.md` → **Program.cs
 **IMPORTANT: After Project Setup you MUST run these checks:**
 
 1. Run `dotnet build "<ProjectRoot>.slnx"` (`dotnet new sln --format slnx` writes `.slnx`). Aspire mode: `dotnet build "<ProjectRoot>.sln"`, because `aspire new` writes a `.sln`. It must succeed; fix any errors and rebuild.
-2. When `mcp__ide__getDiagnostics` is available, check the new files with it as well.
-3. Tell the user how to start the apps: `dapr run -f .` in `<ProjectRoot>` (Aspire: `aspire run`).
+2. Tell the user how to start the apps: `dapr run -f .` in `<ProjectRoot>` (Aspire: `aspire run`).
 
 ## Create README.md
 

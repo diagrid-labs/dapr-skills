@@ -1,13 +1,9 @@
 ---
 name: create-workflow-aspire
-description: This skill creates a Dapr workflow application with .NET Aspire that runs locally through the Aspire AppHost. Use this skill when the user asks to "create a workflow with Aspire", "write an Aspire workflow application" or "build a workflow app with .NET Aspire". For a workflow that runs on Diagrid Catalyst, use the catalyst-ai plugin instead.
+description: Creates a Dapr workflow app with .NET Aspire, run locally through the Aspire AppHost. Use for "create a workflow with Aspire" or "build a workflow app with .NET Aspire". For Diagrid Catalyst use the catalyst-ai plugin.
 allowed-tools:
   - Write
   - Edit
-  - Bash(dotnet:*)
-  - Bash(aspire new:*)
-  - Bash(~/.aspire/bin/aspire new:*)
-  - mcp__ide__getDiagnostics
   - Bash(diagrid-dev-dashboard --version)
 ---
 
@@ -177,8 +173,7 @@ HTTP request file for testing the workflow endpoints: `start`, `status`, `pause`
 **IMPORTANT: After Project Setup you MUST run these checks:**
 
 1. Run `dotnet build` on the `.sln` file (`aspire new` writes a `.sln`, not a `.slnx`). It must succeed; fix any errors and rebuild until it does. Never report the solution as created while the build fails.
-2. When `mcp__ide__getDiagnostics` is available, check the new files with it as well.
-3. Tell the user how to start the solution: `aspire run` in the solution root.
+2. Tell the user how to start the solution: `aspire run` in the solution root.
 
 ## Create README.md
 
