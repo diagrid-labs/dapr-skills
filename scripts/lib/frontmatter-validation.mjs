@@ -16,6 +16,15 @@ import { declaredTools } from './authoring-validation.mjs';
 export const ALLOWED_FRONTMATTER_KEYS = ['name', 'description', 'allowed-tools'];
 
 /**
+ * Support skills hold shared files and must never be picked by a model. They
+ * get the keys that hide them: `disable-model-invocation` (Claude Code and
+ * Copilot CLI), `user-invocable` (the same two) and `agents/openai.yaml` with
+ * `policy.allow_implicit_invocation: false` (Codex CLI, which reads neither key).
+ */
+export const SUPPORT_SKILLS = ['dapr-shared'];
+const SUPPORT_SKILL_KEYS = ['disable-model-invocation', 'user-invocable'];
+
+/**
  * Hard limits. They fail the build, so they sit at (or just above) today's
  * values and only ratchet down. TARGET_* are the goals; going over them is
  * reported as a warning until the descriptions have been shortened.
@@ -75,11 +84,34 @@ export function checkFrontmatterKeys(skillsDir) {
   for (const name of skillFolders(skillsDir)) {
     const keys = frontmatterKeys(readFileSync(join(skillsDir, name, 'SKILL.md'), 'utf8'));
     if (keys === null) continue; // checkManifests reports a missing block
-    const extra = keys.filter((k) => !ALLOWED_FRONTMATTER_KEYS.includes(k));
+    const allowed = SUPPORT_SKILLS.includes(name) ? [...ALLOWED_FRONTMATTER_KEYS, ...SUPPORT_SKILL_KEYS] : ALLOWED_FRONTMATTER_KEYS;
+    const extra = keys.filter((k) => !allowed.includes(k));
     if (extra.length > 0) {
       failures.push(
         `${name}/SKILL.md -> frontmatter keys not allowed: ${extra.join(', ')} (allowed: ${ALLOWED_FRONTMATTER_KEYS.join(', ')})`,
       );
+    }
+  }
+  return failures;
+}
+
+/**
+ * Check — every support skill is hidden from model selection in all three CLIs:
+ * `disable-model-invocation: true` and `user-invocable: false` in SKILL.md, and
+ * `allow_implicit_invocation: false` in agents/openai.yaml. Returns failure strings.
+ */
+export function checkSupportSkillsHidden(skillsDir) {
+  const failures = [];
+  for (const name of SUPPORT_SKILLS) {
+    const md = join(skillsDir, name, 'SKILL.md');
+    if (!existsSync(md)) continue;
+    const fm = parseFrontmatter(readFileSync(md, 'utf8')) ?? {};
+    if (fm['disable-model-invocation'] !== 'true') failures.push(`${name}/SKILL.md -> missing \`disable-model-invocation: true\` (Claude Code, Copilot CLI)`);
+    if (fm['user-invocable'] !== 'false') failures.push(`${name}/SKILL.md -> missing \`user-invocable: false\` (Claude Code, Copilot CLI)`);
+    const yaml = join(skillsDir, name, 'agents', 'openai.yaml');
+    const text = existsSync(yaml) ? readFileSync(yaml, 'utf8') : '';
+    if (!/^\s+allow_implicit_invocation:\s*false\s*$/m.test(text)) {
+      failures.push(`${name}/agents/openai.yaml -> missing \`policy.allow_implicit_invocation: false\` (Codex CLI)`);
     }
   }
   return failures;

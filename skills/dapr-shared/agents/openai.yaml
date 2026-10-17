@@ -1,0 +1,4 @@
+# Codex CLI reads neither disable-model-invocation nor user-invocable from SKILL.md.
+# dapr-shared only holds files that other skills link to, so it must never be selected.
+policy:
+  allow_implicit_invocation: false

@@ -35,6 +35,7 @@ import {
 import {
   checkFrontmatterKeys,
   checkAllowedTools,
+  checkSupportSkillsHidden,
   checkDescriptionBudget,
   checkDescriptionSimilarity,
   TARGET_DESCRIPTION_CHARS,
@@ -78,7 +79,8 @@ report('pubsub: CEL matches cast with int()', checkCelCasts(skillsDir));
 report('workflow: placeholders are defined and used', checkFamilyVocabulary(skillsDir, 'workflow'));
 report('workflow: templates link the placeholder vocabulary', checkFamilyVocabularyLinks(skillsDir, 'workflow'));
 report('reviews: example Found: lines match their findings', checkReportExampleCounts(skillsDir));
-report('cross-cli: frontmatter keys are name, description, allowed-tools', checkFrontmatterKeys(skillsDir));
+report('cross-cli: frontmatter keys are name, description, allowed-tools (support skills may also hide themselves)', checkFrontmatterKeys(skillsDir));
+report('cross-cli: support skills are hidden from model selection', checkSupportSkillsHidden(skillsDir));
 report('cross-cli: allowed-tools has no wildcard shell or MCP tools', checkAllowedTools(skillsDir));
 report('cross-cli: description length and total budget', checkDescriptionBudget(skillsDir));
 report('cross-cli: descriptions are distinct', checkDescriptionSimilarity(skillsDir));

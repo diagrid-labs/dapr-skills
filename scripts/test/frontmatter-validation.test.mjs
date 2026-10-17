@@ -8,6 +8,7 @@ import {
   checkFrontmatterKeys,
   toolProblem,
   checkAllowedTools,
+  checkSupportSkillsHidden,
   checkDescriptionBudget,
   distinctiveWords,
   descriptionSimilarity,
@@ -87,4 +88,23 @@ test('checkDescriptionSimilarity names the pair and the shared words', () => {
   assert.equal(failures.length, 1);
   assert.match(failures[0], /^a \/ b/);
   assert.match(failures[0], /shared: application, creates, locally, workflow/);
+});
+
+test('checkFrontmatterKeys lets a support skill hide itself, and only a support skill', () => {
+  const hide = 'disable-model-invocation: true\nuser-invocable: false\n';
+  const dir = fixture({ 'dapr-shared/SKILL.md': skill('dapr-shared', 'd', hide), 'a/SKILL.md': skill('a', 'd', hide) });
+  const failures = checkFrontmatterKeys(dir);
+  assert.equal(failures.length, 1);
+  assert.match(failures[0], /^a\/SKILL.md/);
+});
+
+test('checkSupportSkillsHidden needs the SKILL.md flags and the Codex policy', () => {
+  const hide = 'disable-model-invocation: true\nuser-invocable: false\n';
+  const policy = 'policy:\n  allow_implicit_invocation: false\n';
+  const ok = fixture({ 'dapr-shared/SKILL.md': skill('dapr-shared', 'd', hide), 'dapr-shared/agents/openai.yaml': policy });
+  assert.deepEqual(checkSupportSkillsHidden(ok), []);
+  const bare = fixture({ 'dapr-shared/SKILL.md': skill('dapr-shared', 'd') });
+  assert.equal(checkSupportSkillsHidden(bare).length, 3);
+  const yamlTrue = fixture({ 'dapr-shared/SKILL.md': skill('dapr-shared', 'd', hide), 'dapr-shared/agents/openai.yaml': 'policy:\n  allow_implicit_invocation: true\n' });
+  assert.equal(checkSupportSkillsHidden(yamlTrue).length, 1);
 });
