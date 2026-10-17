@@ -198,6 +198,7 @@ def task_chain_workflow(ctx: wf.DaprWorkflowContext, wf_input: WorkflowInput):
 - Reference activity functions directly (no string names needed).
 - Place workflow functions in `workflow.py`; import `wfr` from `runtime.py`.
 - Activities can be chained by passing the output of one as input to the next.
+- Activity outputs and, after `continue_as_new`, the new workflow input arrive inside the workflow as plain dicts, not as model instances. Read fields with `result["field"]`, or rebuild the model first with `Model.model_validate(result)`.
 - Guard log/print statements with `if not ctx.is_replaying:` to avoid duplicate output during workflow replay.
 
 ### Workflow determinism

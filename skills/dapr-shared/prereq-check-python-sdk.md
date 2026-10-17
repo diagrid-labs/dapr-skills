@@ -4,4 +4,6 @@ Run `python --version`. If that fails, retry with `python3 --version` (common on
 
 Parse the version as `major.minor` and compare numerically (so `3.9` < `3.12` < `3.13`): the check passes when the version is **3.12 or newer** (for example `3.12.x`, `3.13.x`, `3.14.x`). Fail `3.11.x` and below.
 
+The agent skills (`check-prereq-agent-python`) override this range with 3.11 up to but excluding 3.14.
+
 If not installed or the version is below 3.12, inform the user they need to install the [Python 3.12+ SDK](https://www.python.org/downloads/).

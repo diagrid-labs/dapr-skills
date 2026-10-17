@@ -3,9 +3,18 @@ name: check-prereq-aspire
 description: Checks prerequisites for building Dapr Workflow apps with .NET Aspire. Use for "check prerequisites for Aspire" or "verify Aspire environment".
 allowed-tools:
   - Bash(uname -s)
+  - Bash(dotnet --version)
+  - Bash(powershell -Command "dotnet --version")
+  - Bash(docker info)
+  - Bash(podman info)
+  - Bash(powershell -Command "docker info")
+  - Bash(powershell -Command "podman info")
+  - Bash(dapr --version)
+  - Bash(powershell -Command "dapr --version")
   - Bash(aspire --version)
   - Bash(~/.aspire/bin/aspire --version)
   - Bash(~/.dotnet/tools/aspire --version)
+  - Bash(powershell -Command "aspire --version")
   - Read
 ---
 
@@ -13,13 +22,14 @@ allowed-tools:
 
 ## Overview
 
-This skill checks whether all prerequisites are installed for building Dapr Workflow applications with .NET Aspire. Run this skill before using the `create-workflow-aspire` skill.
+This skill checks whether all prerequisites are installed for building Dapr Workflow applications with .NET Aspire. Run it only when you ask for it, for example before using the `create-workflow-aspire` skill. It is never run automatically as a pre-step.
 
 ## Prerequisites
 
 The following must be installed:
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download)
+- [C# LSP Plugin](https://claude.com/plugins/csharp-lsp)
 - [Aspire CLI](https://aspire.dev/get-started/install-cli/) — install via `curl -sSL https://aspire.dev/install.sh | bash` or `irm https://aspire.dev/install.ps1 | iex`
 - [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation)
 - [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.18+)

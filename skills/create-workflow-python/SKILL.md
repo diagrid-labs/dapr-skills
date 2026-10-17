@@ -5,6 +5,10 @@ allowed-tools:
   - Write
   - Edit
   - Bash(diagrid-dev-dashboard --version)
+  - Bash(uv venv)
+  - Bash(uv sync)
+  - Bash(uv run python -m compileall -q -x .venv .)
+  - Bash(uv run python -c "import pathlib, shutil; [shutil.rmtree(p) for p in pathlib.Path('.').rglob('__pycache__') if '.venv' not in p.parts]")
 ---
 
 # Create Dapr Workflow Python Application
@@ -44,7 +48,7 @@ so a wrong reading is caught before it is scaffolded. Resolve them exactly as
 
 The following must be installed by the user before this skill can run:
 
-- [Python 3.12+](https://www.python.org/downloads/)
+- [Python 3.12+](https://www.python.org/downloads/) (`uv venv` uses the newest interpreter it finds; pin one with `uv venv --python 3.12` when you need a specific version)
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) (Astral)
 - [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation)
 - [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/)
@@ -125,7 +129,7 @@ A workflow activity is defined using the @wfr.activity(name="<NAME>") attribute.
 
 ### local.http
 
-HTTP request file for testing the workflow endpoints. Contains a `start` request (POST) to schedule a new workflow instance and a `status` request (GET) to query the workflow state. Uses the `<app-port>` from `dapr.yaml`. See `REFERENCE.md` for full example.
+HTTP request file for testing the workflow endpoints. Contains a `start` request (POST) to schedule a new workflow instance and a `status` request (GET) to query the workflow state. Uses the `<app-port>` from `dapr.yaml`. The shared template includes a `raise-event` request: use the event name the workflow waits for, and remove the request when the workflow waits for no external event. See `REFERENCE.md` for full example.
 
 ## Verify
 
@@ -133,8 +137,8 @@ HTTP request file for testing the workflow endpoints. Contains a `start` request
 
 1. Run `uv venv` in the `<ProjectName>` folder to create a virtual environment.
 2. Run `uv sync` in the `<ProjectName>` folder to install dependencies.
-3. Run `uv run python -m compileall -q <ProjectName>`. It must exit with code 0; fix any error and re-run.
-4. Remove any `__pycache__` folders created by the compile step.
+3. Run `uv run python -m compileall -q -x .venv .` in the `<ProjectName>` folder. The `-x .venv` skips the virtual environment, so only the project code is compiled. It must exit with code 0; fix any error and re-run. A `SyntaxWarning` that comes from a package inside `.venv` (seen with Python 3.14) is harmless.
+4. Remove the `__pycache__` folders created by the compile step, on every OS, by running this in the `<ProjectName>` folder: `uv run python -c "import pathlib, shutil; [shutil.rmtree(p) for p in pathlib.Path('.').rglob('__pycache__') if '.venv' not in p.parts]"`.
 
 ## Create README.md
 

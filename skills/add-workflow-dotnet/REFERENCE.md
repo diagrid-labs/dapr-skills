@@ -34,6 +34,7 @@
 
 ### Edited files
 - `<path>` — <one-line edit description>
+- <`Properties/launchSettings.json` — new `http` profile on port <port> (only when the project has none)>
 
 ### Dapr wiring
 - <dapr.yaml: new | append app entry | unchanged>; app port <port>, Dapr HTTP <port>, gRPC <port>
@@ -57,7 +58,7 @@ Reply **yes** to apply with the defaults, answer a question differently (for exa
 
 ## Package reference
 
-- Per-project: `dotnet add "<project-path>" package Dapr.Workflow --version 1.18.10`.
+- Per-project: add `<PackageReference Include="Dapr.Workflow" Version="1.18.10" />` to the `.csproj` with `Edit`. Do not run `dotnet add package`: it is not an allowed command and the `Edit` keeps the change minimal.
 - Central Package Management: add `<PackageVersion Include="Dapr.Workflow" Version="1.18.10" />` to `Directory.Packages.props` and `<PackageReference Include="Dapr.Workflow" />` (no version) to the `.csproj` with `Edit`. Do not run `dotnet add package` (it would write a version into the `.csproj`).
 - Package updates (question 1, default yes): change the existing `Dapr.*` versions to 1.18.10 in the same place they are declared (`Directory.Packages.props` or the `.csproj`). Use `Edit`, not `dotnet add package`, so the version stays where it was. In Aspire mode an AppHost on Aspire 9.0–9.4 is updated to 9.5.2 the same way (SDK version and `Aspire.Hosting.*` packages).
 
@@ -124,7 +125,7 @@ The shared [`../dapr-shared/dotnet-local-http.md`](../dapr-shared/dotnet-local-h
 For the `orders-api` layout (net8 minimal API with `OrderService`, tests in `tests/OrdersApi.Tests`):
 
 - Plan: target `OrdersApi.slnx` → `src/OrdersApi` (net8.0, minimal API, Program.cs), dapr run, workflow `PlaceOrderWorkflow` (task chaining).
-- Package: `dotnet add "src/OrdersApi/OrdersApi.csproj" package Dapr.Workflow --version 1.18.10`.
+- Package: `<PackageReference Include="Dapr.Workflow" Version="1.18.10" />` added to `src/OrdersApi/OrdersApi.csproj` with `Edit`.
 - New files: `src/OrdersApi/Workflows/PlaceOrderWorkflow.cs`, `src/OrdersApi/Activities/ReserveStockActivity.cs`, `ChargePaymentActivity.cs`, `SendConfirmationActivity.cs`, `src/OrdersApi/Models/PlaceOrderInput.cs`, `PlaceOrderOutput.cs`, `src/OrdersApi/OrdersApi.workflow.http`, `dapr.yaml`, `resources/statestore.yaml`, `DAPR-WORKFLOW.md`.
 - Edited: `src/OrdersApi/OrdersApi.csproj` (package), `src/OrdersApi/Program.cs` — after `builder.Services.AddSingleton<OrderService>();` add `builder.Services.AddDaprWorkflow();` and `builder.Services.AddDaprWorkflowVersioning();`; after `app.MapPost("/orders", ...)` add the workflow endpoints under `app.MapGroup("/workflows/place-order")`.
 - Questions: no newer packages (the project has no `Dapr.*` package yet), so only question 2: "Should `POST /orders` also start `PlaceOrderWorkflow` after it saves the order? Default: yes." The tests only call `OrderService` directly, so the default stays yes. With yes, the `POST /orders` handler gains a `DaprWorkflowClient workflowClient` parameter and calls `ScheduleNewWorkflowAsync(nameof(PlaceOrderWorkflow), order.Id, new PlaceOrderInput(order))` after `orders.Add(order)`; its `Results.Created(...)` response is unchanged.

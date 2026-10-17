@@ -3,6 +3,14 @@ name: check-prereq-dotnet
 description: Checks prerequisites for building Dapr Workflow apps in .NET. Use for "check prerequisites for .NET" or "verify .NET environment".
 allowed-tools:
   - Bash(uname -s)
+  - Bash(dotnet --version)
+  - Bash(powershell -Command "dotnet --version")
+  - Bash(docker info)
+  - Bash(podman info)
+  - Bash(powershell -Command "docker info")
+  - Bash(powershell -Command "podman info")
+  - Bash(dapr --version)
+  - Bash(powershell -Command "dapr --version")
   - Read
 ---
 
@@ -10,13 +18,14 @@ allowed-tools:
 
 ## Overview
 
-This skill checks whether all prerequisites are installed for building Dapr Workflow applications in .NET. Run this skill before using the `create-workflow-dotnet` skill.
+This skill checks whether all prerequisites are installed for building Dapr Workflow applications in .NET. Run it only when you ask for it, for example before using the `create-workflow-dotnet` skill. It is never run automatically as a pre-step.
 
 ## Prerequisites
 
 The following must be installed:
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download)
+- [C# LSP Plugin](https://claude.com/plugins/csharp-lsp)
 - [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation)
 - [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.18+)
 

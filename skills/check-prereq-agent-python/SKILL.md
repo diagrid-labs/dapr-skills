@@ -5,7 +5,25 @@ allowed-tools:
   - Bash(uname -s)
   - Bash(python --version)
   - Bash(python3 --version)
+  - Bash(powershell -Command "python --version")
   - Bash(uv --version)
+  - Bash(powershell -Command "uv --version")
+  - Bash(docker info)
+  - Bash(podman info)
+  - Bash(powershell -Command "docker info")
+  - Bash(powershell -Command "podman info")
+  - Bash(dapr --version)
+  - Bash(powershell -Command "dapr --version")
+  - Bash(uv pip show dapr-agents)
+  - Bash(powershell -Command "uv pip show dapr-agents")
+  - Bash([ -n "${OPENAI_API_KEY}" ] && echo "set" || echo "unset")
+  - Bash(powershell -Command "if ([string]::IsNullOrEmpty($env:OPENAI_API_KEY)) { 'unset' } else { 'set' }")
+  - Bash([ -n "${ANTHROPIC_API_KEY}" ] && echo "set" || echo "unset")
+  - Bash(powershell -Command "if ([string]::IsNullOrEmpty($env:ANTHROPIC_API_KEY)) { 'unset' } else { 'set' }")
+  - Bash([ -n "${GOOGLE_API_KEY}" ] && echo "set" || echo "unset")
+  - Bash(powershell -Command "if ([string]::IsNullOrEmpty($env:GOOGLE_API_KEY)) { 'unset' } else { 'set' }")
+  - Bash(curl -sS -o /dev/null -w "%{http_code}" http://localhost:11434/api/tags --max-time 2)
+  - Bash(powershell -Command "(Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 http://localhost:11434/api/tags).StatusCode")
   - Read
 ---
 
@@ -13,7 +31,7 @@ allowed-tools:
 
 ## Overview
 
-This skill checks whether all prerequisites are installed for building durable AI agents in Python — either with the native [`dapr-agents`](https://github.com/dapr/dapr-agents) SDK (the Dapr Agents framework, which is Python-only) or with a [`diagrid`](https://pypi.org/project/diagrid/) framework wrapper. Run this skill before using the `create-agent-python` skill.
+This skill checks whether all prerequisites are installed for building durable AI agents in Python — either with the native [`dapr-agents`](https://github.com/dapr/dapr-agents) SDK (the Dapr Agents framework, which is Python-only) or with a [`diagrid`](https://pypi.org/project/diagrid/) framework wrapper. Run it only when you ask for it, for example before using the `create-agent-python` skill. It is never run automatically as a pre-step.
 
 ## Prerequisites
 
@@ -21,6 +39,7 @@ The following must be installed:
 
 - [Python](https://www.python.org/downloads/) `>=3.11,<3.14` — the bound both `dapr-agents` and `diagrid` declare
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) (Astral)
+- [Pyright LSP Plugin](https://claude.com/plugins/pyright-lsp)
 - [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation)
 - [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (version 1.18+)
 - [dapr-agents](https://pypi.org/project/dapr-agents/) `>=1.0.9`, checked as a local install only (native path only — a `diagrid[<extra>]` project gets it transitively, and either way the project installs it with `uv sync`)
