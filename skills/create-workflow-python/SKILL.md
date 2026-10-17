@@ -109,7 +109,7 @@ Python configuration file used by packaging tools. See `REFERENCE.md` for full e
 
 ### main.py
 
-Main entry for the Python workflow application. See `REFERENCE.md` for full example.
+Main entry for the Python workflow application. The generic `/raise-event` endpoint stays in every project, because the event name comes from the request body; only the `raise-event` example in `local.http` depends on the workflow. See `REFERENCE.md` for full example.
 
 ### Models
 

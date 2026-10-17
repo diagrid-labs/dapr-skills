@@ -13,7 +13,7 @@
 | Central Package Management | `Directory.Packages.props` with `<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>` in the solution folder or a parent. |
 | Existing Dapr | `Dapr.*` package references; `dapr.yaml`; folders named in its `resourcesPath` (often `resources/` or `components/`); component files with metadata `actorStateStore` set to `"true"` or `true` (both forms count). |
 | Aspire | An AppHost project whose `.csproj` has a `ProjectReference` to the target project. An AppHost declares `Sdk="Aspire.AppHost.Sdk/<version>"`, a `<Sdk Name="Aspire.AppHost.Sdk" Version="<version>" />` element, or `<IsAspireHost>true</IsAspireHost>` (then the version is the `Aspire.Hosting.AppHost` package version). Aspire 9.x and 13.x are supported; for an older AppHost, say so and ask whether to use `dapr run` mode instead. |
-| App port | `applicationUrl` of the `http` profile in `Properties/launchSettings.json`. If none, add an `http` profile on a free port (plan item). |
+| App port | `applicationUrl` of the `http` profile in `Properties/launchSettings.json`. If none, add an `http` profile (plan item) on the first port from 5000 upward that no other `launchSettings.json` in the solution, `dapr.yaml` or AppHost already uses; the same rule applies in Aspire mode, where Aspire reads the profile. |
 | Tests | Projects referencing the target project and `Microsoft.NET.Test.Sdk`. |
 
 ## Add Workflow Plan template
@@ -51,7 +51,7 @@
 1. Newer packages are available: <Dapr.Client 1.17.9 → 1.18.10, Dapr.AspNetCore 1.17.9 → 1.18.10>. Update them? **Default: yes, update.**
 2. Should `<POST /orders>` also start `<WorkflowName>` after it saves the <order>? **Default: yes.** <(Default no: `<TestName>` calls this endpoint over HTTP and would need a running Dapr sidecar.)>
 
-<Leave out a question that does not apply. Without a trigger endpoint, write instead: No existing endpoint starts the workflow; use the new start endpoint.>
+<Leave out a question that does not apply and renumber the rest, so a plan with only the endpoint question numbers it 1 and the user answers "1: no". The numbers 1 and 2 above are for the full two-question case. Without a trigger endpoint, write instead: No existing endpoint starts the workflow; use the new start endpoint.>
 
 Reply **yes** to apply with the defaults, answer a question differently (for example "1: no"), list items to drop, or **stop**.
 ```

@@ -17,7 +17,7 @@
         "Workflow management endpoints exist for start and status at minimum (start schedules the workflow with DaprWorkflowClient.ScheduleNewWorkflowAsync; status checks state.Exists)",
         "dapr.yaml at the solution root has an app entry with appDirPath pointing to src/OrdersApi and appPort 5180, and resources/statestore.yaml has actorStateStore \"true\"",
         "README.md is byte-for-byte unchanged and DAPR-WORKFLOW.md exists at the solution root with how to start (`dapr run -f .`), request examples and a Diagrid Dapr Dev Dashboard section with the macOS/Linux and Windows install commands",
-        "The transcript shows `dotnet build` on the solution after the code steps, a final `dotnet test` with 2 passed and 0 failed, and the build succeeding",
+        "The transcript shows `dotnet build` on the solution after the code steps, a final `dotnet test` with 2 passed and 0 failed (or, when the machine lacks the .NET 8 runtime and the test run aborts with \"You must install or update .NET\", the baseline and final test runs are reported as not run, in DAPR-WORKFLOW.md, without setting DOTNET_ROLL_FORWARD), and the build succeeding",
         "No files outside the plan were changed: tests/OrdersApi.Tests/* and src/OrdersApi/Services/OrderService.cs and src/OrdersApi/Models/Order.cs are unchanged",
         "No git command other than `git status` was run",
         "Dev Dashboard: before changing files the agent runs `diagrid-dev-dashboard --version` once without stopping, and the final output ends with exactly `Dapr Workflow is added to OrdersApi. Open DAPR-WORKFLOW.md in the solution root for what changed and how to run it.` followed only by the matching Diagrid Dapr Dev Dashboard recommendation"
