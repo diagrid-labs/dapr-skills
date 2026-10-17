@@ -6,12 +6,7 @@ allowed-tools:
   - Bash(python --version)
   - Bash(python3 --version)
   - Bash(uv --version)
-  - Bash(dapr:*)
-  - Bash(docker info:*)
-  - Bash(podman info:*)
-  - Bash(powershell:*)
   - Read
-  - mcp__ide__getDiagnostics
 ---
 
 # Check Prerequisites for Dapr Workflow Python

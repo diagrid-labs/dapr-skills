@@ -4,10 +4,6 @@ description: This skill creates a Dapr application in TypeScript that runs local
 allowed-tools:
   - Write
   - Edit
-  - Bash(npm:*)
-  - Bash(npx:*)
-  - Bash(dapr:*)
-  - mcp__ide__getDiagnostics
   - Bash(diagrid-dev-dashboard --version)
 ---
 

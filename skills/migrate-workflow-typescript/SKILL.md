@@ -7,17 +7,6 @@ allowed-tools:
   - Glob
   - Edit
   - Write
-  - Bash(git status:*)
-  - Bash(git branch:*)
-  - Bash(git checkout:*)
-  - Bash(git diff:*)
-  - Bash(git rev-parse:*)
-  - Bash(git add:*)
-  - Bash(git commit:*)
-  - Bash(npm:*)
-  - Bash(npx:*)
-  - mcp__ide__getDiagnostics
-model: opus
 ---
 
 # Migrate an Existing TypeScript Application to Dapr

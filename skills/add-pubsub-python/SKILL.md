@@ -7,15 +7,7 @@ allowed-tools:
   - Glob
   - Edit
   - Write
-  - Bash(uv:*)
-  - Bash(python:*)
-  - Bash(python3:*)
-  - Bash(py:*)
-  - Bash(pip:*)
-  - Bash(dapr:*)
-  - Bash(git status:*)
   - Bash(diagrid-dev-dashboard --version)
-  - mcp__ide__getDiagnostics
 ---
 
 # Add Dapr pub/sub to an existing Python FastAPI app

@@ -4,13 +4,6 @@ description: This skill creates a durable AI agent application in Python, runnin
 allowed-tools:
   - Write
   - Edit
-  - Bash(mkdir:*)
-  - Bash(curl:*)
-  - Bash(uv venv:*)
-  - Bash(uv sync:*)
-  - Bash(uv lock:*)
-  - Bash(dapr:*)
-  - mcp__ide__getDiagnostics
   - Bash(diagrid-dev-dashboard --version)
 ---
 
@@ -214,7 +207,7 @@ HTTP request file for testing the agent endpoints. Native: `POST /agent/run` ret
 2. Run `uv sync` in each `<ProjectName>` folder to resolve and install dependencies. This writes `uv.lock` next to `pyproject.toml`.
 3. Confirm `uv.lock` exists and instruct the user to commit it — the `>=` floors in `pyproject.toml` keep the project on supported versions, and `uv.lock` is what makes a checkout reproduce byte-for-byte.
 4. Run `uv run python -m compileall -q <ProjectName>` in each project folder. It must exit with code 0; fix any error and re-run.
-5. Check with `mcp__ide__getDiagnostics` when it is available, then remove any `__pycache__` folders the compile step created.
+5. Remove any `__pycache__` folders the compile step created.
 6. **Windows path length.** If `uv venv` / `uv sync` fails with a path-length error (`path longer than allowed`, `os error 206`, `os error 87`, or a DLL that will not load from `.venv`), the project folder is too deep for the 260-character Windows limit. Do not work around it by mapping drives (`subst`), creating virtual environments outside the project, or running `uv` from another folder — those leave files behind on the user's machine. Stop, tell the user that Verify did not complete and why, and suggest either moving the project to a shorter path (for example `C:\src\<ProjectRoot>`) or enabling long paths (Windows `LongPathsEnabled`), then re-running `uv sync`. Never report the build as verified when `uv.lock` was not written.
 
 ## Create README.md

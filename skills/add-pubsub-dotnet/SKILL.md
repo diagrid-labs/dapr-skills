@@ -7,11 +7,7 @@ allowed-tools:
   - Glob
   - Edit
   - Write
-  - Bash(dotnet:*)
-  - Bash(dapr:*)
-  - Bash(git status:*)
   - Bash(diagrid-dev-dashboard --version)
-  - mcp__ide__getDiagnostics
 ---
 
 # Add Dapr pub/sub to an existing .NET project

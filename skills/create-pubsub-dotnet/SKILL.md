@@ -4,12 +4,7 @@ description: This skill creates a Dapr pub/sub application in .NET — a publish
 allowed-tools:
   - Write
   - Edit
-  - Bash(dotnet:*)
-  - Bash(dapr:*)
-  - Bash(aspire new:*)
-  - Bash(~/.aspire/bin/aspire new:*)
   - Bash(diagrid-dev-dashboard --version)
-  - mcp__ide__getDiagnostics
 ---
 
 # Create Dapr Pub/Sub .NET Application
@@ -187,8 +182,7 @@ For the `Program.cs` of each type and style, see `REFERENCE.md` → **Program.cs
 **IMPORTANT: After Project Setup you MUST run these checks:**
 
 1. Run `dotnet build "<ProjectRoot>.slnx"` (`dotnet new sln --format slnx` writes `.slnx`). Aspire mode: `dotnet build "<ProjectRoot>.sln"`, because `aspire new` writes a `.sln`. It must succeed; fix any errors and rebuild.
-2. When `mcp__ide__getDiagnostics` is available, check the new files with it as well.
-3. Tell the user how to start the apps: `dapr run -f .` in `<ProjectRoot>` (Aspire: `aspire run`).
+2. Tell the user how to start the apps: `dapr run -f .` in `<ProjectRoot>` (Aspire: `aspire run`).
 
 ## Create README.md
 

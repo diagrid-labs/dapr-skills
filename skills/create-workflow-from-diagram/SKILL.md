@@ -5,10 +5,7 @@ allowed-tools:
   - Read
   - Write
   - Edit
-  - Bash(mkdir:*)
-  - Bash(ls:*)
   - Bash(diagrid-dev-dashboard --version)
-model: opus
 ---
 
 # Create Dapr Workflow from Diagram

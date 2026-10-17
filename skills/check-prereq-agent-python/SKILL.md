@@ -6,13 +6,6 @@ allowed-tools:
   - Bash(python --version)
   - Bash(python3 --version)
   - Bash(uv --version)
-  - Bash(uv pip show:*)
-  - Bash([ -n:*)
-  - Bash(curl:*)
-  - Bash(powershell:*)
-  - Bash(dapr:*)
-  - Bash(docker info:*)
-  - Bash(podman info:*)
   - Read
 ---
 

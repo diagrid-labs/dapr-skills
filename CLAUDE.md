@@ -160,7 +160,7 @@ All skills require:
 
 - Skill files are Markdown documents in `skills/<skill-name>/SKILL.md`
 - Each skill directory should also include a `REFERENCE.md` with full code examples and detailed explanations
-- Skill front-matter fields: `name`, `description`, `model` (e.g. `opus`)
+- Skill front-matter fields: `name`, `description` and optionally `allowed-tools` — nothing else. `allowed-tools` lists no wildcard shell tools (`Bash`, `Bash(dotnet:*)`) and no `mcp__` tools; exact commands such as `Bash(uname -s)` are fine. Other keys (`model`, `disable-model-invocation`, ...) mean different things in Claude Code, Codex CLI and Copilot CLI.
 - Each skill should include sections for: prerequisite checks, project setup, folder structure, verify, and a final message
 - Use `<PlaceholderName>` syntax for values the user should replace (e.g., `<ProjectName>`, `<ProjectNamespace>`)
 - Code examples should be complete and runnable, not snippets
@@ -190,6 +190,17 @@ The pub/sub skills build an application from the domain the user describes. Ever
 - **create skills declare Write and Edit** — a skill that constrains `allowed-tools` must declare the tools it writes files with.
 - **create skills point at their review skills** — so a user who scaffolds a project discovers the audit skills.
 - **shared reference files are linked** — no Markdown file under `dapr-shared/references/` is unreferenced by any skill. (Non-Markdown files there are not checked.)
+
+## Cross-CLI checks
+
+The skills install into Claude Code, Codex CLI and Copilot CLI. `scripts/lib/frontmatter-validation.mjs` (unit-tested in `scripts/test/frontmatter-validation.test.mjs`) enforces:
+
+- **frontmatter keys** — only `name`, `description`, `allowed-tools`.
+- **allowed-tools** — no wildcard shell tools and no MCP tools.
+- **description budget** — descriptions are always in context, and Codex budgets its whole skill list at about 8,000 characters and shortens descriptions first. Hard limits (`MAX_DESCRIPTION_CHARS`, `MAX_TOTAL_DESCRIPTION_CHARS`) sit at today's values and only ratchet down. The build prints a `WARN` for descriptions above the targets (400 characters each, 8,000 in total).
+- **description similarity** — two descriptions that read alike compete for the same trigger. The hard limit sits just above the language twins; pairs above the 50% target are printed as `WARN`.
+
+Lower the `MAX_*` constants whenever descriptions get shorter, never raise them.
 
 Placeholder vocabularies are per family (`scripts/lib/family-validation.mjs`, `FAMILIES`): pub/sub uses `dapr-shared/pubsub-placeholders.md`, workflow uses `dapr-shared/workflow-placeholders.md`. Adding a family means adding a row there, not a second copy of the checks.
 

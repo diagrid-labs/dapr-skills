@@ -4,10 +4,6 @@ description: This skill creates a Dapr workflow application with .NET Aspire tha
 allowed-tools:
   - Write
   - Edit
-  - Bash(dotnet:*)
-  - Bash(aspire new:*)
-  - Bash(~/.aspire/bin/aspire new:*)
-  - mcp__ide__getDiagnostics
   - Bash(diagrid-dev-dashboard --version)
 ---
 
@@ -177,8 +173,7 @@ HTTP request file for testing the workflow endpoints: `start`, `status`, `pause`
 **IMPORTANT: After Project Setup you MUST run these checks:**
 
 1. Run `dotnet build` on the `.sln` file (`aspire new` writes a `.sln`, not a `.slnx`). It must succeed; fix any errors and rebuild until it does. Never report the solution as created while the build fails.
-2. When `mcp__ide__getDiagnostics` is available, check the new files with it as well.
-3. Tell the user how to start the solution: `aspire run` in the solution root.
+2. Tell the user how to start the solution: `aspire run` in the solution root.
 
 ## Create README.md
 

@@ -4,10 +4,7 @@ description: This skill creates a Dapr pub/sub application in Python with FastAP
 allowed-tools:
   - Write
   - Edit
-  - Bash(uv:*)
-  - Bash(dapr:*)
   - Bash(diagrid-dev-dashboard --version)
-  - mcp__ide__getDiagnostics
 ---
 
 # Create Dapr Pub/Sub Python Application
@@ -171,7 +168,7 @@ Rules that matter:
 
 1. Role both: run `uv sync --all-packages` in `<ProjectRoot>`. Single role: run `uv sync` in the service folder.
 2. Run `uv run python -m compileall -q <service folders>` (for example `contracts publisher subscriber`). It must exit with code 0.
-3. Fix any error and re-run. Check with `mcp__ide__getDiagnostics` when it is available.
+3. Fix any error and re-run.
 4. Remove any `__pycache__` folders created by the compile step.
 
 ## Create README.md

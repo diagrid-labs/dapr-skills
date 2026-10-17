@@ -32,6 +32,15 @@ import {
   checkReviewCrossLinks,
   checkNoOrphanedShared,
 } from './lib/authoring-validation.mjs';
+import {
+  checkFrontmatterKeys,
+  checkAllowedTools,
+  checkDescriptionBudget,
+  checkDescriptionSimilarity,
+  TARGET_DESCRIPTION_CHARS,
+  TARGET_TOTAL_DESCRIPTION_CHARS,
+  TARGET_DESCRIPTION_SIMILARITY,
+} from './lib/frontmatter-validation.mjs';
 
 // Pinned on purpose; bump deliberately after checking the CLI's install layout.
 export const SKILLS_CLI = 'skills@1.7.2';
@@ -53,6 +62,13 @@ function report(title, failures) {
   for (const f of failures) console.log(`      ${f}`);
 }
 
+// Advisory: never fails the build. Lists what is still above the target.
+function warn(title, items) {
+  if (items.length === 0) return;
+  console.log(`WARN  ${title} (${items.length})`);
+  for (const i of items) console.log(`      ${i}`);
+}
+
 report('manifests: every skill folder has a valid SKILL.md', checkManifests(skillsDir));
 report('links: references resolve in the repository', checkLinks(skillsDir));
 report('pubsub: no sample domain in instructions', checkNoSampleDomain(skillsDir));
@@ -62,6 +78,18 @@ report('pubsub: CEL matches cast with int()', checkCelCasts(skillsDir));
 report('workflow: placeholders are defined and used', checkFamilyVocabulary(skillsDir, 'workflow'));
 report('workflow: templates link the placeholder vocabulary', checkFamilyVocabularyLinks(skillsDir, 'workflow'));
 report('reviews: example Found: lines match their findings', checkReportExampleCounts(skillsDir));
+report('cross-cli: frontmatter keys are name, description, allowed-tools', checkFrontmatterKeys(skillsDir));
+report('cross-cli: allowed-tools has no wildcard shell or MCP tools', checkAllowedTools(skillsDir));
+report('cross-cli: description length and total budget', checkDescriptionBudget(skillsDir));
+report('cross-cli: descriptions are distinct', checkDescriptionSimilarity(skillsDir));
+warn(
+  `cross-cli: descriptions above the target (${TARGET_DESCRIPTION_CHARS} each, ${TARGET_TOTAL_DESCRIPTION_CHARS} total)`,
+  checkDescriptionBudget(skillsDir, { maxEach: TARGET_DESCRIPTION_CHARS, maxTotal: TARGET_TOTAL_DESCRIPTION_CHARS }),
+);
+warn(
+  `cross-cli: descriptions more than ${TARGET_DESCRIPTION_SIMILARITY * 100}% alike`,
+  checkDescriptionSimilarity(skillsDir, TARGET_DESCRIPTION_SIMILARITY),
+);
 report('evals: manifests are well-formed', checkEvalManifests(evalsDir));
 report('authoring: create skills verify their output', checkVerifyRuns(skillsDir));
 report('authoring: create skills declare Write and Edit', checkDeclaredTools(skillsDir));

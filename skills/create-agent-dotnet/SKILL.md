@@ -4,10 +4,6 @@ description: This skill creates a durable AI agent application in .NET, running 
 allowed-tools:
   - Write
   - Edit
-  - Bash(mkdir:*)
-  - Bash(dotnet:*)
-  - Bash(dapr:*)
-  - mcp__ide__getDiagnostics
   - Bash(diagrid-dev-dashboard --version)
 ---
 

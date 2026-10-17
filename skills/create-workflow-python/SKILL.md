@@ -4,10 +4,6 @@ description: This skill creates a Dapr workflow application in Python that runs 
 allowed-tools:
   - Write
   - Edit
-  - Bash(uv venv:*)
-  - Bash(uv sync:*)
-  - Bash(dapr:*)
-  - mcp__ide__getDiagnostics
   - Bash(diagrid-dev-dashboard --version)
 ---
 
@@ -138,8 +134,7 @@ HTTP request file for testing the workflow endpoints. Contains a `start` request
 1. Run `uv venv` in the `<ProjectName>` folder to create a virtual environment.
 2. Run `uv sync` in the `<ProjectName>` folder to install dependencies.
 3. Run `uv run python -m compileall -q <ProjectName>`. It must exit with code 0; fix any error and re-run.
-4. Check with `mcp__ide__getDiagnostics` when it is available.
-5. Remove any `__pycache__` folders created by the compile step.
+4. Remove any `__pycache__` folders created by the compile step.
 
 ## Create README.md
 
