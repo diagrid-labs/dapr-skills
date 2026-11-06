@@ -21,7 +21,7 @@
         "Contracts declare the OrderPlaced record and a PubSubNames class with PubSubName, OrdersTopic and OrdersDeadLetterTopic",
         "The agent restated the resolved event, topic, fields and identifying field before creating any file, and no generated file contains an unresolved placeholder such as <EventName>, <TopicName> or <IdProperty>",
         "The agent ran dotnet build \"OrderFlow.slnx\" (not .sln) and the build succeeded",
-        "OrderFlow/README.md has sections for running and trying the app, the Diagrid Dapr Dev Dashboard (link https://github.com/diagridio/dev-dashboard) and running with Catalyst, plus a Switching the message broker paragraph that links https://docs.dapr.io/reference/components-reference/supported-pubsub/ and keeps metadata.name pubsub",
+        "OrderFlow/README.md has sections for running and trying the app, the Diagrid Dapr Dev Dashboard (link https://github.com/diagridio/dev-dashboard) and running with Diagrid, plus a Switching the message broker paragraph that links https://docs.dapr.io/reference/components-reference/supported-pubsub/ and keeps metadata.name pubsub",
         "The transcript shows the `diagrid-dev-dashboard --version` check was run and the final message carries the matching installed/not-installed Dev Dashboard tip; the agent did not ask about it, did not install it, and did not invoke any check-prereq skill",
         "The final output starts with exactly: The OrderFlow pub/sub application is created. Open the README.md file in the OrderFlow folder for a summary and instructions for running locally. followed only by the matching Diagrid Dapr Dev Dashboard recommendation (start instructions if the command succeeded, install instructions if it failed)"
       ]

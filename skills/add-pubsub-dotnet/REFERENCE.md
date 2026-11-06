@@ -151,7 +151,7 @@ Follow [`../dapr-shared/pubsub-local-http.md`](../dapr-shared/pubsub-local-http.
 
 ## DAPR-PUBSUB.md
 
-Use the template and the **Filling it in** rules in [`../dapr-shared/pubsub-run-doc.md`](../dapr-shared/pubsub-run-doc.md). `<StartCommand>` is `dapr run -f .` or `aspire run`; omit the Catalyst section in Aspire mode.
+Use the template and the **Filling it in** rules in [`../dapr-shared/pubsub-run-doc.md`](../dapr-shared/pubsub-run-doc.md). `<StartCommand>` is `dapr run -f .` or `aspire run`; omit the Diagrid section in Aspire mode.
 
 ## Worked example
 

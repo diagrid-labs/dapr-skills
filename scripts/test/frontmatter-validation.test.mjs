@@ -70,7 +70,7 @@ test('checkDescriptionBudget enforces the per-skill and total limits', () => {
 });
 
 test('distinctiveWords drops stopwords and product names', () => {
-  const words = distinctiveWords('This skill creates a Dapr workflow for Diagrid Catalyst');
+  const words = distinctiveWords('This skill creates a Dapr workflow for Diagrid');
   assert.deepEqual([...words].sort(), ['creates', 'workflow']);
 });
 

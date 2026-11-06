@@ -1,6 +1,6 @@
 ---
 name: create-workflow-dotnet
-description: Creates a Dapr workflow app in .NET, run locally with dapr run. Use for "create a workflow in .NET" or "build a workflow app in C#". For Diagrid Catalyst use the catalyst-ai plugin.
+description: Creates a Dapr workflow app in .NET, run locally with dapr run. Use for "create a workflow in .NET" or "build a workflow app in C#". For Diagrid use the catalyst-ai plugin.
 allowed-tools:
   - Write
   - Edit
@@ -153,10 +153,10 @@ The README contains the following sections:
 4. How to start the application using the Dapr CLI.
 5. List the available endpoints in the Program.cs file and provide examples how to call these using curl. Also include a link to the `local.http` file.
 6. The **Diagrid Dapr Dev Dashboard** section, copied from the **README section** of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md): why it is useful, the install command for each OS (macOS / Linux and Windows) and the run command (`diagrid-dev-dashboard`, http://localhost:9090).
-7. How to run the application with Diagrid Catalyst to visually inspect the workflow.
+7. How to run the application with Diagrid to visually inspect the workflow.
 8. Next steps: run the `review-workflow-determinism`, `review-workflow-activity` and `review-workflow-management` skills to audit the generated code.
 
-See `REFERENCE.md` for additional instructions on running locally and running with Catalyst.
+See `REFERENCE.md` for additional instructions on running locally and running with Diagrid.
 
 ## Show final message
 
