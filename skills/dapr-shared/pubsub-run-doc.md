@@ -49,7 +49,7 @@ At-least-once delivery: the handler ignores duplicates by <dedupe key>. Invalid 
 - `<StartCommand>` is `dapr run -f .` or `aspire run`.
 - Add "Publish from `<endpoint>`" to Next steps when question 2 was answered no.
 - Add "Mixed `Dapr.*` versions: <list>" under "Before production" when question 1 was answered no.
-- Omit the Catalyst section in Aspire mode.
+- Omit the Diagrid section in Aspire mode.
 - When no dead-letter topic is configured, say that DROP is not redelivered and that the message is not forwarded anywhere. Never describe DROP as discarded silently when a dead-letter topic exists.
 
 The run-doc section links use `../dapr-shared/` relative paths only inside the skill; in the generated `DAPR-PUBSUB.md` the content is copied, not linked.

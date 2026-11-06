@@ -1,6 +1,6 @@
 ---
 name: migrate-workflow-typescript
-description: Migrates an existing TypeScript/Node.js app to Dapr incrementally. Scans for service-call, messaging, scheduling, secrets, state and saga patterns, maps them to Dapr building blocks, then applies approved changes one at a time. Use for "migrate this app to Dapr" or "add Dapr to my Node.js app". To host on Diagrid Catalyst use the catalyst-ai plugin.
+description: Migrates an existing TypeScript/Node.js app to Dapr incrementally. Scans for service-call, messaging, scheduling, secrets, state and saga patterns, maps them to Dapr building blocks, then applies approved changes one at a time. Use for "migrate this app to Dapr" or "add Dapr to my Node.js app". To host on Diagrid use the catalyst-ai plugin.
 allowed-tools:
   - Read
   - Grep

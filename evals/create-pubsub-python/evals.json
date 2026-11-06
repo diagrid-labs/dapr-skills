@@ -18,7 +18,7 @@
         "The agent ran uv sync --all-packages in the project root and it succeeded",
         "The agent restated the resolved event, topic, fields and identifying field before creating any file, and no generated file contains an unresolved placeholder such as <EventName>, <TopicName> or <id_field>",
         "The agent ran `diagrid-dev-dashboard --version` once and did not stop, ask or install because of the result",
-        "order-flow/README.md has sections for running and trying the app, the Diagrid Dapr Dev Dashboard (link https://github.com/diagridio/dev-dashboard) and running with Catalyst, plus a Switching the message broker paragraph that links https://docs.dapr.io/reference/components-reference/supported-pubsub/ and keeps metadata.name pubsub",
+        "order-flow/README.md has sections for running and trying the app, the Diagrid Dapr Dev Dashboard (link https://github.com/diagridio/dev-dashboard) and running with Diagrid, plus a Switching the message broker paragraph that links https://docs.dapr.io/reference/components-reference/supported-pubsub/ and keeps metadata.name pubsub",
         "The final output starts with exactly: The order-flow pub/sub application is created. Open the README.md file in the order-flow folder for a summary and instructions for running locally. followed only by the matching Diagrid Dapr Dev Dashboard recommendation"
       ]
     },

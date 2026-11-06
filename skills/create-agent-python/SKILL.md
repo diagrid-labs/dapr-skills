@@ -1,6 +1,6 @@
 ---
 name: create-agent-python
-description: Creates a durable AI agent app in Python with the Dapr Agents SDK or a Diagrid framework wrapper, run locally with dapr run. Use for "create an agent in Python", "scaffold a Dapr Agents project" or "create a multi-agent orchestrator". For Diagrid Catalyst use the catalyst-ai plugin.
+description: Creates a durable AI agent app in Python with the Dapr Agents SDK or a Diagrid framework wrapper, run locally with dapr run. Use for "create an agent in Python", "scaffold a Dapr Agents project" or "create a multi-agent orchestrator". For Diagrid use the catalyst-ai plugin.
 allowed-tools:
   - Write
   - Edit
@@ -225,7 +225,7 @@ The README contains the following sections:
 6. Memory: conversation history is kept per run (per workflow instance), not across runs. Do not promise cross-session memory.
 7. **Observability section** (observability on): how to start the observability stack (`docker compose -f docker-compose.observability.yaml up -d`), the trace UI URL (Zipkin http://localhost:9411 for native, Jaeger http://localhost:16686 for wrapper and mixed), Grafana URL (http://localhost:3000), and Prometheus URL (http://localhost:9099). The Diagrid Dapr Dev Dashboard gets its own section (item 10); it is **not** part of `dapr init` or of the compose stack.
 8. **Wrapper and mixed projects:** the `diagrid` licence note and the usage analytics note with the opt-out variables (`DO_NOT_TRACK`, `SCARF_NO_ANALYTICS`, `DIAGRID_NO_ANALYTICS`); do not set an opt-out in the generated files. Mixed projects also get the "verify this end to end" note for the coordinator → specialist dispatch. Text for all three is in `REFERENCE.md`.
-9. How to run with Diagrid Catalyst: [`../dapr-shared/running-with-catalyst.md`](../dapr-shared/running-with-catalyst.md). For wrapper projects, also mention `diagridpy init` as an alternative (see `REFERENCE.md`).
+9. How to run with Diagrid: [`../dapr-shared/running-with-catalyst.md`](../dapr-shared/running-with-catalyst.md). For wrapper projects, also mention `diagridpy init` as an alternative (see `REFERENCE.md`).
 10. The **Diagrid Dapr Dev Dashboard** section, copied from the **README section** of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md): why it is useful, the install command for each OS (macOS / Linux and Windows) and the run command (`diagrid-dev-dashboard`, http://localhost:9090).
 11. Next steps: run the `review-agent-tools`, `review-agent-memory`, `review-agent-orchestration` and `review-agent-observability` skills to audit the generated agent.
 

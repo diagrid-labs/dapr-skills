@@ -459,6 +459,6 @@ These are not needed to scaffold the project, but answer the questions that come
 
 See [`../dapr-shared/running-locally-dapr.md`](../dapr-shared/running-locally-dapr.md) for instructions.
 
-## Running with Diagrid Catalyst
+## Running with Diagrid
 
 See [`../dapr-shared/running-with-catalyst.md`](../dapr-shared/running-with-catalyst.md) for instructions.

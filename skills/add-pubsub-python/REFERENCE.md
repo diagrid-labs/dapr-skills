@@ -106,7 +106,7 @@ Use [`../dapr-shared/pubsub-run-doc.md`](../dapr-shared/pubsub-run-doc.md) with 
 
 - `<StartCommand>`: `dapr run -f .` from the project root, or the one-app command `dapr run --app-id <app-id> --app-port <port> --resources-path ./resources -- uv run uvicorn <module>:app --port <port>` (drop `--app-port` for a streaming-only subscriber that serves no HTTP) when the project has no `dapr.yaml` and none was created.
 - `<dedupe key>`: the CloudEvent `id`.
-- The Catalyst section is included (this skill never uses Aspire).
+- The Diagrid section is included (this skill never uses Aspire).
 - The `.http` file is the one appended to or created in step 6.
 
 ## Clashes and mixed types

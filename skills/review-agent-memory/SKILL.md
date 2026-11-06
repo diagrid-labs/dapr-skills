@@ -11,7 +11,7 @@ allowed-tools:
 
 ## Overview
 
-Scans agent memory and state-store configuration (component YAMLs + in-code wiring) for correctness: exactly one actor state store (`actorStateStore: "true"`) for the workflow engine, memory and state wiring that really persists (native `dapr-agents` memory is per run and moves to the state store whenever `state` is set; `diagrid` wrappers keep history per workflow instance only), helper stores that point at loaded components, exact component names for auto-discovery, stable agent names, and secret management for LLM and Catalyst keys. Read-only: this skill never modifies source files.
+Scans agent memory and state-store configuration (component YAMLs + in-code wiring) for correctness: exactly one actor state store (`actorStateStore: "true"`) for the workflow engine, memory and state wiring that really persists (native `dapr-agents` memory is per run and moves to the state store whenever `state` is set; `diagrid` wrappers keep history per workflow instance only), helper stores that point at loaded components, exact component names for auto-discovery, stable agent names, and secret management for LLM and Diagrid keys. Read-only: this skill never modifies source files.
 
 ## Execution Order
 

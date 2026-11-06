@@ -713,6 +713,6 @@ Verified against `@dapr/dapr@3.18.0` source — worth knowing before adding to t
 
 See [`../dapr-shared/running-locally-dapr.md`](../dapr-shared/running-locally-dapr.md) for instructions.
 
-## Running with Diagrid Catalyst
+## Running with Diagrid
 
 See [`../dapr-shared/running-with-catalyst.md`](../dapr-shared/running-with-catalyst.md) for instructions.

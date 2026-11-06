@@ -1,6 +1,6 @@
 ---
 name: add-workflow-dotnet
-description: Adds Dapr Workflow to an existing .NET (ASP.NET Core, plain or Aspire) project. Shows a plan for approval, then adds the workflow, activities and management endpoints with targeted edits, building after each. Use for "add a workflow to my .NET project" or "make this process a durable workflow". For a new project use create-workflow-dotnet. For Diagrid Catalyst use the catalyst-ai plugin.
+description: Adds Dapr Workflow to an existing .NET (ASP.NET Core, plain or Aspire) project. Shows a plan for approval, then adds the workflow, activities and management endpoints with targeted edits, building after each. Use for "add a workflow to my .NET project" or "make this process a durable workflow". For a new project use create-workflow-dotnet. For Diagrid use the catalyst-ai plugin.
 allowed-tools:
   - Read
   - Grep

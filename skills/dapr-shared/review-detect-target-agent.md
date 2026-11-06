@@ -60,7 +60,7 @@ Then:
   - a single project registers two or more agents (two or more `WithAgent(` calls, or a `WithAgent(` call inside a loop), **or** a class deriving from `Workflow<` calls `RunAgentAsync(`, `RunAgentWithHistoryAsync(` or `RunAgentAndDeserializeAsync(` on its `WorkflowContext` → `shape: in-process`;
   - the entrypoint count is > 1 (separate agent apps listed in `dapr.yaml`), with or without `agent-pubsub.yaml` → `shape: multi-app`.
 
-  Do not require `agent-registry.yaml`: there is no local registry component on the .NET path (it is a Catalyst opt-in via `.WithCatalyst(...)`).
+  Do not require `agent-registry.yaml`: there is no local registry component on the .NET path (it is a Diagrid opt-in via `.WithCatalyst(...)`).
 
 **Wrapper caveat.** Wrapped frameworks can encode multi-agent patterns that carry none of the markers above: LangGraph composes agents as compiled subgraphs or `Send` fan-out inside one graph, and deepagents sub-agents can be reached over the Agent Protocol (HTTP) through a hand-written client instead of `AsyncSubAgent(`. When `language == python`, `flavor == wrapper`, **and** the entrypoint count is > 1 **but** no Python orchestrator condition above holds, classify topology as `single-agent` **and** set `topology_unverified: true`. Only `review-agent-orchestration` acts on this flag: it reports it as the `DAG-ORCH-010` "Please verify" finding instead of its single-agent result, so a false single-agent classification never silently suppresses the orchestration rules. The other `review-agent-*` skills ignore the flag.
 

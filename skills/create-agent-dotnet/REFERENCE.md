@@ -7,7 +7,7 @@ Microsoft Agent Framework agents executed durably on Dapr Workflow via [`Diagrid
 ## License and usage analytics
 
 - **License.** `Diagrid.AI.Microsoft.AgentFramework` is licensed under the Business Source License 1.1 (see [`LICENSE.md`](https://github.com/diagridio/dotnet-ai/blob/master/LICENSE.md)). Production use without a commercial license is permitted only under the Additional Use Grant (among other conditions: organizations below 60 FTE and below USD 15M annual revenue, and not for competing or hosted offerings). Mention this in the generated README so users can check whether it applies to them.
-- **Usage analytics.** Releases **after** `1.2.0` send one anonymous usage event per process from `AddDaprAgents()` (package name and version, OS, architecture, .NET version, whether the target is Catalyst or OSS Dapr, and whether it runs in CI). `1.2.0` does not. When you move to a later release, mention it in the generated README and how to opt out: set `DO_NOT_TRACK`, `SCARF_NO_ANALYTICS`, or `DIAGRID_NO_ANALYTICS` to `1`/`true` — for example per app in `dapr.yaml`:
+- **Usage analytics.** Releases **after** `1.2.0` send one anonymous usage event per process from `AddDaprAgents()` (package name and version, OS, architecture, .NET version, whether the target is Diagrid or OSS Dapr, and whether it runs in CI). `1.2.0` does not. When you move to a later release, mention it in the generated README and how to opt out: set `DO_NOT_TRACK`, `SCARF_NO_ANALYTICS`, or `DIAGRID_NO_ANALYTICS` to `1`/`true` — for example per app in `dapr.yaml`:
 
   ```yaml
   apps:
@@ -345,7 +345,7 @@ app.Run();
 - Determinism rules apply to `PlanWorkflow`: no `DateTime.Now`, `Guid.NewGuid()`, I/O or constructor-injected services in the workflow body. Tools (which run as activities) are where I/O belongs.
 - The workflow checks for the iteration-cap text, because a capped agent returns a successful response rather than throwing.
 - `/run` returns `202 Accepted` with a status URL, so long plans do not hold the HTTP request open.
-- There is no `agent-registry` component in the local OSS scaffold. `Diagrid.AI.Microsoft.AgentFramework` only writes an agent registry when you opt in with `.WithCatalyst(...)` — see below — and that path targets Diagrid Catalyst, not `dapr init`.
+- There is no `agent-registry` component in the local OSS scaffold. `Diagrid.AI.Microsoft.AgentFramework` only writes an agent registry when you opt in with `.WithCatalyst(...)` — see below — and that path targets Diagrid, not `dapr init`.
 
 ### Alternative: specialists as separate apps
 
@@ -487,11 +487,11 @@ See [`../dapr-shared/running-locally-dapr.md`](../dapr-shared/running-locally-da
 
 The generated README gets the **Diagrid Dapr Dev Dashboard** section from the **README section** of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md): an optional tool the reader installs (install command per OS), not something `dapr init` or the compose file provides. It is started in a second terminal with `diagrid-dev-dashboard` and opens http://localhost:9090.
 
-## Running with Diagrid Catalyst
+## Running with Diagrid
 
 See [`../dapr-shared/running-with-catalyst.md`](../dapr-shared/running-with-catalyst.md).
 
-If you want the agent to show up in the Catalyst **Agents** view, opt in explicitly:
+If you want the agent to show up in the Diagrid **Agents** view, opt in explicitly:
 
 ```csharp
 builder.Services.AddDaprAgents()
@@ -501,9 +501,9 @@ builder.Services.AddDaprAgents()
 
 `WithCatalyst()` adds a hosted service that, at startup, writes the agent's metadata — including its full `instructions` — to the state component named by `DiagridCatalystOptions.Registry.ResourceName`, which defaults to `agent-registry`.
 
-- **Only call `WithCatalyst()` when running on Catalyst.** The registry write is not guarded: if the `agent-registry` component does not exist (for example when running locally with `dapr run`), the app fails at startup.
+- **Only call `WithCatalyst()` when running on Diagrid.** The registry write is not guarded: if the `agent-registry` component does not exist (for example when running locally with `dapr run`), the app fails at startup.
 - Do not put secrets in agent instructions; they are copied into the registry.
 
 > **This write can succeed and still leave the agent invisible.** The Agents view is populated by a sidecar interceptor bound to the component named exactly `agent-registry`, and that component is scoped so that only App IDs declared by an `Agent` resource are intercepted. If your App ID is not in that scope, `SaveStateAsync` returns without an error and nothing appears in the view. `diagrid component list` is not evidence either way — it renders `agent-registry` as available to all app identities regardless of the actual scope. Verify by looking for the agent in the Agents view, not by the absence of an exception. `agent-*` components are also not provisioned on every project: check that `agent-registry` exists on the target project before relying on it.
 
-On Catalyst, the separate `Diagrid.AI.Identity` package (experimental, `DGRDID001`) adds workload identity for outbound calls (`AddDiagridIdentity()`, `UseDiagridIdentity()`, `AddDiagridIdentityHttpClient()`). It only works under Catalyst (`diagrid dev run`); on OSS `dapr run` it returns `503 oauth.not_configured`.
+On Diagrid, the separate `Diagrid.AI.Identity` package (experimental, `DGRDID001`) adds workload identity for outbound calls (`AddDiagridIdentity()`, `UseDiagridIdentity()`, `AddDiagridIdentityHttpClient()`). It only works under Diagrid (`diagrid dev run`); on OSS `dapr run` it returns `503 oauth.not_configured`.

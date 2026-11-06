@@ -118,7 +118,7 @@ Notes:
 - No sidecar running: the SDK raises `TimeoutError` after waiting for the sidecar, and the publisher answers 503. Set `DAPR_HEALTH_TIMEOUT` to shorten the wait.
 - Include a short "Switching the message broker" paragraph: the app runs on Redis locally. Any broker works by replacing `resources/pubsub.yaml` with a component of that type from https://docs.dapr.io/reference/components-reference/supported-pubsub/ (for example a `pubsub.kafka` component) while keeping `metadata.name: pubsub`, so the code does not change. Link the supported-pubsub page for each broker's metadata and never put secrets inline: use `secretKeyRef`. When the user asked for another broker, add: "You asked for <broker>; this scaffold runs on Redis locally so it works without extra infrastructure."
 - Never suggest running Redis separately.
-- Finish with the Dev Dashboard section, the Catalyst section and the three review skills.
+- Finish with the Dev Dashboard section, the Diagrid section and the three review skills.
 
 ## Worked example: one resolved scenario
 

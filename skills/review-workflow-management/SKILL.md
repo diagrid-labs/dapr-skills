@@ -1,6 +1,6 @@
 ---
 name: review-workflow-management
-description: Read-only audit of the HTTP management endpoints (start, status, terminate, pause, resume, raise-event, purge) an app exposes for Dapr Workflows, with DWF-MGT-NNN findings. Use for "review workflow management" or "check workflow HTTP endpoints". To operate runs on Diagrid Catalyst use the catalyst-ai plugin.
+description: Read-only audit of the HTTP management endpoints (start, status, terminate, pause, resume, raise-event, purge) an app exposes for Dapr Workflows, with DWF-MGT-NNN findings. Use for "review workflow management" or "check workflow HTTP endpoints". To operate runs on Diagrid use the catalyst-ai plugin.
 allowed-tools:
   - Read
   - Grep

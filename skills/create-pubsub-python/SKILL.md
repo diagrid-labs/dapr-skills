@@ -184,7 +184,7 @@ Create a README.md file inside the <ProjectRoot> folder. See `REFERENCE.md` → 
 5. Declarative only: the subscription hot-reloads.
 6. The local-only items: Redis without a password, no component scopes, no stream trimming. Add a "Switching the message broker" paragraph. It MUST contain the link https://docs.dapr.io/reference/components-reference/supported-pubsub/ and MUST say that `resources/pubsub.yaml` is replaced while `metadata.name: pubsub` stays the same, so no code changes. A heading with no paragraph, or a paragraph without that link, is incomplete. See `REFERENCE.md` → **README key points** for the full wording.
 7. The **Diagrid Dapr Dev Dashboard** section from the **README section** of [`../dapr-shared/dev-dashboard.md`](../dapr-shared/dev-dashboard.md).
-8. Running with Diagrid Catalyst, from [`../dapr-shared/running-with-catalyst.md`](../dapr-shared/running-with-catalyst.md) (`<ProjectName>` is `<root-kebab>`).
+8. Running with Diagrid, from [`../dapr-shared/running-with-catalyst.md`](../dapr-shared/running-with-catalyst.md) (`<ProjectName>` is `<root-kebab>`).
 9. Next steps: the review skills `review-pubsub-publishing`, `review-pubsub-subscriptions` and `review-pubsub-components`.
 
 ## Show final message

@@ -77,4 +77,4 @@ apps:
 - `command` is `["dotnet", "run"]` — it runs inside `appDirPath`, so do not add `--project`.
 - `appPort` must match the `applicationUrl` in each project's `Properties/launchSettings.json` (`5100`, `5101`, …).
 - There is no `configFilePath`; the .NET scaffold does not create `resources/tracing.yaml`. Add it together with the file if you enable tracing.
-- .NET components: `agent-workflow` and `llm-provider`. There is no local `agent-registry` (it is a Catalyst opt-in via `.WithCatalyst()`), and conversation turns live in the session workflow rather than an `agent-memory` component. The coordinator calls specialists synchronously via Dapr service invocation, so no `agent-pubsub` component is needed.
+- .NET components: `agent-workflow` and `llm-provider`. There is no local `agent-registry` (it is a Diagrid opt-in via `.WithCatalyst()`), and conversation turns live in the session workflow rather than an `agent-memory` component. The coordinator calls specialists synchronously via Dapr service invocation, so no `agent-pubsub` component is needed.

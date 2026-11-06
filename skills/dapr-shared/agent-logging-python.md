@@ -47,7 +47,7 @@ Call `configure_logging()` at the top of `main.py`, before the agent or runner i
 
 ### Key points
 
-- JSON log output is readable by Grafana Loki, Datadog, Elastic, and the Diagrid Catalyst log UI without extra parsing.
+- JSON log output is readable by Grafana Loki, Datadog, Elastic, and the Diagrid log UI without extra parsing.
 - `trace_id` / `span_id` are the standard W3C Trace Context identifiers — the same IDs Dapr writes into traces — so a log line can be jumped to its Zipkin trace by ID.
 - Tools should log via `logger = logging.getLogger(__name__)`, never bare `print(`. `print` bypasses the handler and loses trace correlation.
 - Set `LOG_LEVEL=debug` in the environment when diagnosing; the default is `INFO`.

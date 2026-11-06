@@ -90,7 +90,7 @@ Filtered out, because none of them is a framework this skill can scaffold:
 
 - `agent-core` — the shared base every extra pulls in.
 - `all` — a meta-extra.
-- `identity` — runtime dependencies of `diagrid.identity` (verified caller identity on Catalyst), not an agent framework.
+- `identity` — runtime dependencies of `diagrid.identity` (verified caller identity on Diagrid), not an agent framework.
 - `holmesgpt` — **not supported for scaffolding.** `diagrid[holmesgpt]` does not resolve from PyPI: HolmesGPT pins `uvicorn<0.41`, while `agent-core` requires `uvicorn>=0.41`. It only resolves inside the `python-ai` repository, whose dependency overrides a consumer project does not inherit. If the user asks for HolmesGPT, say so and offer another framework.
 
 ### Entry-point snapshot
@@ -534,16 +534,16 @@ The generated README gets the **Diagrid Dapr Dev Dashboard** section from the **
 Put both in the generated README of a wrapper project (and of a mixed project, for the specialists):
 
 - **Licence.** `diagrid` is licensed under the Business Source License 1.1 with an Additional Use Grant that defines when production use is allowed without a commercial licence; each version converts to Apache-2.0 on its Change Date (2030-03-01 at the latest). Point the reader to the `LICENSE.md` in [`diagridio/python-ai`](https://github.com/diagridio/python-ai). `dapr-agents` is Apache-2.0.
-- **Usage analytics.** Every `diagrid` runner sends one anonymous usage event per process when it is constructed (package and framework versions, OS, architecture, Python version, whether it targets Catalyst or a plain sidecar, whether it runs in CI — no prompts, app data, app ids or hostnames). It runs on a background thread and never blocks or fails the app. To opt out, set any of `DO_NOT_TRACK=1`, `SCARF_NO_ANALYTICS=1` or `DIAGRID_NO_ANALYTICS=1` (in the shell, or in the app's `env:` block in `dapr.yaml`). The scaffold does not set an opt-out by default.
+- **Usage analytics.** Every `diagrid` runner sends one anonymous usage event per process when it is constructed (package and framework versions, OS, architecture, Python version, whether it targets Diagrid or a plain sidecar, whether it runs in CI — no prompts, app data, app ids or hostnames). It runs on a background thread and never blocks or fails the app. To opt out, set any of `DO_NOT_TRACK=1`, `SCARF_NO_ANALYTICS=1` or `DIAGRID_NO_ANALYTICS=1` (in the shell, or in the app's `env:` block in `dapr.yaml`). The scaffold does not set an opt-out by default.
 
 ## Running locally
 
 See [`../dapr-shared/running-locally-dapr.md`](../dapr-shared/running-locally-dapr.md).
 
-## Running with Diagrid Catalyst
+## Running with Diagrid
 
 See [`../dapr-shared/running-with-catalyst.md`](../dapr-shared/running-with-catalyst.md).
 
-On Catalyst, the `agent-registry` component is what backs the **Agents** view, and writing to it can succeed while the agent stays invisible: the view is populated by a sidecar interceptor bound to the component named exactly `agent-registry`, scoped to the App IDs declared by an `Agent` resource. An App ID outside that scope gets a successful write and no entry in the view, with no error to catch. `diagrid component list` is not evidence of scope — it renders `agent-registry` as available to all app identities either way. Confirm the agent appears in the Agents view, and check that the project has `agent-registry` at all: the `agent-*` components are not provisioned on every project.
+On Diagrid, the `agent-registry` component is what backs the **Agents** view, and writing to it can succeed while the agent stays invisible: the view is populated by a sidecar interceptor bound to the component named exactly `agent-registry`, scoped to the App IDs declared by an `Agent` resource. An App ID outside that scope gets a successful write and no entry in the view, with no error to catch. `diagrid component list` is not evidence of scope — it renders `agent-registry` as available to all app identities either way. Confirm the agent appears in the Agents view, and check that the project has `agent-registry` at all: the `agent-*` components are not provisioned on every project.
 
-Alternative for wrapper projects: the `diagrid` package ships a `diagridpy` CLI, and `diagridpy init <project> --framework <framework>` bootstraps a Catalyst project, a local kind cluster, a Helm chart and a framework template in one command. It needs a Catalyst account, `kind` and Helm. Mention it in the README as an alternative, not as the way to run the scaffolded project.
+Alternative for wrapper projects: the `diagrid` package ships a `diagridpy` CLI, and `diagridpy init <project> --framework <framework>` bootstraps a Diagrid project, a local kind cluster, a Helm chart and a framework template in one command. It needs a Diagrid account, `kind` and Helm. Mention it in the README as an alternative, not as the way to run the scaffolded project.
