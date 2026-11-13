@@ -61,7 +61,7 @@ Notes:
 
 ## Triggering check
 
-[`triggering/queries.json`](triggering/queries.json) checks **which** skill fires for a request when both this plugin and [catalyst-ai](https://github.com/diagridio/catalyst-ai) are installed. Five skill pairs across the two plugins overlap (workflow scaffolding, from-diagram, agent scaffolding, determinism, activity idempotency), and skill triggering is decided by the `description` front matter — Claude Code namespaces skill *names* per plugin, but defines no precedence when two descriptions match the same request.
+[`triggering/queries.json`](triggering/queries.json) checks **which** skill fires for a request when both this plugin and [catalyst-ai](https://github.com/diagridio/catalyst-ai) are installed. Six skill pairs across the two plugins overlap (workflow scaffolding, from-diagram, agent scaffolding, determinism, activity idempotency, and — since catalyst-ai 0.8.1 added `catalyst-agent-harness` — making an existing agent loop durable), and skill triggering is decided by the `description` front matter — Claude Code namespaces skill *names* per plugin, but defines no precedence when two descriptions match the same request.
 
 The per-skill evals cannot catch a mis-route, because they assume the right skill already ran.
 
@@ -69,8 +69,10 @@ To run it, follow the `method` array in the file: collect the `description:` fie
 
 Re-run it when:
 
-- any `description` in this repo changes, especially on the five overlapping skills;
+- any `description` in this repo changes, especially on the six overlapping skills;
 - `catalyst-ai` publishes a release, since that half of the wording lives in a repository we do not control;
 - you add a skill whose purpose is close to one of theirs.
 
-Update the `baseline` block with the date, model and result whenever the outcome changes. `docs/catalyst-ai-description-proposal.md` tracks the reciprocal wording changes suggested to the `catalyst-ai` maintainers.
+Read the catalyst-ai descriptions from a **fresh clone of the remote**, not from the local marketplace cache. On 2026-11-13 that cache sat at 0.6.1 against an 0.8.1 remote, so running it as written would have graded two-version-old wording. Check the remote's `.claude-plugin/plugin.json` version first and clone read-only rather than pulling the cache, which would change an installed plugin.
+
+Update the `baseline` block with the date, model and result whenever the outcome changes.
