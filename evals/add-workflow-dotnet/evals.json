@@ -82,12 +82,12 @@
       "id": 5,
       "name": "unsupported-net6",
       "prompt": "Add a Dapr workflow to ./legacy-api that runs a nightly data export.",
-      "expected_output": "Stops before planning: explains Dapr.Workflow 1.18 needs net8.0 or later; no changes.",
+      "expected_output": "Stops before planning: explains Dapr.Workflow 1.19 needs net8.0 or later; no changes.",
       "files": [
         "evals/add-workflow-dotnet/files/legacy-api/src/LegacyApi/LegacyApi.csproj"
       ],
       "expectations": [
-        "The response says the project targets net6.0 and that Dapr.Workflow 1.18 needs net8.0, net9.0 or net10.0, and suggests upgrading the target framework or creating a separate workflow service with create-workflow-dotnet",
+        "The response says the project targets net6.0 and that Dapr.Workflow 1.19 needs net8.0, net9.0 or net10.0, and suggests upgrading the target framework or creating a separate workflow service with create-workflow-dotnet",
         "No file in the legacy-api fixture is added, changed or deleted, and no `dotnet add` or `dotnet build` was run"
       ]
     },

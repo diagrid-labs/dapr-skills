@@ -13,7 +13,7 @@
         "The secret is named `PAYMENT_API_KEY` everywhere: src/activities.ts calls daprClient.secret.get(\"secretstore\", \"PAYMENT_API_KEY\") and indexes the result with `PAYMENT_API_KEY`, no file uses `payment-api-key`, and the README tells the user to export `PAYMENT_API_KEY` in the shell before `dapr run -f .`",
         "Both ShopFlow-app/package.json and pricing-service/package.json depend on \"@dapr/dapr\": \"3.19.0\"",
         "src/workflow.ts defines the workflow as an `async function*` and calls ctx.callActivity for six activities (pricing, save state, charge payment, publish, receipt, follow-up job); it contains no daprClient, fetch, Date.now, new Date() or Math.random usage",
-        "src/activities.ts contains daprClient.invoker.invoke to pricing-service method calculate-total, daprClient.state.save, daprClient.secret.get, daprClient.pubsub.publish, daprClient.binding.send to receipt-binding, and a fetch POST to the sidecar's /v1.0/jobs/ HTTP API",
+        "src/activities.ts contains daprClient.invoker.invoke to pricing-service method calculate-total, daprClient.state.save, daprClient.secret.get, daprClient.pubsub.publish, daprClient.binding.send to receipt-binding, and daprClient.jobs.schedule for the follow-up reminder job",
         "src/index.ts passes an Express app to `new DaprServer({ serverHttp: app })`, registers server.pubsub.subscribe and server.binding.receive(\"schedule-binding\", ...) before server.start(), and defines routes /start, /status/:instanceId, /pause/:instanceId, /resume/:instanceId, /terminate/:instanceId, /purge/:instanceId and POST /job/:jobName",
         "pricing-service/src/index.ts registers the calculate-total method with server.invoker.listen (not invoker.handle)",
         "The agent runs `npm install` in both app folders and `npx tsc --noEmit` in both folders, then creates ShopFlow/README.md listing which building block each activity demonstrates; the last output is exactly: The ShopFlow workflow application is created. Open the README.md file in the ShopFlow folder for a summary and instructions for running locally.",
@@ -34,7 +34,7 @@
         "No file under ClinicBooking contains the strings `calculate-total`, `order-completed` or `OrderInput`",
         "ClinicBooking/resources/ contains statestore.yaml, pubsub.yaml, secretstore.yaml, an http output binding and a cron input binding",
         "The workflow in src/workflow.ts is an `async function*` and the activity that invokes the companion service uses daprClient.invoker.invoke with the companion's app id",
-        "The reminder job is scheduled via an HTTP call to the sidecar's /v1.0/jobs/ endpoint and src/index.ts exposes a POST /job/:jobName callback route",
+        "The reminder job is scheduled with daprClient.jobs.schedule(...) and src/index.ts exposes a POST /job/:jobName callback route",
         "The agent runs `npx tsc --noEmit` in both the main app folder and the companion service folder"
       ]
     },

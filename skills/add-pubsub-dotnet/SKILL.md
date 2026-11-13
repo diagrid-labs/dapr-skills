@@ -43,7 +43,7 @@ The user must have installed:
 Read-only. Follow **Detection** in `REFERENCE.md`. Determine and remember:
 
 - The solution file (`*.sln` or `*.slnx`) and the target project. If more than one ASP.NET Core project qualifies, ask which one (one question) and wait.
-- Target framework. `net8.0`, `net9.0` and `net10.0` are supported. For anything else (`net6.0`, `net7.0`, .NET Framework, or a multi-target list containing one), stop now: say that `Dapr.AspNetCore` 1.18 needs net8.0 or later, suggest upgrading the target framework or creating a separate service with `create-pubsub-dotnet`, and change nothing.
+- Target framework. `net8.0`, `net9.0` and `net10.0` are supported. For anything else (`net6.0`, `net7.0`, .NET Framework, or a multi-target list containing one), stop now: say that `Dapr.AspNetCore` 1.19 needs net8.0 or later, suggest upgrading the target framework or creating a separate service with `create-pubsub-dotnet`, and change nothing.
 - Host type. Only ASP.NET Core (`Microsoft.NET.Sdk.Web`) is supported. Worker Service, console, Azure Functions, Blazor WebAssembly and MAUI projects stop here with the same kind of explanation.
 - Hosting mode: **Aspire** when an AppHost project references the target project; otherwise **dapr run**.
 - `Program.cs` (top-level) or `Startup.cs`; minimal APIs or controllers; namespace style, nullable, folder layout.
