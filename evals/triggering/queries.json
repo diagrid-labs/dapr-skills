@@ -21,12 +21,18 @@
     "Compare each answer against `expect`, or against `accept` where present. Update the `baseline` block when the result changes."
   ],
   "baseline": {
-    "date": "2026-10-17",
+    "date": "2026-11-13",
     "model": "sonnet (Claude Sonnet 5.5)",
-    "dapr_skills_version": "1.29.0",
-    "catalyst_ai_version": "0.7.1",
-    "result": "After shortening the dapr-skills descriptions to at most 400 characters: 14 of 15 matched `expect` outright (queries 14 and 15 included). Query 11 came back AMBIGUOUS between catalyst-workflow-scaffold and catalyst-deploy at low confidence (was a medium match). Both candidates are catalyst-ai skills. Queries 9 and 10 stayed at medium. No query was routed to a dapr-skills skill that should have gone to catalyst-ai, or the reverse.",
-    "known_risk": "All three medium-confidence answers (queries 2, 10, 11) trace to the single phrase \"writing or reviewing\" in catalyst-ai's catalyst-workflow-determinism and catalyst-activity-idempotency descriptions. Narrowing it to the authoring case should lift them to high. See docs/catalyst-ai-description-proposal.md."
+    "dapr_skills_version": "1.31.0",
+    "catalyst_ai_version": "0.8.1",
+    "result": "15 of 15 matched `expect`, up from 14 of 15. Query 11 recovered from AMBIGUOUS at low confidence to catalyst-workflow-scaffold at high, because catalyst-ai 0.8.1 added \"not a local sidecar\" to that description, which also removed it as a candidate from query 15. Queries 9 and 10 stayed at medium; every other answer was high. Query 15 is still correctly AMBIGUOUS, now between two dapr-skills create skills rather than three candidates. No query was routed to a dapr-skills skill that should have gone to catalyst-ai, or the reverse.",
+    "known_risk": "Queries 9 and 10 remain the only medium-confidence answers. Both trace to \"writing, changing or reviewing\" in catalyst-ai's catalyst-workflow-determinism and catalyst-activity-idempotency descriptions, which still claims the reviewing case that dapr-skills' review-workflow-determinism and review-workflow-activity own. Narrowing it to the authoring case should lift them to high.",
+    "notes": [
+      "The previous known_risk listed queries 2, 10 and 11 as the medium answers. That did not match its own per-query baselines or its result sentence, both of which say 9 and 10. Corrected here to 9 and 10.",
+      "Run against catalyst-ai 0.8.1 read from a fresh read-only clone of diagridio/catalyst-ai, NOT from the local marketplace cache, which was two minor versions stale at 0.6.1. Check the remote version before trusting ~/.claude/plugins/marketplaces/diagrid.",
+      "catalyst-ai 0.8.1 adds catalyst-agent-harness (making a hand-written agent loop durable on Catalyst). No query covers that case, and it plausibly competes with dapr-skills' create-agent-* skills for a request like \"make my custom agent loop durable\". Consider adding a query for it.",
+      "docs/catalyst-ai-description-proposal.md, referenced by the old known_risk and by evals/README.md, does not exist in this repository."
+    ]
   },
   "queries": [
     {
@@ -137,9 +143,9 @@
       "expect": "catalyst-ai:catalyst-workflow-scaffold",
       "rationale": "Explicit Diagrid target.",
       "baseline": {
-        "picked": "AMBIGUOUS (catalyst-ai:catalyst-workflow-scaffold, catalyst-ai:catalyst-deploy)",
-        "confidence": "low",
-        "note": "leaned to catalyst-workflow-scaffold; both candidates are catalyst-ai skills, so no dapr-skills description competed"
+        "picked": "catalyst-ai:catalyst-workflow-scaffold",
+        "confidence": "high",
+        "note": "recovered from AMBIGUOUS/low at catalyst-ai 0.7.1; 0.8.1's \"not a local sidecar\" wording settled it against catalyst-deploy"
       }
     },
     {
@@ -184,8 +190,7 @@
         "picked": "AMBIGUOUS",
         "candidates": [
           "dapr-skills:create-workflow-python",
-          "dapr-skills:create-workflow-dotnet",
-          "catalyst-ai:catalyst-workflow-scaffold"
+          "dapr-skills:create-workflow-dotnet"
         ],
         "confidence": "low"
       }
