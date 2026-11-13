@@ -11,7 +11,7 @@
         "The agent runs `aspire new aspire-starter -n DeviceProvisioning -o DeviceProvisioning` including all three flags --non-interactive, --test-framework none and --suppress-agent-init",
         "The DeviceProvisioning.Web folder does not exist after setup and neither DeviceProvisioning.AppHost.csproj nor the solution file references the Web project",
         "The Sdk attribute in DeviceProvisioning.AppHost/DeviceProvisioning.AppHost.csproj keeps the Aspire.AppHost.Sdk version written by aspire new, and the Aspire.Hosting.Valkey PackageReference uses that same version; CommunityToolkit.Aspire.Hosting.Dapr is version 13.0.0",
-        "DeviceProvisioning.ApiService.csproj references Dapr.Workflow version 1.18.10 and the ServiceDefaults project",
+        "DeviceProvisioning.ApiService.csproj references Dapr.Workflow version 1.19.1 and the ServiceDefaults project",
         "AppHost.cs calls builder.AddDapr(), AddValkey(\"cache\", 16379, ...), WithDaprSidecar(...) on the ApiService project, and adds the Dev Dashboard with builder.AddExecutable(\"dapr-dev-dashboard\", \"diagrid-dev-dashboard\", \".\", \"--port\", \"9090\", \"--no-open\").WithHttpEndpoint(port: 9090, isProxied: false) — no dashboard container",
         "The workflow class awaits RegisterDevice, IssueCertificate, PushConfiguration and ActivateDevice activities sequentially via context.CallActivityAsync, passing each output into the next call",
         "ApiService Program.cs calls builder.AddServiceDefaults(), builder.Services.AddDaprWorkflow() and app.MapDefaultEndpoints(), and maps POST /start and GET /status/{instanceId}",

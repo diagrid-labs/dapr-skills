@@ -1,8 +1,12 @@
 # Reference: Dapr Workflow TypeScript Application
 
+Package versions come from [dapr-versions.md](../dapr-shared/dapr-versions.md) — change a pin there, not here.
+
 This reference uses the default **Order Processing** scenario. If the user asked for a different scenario, keep the same structure — one activity per building block, plus a companion service invoked over service invocation — but rename files, activities, topics, and components to fit their domain.
 
-Every code sample below was compiled with `npx tsc --noEmit` against the real, published `@dapr/dapr@3.18.0` package before being written here. The `@dapr/dapr` SDK's own inline code comments are not always reliable (see "SDK gotchas" near the end) — the shapes used here are the verified ones, not the documented-but-nonexistent ones.
+Every code sample below — the scaffold files, the workflow patterns, and the 1.19 capabilities section — was compiled with `npx tsc --noEmit` against the real, published **`@dapr/dapr@3.19.0`** package, the version the scaffold pins, on `strict: true`. The `@dapr/dapr` SDK's own inline code comments are not always reliable (see "SDK gotchas" near the end) — the shapes used here are the verified ones, not the documented-but-nonexistent ones.
+
+> **Re-verified at 3.19.0.** The samples were originally written against `3.18.0` and have since been recompiled against `3.19.0` with zero errors; nothing in the 3.18 → 3.19 move removed or renamed an API these samples use. What *did* change is what the SDK now covers: 3.19.0 added a Jobs client and server wrapper, a timeout on `waitForExternalEvent`, activity retry policies, detached workflows, payload references and a replay-safe logger. The notes below describe 3.19.0 behaviour; where a shape differs on `3.18.x`, that is called out inline.
 
 ## dapr.yaml
 
@@ -104,7 +108,7 @@ spec:
     "start": "ts-node src/index.ts"
   },
   "dependencies": {
-    "@dapr/dapr": "3.18.0",
+    "@dapr/dapr": "3.19.0",
     "express": "^4.21.0"
   },
   "devDependencies": {
@@ -204,10 +208,10 @@ const PUBSUB_NAME = "pubsub";
 const ORDER_TOPIC = "order-completed";
 
 async function start() {
-  // A plain Express app carries our own routes (workflow management + the Dapr Jobs
-  // callback) because @dapr/dapr's DaprServer does not wrap the Jobs building block.
-  // Passing it in via `serverHttp` puts Dapr's own routes (invoker/pubsub/bindings) on
-  // the SAME port instead of opening a second server.
+  // A plain Express app carries our own routes: the workflow management API, which the
+  // SDK does not expose over HTTP, and a catch-all Dapr Jobs callback. Passing it in via
+  // `serverHttp` puts Dapr's own routes (invoker/pubsub/bindings) on the SAME port
+  // instead of opening a second server.
   const app = express();
   app.use(express.json());
 
@@ -275,7 +279,9 @@ async function start() {
   });
 
   // --- Jobs building block: Dapr calls this back when a scheduled job fires ---
-  // (Direct HTTP route, not the @dapr/dapr SDK — see activities.ts for why.)
+  // A catch-all route, because this app schedules one job per order and so cannot know
+  // the names up front. `server.jobs.listen(name, cb)` is the SDK alternative and is the
+  // better fit for a fixed set of named jobs — see "Jobs: which callback to use" below.
   app.post("/job/:jobName", async (req: Request, res: Response) => {
     console.log(`Job triggered: ${req.params.jobName}`, req.body);
     res.status(200).send();
@@ -495,7 +501,7 @@ const approvalWorkflow: TWorkflow = async function* (
 
 - `yield ctx.waitForExternalEvent(name)` pauses the workflow until `workflowClient.raiseEvent(instanceId, name, payload)` is called elsewhere; the yielded value is whatever `payload` was passed. Event names are matched case-insensitively.
 - When a workflow uses this pattern, add the `POST /raise-event/:instanceId/:eventName` route shown in `src/index.ts` and the matching `raise-event` request in `local.http` — otherwise nothing can wake the waiting instance.
-- Unlike some other Dapr Workflow SDKs, `waitForExternalEvent` in `@dapr/dapr@3.18.0` takes **no built-in timeout parameter**. To bound the wait, race it against `ctx.createTimer(...)` via `ctx.whenAny([...])` — check the winning task's shape against the `@dapr/dapr` type definitions installed in your project (`node_modules/@dapr/dapr/index.d.ts`) before relying on it; this SDK version documents that surface less thoroughly than the rest of the workflow API.
+- `waitForExternalEvent` **gained a built-in timeout in `@dapr/dapr` 3.19.0**, the version this scaffold pins, so the timer race the 3.18.0 notes prescribed is no longer needed: `yield ctx.waitForExternalEvent<T>("approval-event", { timeoutInSeconds: 3600 })`. The second argument is `ExternalEventOptions` (`timeoutInSeconds`, and `asReference` for payloads kept in a binary store). It returns a `CancellableTask<T>` — a `Task<T>` plus `isCanceled` and `cancel()`, where `cancel()` stops the local wait only and cancels nothing in the Dapr runtime. On `3.18.x` the parameter does not exist and the wait must be raced against `ctx.createTimer(...)` via `ctx.whenAny([...])` instead. Verified against the 3.19.0 type definitions (`node_modules/@dapr/dapr/types/workflow/ExternalEventOptions.type.d.ts`), not re-tested at runtime.
 - Guard logging with `if (!ctx.isReplaying())`.
 
 #### Saga / compensation
@@ -595,18 +601,12 @@ export async function sendReceiptActivity(_ctx: WorkflowActivityContext, order: 
 }
 
 export async function scheduleFollowUpJobActivity(_ctx: WorkflowActivityContext, order: OrderRecord): Promise<void> {
-  // Jobs: @dapr/dapr (v3.18.0) does not yet wrap the Jobs API — no client method and no
-  // server callback hook — so this calls the Dapr sidecar's HTTP endpoint directly. Dapr
-  // POSTs back to /job/<jobName> on this app when the job fires (see src/index.ts).
-  const daprHttpPort = process.env.DAPR_HTTP_PORT ?? "3500";
-  const jobName = `review-reminder-${order.orderId}`;
-  await fetch(`http://localhost:${daprHttpPort}/v1.0/jobs/${jobName}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      data: { orderId: order.orderId, customerName: order.customerName },
-      dueTime: "60s",
-    }),
+  // Jobs: scheduled through the SDK's Jobs client, added in @dapr/dapr 3.19.0.
+  // The job name carries the order id so every order gets its own reminder; Dapr POSTs
+  // back to /job/<jobName> on this app when it fires (see src/index.ts).
+  await daprClient.jobs.schedule(`review-reminder-${order.orderId}`, {
+    dueTime: "60s",
+    data: { orderId: order.orderId, customerName: order.customerName },
   });
 }
 ```
@@ -614,11 +614,10 @@ export async function scheduleFollowUpJobActivity(_ctx: WorkflowActivityContext,
 ### Key points
 
 - The `_ctx: WorkflowActivityContext` parameter provides the activity context (`getWorkflowInstanceId()`, `getWorkflowActivityId()`); prefix it with `_` when unused, matching the rest of the file.
-- Activities are where all I/O and non-deterministic operations belong — every Dapr client call in this file (state, secrets, pub/sub, bindings, service invocation, and the raw Jobs HTTP calls) lives here, never in `workflow.ts`.
+- Activities are where all I/O and non-deterministic operations belong — every Dapr client call in this file (state, secrets, pub/sub, bindings, service invocation and jobs) lives here, never in `workflow.ts`.
 - `daprClient.invoker.invoke(...)`'s response is typed `Promise<object>` by the SDK; cast it to the shape you expect (`as unknown as PricingResult` here).
 - `daprClient.secret.get(...)` returns `Promise<object>` shaped like `{ [key]: value }` — cast it before indexing under `strict` mode.
 - Read secrets in the activity that uses them. Never return a secret from an activity or pass it as activity input: both are written to the workflow history.
-- `fetch` is available globally in Node.js 18+ — no extra HTTP client dependency needed for the Jobs calls.
 - If the exact functionality is unclear, add a `// TODO: implement actual functionality` comment inside the activity function, as done in `chargePaymentActivity`.
 
 ## pricing-service/package.json
@@ -633,7 +632,7 @@ export async function scheduleFollowUpJobActivity(_ctx: WorkflowActivityContext,
     "start": "ts-node src/index.ts"
   },
   "dependencies": {
-    "@dapr/dapr": "3.18.0"
+    "@dapr/dapr": "3.19.0"
   },
   "devDependencies": {
     "typescript": "^5.7.0",
@@ -698,7 +697,7 @@ Create a `.gitignore` file in the project root with common Node.js ignore patter
 
 ## SDK gotchas to know before you extend this app
 
-Verified against `@dapr/dapr@3.18.0` source — worth knowing before adding to this scaffold:
+Verified against `@dapr/dapr` source — worth knowing before adding to this scaffold. Each was re-checked against `3.19.0`; where a gotcha was fixed or superseded in that release, the bullet says so:
 
 - **Workflows must be `async function*`, not `function*`.** `TWorkflow`'s declared type says `Generator`, but the runtime dispatches on `Symbol.asyncIterator`, which only an async generator implements. A plain sync generator compiles but misbehaves at runtime.
 - **Two workflow client APIs exist in this SDK, and they don't interoperate.** This scaffold exclusively uses `WorkflowRuntime` + `DaprWorkflowClient` (gRPC-based) because it's the only one that can register workflow/activity code. `DaprClient.workflow` is a separate, HTTP-only, management-only API with some deprecated methods (`get`/`start`) — don't mix the two.
@@ -707,7 +706,111 @@ Verified against `@dapr/dapr@3.18.0` source — worth knowing before adding to t
 - **HTTP vs. gRPC error handling is inconsistent across building blocks** in this SDK version — e.g. `pubsub.publish()` resolves with `{ error }` on HTTP but throws on gRPC; `state.save()`/`state.delete()` catch-and-return on HTTP but reject on gRPC. This scaffold stays on the default HTTP protocol throughout to avoid the inconsistency; wrap calls in `try/catch` if you switch any client to gRPC.
 - **`state.get()` discards the etag** on both transports — use `state.getBulk()` (even for a single key) if you need the etag back for optimistic concurrency (`StateConcurrencyEnum`/`StateConsistencyEnum`, both exported from `@dapr/dapr`).
 - **The typed service-invocation proxy (`client.proxy.create(...)`) always throws** in this SDK version on both HTTP and gRPC — don't use it, despite an example in the SDK's own repo presenting it as working.
-- **Jobs has no client wrapper or server callback hook** in `@dapr/dapr@3.18.0` — only generated proto scaffolding with nothing wired up to a public API. This scaffold talks to the sidecar's `/v1.0/jobs/<name>` HTTP API directly (see `activities.ts`) and exposes a plain `POST /job/<name>` Express route for the trigger callback (see `src/index.ts`). Check `npm view @dapr/dapr version` for a newer release before assuming this is still the case.
+- **Jobs gained a full client and server wrapper in `@dapr/dapr` 3.19.0.** It had neither in `3.18.0`, which is why older material (and earlier versions of this scaffold) called the sidecar's `/v1.0/jobs/<name>` HTTP API with `fetch`. On the pinned version use `client.jobs.schedule(name, options)` / `.get(name)` / `.delete(name)` instead — the scaffold's `scheduleFollowUpJobActivity` shows the shape. See "Jobs: which callback to use" below for the server side, which is the part that still needs a decision.
+
+## Jobs: which callback to use
+
+Scheduling is settled — use `client.jobs.schedule(...)`. The **callback** side has two shapes, and
+the right one depends on whether your job names are known before the app starts.
+
+| | `server.jobs.listen(name, cb)` | Catch-all `app.post("/job/:jobName")` |
+|---|---|---|
+| Job names | Must be known at startup, matched **exactly** | Any name, including per-instance ones |
+| Unregistered name | Logged as a warning and answered **404** — the job fires and is dropped | Handled |
+| Registration | Before `server.start()`, one call per name | One Express route |
+| Re-registering a name | Throws `A handler for job '<name>' is already registered` | n/a |
+
+This scaffold schedules `review-reminder-${order.orderId}`, a different name per order, so it uses the
+catch-all route: there is no startup-time list of names to register. If your app instead has a
+fixed set of jobs — `nightly-reconcile`, `hourly-sync` — prefer `server.jobs.listen`, which gives
+you per-job handlers and a typed payload:
+
+```typescript
+await server.jobs.listen("nightly-reconcile", async (data) => {
+  console.log("Reconcile job fired", data);
+});
+```
+
+The two do not collide. The SDK registers its own `/job/:name` route lazily, on the **first**
+`listen()` call, so an app that never calls `listen()` leaves the path free for its own route.
+An app that uses both would have the SDK's handler win, and its catch-all would never see a
+request — so pick one.
+
+Job options worth knowing (`JobOptions`): `schedule` (a six-field cron, a descriptor such as
+`@every 5m`, or a `CronExpressionBuilder`), `dueTime`, `ttl`, `repeats`, `data`, `overwrite`
+(**defaults to `false` — scheduling an existing name fails unless you opt in**) and
+`failurePolicy`, which is either `{ type: "drop" }` or `{ type: "constant", interval, maxRetries }`.
+
+## What `@dapr/dapr` 3.19.0 adds
+
+The 3.18 → 3.19 move removed and renamed nothing, so existing code keeps compiling. These are the
+additions worth reaching for; every snippet here was compiled against 3.19.0.
+
+**Activity and child-workflow retry policies.** `callActivity` takes a third `ActivityOptions`
+argument. This is the SDK-side retry; it stacks with any Dapr resiliency policy configured for the
+app, so do not configure both for the same call unless you mean the product of the two.
+
+```typescript
+const result = yield ctx.callActivity(chargePaymentActivity, order, {
+  retryPolicy: {
+    firstRetryInterval: 1,      // seconds
+    maxNumberOfAttempts: 5,     // includes the initial invocation
+    backoffCoefficient: 2,
+    maxRetryInterval: 60,
+    retryTimeout: 300,
+  },
+});
+```
+
+**Detached workflows.** Fire-and-forget a workflow that outlives the caller. The task yields the
+new instance's **ID, not its output** — completion and failure never flow back, so the parent
+cannot await or observe it.
+
+```typescript
+const childId: string = yield ctx.scheduleNewDetachedWorkflow(reminderWorkflow, { orderId });
+```
+
+**Cross-app activities.** `targetAppId` runs an activity in another Dapr app, and
+`propagationScope` controls how much history that callee sees — `NONE` (the default),
+`OWN_HISTORY` (the caller's own events only) or `LINEAGE` (ancestral history too). Treat the
+scope as a trust boundary, not a tuning knob.
+
+```typescript
+const quote = yield ctx.callActivity("remoteActivity", input, {
+  targetAppId: "pricing-service",
+  propagationScope: HistoryPropagationScope.OWN_HISTORY,
+});
+```
+
+**A replay-safe logger.** `ctx.logger` writes only when the workflow is *not* replaying, which is
+what the `if (!ctx.isReplaying())` guard used elsewhere in this reference does by hand. Prefer it
+for new code.
+
+```typescript
+ctx.logger.info(`processing ${ctx.getWorkflowName()}`);
+```
+
+**The patching API.** `ctx.isPatched("add-fraud-check")` is available in this SDK — see
+[`../dapr-shared/references/core/versioning.md`](../dapr-shared/references/core/versioning.md).
+Note that JavaScript has patching but **no named-version registration**; `WorkflowRuntime` offers
+only `registerWorkflow` and `registerWorkflowWithName`.
+
+**Other context additions.** `ctx.getWorkflowName()`, `ctx.newGuid()` (a replay-safe GUID — never
+use `crypto.randomUUID()` in a workflow body), `ctx.sendEvent(instanceId, name, payload)` to raise
+an event on another instance from inside a workflow, and `ctx.getPropagatedHistory()`.
+
+**Payload references**, for payloads too large to inline. Declare them per registration, then
+resolve them inside the workflow with `ctx.resolvePayload(ref)` or stream with
+`ctx.openPayload(ref)`; `ctx.hasPayloadResolver()` reports whether a store is configured. This is
+the SDK side of the remedy for the silent payload-size stall described in
+[`../dapr-shared/references/core/gotchas.md`](../dapr-shared/references/core/gotchas.md) — the
+feature is **alpha, and .NET and JS only**.
+
+**New client methods** on `DaprWorkflowClient`: `listWorkflowInstanceIds(continuationToken?,
+pageSize?)` (IDs only — there is no server-side filtering beyond paging),
+`getWorkflowHistory(instanceId)` and `rerunWorkflowFromEvent(sourceInstanceId, eventId, options?)`,
+which starts a **new** instance from a point in an existing one's history. `suspendWorkflow` and
+`resumeWorkflow` now take an optional `reason`, and most client calls accept an `AbortSignal`.
 
 ## Running Locally
 

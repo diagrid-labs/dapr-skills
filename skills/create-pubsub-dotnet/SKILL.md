@@ -36,8 +36,8 @@ The following must be installed by the user before this skill can run. Do not ru
 
 Packages (added during project setup):
 
-- `Dapr.AspNetCore` `1.18.10` for the publisher, declarative subscribers and programmatic subscribers
-- `Dapr.Messaging` `1.18.10` for streaming subscribers (no `Dapr.AspNetCore` in that project)
+- `Dapr.AspNetCore` `1.19.1` for the publisher, declarative subscribers and programmatic subscribers
+- `Dapr.Messaging` `1.19.1` for streaming subscribers (no `Dapr.AspNetCore` in that project)
 - Aspire mode only: `CommunityToolkit.Aspire.Hosting.Dapr` `13.0.0` and `Aspire.Hosting.Valkey` (same version as the `Aspire.AppHost.Sdk` that `aspire new` writes)
 - Optional: the [Diagrid Dapr Dev Dashboard](https://github.com/diagridio/dev-dashboard). The skill only checks whether it is installed; it never installs it and never stops without it.
 
@@ -114,15 +114,15 @@ dotnet new sln --format slnx -n <ProjectRoot>
 dotnet new web -n <ProjectRoot>.Publisher
 dotnet new web -n <ProjectRoot>.Subscriber
 dotnet new classlib -n <ProjectRoot>.Contracts
-dotnet add <ProjectRoot>.Publisher package Dapr.AspNetCore --version 1.18.10
-dotnet add <ProjectRoot>.Subscriber package Dapr.AspNetCore --version 1.18.10
+dotnet add <ProjectRoot>.Publisher package Dapr.AspNetCore --version 1.19.1
+dotnet add <ProjectRoot>.Subscriber package Dapr.AspNetCore --version 1.19.1
 dotnet add <ProjectRoot>.Publisher reference <ProjectRoot>.Contracts
 dotnet add <ProjectRoot>.Subscriber reference <ProjectRoot>.Contracts
 dotnet sln add <ProjectRoot>.Publisher <ProjectRoot>.Subscriber <ProjectRoot>.Contracts
 ```
 
 - Role `publisher` or `subscriber`: create only that web project; no `classlib`; the contract goes in the project's `Models/` folder.
-- Streaming subscriber: add `Dapr.Messaging` `1.18.10` to the subscriber instead of `Dapr.AspNetCore`.
+- Streaming subscriber: add `Dapr.Messaging` `1.19.1` to the subscriber instead of `Dapr.AspNetCore`.
 - Set `<TargetFramework>net10.0</TargetFramework>` in every project.
 - Delete the generated `Class1.cs` from the Contracts classlib.
 

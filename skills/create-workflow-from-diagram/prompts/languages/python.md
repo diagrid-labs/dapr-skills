@@ -387,7 +387,7 @@ Generate the code from the validated IR (`../ir-schema.md`), not from the diagra
 
 SDK calls for each construct in this language:
 
-| IR construct | Python (`dapr-ext-workflow`) |
+| IR construct | Python (`dapr.ext.workflow`) |
 |---|---|
 | `activity` task | `yield ctx.call_activity(<activity_fn>, input=...)` |
 | `task_type: "call_activity"` | `yield ctx.call_child_workflow(<workflow_fn>, input=...)` |

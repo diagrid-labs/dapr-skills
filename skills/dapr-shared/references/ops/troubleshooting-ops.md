@@ -120,6 +120,12 @@ From the Dapr docs: _"Creating a large number of workflows could result in unbou
 
 **Manual purge via API** — purge a specific workflow instance:
 
+> **The workflow HTTP API is deprecated.** The 1.19 docs head its reference "HTTP API reference
+> (Deprecated)" and say it "is deprecated and will eventually be removed". The supported surface is
+> the SDK clients and the gRPC `*Beta1` RPCs underneath them. The `curl` calls below still work and
+> are kept because they are the quickest way to reproduce a problem by hand — do not build an
+> application on them.
+
 ```bash
 # HTTP API
 curl -X POST http://localhost:3500/v1.0/workflows/dapr/<workflow-name>/purge/<instance-id>
@@ -177,9 +183,11 @@ short workflows (e.g., order processing) and low-frequency long workflows (e.g.,
 consider routing them to separate state store instances. This prevents high-throughput workflows
 from saturating the connection pool for long-running ones.
 
-**Read replicas** — for state stores that support read replicas (PostgreSQL, CosmosDB), queries
-against workflow state (e.g., listing workflows by status) can be routed to replicas to avoid
-contention with write-heavy workflow execution.
+**Read replicas** — for workflow-capable state stores that support read replicas (PostgreSQL, SQL
+Server), queries against workflow state (e.g., listing workflows by status) can be routed to
+replicas to avoid contention with write-heavy workflow execution. Cosmos DB has read replicas but
+cannot back a Dapr Workflow at all — see
+[state-store-selection.md](state-store-selection.md) → **Not supported for Workflow**.
 
 ### Actor idle timeout tuning
 

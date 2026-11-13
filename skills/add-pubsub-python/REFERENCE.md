@@ -1,18 +1,20 @@
 # Reference: add Dapr pub/sub to an existing Python FastAPI app
 
+Package versions come from [dapr-versions.md](../dapr-shared/dapr-versions.md) — change a pin there, not here.
+
 ## Detection
 
 | What | How |
 |---|---|
 | Scope | The folder the user named; otherwise the current directory, confirmed in one line. |
 | FastAPI module | `Grep` `FastAPI(` in `**/*.py` (skip `.venv`, `venv`, `site-packages`, `tests`). One match → use it. Several → ask. None → the app is not FastAPI: stop (see Edge cases). |
-| Other frameworks | `Flask(`, `django`, `from starlette` without FastAPI, `aiohttp.web` → not supported; stop and point to `## Alternative: dapr-ext-grpc` in [`../dapr-shared/python-pubsub-subscriber-programmatic.md`](../dapr-shared/python-pubsub-subscriber-programmatic.md). |
+| Other frameworks | `Flask(`, `django`, `from starlette` without FastAPI, `aiohttp.web` → not supported; stop and point to `## Alternative: dapr[grpc]` in [`../dapr-shared/python-pubsub-subscriber-programmatic.md`](../dapr-shared/python-pubsub-subscriber-programmatic.md). |
 | Python version | `requires-python` in `pyproject.toml`, else `.python-version`, else `python --version` (try `python3`, then `py` on Windows). Below 3.10 → stop. |
 | Package manager: uv | `uv.lock` or `[tool.uv]` / `[dependency-groups]` in `pyproject.toml`. Add with `uv add "dapr==<v>"`; check with `uv run`. |
 | Package manager: pip + requirements | `requirements.txt` without `uv.lock`. Pin the lines with `Edit`, then `python -m pip install -r requirements.txt` using the project venv (`.venv/Scripts/python.exe` on Windows, `.venv/bin/python` elsewhere). No venv found → ask where it is. |
 | Package manager: pip + pyproject | `pyproject.toml` with `[project].dependencies`, no `uv.lock`, no Poetry table. Pin there with `Edit`, then `python -m pip install -e .` in the venv. |
 | Package manager: unsupported | `poetry.lock` or `[tool.poetry]` (Poetry), `pdm.lock` or `[tool.pdm]` (PDM), `Pipfile` (Pipenv), `environment.yml` (conda). Stop with an explanation; change nothing. |
-| Existing Dapr packages | `dapr`, `dapr-ext-fastapi`, `dapr-ext-grpc`, `dapr-ext-workflow` in the dependency files, with pins. A `dapr==1.18.x` pin sets the version for `dapr-ext-fastapi` too. |
+| Existing Dapr packages | Either shape, in the dependency files, with pins: `dapr` plus extras (`dapr[fastapi]`, `dapr[grpc]`, `dapr[workflow]`) from Dapr 1.19 on, or the pre-1.19 `dapr-ext-fastapi`, `dapr-ext-grpc`, `dapr-ext-workflow` packages. The extras form carries one version for all of them; the old form carries one pin per package, and they must match each other. |
 | Existing subscriptions | Programmatic: `DaprApp(` plus `.subscribe(`. Streaming: `subscribe_with_handler(` or `.subscribe(` on a `DaprClient`. Declarative: YAML with `kind: Subscription` whose `scopes` include this app id or that has no `scopes`. Record every `(pubsub, topic)` pair and its type. |
 | Existing `DaprApp` / `lifespan` | `DaprApp(` and `lifespan=` / `@asynccontextmanager` in the app module. Reuse them; never duplicate. |
 | Existing Dapr files | `dapr.yaml` and the folder in its `resourcesPath` (often `resources/` or `components/`); files with `type: pubsub.` (name, type, `scopes`); `kind: Resiliency` files. |
@@ -32,9 +34,10 @@
 **Topics:** <pubsub>/<topic> (`<EventName>`, new or an existing model), dead-letter `<topic>-deadletter`
 
 ### Packages
-- `dapr==<v>` → <pyproject.toml | requirements.txt> (publisher, programmatic, streaming)
-- `dapr-ext-fastapi==<v>` → <file> (programmatic only)
+- `dapr==<v>` → <pyproject.toml | requirements.txt> (publisher, streaming)
+- `dapr[fastapi]==<v>` → <file> (programmatic only — one coordinate, not a second package)
 - <dapr packages> <old version> → <v> (question 1)
+- <Only when the project still has `dapr-ext-*`: a `dapr-ext-fastapi` pin at `<old>` → `dapr[fastapi]==<v>`, replacing the line rather than adding one (question 1)>
 
 ### New files
 - `<path>` — <purpose>
@@ -65,7 +68,7 @@
 - <Only when question 2 is Yes and an existing test calls the trigger endpoint over HTTP: `<test file / test names>` call `<trigger endpoint>` and will need a Dapr sidecar or a test double for the publisher via `app.dependency_overrides[get_<event_name>_publisher]`; without a sidecar run them with `DAPR_HEALTH_TIMEOUT=2` (seconds) so they fail in seconds instead of waiting 60 s per call. This skill does not edit tests.>
 
 ### Questions
-1. Newer packages are available: <dapr 1.18.0 → 1.18.3, dapr-ext-fastapi 1.18.0 → 1.18.3>. Update them? **Default: yes, update.**
+1. Newer packages are available: <dapr 1.18.0 → 1.19.0>. <And: `dapr-ext-fastapi` is retired — from Dapr 1.19 it is the `fastapi` extra of `dapr`, so a `dapr-ext-fastapi` pin at 1.18.3 becomes `dapr[fastapi]==1.19.0`. The import path `dapr.ext.fastapi` does not change.> Update them? **Default: yes, update.**
 2. Should `<trigger endpoint>` also publish `<EventName>` after its existing work succeeds? **Default: yes.** <(Default no when the request does not ask to publish from this action and `<test name>` calls this endpoint over HTTP: it would need a running Dapr sidecar. When the request explicitly asks to publish from a named action or endpoint, the default stays yes and the Risk section above names the test.)>
 
 <Leave out a question that does not apply. Without a trigger endpoint, write instead: No existing endpoint publishes; use the new publish endpoint.>
@@ -79,14 +82,23 @@ Reply **yes** to apply with the defaults, answer a question differently (for exa
 |---|---|---|
 | Publisher (any type) | `dapr` | `DaprClient.publish_event`. |
 | Subscriber, declarative | none for subscribing | Plain FastAPI routes and `resources/subscription.yaml`. Add `dapr` only when the same app also publishes. |
-| Subscriber, programmatic | `dapr-ext-fastapi` (and `dapr` when it also publishes) | `DaprApp(app).subscribe(...)`. |
+| Subscriber, programmatic | `dapr[fastapi]` (the extra already includes everything `dapr` provides, so nothing extra is needed to publish) | `DaprApp(app).subscribe(...)`. |
 | Subscriber, streaming | `dapr` | `DaprClient().subscribe_with_handler(...)`; no extra FastAPI package. |
 
-Versions: `dapr` and `dapr-ext-fastapi` 1.18.3, or the existing `dapr==1.18.x` pin when the project has one (keep both packages on the same version). Never leave `dapr` and `dapr-ext-*` at different versions.
+Versions: `dapr==1.19.0`, or `dapr[fastapi]==1.19.0` for a programmatic subscriber. From Dapr 1.19 the FastAPI
+extension is an extra of the `dapr` distribution, so there is one coordinate and one version.
+
+**A project still on `dapr-ext-*`.** Question 1 offers the move to the extra, default yes. If the user declines,
+leave every Dapr package at **the pin the project already has** and match any package you add to it — do not
+write a newer version, including `1.18.3`, over a pin the user just declined to update. **Never write `dapr==1.19.0` beside
+a `dapr-ext-*` pin:** `dapr` 1.19.0 ships `dapr.ext.fastapi` itself, so the two put the same module on the import
+path twice and which one wins depends on install order.
 
 Commands per package manager:
 
-- uv: `uv add "dapr==1.18.3"` (and `uv add "dapr-ext-fastapi==1.18.3"`).
+- uv: `uv add "dapr==1.19.0"`, or `uv add "dapr[fastapi]==1.19.0"` for a programmatic subscriber. Quote the
+  brackets — `[` is a glob character in POSIX shells and a wildcard in PowerShell. When replacing the old pair,
+  `uv remove dapr-ext-fastapi` first so the retired package does not stay in the lock file.
 - pip + requirements: `Edit` the lines in `requirements.txt`, then `<python> -m pip install -r requirements.txt`.
 - pip + pyproject: `Edit` `[project].dependencies`, then `<python> -m pip install -e .`.
 
@@ -120,7 +132,7 @@ Use [`../dapr-shared/pubsub-run-doc.md`](../dapr-shared/pubsub-run-doc.md) with 
 | Declarative YAML exists but its `scopes` do not include this app id | Do not reuse it. Add a new Subscription file scoped to this app and report the mismatch in the plan. |
 | Existing `DaprApp` | Reuse it; add `.subscribe(...)` calls only. |
 | Existing `lifespan` | Merge into it (streaming); never replace it. |
-| Python programmatic or streaming combined with routing | `dapr-ext-fastapi` has no routing and streaming has no routes. Offer declarative for that subscription (default yes). |
+| Python programmatic or streaming combined with routing | `dapr.ext.fastapi` has no routing and streaming has no routes. Offer declarative for that subscription (default yes). |
 | Existing `dapr.yaml` or resiliency file | Append to it; never replace it. |
 | Role `both` in one app | Allowed. The plan notes that the app receives its own events. |
 | App id or port already used in `dapr.yaml` | Use the next free value (ports in steps of 10) and state it in the plan. |
@@ -130,7 +142,7 @@ Use [`../dapr-shared/pubsub-run-doc.md`](../dapr-shared/pubsub-run-doc.md) with 
 - Python below 3.10, a non-FastAPI app, or Poetry, PDM, Pipenv or conda: stop with an explanation. No changes.
 - Several FastAPI modules: ask which one.
 - Declarative subscriber: `appPort` must exist in `dapr.yaml`; add it when missing and say so in the plan.
-- Older `dapr*` packages and question 1 answered no: keep the new package at 1.18.3 and add a "Mixed `dapr*` versions" warning to `DAPR-PUBSUB.md`.
+- Older `dapr*` packages and question 1 answered no: pin the new package to the project's existing `dapr` version, not to a newer one, and add a "Mixed `dapr*` versions" warning to `DAPR-PUBSUB.md`.
 - Trigger endpoint covered by an HTTP test: when the request explicitly asks to publish from a named action or endpoint (for example "when an order is created", "from POST /orders"), question 2 defaults to **yes** and the plan carries a **Risk** line naming the test file(s)/test(s), saying they will need a Dapr sidecar or a test double for the publisher (`app.dependency_overrides`) and that the skill does not edit tests. When the request does not mention publishing from an existing action, question 2 defaults to no. When declined, leave the endpoint unchanged and add "Publish from `<endpoint>`" to Next steps in `DAPR-PUBSUB.md`.
 - No sidecar at publish time: `publish_event` raises `TimeoutError` after the health-check wait (not `DaprGrpcError`); the publisher template maps both to 503. `DAPR_HEALTH_TIMEOUT` shortens the wait. Do not "fix" this in the app's existing error handling.
 - A `HotReload: false` Configuration: tell the run doc that declarative changes need a restart.
@@ -145,7 +157,7 @@ Use [`../dapr-shared/pubsub-run-doc.md`](../dapr-shared/pubsub-run-doc.md) with 
 For the `orders-fastapi-uv` layout (uv, `app/main.py` with `POST /orders` and `GET /orders/{order_id}`, `app/models.py` with `Order`, tests in `tests/test_orders.py` that use `TestClient`), role both, declarative:
 
 - Plan: target `app/main.py` (Python 3.12, uv), role both, **Subscription type:** declarative — default, topic `pubsub/orders` with dead-letter `orders-deadletter`.
-- Package: `uv add "dapr==1.18.3"` (needed for publishing; the declarative subscriber itself needs no Dapr package).
+- Package: `uv add "dapr==1.19.0"` (needed for publishing; the declarative subscriber itself needs no Dapr package).
 - New files: `app/handler.py` (from `python-pubsub-handler.md`), the contract and constants in `app/pubsub_models.py`, `resources/pubsub.yaml`, `resources/resiliency.yaml`, `resources/subscription.yaml` (`scopes: [orders-fastapi]`), `dapr.yaml`, `orders-fastapi.pubsub.http`, `DAPR-PUBSUB.md`. Adapt the template imports to the package: `from app.handler import handle_order_event, handle_dead_letter` in `app/main.py`, and `from app.pubsub_models import OrderPlaced` in `app/handler.py` (the templates import `handler` and `contracts`).
 - Edited: `pyproject.toml` and `uv.lock` (by `uv add`), `app/main.py` — add `@app.post("/events/pubsub/orders")` and `@app.post("/events/pubsub/orders-deadletter")` plain routes taking `event: dict = Body(...)` (no `DaprApp`), and the publish endpoint `POST /pubsub/orders`.
 - Question 2: the request says "publish an order-placed event when an order is created", so the default is **yes** even though `tests/test_orders.py` calls `POST /orders` over HTTP. `create_order` publishes after it saves, and the plan carries a **Risk** line: `tests/test_orders.py` will need a Dapr sidecar or a test double for the publisher (`app.dependency_overrides[get_order_publisher]`; `create_order` takes it as `Depends(get_order_publisher)`); the skill does not edit tests. (Had the request not mentioned publishing from an existing action, the default would be no.)

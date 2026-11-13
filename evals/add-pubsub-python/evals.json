@@ -12,7 +12,7 @@
       "expectations": [
         "Before the first file change, the response or transcript contains an Add Pub/Sub Plan that includes the line `**Subscription type:** declarative — default`",
         "Before the first file change, the plan asks whether POST /orders should also publish and states the default is Yes (the request explicitly asks to publish when an order is created), and the plan contains a Risk line that names tests/test_orders.py, says it will need a Dapr sidecar or a test double for the publisher via `app.dependency_overrides[get_order_publisher]` (the exact override target name), and mentions `DAPR_HEALTH_TIMEOUT=2` for running tests without a sidecar, and says the skill does not edit tests",
-        "pyproject.toml lists `dapr==1.18.3` in its dependencies, and the transcript shows it was added with `uv add`",
+        "pyproject.toml lists `dapr==1.19.0` in its dependencies, and the transcript shows it was added with `uv add`",
         "app/main.py contains `@app.post(\"/events/pubsub/orders\")` whose handler takes a parameter declared with `dict = Body(`, and contains no `DaprApp`",
         "app/main.py contains a new `POST /pubsub/orders` publish endpoint (a `@app.post(\"/pubsub/orders\"` decorator), and the existing `POST /orders` handler (`create_order`) now publishes (calls `publish_event` directly or through the injected publisher) after its existing work (saving the order), still returns its original response on success, and its original save logic is unchanged",
         "resources/subscription.yaml exists, has `kind: Subscription`, `topic: orders` and `deadLetterTopic: orders-deadletter`, and contains `scopes:` with the entry `orders-fastapi` (equal to the appID in dapr.yaml)",
@@ -32,14 +32,14 @@
       "id": 2,
       "name": "req-follow-programmatic",
       "prompt": "Add a subscription to the orders topic in ./notify-fastapi-req (create .venv with python -m venv .venv if needed). Show the plan, then proceed.",
-      "expected_output": "A plan that follows the existing DaprApp programmatic subscriptions, offers the dapr and dapr-ext-fastapi 1.18.0 to 1.18.3 update (default yes) before any change, then adds one new @dapr_app.subscribe for orders with a dead-letter topic to the existing DaprApp, with aligned 1.18.3 pins in requirements.txt and the emails subscription untouched.",
+      "expected_output": "A plan that follows the existing DaprApp programmatic subscriptions, offers to replace the retired dapr-ext-fastapi package with the dapr[fastapi] extra at 1.19.0 (default yes) before any change, then adds one new @dapr_app.subscribe for orders with a dead-letter topic to the existing DaprApp, leaving requirements.txt with a single dapr[fastapi]==1.19.0 line and the emails subscription untouched.",
       "files": [
         "evals/add-pubsub-python/files/notify-fastapi-req/"
       ],
       "expectations": [
         "The plan contains `programmatic — follows existing DaprApp subscriptions` on its Subscription type line",
-        "Before any file change, the plan lists question 1 about package updates naming `dapr` and `dapr-ext-fastapi` going from 1.18.0 to 1.18.3, with Yes as the default",
-        "After the default is accepted, requirements.txt contains `dapr==1.18.3` and `dapr-ext-fastapi==1.18.3` and no `1.18.0` pin remains",
+        "Before any file change, the plan lists question 1 about package updates, saying that `dapr-ext-fastapi` is retired and that the two 1.18.0 pins become the single `dapr[fastapi]==1.19.0` extra, with Yes as the default",
+        "After the default is accepted, requirements.txt contains `dapr[fastapi]==1.19.0`, no `dapr-ext-fastapi` line remains, and no `1.18.0` pin remains",
         "main.py contains exactly one `DaprApp(` occurrence",
         "main.py contains a new `@dapr_app.subscribe(` decorator for topic `orders` that passes `dead_letter_topic=`",
         "The original `@dapr_app.subscribe(pubsub=\"pubsub\", topic=\"emails\", route=\"/events/pubsub/emails\")` decorator and its `handle_email` function are unchanged and still return `{\"status\": \"SUCCESS\"}`",
@@ -77,13 +77,13 @@
       "id": 4,
       "name": "flask-unsupported",
       "prompt": "Add Dapr pub/sub to the Flask app in ./flask-app so it can publish and subscribe to an orders topic.",
-      "expected_output": "The skill stops after inspection: it explains that v1 supports FastAPI only, points to the dapr-ext-grpc alternative, and changes no file.",
+      "expected_output": "The skill stops after inspection: it explains that v1 supports FastAPI only, points to the dapr[grpc] alternative, and changes no file.",
       "files": [
         "evals/add-pubsub-python/files/flask-app/"
       ],
       "expectations": [
         "The response states that the skill supports FastAPI apps only and that this Flask app is not supported",
-        "The response points to the dapr-ext-grpc alternative for non-FastAPI apps",
+        "The response points to the dapr[grpc] alternative for non-FastAPI apps",
         "No file in flask-app is created, edited or deleted: app.py and requirements.txt are byte-identical to the fixture, and there is no dapr.yaml, resources folder or DAPR-PUBSUB.md",
         "No package is installed and no Add Pub/Sub Plan approval is requested",
         "No git command other than `git status` appears in the transcript"

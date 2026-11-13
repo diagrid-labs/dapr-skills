@@ -1,5 +1,7 @@
 # Reference: Dapr Workflow .NET Application
 
+Package versions come from [dapr-versions.md](../dapr-shared/dapr-versions.md) — change a pin there, not here.
+
 ## dapr.yaml
 
 Create a `dapr.yaml` multi-app run file in the project root. This file configures the Dapr sidecar and points to the resources folder.
@@ -62,7 +64,7 @@ The `.csproj` file should look like this:
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapr.Workflow" Version="1.18.10" />
+    <PackageReference Include="Dapr.Workflow" Version="1.19.1" />
   </ItemGroup>
 
 </Project>

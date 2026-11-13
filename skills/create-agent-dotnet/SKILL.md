@@ -51,7 +51,7 @@ The following must be installed by the user before this skill can run:
 Additional runtime dependencies (handled during project setup):
 
 - NuGet package [`Diagrid.AI.Microsoft.AgentFramework`](https://www.nuget.org/packages/Diagrid.AI.Microsoft.AgentFramework) version `1.2.0` (multi-targets `net8.0`, `net9.0`, `net10.0`). It brings `Microsoft.Agents.AI`, `Microsoft.Extensions.AI`, `Dapr.Workflow` and the Dapr conversation/state clients transitively — do not add those at lower versions.
-- Coordinator + specialists only: NuGet package `Dapr.Workflow` version `1.18.10`, referenced explicitly because the app defines its own workflow.
+- Coordinator + specialists only: NuGet package `Dapr.Workflow` version `1.19.1`, referenced explicitly because the app defines its own workflow.
 - License: the package is licensed under the Business Source License 1.1; production use without a commercial license is limited by its Additional Use Grant (see "License and usage analytics" in `REFERENCE.md`). Tell the user this in the generated README.
 
 Optional, for inspecting workflow runs locally:
@@ -149,7 +149,7 @@ Configures the ASP.NET Core port, which must match `appPort` in `dapr.yaml`. See
 
 ### .csproj
 
-Targets `net10.0` and references `Diagrid.AI.Microsoft.AgentFramework` `1.2.0`; the coordinator + specialists topology also references `Dapr.Workflow` `1.18.10`. See `REFERENCE.md`.
+Targets `net10.0` and references `Diagrid.AI.Microsoft.AgentFramework` `1.2.0`; the coordinator + specialists topology also references `Dapr.Workflow` `1.19.1`. See `REFERENCE.md`.
 
 ### Program.cs
 

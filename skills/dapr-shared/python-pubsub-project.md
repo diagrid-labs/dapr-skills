@@ -1,5 +1,7 @@
 # Python pub/sub project files
 
+Package versions come from [dapr-versions.md](dapr-versions.md) — change a pin there, not here.
+
 Placeholders are resolved from the specification interview; the vocabulary is in [pubsub-placeholders.md](pubsub-placeholders.md).
 
 ## Workspace root pyproject.toml
@@ -46,7 +48,7 @@ version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
     "<root-kebab>-contracts",
-    "dapr==1.18.3",
+    "dapr==1.19.0",
     "fastapi==0.118.2",
     "pydantic==2.12.0",
     "uvicorn==0.37.0",
@@ -61,8 +63,8 @@ Subscriber dependencies by type:
 | Type | Dependencies besides `<root-kebab>-contracts` |
 |---|---|
 | declarative | `fastapi==0.118.2`, `pydantic==2.12.0`, `uvicorn==0.37.0` (no `dapr`) |
-| programmatic | `dapr==1.18.3`, `dapr-ext-fastapi==1.18.3`, `fastapi==0.118.2`, `pydantic==2.12.0`, `uvicorn==0.37.0` |
-| streaming | `dapr==1.18.3`, `pydantic==2.12.0` |
+| programmatic | `dapr[fastapi]==1.19.0`, `fastapi==0.118.2`, `pydantic==2.12.0`, `uvicorn==0.37.0` |
+| streaming | `dapr==1.19.0`, `pydantic==2.12.0` |
 
 ## Single-service pyproject.toml
 
@@ -71,5 +73,10 @@ The same as the service file but without the contracts dependency or `[tool.uv.s
 ## Key points
 
 - Run `uv sync --all-packages` at the root.
-- `dapr` and `dapr-ext-fastapi` share one version.
-- An add skill aligns `dapr-ext-fastapi` to an existing `dapr==1.18.x` pin.
+- There is one Dapr version to keep aligned, not two: from Dapr 1.19 the FastAPI extension is the
+  `fastapi` extra of the `dapr` distribution, so `dapr[fastapi]==1.19.0` is a single coordinate.
+  Quote the brackets in shell commands — `uv add "dapr[fastapi]==1.19.0"` — because `[` is a glob
+  character in POSIX shells and a wildcard in PowerShell.
+- A project still carrying `dapr-ext-fastapi` is pre-1.19. Never pin `dapr==1.19.0` beside it: that
+  puts two copies of `dapr.ext.fastapi` on the import path and which one wins depends on install
+  order. Either migrate both to the extra, or leave the old pair matched at `1.18.3`.

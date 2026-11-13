@@ -53,6 +53,8 @@ Symptoms to look for:
 
 1. Identify when the broken deployment went out relative to when the affected workflow instances started.
 2. Fetch the workflow history via the management API: `GET /v1.0/workflows/<instanceId>/history`
+   (this HTTP API is deprecated as of the 1.19 docs — prefer the SDK client; see
+   [troubleshooting.md](troubleshooting.md) → **Key diagnostic commands**)
 3. Compare the history event sequence (activity names, order, sequence numbers) against what the current code would produce.
 4. Use `ctx.IsReplaying()` (Go SDK: `wfctx.IsReplaying()`) to gate log output — logs emitted during replay indicate where replay is active.
 

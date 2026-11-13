@@ -82,7 +82,7 @@ Use `order-process.bpmn` or `user-order.png` to demonstrate the skill end to end
 
 The per-language prompts in `prompts/languages/*.md` define idiomatic Dapr Workflow code for each target:
 
-- **Python** — `dapr-ext-workflow`, `@wfr.workflow(name=...)` decorator, activities with `@wfr.activity(name=...)`, Pydantic input/output models. Shares conventions with the `create-workflow-python` skill.
+- **Python** — `dapr[workflow]` (the `dapr.ext.workflow` module), `@wfr.workflow(name=...)` decorator, activities with `@wfr.activity(name=...)`, Pydantic input/output models. Shares conventions with the `create-workflow-python` skill.
 - **Go** — `github.com/dapr/go-sdk/workflow` package, `workflow.NewWorker()` with `RegisterWorkflow(...)` / `RegisterActivity(...)`, structs for I/O.
 - **C# / .NET** — `Dapr.Workflow` package, classes deriving from `Workflow<TInput, TOutput>` and `WorkflowActivity<TInput, TOutput>`, one class per activity. Shares conventions with `create-workflow-dotnet`.
 - **Java** — `io.dapr.workflows` package, `Workflow` / `WorkflowActivity` interface impls, Maven build.

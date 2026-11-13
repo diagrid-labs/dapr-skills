@@ -33,7 +33,7 @@ The following must be installed by the user before this skill can run:
 
 Additional runtime dependencies (handled during project setup):
 
-- NuGet package: `Dapr.Workflow` version `1.18.10`
+- NuGet package: `Dapr.Workflow` version `1.19.1`
 - Optional: the [Diagrid Dapr Dev Dashboard](https://github.com/diagridio/dev-dashboard) for inspecting workflow runs locally. The skill only checks whether it is installed (see `## Check optional tools`); it never installs it and never stops without it.
 
 ## Check optional tools
@@ -66,7 +66,7 @@ Create the project root folder inside the current location where the terminal is
 mkdir <ProjectRoot>
 cd <ProjectRoot>
 dotnet new web -n <ProjectName>
-dotnet add <ProjectName> package Dapr.Workflow --version 1.18.10
+dotnet add <ProjectName> package Dapr.Workflow --version 1.19.1
 ```
 
 The <ProjectName> should start with the <ProjectRoot> and end with `App`: <ProjectRoot>App.

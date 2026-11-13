@@ -1,5 +1,7 @@
 # Create Dapr Pub/Sub .NET Application — Reference
 
+Package versions come from [dapr-versions.md](../dapr-shared/dapr-versions.md) — change a pin there, not here.
+
 Detailed reference for the `create-pubsub-dotnet` skill. All code and YAML live in `../dapr-shared/`; this file says which section to copy and where it goes. File and type names below are placeholders resolved from the specification interview; the vocabulary is in [`pubsub-placeholders.md`](../dapr-shared/pubsub-placeholders.md).
 
 ## Folder structures
@@ -67,7 +69,7 @@ There is no `dapr.yaml` and no root `resources/` folder. The `Resources/*.yaml` 
 │   ├── pubsub.yaml
 │   └── resiliency.yaml             # no subscription.yaml
 └── <ProjectRoot>.Subscriber/
-    ├── <ProjectRoot>.Subscriber.csproj   # Dapr.Messaging 1.18.10, no Dapr.AspNetCore
+    ├── <ProjectRoot>.Subscriber.csproj   # Dapr.Messaging 1.19.1, no Dapr.AspNetCore
     ├── Program.cs                  # AddDaprMessaging(...), no Map* calls
     └── <EventName>TopicHandler.cs  # ITopicHandler<<EventName>>
 ```

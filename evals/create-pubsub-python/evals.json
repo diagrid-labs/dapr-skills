@@ -9,7 +9,7 @@
       "files": [],
       "expectations": [
         "The root pyproject.toml has a [tool.uv.workspace] table with members contracts, publisher and subscriber",
-        "subscriber/pyproject.toml lists neither dapr nor dapr-ext-fastapi as a dependency",
+        "subscriber/pyproject.toml lists neither dapr nor any dapr extra as a dependency",
         "subscriber/main.py has @app.post(\"/events/pubsub/orders\") with a parameter typed dict = Body( and contains no DaprApp",
         "subscriber/handler.py returns \"DROP\" when pydantic raises ValidationError",
         "resources/subscription.yaml has scopes containing order-flow-subscriber, matching the appID in dapr.yaml",
@@ -33,7 +33,7 @@
         "The .subscribe( call has dead_letter_topic= and metadata={\"rawPayload\": \"true\"}",
         "The publisher passes publish_metadata equal to {\"ttlInSeconds\": \"60\", \"rawPayload\": \"true\"} with string values, not an integer 60 or boolean true",
         "subscriber/handler.py decodes data_base64 (base64.b64decode)",
-        "subscriber/pyproject.toml depends on dapr-ext-fastapi==1.18.3",
+        "subscriber/pyproject.toml depends on dapr[fastapi]==1.19.0 and has no dapr-ext-fastapi line",
         "No resources/subscription.yaml is created, and no file contains isRawPayload",
         "The agent asked no question about the subscription type, because the prompt specified programmatic",
         "The contract is the AlertRaised model from the prompt on the alerts topic, with alerts-deadletter as the dead-letter topic; no file mentions OrderPlaced or a topic named orders"
@@ -59,10 +59,10 @@
       "id": 4,
       "name": "edge-programmatic-routing",
       "prompt": "Create a Python pub/sub subscriber project named OrderRisk using programmatic subscriptions. It subscribes to OrderPlaced events on the orders topic - order id, customer id and amount, identified by the order id - logs each one, routes orders with an amount over 1000 to a separate handler called `large`, and uses Kafka.",
-      "expected_output": "The agent explains that dapr-ext-fastapi cannot route by content and offers a declarative subscription instead (default yes). The project is named OrderRisk (folder OrderRisk, app ids order-risk-*). The result is a declarative subscription.yaml with a CEL rule and a /events/pubsub/orders/large route, and no programmatic subscription for orders.",
+      "expected_output": "The agent explains that dapr.ext.fastapi cannot route by content and offers a declarative subscription instead (default yes). The project is named OrderRisk (folder OrderRisk, app ids order-risk-*). The result is a declarative subscription.yaml with a CEL rule and a /events/pubsub/orders/large route, and no programmatic subscription for orders.",
       "files": [],
       "expectations": [
-        "transcript.md or final_message.md contains the question text \"dapr-ext-fastapi cannot route by content. Use a declarative subscription for this topic instead?\" (key phrase: cannot route by content ... declarative subscription), with the default answer logged as yes, and this appears in the transcript before the first project file or folder is created",
+        "transcript.md or final_message.md contains the question text \"dapr.ext.fastapi cannot route by content. Use a declarative subscription for this topic instead?\" (key phrase: cannot route by content ... declarative subscription), with the default answer logged as yes, and this appears in the transcript before the first project file or folder is created",
         "After the default answer, resources/subscription.yaml has a rule whose match contains int(event.data.amount) > 1000 and whose path is /events/pubsub/orders/large",
         "The subscriber has a route for /events/pubsub/orders/large and no file contains a DaprApp(...).subscribe registration for the orders topic",
         "resources/subscription.yaml scopes contain order-risk-subscriber, matching the appID order-risk-subscriber in dapr.yaml (the kebab-case form of the project name OrderRisk)",

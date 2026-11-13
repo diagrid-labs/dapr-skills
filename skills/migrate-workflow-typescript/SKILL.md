@@ -39,7 +39,7 @@ The following must be installed by the user before this skill can run:
 - [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/)
 - `git`, with the target repository already checked out
 
-Additional runtime dependency (added during migration, not before): npm package `@dapr/dapr` version `3.18.0`.
+Additional runtime dependency (added during migration, not before): npm package `@dapr/dapr` version `3.19.0`.
 
 ## Phase 1: Resolve scope & detect existing Dapr adoption
 
@@ -81,7 +81,7 @@ After the report, ask the user which items to proceed with: all **Recommended** 
 
 Only for the categories with at least one approved item, and only for what Phase 1 didn't already find in place:
 
-- Add `@dapr/dapr` (version `3.18.0`) to `package.json` dependencies.
+- Add `@dapr/dapr` (version `3.19.0`) to `package.json` dependencies.
 - Create `dapr.yaml` (or add an entry to an existing one) and a `resources/` folder.
 - Create one component YAML per approved category, using the infra already detected in Phase 3 — see `REFERENCE.md` for the templates. Do not add components for categories with no approved items.
 

@@ -29,7 +29,7 @@ Role both, declarative subscriber:
     └── handler.py
 ```
 
-Role both, programmatic subscriber: the same tree without `resources/subscription.yaml`. The subscriber `pyproject.toml` adds `dapr` and `dapr-ext-fastapi`, and `main.py` uses `DaprApp`.
+Role both, programmatic subscriber: the same tree without `resources/subscription.yaml`. The subscriber `pyproject.toml` adds `dapr[fastapi]`, and `main.py` uses `DaprApp`.
 
 Role both, streaming subscriber:
 
@@ -80,7 +80,7 @@ Section names refer to the headings in the shared files.
 | `subscriber/main.py` | `python-pubsub-subscriber-declarative.md` → **main.py** | `python-pubsub-subscriber-programmatic.md` → **main.py** | `python-pubsub-subscriber-streaming.md` → **Standalone subscriber (create)**, `subscriber/main.py` |
 | Handler | `python-pubsub-handler.md` → **handler.py** | `python-pubsub-handler.md` → **handler.py** | `subscriber/streaming.py` in the same section |
 | `resources/subscription.yaml` | `dapr-pubsub-subscription.md` → **resources/subscription.yaml**, `scopes: [<root-kebab>-subscriber]` | not created | not created |
-| Subscriber `pyproject.toml` | `python-pubsub-project.md`: FastAPI, pydantic, uvicorn | adds `dapr`, `dapr-ext-fastapi` | `dapr`, pydantic only |
+| Subscriber `pyproject.toml` | `python-pubsub-project.md`: FastAPI, pydantic, uvicorn | adds `dapr[fastapi]` | `dapr`, pydantic only |
 | `dapr.yaml` subscriber entry | `appPort: 8002` | `appPort: 8002` | no `appPort` |
 | Publisher `main.py` | `python-pubsub-publisher.md` → **Publish endpoint** | same | same |
 | Contracts | `python-pubsub-publisher.md` → **Contracts** | same | same |
@@ -96,7 +96,7 @@ Add these only when the user asks for them. The dead-letter topic and the inboun
 
 | Feature | Declarative | Programmatic | Streaming |
 |---|---|---|---|
-| Content-based routing | `dapr-pubsub-subscription.md` → **With routing rules**, plus one route per rule from `python-pubsub-subscriber-declarative.md` → **Routing rules** (`<subscribe_route>/<RuleName>`) | Not supported by `dapr-ext-fastapi`. Ask: "dapr-ext-fastapi cannot route by content. Use a declarative subscription for this topic instead? (default: yes)" | Not supported. Ask: "Streaming subscriptions cannot route by content. Use a declarative subscription for this topic instead? (default: yes)" |
+| Content-based routing | `dapr-pubsub-subscription.md` → **With routing rules**, plus one route per rule from `python-pubsub-subscriber-declarative.md` → **Routing rules** (`<subscribe_route>/<RuleName>`) | Not supported by `dapr.ext.fastapi`. Ask: "dapr.ext.fastapi cannot route by content. Use a declarative subscription for this topic instead? (default: yes)" | Not supported. Ask: "Streaming subscriptions cannot route by content. Use a declarative subscription for this topic instead? (default: yes)" |
 | Message TTL | Publisher side: `python-pubsub-publisher.md` → **TTL and raw payload** (`publish_metadata={"ttlInSeconds": "60"}`, a string) | same | same |
 | Raw payload | Publisher `rawPayload` per `python-pubsub-publisher.md` → **TTL and raw payload**; subscriber: `dapr-pubsub-subscription.md` → **With raw payload** and `python-pubsub-subscriber-declarative.md` → **Raw payload** | `python-pubsub-subscriber-programmatic.md` → **Raw payload** | `python-pubsub-subscriber-streaming.md` → **Raw payload** |
 

@@ -34,7 +34,7 @@ The following must be installed by the user before this skill can run. Do not ru
 - [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation)
 - [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) 1.18+
 
-Python packages (handled during project setup): `dapr` 1.18.3, `dapr-ext-fastapi` 1.18.3 (programmatic subscriber only), `fastapi` 0.118.2, `pydantic` 2.12.0, `uvicorn` 0.37.0. Optional: the [Diagrid Dapr Dev Dashboard](https://github.com/diagridio/dev-dashboard).
+Python packages (handled during project setup): `dapr` 1.19.0, or `dapr[fastapi]` 1.19.0 for a programmatic subscriber — from Dapr 1.19 the FastAPI extension is an extra of the `dapr` distribution, not a separate `dapr-ext-fastapi` package. Plus `fastapi` 0.118.2, `pydantic` 2.12.0, `uvicorn` 0.37.0. Optional: the [Diagrid Dapr Dev Dashboard](https://github.com/diagridio/dev-dashboard).
 
 Background on delivery guarantees, CloudEvents and the subscription types: [`../dapr-shared/pubsub-concepts.md`](../dapr-shared/pubsub-concepts.md).
 Placeholder vocabulary used by every template: [`../dapr-shared/pubsub-placeholders.md`](../dapr-shared/pubsub-placeholders.md).
@@ -61,7 +61,7 @@ Domain, first:
 Then the wiring:
 
 5. "Should this app publish, subscribe, or both? (default: both)"
-6. Only if the role includes a subscriber: "Which subscription type? **declarative** (default — a Subscription YAML file, no Dapr code in the subscriber), **programmatic** (`DaprApp(app).subscribe(...)` in code) or **streaming** (the app pulls messages; no inbound port)". Inference: "streaming", "no inbound port" or "pull" → streaming; "programmatic", `DaprApp` or "dapr-ext-fastapi" → programmatic; "declarative" or "subscription YAML" → declarative.
+6. Only if the role includes a subscriber: "Which subscription type? **declarative** (default — a Subscription YAML file, no Dapr code in the subscriber), **programmatic** (`DaprApp(app).subscribe(...)` in code) or **streaming** (the app pulls messages; no inbound port)". Inference: "streaming", "no inbound port" or "pull" → streaming; "programmatic", `DaprApp`, "dapr[fastapi]" or the pre-1.19 name "dapr-ext-fastapi" → programmatic; "declarative" or "subscription YAML" → declarative.
 7. The name of the project (no spaces). It becomes `<ProjectRoot>` (the folder) and `<root-kebab>` (lowercase, hyphen-separated, used for app ids and package names).
 
 There is no hosting or style question: Python uses `dapr run` and FastAPI.
@@ -72,7 +72,7 @@ Feature rules:
 - Content-based routing, message TTL and raw payload are added only when the user mentions them (see `REFERENCE.md` → **Routing, TTL and raw payload**).
 - The broker is always Redis locally. If the user names another broker (for example Kafka), still scaffold Redis and explain in the README how to switch (see **Create README.md**).
 - Routing with a streaming subscriber → ask: "Streaming subscriptions cannot route by content. Use a declarative subscription for this topic instead? (default: yes)".
-- Routing with a programmatic subscriber → ask: "dapr-ext-fastapi cannot route by content. Use a declarative subscription for this topic instead? (default: yes)".
+- Routing with a programmatic subscriber → ask: "dapr.ext.fastapi cannot route by content. Use a declarative subscription for this topic instead? (default: yes)".
 
 ### Resolving the placeholders
 
@@ -142,7 +142,7 @@ for a stray `<` ... `>`. Ports: publisher `appPort` 8001 / `daprHTTPPort` 3501, 
 `daprHTTPPort` 3502.
 
 - **`.gitignore`**: Python style, from https://raw.githubusercontent.com/github/gitignore/refs/heads/main/Python.gitignore.
-- **`pyproject.toml` files** (workspace root, `contracts`, services): [`../dapr-shared/python-pubsub-project.md`](../dapr-shared/python-pubsub-project.md). Take the subscriber dependencies from its table for the chosen type (declarative has no `dapr`; programmatic adds `dapr-ext-fastapi`; streaming has no FastAPI).
+- **`pyproject.toml` files** (workspace root, `contracts`, services): [`../dapr-shared/python-pubsub-project.md`](../dapr-shared/python-pubsub-project.md). Take the subscriber dependencies from its table for the chosen type (declarative has no `dapr`; programmatic takes `dapr[fastapi]`; streaming has no FastAPI).
 - **`dapr.yaml`**: [`../dapr-shared/pubsub-dapr-yaml.md`](../dapr-shared/pubsub-dapr-yaml.md) (Python block). The `appID` values are `<root-kebab>-publisher` and `<root-kebab>-subscriber`. Omit `appPort` for a streaming-only subscriber; keep it for declarative and programmatic subscribers.
 - **`resources/pubsub.yaml`**: [`../dapr-shared/dapr-pubsub-redis.md`](../dapr-shared/dapr-pubsub-redis.md).
 - **`resources/resiliency.yaml`**: [`../dapr-shared/dapr-pubsub-resiliency.md`](../dapr-shared/dapr-pubsub-resiliency.md) (dead-letter on).

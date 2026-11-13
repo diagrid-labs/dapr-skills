@@ -1,5 +1,7 @@
 # Reference: add Dapr Workflow to an existing .NET project
 
+Package versions come from [dapr-versions.md](../dapr-shared/dapr-versions.md) — change a pin there, not here.
+
 ## Detection
 
 | What | How |
@@ -26,8 +28,8 @@
 **Workflow:** <WorkflowName> — <one-line description, pattern>
 
 ### Packages
-- `Dapr.Workflow` 1.18.10 → <.csproj | Directory.Packages.props>
-- <Dapr.Client, Dapr.AspNetCore> <old version> → 1.18.10 (question 1)
+- `Dapr.Workflow` 1.19.1 → <.csproj | Directory.Packages.props>
+- <Dapr.Client, Dapr.AspNetCore> <old version> → 1.19.1 (question 1)
 
 ### New files
 - `<path>` — <purpose>
@@ -48,7 +50,7 @@
 - <Uncommitted changes found: the edits will mix with them.>
 
 ### Questions
-1. Newer packages are available: <Dapr.Client 1.17.9 → 1.18.10, Dapr.AspNetCore 1.17.9 → 1.18.10>. Update them? **Default: yes, update.**
+1. Newer packages are available: <Dapr.Client 1.17.9 → 1.19.1, Dapr.AspNetCore 1.17.9 → 1.19.1>. Update them? **Default: yes, update.**
 2. Should `<POST /orders>` also start `<WorkflowName>` after it saves the <order>? **Default: yes.** <(Default no: `<TestName>` calls this endpoint over HTTP and would need a running Dapr sidecar.)>
 
 <Leave out a question that does not apply and renumber the rest, so a plan with only the endpoint question numbers it 1 and the user answers "1: no". The numbers 1 and 2 above are for the full two-question case. Without a trigger endpoint, write instead: No existing endpoint starts the workflow; use the new start endpoint.>
@@ -58,9 +60,9 @@ Reply **yes** to apply with the defaults, answer a question differently (for exa
 
 ## Package reference
 
-- Per-project: add `<PackageReference Include="Dapr.Workflow" Version="1.18.10" />` to the `.csproj` with `Edit`. Do not run `dotnet add package`: it is not an allowed command and the `Edit` keeps the change minimal.
-- Central Package Management: add `<PackageVersion Include="Dapr.Workflow" Version="1.18.10" />` to `Directory.Packages.props` and `<PackageReference Include="Dapr.Workflow" />` (no version) to the `.csproj` with `Edit`. Do not run `dotnet add package` (it would write a version into the `.csproj`).
-- Package updates (question 1, default yes): change the existing `Dapr.*` versions to 1.18.10 in the same place they are declared (`Directory.Packages.props` or the `.csproj`). Use `Edit`, not `dotnet add package`, so the version stays where it was. In Aspire mode an AppHost on Aspire 9.0–9.4 is updated to 9.5.2 the same way (SDK version and `Aspire.Hosting.*` packages).
+- Per-project: add `<PackageReference Include="Dapr.Workflow" Version="1.19.1" />` to the `.csproj` with `Edit`. Do not run `dotnet add package`: it is not an allowed command and the `Edit` keeps the change minimal.
+- Central Package Management: add `<PackageVersion Include="Dapr.Workflow" Version="1.19.1" />` to `Directory.Packages.props` and `<PackageReference Include="Dapr.Workflow" />` (no version) to the `.csproj` with `Edit`. Do not run `dotnet add package` (it would write a version into the `.csproj`).
+- Package updates (question 1, default yes): change the existing `Dapr.*` versions to 1.19.1 in the same place they are declared (`Directory.Packages.props` or the `.csproj`). Use `Edit`, not `dotnet add package`, so the version stays where it was. In Aspire mode an AppHost on Aspire 9.0–9.4 is updated to 9.5.2 the same way (SDK version and `Aspire.Hosting.*` packages).
 
 ## Dapr wiring (dapr run mode)
 
@@ -116,7 +118,7 @@ The shared [`../dapr-shared/dotnet-local-http.md`](../dapr-shared/dotnet-local-h
 
 - Port already used by another app in `dapr.yaml`: take the next free port and state it in the plan.
 - Trigger endpoint declined (question 2 answered no): leave it unchanged and add a "Start the workflow from `<endpoint>`" next step to `DAPR-WORKFLOW.md`.
-- Package updates declined (question 1 answered no): keep `Dapr.Workflow` 1.18.10 and add a warning about mixed `Dapr.*` versions to `DAPR-WORKFLOW.md`.
+- Package updates declined (question 1 answered no): keep `Dapr.Workflow` 1.19.1 and add a warning about mixed `Dapr.*` versions to `DAPR-WORKFLOW.md`.
 - Windows path-length errors (`path longer than allowed`, `os error 206`) during build or restore: report them and suggest a shorter path or enabling long paths. Never map drives (`subst`) or move build output.
 - `Startup.cs` hosts: follow "Adding to an existing Program.cs" in [`../dapr-shared/dotnet-workflow-endpoints.md`](../dapr-shared/dotnet-workflow-endpoints.md) (`ConfigureServices` / `UseEndpoints`).
 
@@ -125,7 +127,7 @@ The shared [`../dapr-shared/dotnet-local-http.md`](../dapr-shared/dotnet-local-h
 For the `orders-api` layout (net8 minimal API with `OrderService`, tests in `tests/OrdersApi.Tests`):
 
 - Plan: target `OrdersApi.slnx` → `src/OrdersApi` (net8.0, minimal API, Program.cs), dapr run, workflow `PlaceOrderWorkflow` (task chaining).
-- Package: `<PackageReference Include="Dapr.Workflow" Version="1.18.10" />` added to `src/OrdersApi/OrdersApi.csproj` with `Edit`.
+- Package: `<PackageReference Include="Dapr.Workflow" Version="1.19.1" />` added to `src/OrdersApi/OrdersApi.csproj` with `Edit`.
 - New files: `src/OrdersApi/Workflows/PlaceOrderWorkflow.cs`, `src/OrdersApi/Activities/ReserveStockActivity.cs`, `ChargePaymentActivity.cs`, `SendConfirmationActivity.cs`, `src/OrdersApi/Models/PlaceOrderInput.cs`, `PlaceOrderOutput.cs`, `src/OrdersApi/OrdersApi.workflow.http`, `dapr.yaml`, `resources/statestore.yaml`, `DAPR-WORKFLOW.md`.
 - Edited: `src/OrdersApi/OrdersApi.csproj` (package), `src/OrdersApi/Program.cs` — after `builder.Services.AddSingleton<OrderService>();` add `builder.Services.AddDaprWorkflow();` and `builder.Services.AddDaprWorkflowVersioning();`; after `app.MapPost("/orders", ...)` add the workflow endpoints under `app.MapGroup("/workflows/place-order")`.
 - Questions: no newer packages (the project has no `Dapr.*` package yet), so only question 2: "Should `POST /orders` also start `PlaceOrderWorkflow` after it saves the order? Default: yes." The tests only call `OrderService` directly, so the default stays yes. With yes, the `POST /orders` handler gains a `DaprWorkflowClient workflowClient` parameter and calls `ScheduleNewWorkflowAsync(nameof(PlaceOrderWorkflow), order.Id, new PlaceOrderInput(order))` after `orders.Add(order)`; its `Results.Created(...)` response is unchanged.

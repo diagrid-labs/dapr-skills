@@ -1,6 +1,8 @@
 # Programmatic subscriber (.NET)
 
-The app tells the sidecar what it subscribes to, through `GET /dapr/subscribe`. The handlers are in [dotnet-pubsub-handler.md](dotnet-pubsub-handler.md). Resolve every placeholder from the specification interview before copying this file; the vocabulary is in [pubsub-placeholders.md](pubsub-placeholders.md). Replace `<ProjectNamespace>` with the namespace of the project the file lives in. `Dapr.AspNetCore` 1.18.10 provides `UseCloudEvents`, `MapSubscribeHandler`, `WithTopic` and `[Topic]`.
+Package versions come from [dapr-versions.md](dapr-versions.md) — change a pin there, not here.
+
+The app tells the sidecar what it subscribes to, through `GET /dapr/subscribe`. The handlers are in [dotnet-pubsub-handler.md](dotnet-pubsub-handler.md). Resolve every placeholder from the specification interview before copying this file; the vocabulary is in [pubsub-placeholders.md](pubsub-placeholders.md). Replace `<ProjectNamespace>` with the namespace of the project the file lives in. `Dapr.AspNetCore` 1.19.1 provides `UseCloudEvents`, `MapSubscribeHandler`, `WithTopic` and `[Topic]`.
 
 ## Minimal API form
 

@@ -1,5 +1,7 @@
 # Reference: add Dapr pub/sub to an existing .NET project
 
+Package versions come from [dapr-versions.md](../dapr-shared/dapr-versions.md) — change a pin there, not here.
+
 ## Detection
 
 | What | How |
@@ -20,7 +22,7 @@
 
 | What | How |
 |---|---|
-| Dapr packages | `Dapr.AspNetCore`, `Dapr.Client`, `Dapr.Messaging` references and versions, in the `.csproj` and `Directory.Packages.props`. Any below 1.18.10 → newer packages available (question 1). |
+| Dapr packages | `Dapr.AspNetCore`, `Dapr.Client`, `Dapr.Messaging` references and versions, in the `.csproj` and `Directory.Packages.props`. Any below 1.19.1 → newer packages available (question 1). |
 | Client registration | `Grep` `AddDaprClient(` and `.AddDapr(`. Either one present → reuse it, add nothing. |
 | CloudEvents middleware | `Grep` `UseCloudEvents(`. Present but after `UseEndpoints(` (or after a terminal `app.Run(` delegate) → plan item "move `UseCloudEvents()`". |
 | Subscribe wiring | `Grep` `MapSubscribeHandler(`, `AddDaprMessaging(`, `MapDaprMessaging(`. Present → reuse, never duplicate. |
@@ -55,8 +57,8 @@ A Subscription file whose `scopes` do not include this app-id is not a marker fo
 |---|---|---|---|---|
 
 ### Packages
-- <`Dapr.AspNetCore` 1.18.10 (publisher, declarative, programmatic)> → <.csproj | Directory.Packages.props>
-- <`Dapr.Messaging` 1.18.10 (streaming)>
+- <`Dapr.AspNetCore` 1.19.1 (publisher, declarative, programmatic)> → <.csproj | Directory.Packages.props>
+- <`Dapr.Messaging` 1.19.1 (streaming)>
 
 ### New files
 - `<path>` — <purpose>
@@ -91,11 +93,11 @@ Leave out a question that does not apply. Without a trigger endpoint, write inst
 
 ## Package reference
 
-- Per-project: `dotnet add "<project-path>" package Dapr.AspNetCore --version 1.18.10` (and `Dapr.Messaging` the same way for streaming).
-- Central Package Management: add `<PackageVersion Include="Dapr.AspNetCore" Version="1.18.10" />` (and `Dapr.Messaging`) to `Directory.Packages.props` and `<PackageReference Include="Dapr.AspNetCore" />` (no version) to the `.csproj` with `Edit`. Do not run `dotnet add package` (it would write a version into the `.csproj`).
+- Per-project: `dotnet add "<project-path>" package Dapr.AspNetCore --version 1.19.1` (and `Dapr.Messaging` the same way for streaming).
+- Central Package Management: add `<PackageVersion Include="Dapr.AspNetCore" Version="1.19.1" />` (and `Dapr.Messaging`) to `Directory.Packages.props` and `<PackageReference Include="Dapr.AspNetCore" />` (no version) to the `.csproj` with `Edit`. Do not run `dotnet add package` (it would write a version into the `.csproj`).
 - Never add `Dapr.Client` explicitly; it comes in through `Dapr.AspNetCore`. A streaming-only subscriber references `Dapr.Messaging` and not `Dapr.AspNetCore`; when the same project also publishes, use `IDaprPublishSubscribeClient` instead of `DaprClient` so one project uses one stack.
-- Package updates (question 1, default yes): change the existing `Dapr.*` versions to 1.18.10 in the same place they are declared (`Directory.Packages.props` or the `.csproj`). Use `Edit`, not `dotnet add package`, so the version stays where it was. In Aspire mode an AppHost on Aspire 9.0–9.4 is updated to 9.5.2 the same way (SDK version and `Aspire.Hosting.*` packages).
-- Streaming with `Dapr.Messaging` older than 1.18.8: the update to 1.18.10 is a required item. If declined, the plan switches to declarative.
+- Package updates (question 1, default yes): change the existing `Dapr.*` versions to 1.19.1 in the same place they are declared (`Directory.Packages.props` or the `.csproj`). Use `Edit`, not `dotnet add package`, so the version stays where it was. In Aspire mode an AppHost on Aspire 9.0–9.4 is updated to 9.5.2 the same way (SDK version and `Aspire.Hosting.*` packages).
+- Streaming with `Dapr.Messaging` older than 1.18.8: the update to 1.19.1 is a required item. If declined, the plan switches to declarative.
 
 ## Wiring per subscription type
 
@@ -173,7 +175,7 @@ For the `shop-api` fixture (net8 minimal API with `OrderStore`, xUnit tests in `
 | pubsub | orders | declarative | `/events/pubsub/orders` | orders-deadletter (`/events/pubsub/orders-deadletter`) |
 
 ### Packages
-- `Dapr.AspNetCore` 1.18.10 → `src/ShopApi/ShopApi.csproj`
+- `Dapr.AspNetCore` 1.19.1 → `src/ShopApi/ShopApi.csproj`
 
 ### New files
 - `src/ShopApi/Models/OrderPlaced.cs` — message contract
@@ -262,6 +264,6 @@ The new `using ShopApi.Models;` is already present; add `using ShopApi.Messaging
 - `dapr.yaml`: appID `shop-api`, appDirPath `src/ShopApi`, appPort 5180 (the `launchSettings.json` port), daprHTTPPort 3555, daprGRPCPort 50055, command `["dotnet", "run"]`, `resourcesPath: ./resources`.
 - `resources/subscription.yaml`: `scopes: [shop-api]`, the same string as the `appID`.
 - `resources/pubsub.yaml`, `resources/resiliency.yaml`, `src/ShopApi/ShopApi.pubsub.http`, `DAPR-PUBSUB.md` — from the shared templates.
-- Package: `dotnet add "src/ShopApi/ShopApi.csproj" package Dapr.AspNetCore --version 1.18.10`.
+- Package: `dotnet add "src/ShopApi/ShopApi.csproj" package Dapr.AspNetCore --version 1.19.1`.
 
 After each of the six steps run `dotnet build "ShopApi.slnx"`; at the end `dotnet test "ShopApi.slnx"` (2 tests pass).

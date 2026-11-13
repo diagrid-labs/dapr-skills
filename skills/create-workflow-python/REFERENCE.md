@@ -1,5 +1,7 @@
 # Reference: Dapr Workflow Python Application
 
+Package versions come from [dapr-versions.md](../dapr-shared/dapr-versions.md) — change a pin there, not here.
+
 ## dapr.yaml
 
 Create a `dapr.yaml` multi-app run file in the project root. This file configures the Dapr sidecar and points to the resources folder.
@@ -38,8 +40,7 @@ name = "<ProjectName>"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
-    "dapr==1.18.0",
-    "dapr-ext-workflow==1.18.0",
+    "dapr[workflow]==1.19.0",
     "fastapi==0.118.2",
     "pydantic==2.12.0",
     "uvicorn==0.37.0",
@@ -411,7 +412,7 @@ from models import ActivityInput, ActivityOutput
 @wfr.activity(name='step1_activity')
 def step1(ctx, activity_input: ActivityInput) -> ActivityOutput:
     # Do some work; activities may pass Pydantic models directly to and from
-    # the workflow as of dapr-ext-workflow 1.18.
+    # the workflow as of Dapr Python SDK 1.18 (dapr.ext.workflow).
     return ActivityOutput(processed_data=activity_input.data.upper())
 ```
 

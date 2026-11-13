@@ -1,5 +1,7 @@
 # Reference: .NET Agent Application
 
+Package versions come from [dapr-versions.md](../dapr-shared/dapr-versions.md) — change a pin there, not here.
+
 Microsoft Agent Framework agents executed durably on Dapr Workflow via [`Diagrid.AI.Microsoft.AgentFramework`](https://www.nuget.org/packages/Diagrid.AI.Microsoft.AgentFramework), built from [`diagridio/dotnet-ai`](https://github.com/diagridio/dotnet-ai).
 
 > **Single source of truth for this API.** The package README at [`src/Diagrid.AI.Microsoft.AgentFramework/README.md`](https://github.com/diagridio/dotnet-ai/blob/master/src/Diagrid.AI.Microsoft.AgentFramework/README.md) and the runnable samples under [`examples/`](https://github.com/diagridio/dotnet-ai/tree/master/examples) are authoritative. The signatures below match release `1.2.0`; if the package has moved on, prefer the repo over this file.
@@ -210,7 +212,7 @@ Add `Dapr.Workflow` to the `.csproj` (the app defines its own workflow):
 ```xml
 <ItemGroup>
   <PackageReference Include="Diagrid.AI.Microsoft.AgentFramework" Version="1.2.0" />
-  <PackageReference Include="Dapr.Workflow" Version="1.18.10" />
+  <PackageReference Include="Dapr.Workflow" Version="1.19.1" />
 </ItemGroup>
 ```
 

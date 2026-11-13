@@ -1,13 +1,15 @@
 # Streaming subscriber with Dapr.Messaging (.NET)
 
-The streaming subscriber uses `Dapr.Messaging` 1.18.10 (`[DaprTopic]`, `ITopicHandler<T>`). The app opens an outbound gRPC stream to the sidecar, so no inbound HTTP port is needed. Resolve every placeholder from the specification interview before copying this file; the vocabulary is in [pubsub-placeholders.md](pubsub-placeholders.md). Replace `<ProjectNamespace>` with the namespace of the project the file lives in. The contract and `PubSubNames` are in [dotnet-pubsub-publisher.md](dotnet-pubsub-publisher.md).
+Package versions come from [dapr-versions.md](dapr-versions.md) — change a pin there, not here.
+
+The streaming subscriber uses `Dapr.Messaging` 1.19.1 (`[DaprTopic]`, `ITopicHandler<T>`). The app opens an outbound gRPC stream to the sidecar, so no inbound HTTP port is needed. Resolve every placeholder from the specification interview before copying this file; the vocabulary is in [pubsub-placeholders.md](pubsub-placeholders.md). Replace `<ProjectNamespace>` with the namespace of the project the file lives in. The contract and `PubSubNames` are in [dotnet-pubsub-publisher.md](dotnet-pubsub-publisher.md).
 
 ## Streaming subscriber
 
 csproj:
 
 ```xml
-<PackageReference Include="Dapr.Messaging" Version="1.18.10" />
+<PackageReference Include="Dapr.Messaging" Version="1.19.1" />
 ```
 
 `Program.cs`:
@@ -77,7 +79,7 @@ Raw payload: set `EnableRawPayload = true` on `[DaprTopic]`.
 
 Notes from verification:
 
-- `Dapr.Messaging` 1.18.10 with a bare `AddDaprMessaging()` never opened the gRPC stream when running under `dapr run` (observed on Windows): the sidecar never logged `Subscribing to pubsub`. Setting `DaprGrpcEndpoint` from `DAPR_GRPC_PORT` fixes it, and the sidecar then logs `Subscribing to pubsub 'pubsub' topic '<TopicName>'`. Setting only the `DAPR_GRPC_ENDPOINT` environment variable did not help.
+- A bare `AddDaprMessaging()` never opened the gRPC stream when running under `dapr run` (observed on Windows against `Dapr.Messaging` **1.18.10**, and not re-tested against the pinned 1.19.1): the sidecar never logged `Subscribing to pubsub`. Setting `DaprGrpcEndpoint` from `DAPR_GRPC_PORT` fixes it, and the sidecar then logs `Subscribing to pubsub 'pubsub' topic '<TopicName>'`. Setting only the `DAPR_GRPC_ENDPOINT` environment variable did not help. Keep setting the endpoint explicitly: it is correct whether or not the underlying bug survives, so this costs nothing if 1.19.1 fixed it.
 - `MapDaprMessaging()` is not needed for streaming.
 - A body that cannot be deserialized into `<EventName>` throws in the generated dispatcher, before `HandleAsync` runs. The handler cannot return `Drop` for it: the subscription faults (`The streaming subscription ... faulted; reconnecting in 00:00:05`), the message is not acknowledged, and it is redelivered after every reconnect, delaying later messages. The handler can only `Drop` messages that are well-formed JSON but semantically invalid, which is what `<ValidationCondition>` tests. Mitigate by keeping the contract lenient (nullable members) and by relying on the sidecar's resiliency and dead-letter policy. Raw non-JSON bytes never reach the app: the sidecar logs a deserialization error and dead-letters the message.
 - The build warning `DAPR1612` (message type not registered in a `JsonSerializerContext`) only matters for native AOT and is harmless here.
@@ -179,4 +181,4 @@ DAPR1601 (generator) and DAPR1611 (analyzer) describe the same condition; either
 - No `appPort` is needed, but the gRPC endpoint must be set as shown (`DAPR_GRPC_PORT`).
 - There is no minimal API or controller choice: subscribers are handler classes.
 - Never mix `[DaprTopic]` with `[Topic]`, `WithTopic` or a Subscription YAML for the same topic.
-- Requires `Dapr.Messaging` 1.18.8 or later; pin 1.18.10.
+- Requires `Dapr.Messaging` 1.18.8 or later; pin 1.19.1.

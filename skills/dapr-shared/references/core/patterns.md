@@ -11,13 +11,19 @@ Go, Java and JavaScript have no pattern reference of their own yet. The closest 
 material is the per-language prompt packs used by the diagram-to-workflow skill:
 `create-workflow-from-diagram/prompts/languages/{go,java,javascript}.md`.
 
-**Key difference from Temporal:** Temporal has Signals, Queries, and Updates as first-class concepts. Dapr does NOT have these. The equivalents in Dapr are:
+**Key difference from Temporal:** Temporal has Signals, Queries and Updates as first-class
+concepts. Dapr has a genuine equivalent for one of the three, and the other two are weaker than a
+one-line mapping suggests:
 
-| Temporal | Dapr Equivalent |
-|----------|----------------|
-| Signal | `WaitForExternalEvent` / `RaiseEvent` |
-| Query | Management API (`GET /v1.0/workflows/{instanceID}`) |
-| Update | No direct equivalent — use external events |
+| Temporal | Dapr | How close it really is |
+|----------|------|------------------------|
+| Signal | `WaitForExternalEvent` / `RaiseEvent` | **Close.** Dapr buffers events that arrive before the workflow waits for them, in FIFO order per event name, so an early signal is not lost — the same property Temporal signal buffering gives you. |
+| Query | Get-status through the SDK client (`GetWorkflowStateAsync` / `get_workflow_state`) | **Not equivalent.** A Temporal Query runs a read-only handler against live workflow state and takes arguments. Dapr returns the runtime status plus a `customStatus` blob the workflow has previously set: one-way, no arguments, and limited to what the workflow chose to publish. If you need a computed answer, the workflow has to write it to `customStatus` in advance. |
+| Update | No equivalent — external events are the nearest thing | **Not equivalent, in four ways.** A Temporal Update is synchronous, durable, rejectable by a validator before it is recorded, and returns a value to the caller. An external event has none of those: it is fire-and-forget, cannot be rejected, and gives the caller nothing back. Getting a result means the workflow publishing it separately and the caller polling for it. |
+
+The Query row names the SDK client deliberately. The HTTP management API also exposes get-status,
+but the 1.19 docs head that reference "HTTP API reference (Deprecated)", so it is not the surface to
+point a reader at.
 
 ---
 
