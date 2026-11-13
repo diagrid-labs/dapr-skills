@@ -51,7 +51,7 @@ The following must be installed by the user before this skill can run:
 
 Additional runtime dependencies (handled during project setup):
 
-- NuGet package: `Dapr.Workflow` version `1.18.10` (ApiService)
+- NuGet package: `Dapr.Workflow` version `1.19.1` (ApiService)
 - NuGet package: `CommunityToolkit.Aspire.Hosting.Dapr` version `13.0.0` (AppHost)
 - NuGet package: `Aspire.Hosting.Valkey` version `<AspireVersion>` (AppHost) — the same version as the `Aspire.AppHost.Sdk` that `aspire new` writes
 - Optional: the [Diagrid Dapr Dev Dashboard](https://github.com/diagridio/dev-dashboard) for inspecting workflow runs locally. The skill only checks whether it is installed (see `## Check optional tools`); it never installs it and never stops without it.
@@ -79,7 +79,7 @@ After scaffolding:
 2. **Determine `<AspireVersion>`** — read the `Sdk` attribute of the generated `<SolutionRoot>.AppHost/<SolutionRoot>.AppHost.csproj` (e.g. `<Project Sdk="Aspire.AppHost.Sdk/13.6.1">` → `13.6.1`). Keep the Aspire versions that `aspire new` writes: do NOT change the `Aspire.AppHost.Sdk` version or the package versions in the scaffolded ServiceDefaults project.
 3. **Add NuGet packages** — run these commands from **inside the `<SolutionRoot>` folder** (do NOT `cd` elsewhere between commands, as the working directory persists across Bash calls and will break subsequent file operations that use relative paths):
    ```shell
-   dotnet add <SolutionRoot>.ApiService/<SolutionRoot>.ApiService.csproj package Dapr.Workflow --version 1.18.10
+   dotnet add <SolutionRoot>.ApiService/<SolutionRoot>.ApiService.csproj package Dapr.Workflow --version 1.19.1
    dotnet add <SolutionRoot>.AppHost/<SolutionRoot>.AppHost.csproj package CommunityToolkit.Aspire.Hosting.Dapr --version 13.0.0
    dotnet add <SolutionRoot>.AppHost/<SolutionRoot>.AppHost.csproj package Aspire.Hosting.Valkey --version <AspireVersion>
    ```

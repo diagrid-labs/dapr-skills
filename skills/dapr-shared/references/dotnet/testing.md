@@ -1,5 +1,7 @@
 # .NET Workflow Testing
 
+Package versions come from [dapr-versions.md](../../dapr-versions.md) — change a pin there, not here.
+
 ## Overview
 
 Dapr Workflow .NET tests use **xUnit** as the test framework and **Moq** (or **NSubstitute**) to mock activity dependencies. Because `WorkflowContext` and `WorkflowActivityContext` are abstract classes, they can be mocked directly using Moq.
@@ -193,7 +195,7 @@ public async Task RunAsync_ActivityFails_ReturnsError()
 
 ## Integration Testing with Dapr Sidecar
 
-For end-to-end tests, use the `Dapr.Testcontainers` package (same version as `Dapr.Workflow`, e.g. `1.18.10`). It starts `daprd` and its dependencies in Docker containers — Docker is required, the Dapr CLI is not. The pattern below mirrors the SDK's own integration tests (`test/Dapr.IntegrationTest.Workflow` in the dotnet-sdk repo):
+For end-to-end tests, use the `Dapr.Testcontainers` package (same version as `Dapr.Workflow`, e.g. `1.19.1`). It starts `daprd` and its dependencies in Docker containers — Docker is required, the Dapr CLI is not. The pattern below mirrors the SDK's own integration tests (`test/Dapr.IntegrationTest.Workflow` in the dotnet-sdk repo):
 
 ```csharp
 // Integration test — requires Docker

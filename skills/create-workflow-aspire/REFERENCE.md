@@ -1,5 +1,7 @@
 # Reference: Dapr Workflow .NET Aspire Application
 
+Package versions come from [dapr-versions.md](../dapr-shared/dapr-versions.md) — change a pin there, not here.
+
 ## AppHost.cs
 
 See **AppHost.cs (new solution)** in [`../dapr-shared/dotnet-aspire-dapr-wiring.md`](../dapr-shared/dotnet-aspire-dapr-wiring.md).
@@ -135,7 +137,7 @@ app.Run();
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapr.Workflow" Version="1.18.10" />
+    <PackageReference Include="Dapr.Workflow" Version="1.19.1" />
   </ItemGroup>
 
 </Project>
@@ -144,7 +146,7 @@ app.Run();
 ### Key points
 
 - References the ServiceDefaults project for shared Aspire configuration.
-- Uses `Dapr.Workflow` version `1.18.10` for workflow support.
+- Uses `Dapr.Workflow` version `1.19.1` for workflow support.
 - No `Microsoft.AspNetCore.OpenApi` package is needed unless the user explicitly requests OpenAPI support.
 
 ## ServiceDefaults .csproj

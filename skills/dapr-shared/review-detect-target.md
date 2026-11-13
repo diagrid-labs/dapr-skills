@@ -10,7 +10,7 @@ Probe the project root (or the user-specified scope folder) for the markers belo
 | -------------------------------------------------- | --------------- |
 | `*.csproj` containing `Sdk="Microsoft.NET.Sdk.Web"` and `PackageReference Include="Dapr.Workflow"` | `dotnet`        |
 | `*.csproj` referencing `CommunityToolkit.Aspire.Hosting.Dapr` or an `*.AppHost` project | `aspire` (treat as `dotnet` plus Aspire-specific notes) |
-| `pyproject.toml` with `dapr-ext-workflow` dependency | `python`        |
+| `pyproject.toml` with `dapr[workflow]` (1.19 and later), `dapr-ext-workflow` (pre-1.19), or plain `dapr` in a scope whose `.py` files import `dapr.ext.workflow` | `python`        |
 
 If multiple targets exist (e.g., a `.NET` Aspire solution with a sibling Python app), confirm the scope with the user before continuing.
 

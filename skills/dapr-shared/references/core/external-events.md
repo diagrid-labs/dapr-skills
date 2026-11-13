@@ -105,6 +105,12 @@ dapr workflow raise-event <instanceID>/ApprovalReceived \
 
 ### HTTP API
 
+> **The workflow HTTP API is deprecated.** The 1.19 docs head its reference "HTTP API reference
+> (Deprecated)" and say it "is deprecated and will eventually be removed". The supported surface is
+> the SDK clients and the gRPC `*Beta1` RPCs underneath them. The `curl` calls below still work and
+> are kept because they are the quickest way to reproduce a problem by hand — do not build an
+> application on them.
+
 ```bash
 curl -X POST \
   "http://localhost:3500/v1.0/workflows/dapr/<instanceID>/raiseEvent/ApprovalReceived" \

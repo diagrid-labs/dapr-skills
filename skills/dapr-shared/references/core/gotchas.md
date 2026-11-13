@@ -158,7 +158,52 @@ replay, and increases memory pressure on workers.
 - Slow workflow replay proportional to payload size
 - Worker memory pressure when many large-payload workflows replay simultaneously
 - Storage costs increasing faster than workflow volume
-- gRPC message size errors when payloads approach the 4 MB gRPC limit
+- **A workflow stuck in `RUNNING` with no activity ever starting, and nothing in the logs**
+
+**The silent stall — read this before you go looking for an error**
+
+Oversized payloads do not fail loudly. The sidecar budgets **95% of `--max-body-size`** (default
+**4 MiB**) for a work item. Over that budget the work item **is not sent to the SDK at all, and no
+`ResourceExhausted` is raised on the stream**. The workflow simply stops making progress, and the
+stall is **durable**: it survives sidecar and app restarts, and persists until an operator acts. An
+oversized *activity* input stalls only that activity; an oversized workflow payload stalls the
+instance.
+
+This is the opposite of the debugging experience the symptom list above suggests. There is no
+exception to catch, no error to grep for, and the workflow's status stays `RUNNING` — which is why
+it is worth knowing the shape of the failure before meeting it.
+
+**Detecting it**
+
+Two sidecar histograms carry the ratio of payload size to `--max-body-size`, and they are the only
+confirmation the docs offer — there is no error, and **no history event or CLI command is documented
+for this**:
+
+- `runtime/workflow/payload/size_ratio` (tags: `app_id`, `namespace`, `workflow_name`)
+- `runtime/workflow/activity/payload/size_ratio` (also tagged `activity_name`)
+
+Read the bands rather than a single threshold: a value in **(0.95, 1.0]** tripped the stall threshold,
+and **≥ 1.0** exceeded `--max-body-size` outright. In Prometheus they appear as
+`runtime_workflow_payload_size_ratio_bucket` and `runtime_workflow_activity_payload_size_ratio_bucket`.
+
+**Remedies, in the order worth trying**
+
+1. **Pass a reference instead of the data** — the fix below, and the only one that removes the
+   problem rather than moving the limit.
+2. **Raise `--max-body-size`** on the sidecar and restart it. The stalled instance resumes once the
+   work item fits. This buys room; it does not change the shape of the failure.
+3. **Force-purge the instance** when the payload can never fit and the run is expendable.
+
+Dapr 1.19 also has **data references**, which keep large payloads out of the work item entirely. In
+.NET they are configured by chaining from the registration —
+`AddDaprWorkflow().WithBinaryStorePayloads(options => { ... })`, with `BinaryStorePayloadOptions`
+(`StoreName`, `WritePreference`, `OffloadThreshold`) from the `Dapr.Workflow.Payloads` namespace —
+backed by a `binarystore.*` component; the docs name only `binarystore.in-memory`, for development.
+
+Both the binary store building block and the .NET implementation are **alpha**, from `Dapr.Workflow`
+1.19.0. The JavaScript SDK reads the version-1 reference envelope from `@dapr/dapr` 3.19.0 but does
+not implement payload-stage reversal, and the docs say not to assume any other SDK supports the
+scheme. Treat this as something to watch rather than something to build on today.
 
 **The Fix**
 
@@ -300,6 +345,12 @@ err = client.PurgeWorkflow(ctx, instanceID, workflow.WithRecursivePurge(true))
 
 Via HTTP:
 
+> **The workflow HTTP API is deprecated.** The 1.19 docs head its reference "HTTP API reference
+> (Deprecated)" and say it "is deprecated and will eventually be removed". The supported surface is
+> the SDK clients and the gRPC `*Beta1` RPCs underneath them. The `curl` calls below still work and
+> are kept because they are the quickest way to reproduce a problem by hand — do not build an
+> application on them.
+
 ```bash
 curl -X POST \
   "http://localhost:3500/v1.0/workflows/dapr/<instanceID>/purge"
@@ -378,9 +429,13 @@ Choose a versioning strategy before deploying breaking changes:
   or traffic routing).
 - **New workflow type:** register `OrderWorkflowV2` alongside `OrderWorkflow`; route new
   starts to v2 only.
-- **Named versioning** (Go SDK): use `AddVersionedWorkflowN` to pin in-flight instances
-  to their original version while new instances use the latest.
-- **Patching** (Go SDK): use `ctx.IsPatched` for minor in-place changes.
+- **Named versioning** (.NET, Go, Python): pin in-flight instances to the version they
+  started on while new instances use the latest — `AddVersionedWorkflowN` in Go,
+  `@wfr.versioned_workflow` in Python, `AddDaprWorkflowVersioning()` plus the source
+  generator in .NET.
+- **Patching** (.NET, Go, Python): `IsPatched` / `is_patched` for minor in-place changes.
+  A version a replica does not have registered produces a recoverable `STALLED` instance
+  with `reason=VERSION_NAME_MISMATCH`, not a failure.
 
 During development (not production), the fastest resolution is to terminate stale
 in-flight instances before deploying:

@@ -11,11 +11,25 @@ code did, the replay diverges and the workflow fails with a non-determinism erro
 Versioning gives you strategies to deploy code changes safely while open workflows are
 still running.
 
-**Status note:** Named versioning and the patching API (`IsPatched`) are implemented in
-`durabletask-go` and available today in the Go SDK. The full cross-SDK versioning
-experience described in [proposal #20251028](https://github.com/dapr/proposals/blob/main/20251028-BRS-workflow-versioning.md)
-is still in proposal/review stage. The Blue/Green and new-type strategies work today in
-all SDKs regardless of proposal status.
+**SDK support.** The two features do not ship together, so check them separately:
+
+| Feature | SDKs |
+|---|---|
+| Named versioning (registration API) | .NET, Go, Python |
+| Patching API (`IsPatched`) | .NET, Go, Python, **JavaScript** |
+
+Java has neither, and JavaScript has patching but no named-version registration, so a workflow
+in Java — or a JavaScript workflow that needs a full version bump rather than an in-place patch —
+uses Blue/Green or a new workflow type, which work in every SDK.
+
+All of this was verified against the packages, not read off a documentation page: a .NET 10
+project on `Dapr.Workflow` 1.19.1 compiles `context.IsPatched("...")` and
+`builder.Services.AddDaprWorkflowVersioning()`; `dapr[workflow]==1.19.0` exposes
+`DaprWorkflowContext.is_patched` and `WorkflowRuntime.versioned_workflow`; and `@dapr/dapr`
+3.19.0 declares `WorkflowContext.isPatched(patchName: string): boolean` while its
+`WorkflowRuntime` exposes only `registerWorkflow` / `registerWorkflowWithName`, with no
+versioned-registration method. Note that the docs.dapr.io versioning page still shows code tabs
+for .NET, Go and Python only — JavaScript patching is in the SDK ahead of the documentation.
 
 ## Why Code Changes Break Replay
 
@@ -91,11 +105,22 @@ remain.
 **When to use:** Major rewrites, incompatible changes, or when you want a clean
 separation between old and new logic.
 
-## Strategy 3: Named Versioning (Go SDK, Available Now)
+## Strategy 3: Named Versioning (.NET, Go, Python)
 
-The `durabletask-go` registry supports named versioning directly. Register multiple
-implementations of the same canonical workflow name. The runtime pins a running instance
-to the version it started on; new instances use whichever version is marked `isLatest`.
+Register several implementations of one canonical workflow name. The runtime pins a running
+instance to the version it started on; new instances use whichever version is marked latest.
+
+| SDK | How a version is registered |
+|---|---|
+| Go | `registry.AddVersionedWorkflowN(name, versionName, isLatest, fn)` |
+| Python | `@wfr.versioned_workflow(name=..., is_latest=True)` |
+| .NET | `builder.Services.AddDaprWorkflowVersioning()`; named versioning is then applied automatically at runtime. `UseDefaultWorkflowStrategy<T>(key)` and `UseDefaultWorkflowSelector<T>()` change the strategy and the selector (default `MaxVersionSelector`). |
+
+**Do not confuse versioning with registration.** The source generator in `Dapr.Workflow` discovers and
+registers **both workflows and activities** at build time, and that has nothing to do with versioning:
+the docs say you "do not need to opt into named workflow versioning to benefit from this automatic
+registration". `AddDaprWorkflow()` is still required to wire up the services, but its options delegate
+is optional, and explicit `w.RegisterActivity<T>()` calls remain supported for anyone who wants them.
 
 ```go
 // Register v1 (not latest — kept for in-flight instances)
@@ -113,10 +138,20 @@ r.AddVersionedWorkflowN("OrderWorkflow", "OrderWorkflow_v2", true, OrderWorkflow
 The canonical name ("OrderWorkflow") is used everywhere externally. The version name is
 an internal routing detail.
 
-## Strategy 4: Patching API (Go SDK, Available Now)
+## Strategy 4: Patching API (.NET, Go, Python, JavaScript)
 
-For minor in-place fixes that do not warrant a full new version, use `ctx.IsPatched` to
-branch code based on whether the patch was recorded in the workflow's history.
+For minor in-place fixes that do not warrant a full new version, branch on whether the patch
+was recorded in the workflow's history. This is the closest Dapr equivalent of Temporal's
+`GetVersion`, and unlike `GetVersion` it is a boolean, not a version number.
+
+| SDK | Call |
+|---|---|
+| .NET | `context.IsPatched("<patch-id>")` on `WorkflowContext` |
+| Go | `ctx.IsPatched("<patch-id>")` |
+| Python | `ctx.is_patched("<patch-id>")` |
+| JavaScript | `ctx.isPatched("<patch-id>")` on `WorkflowContext` (`@dapr/dapr` 3.19.0+) |
+
+The Go sample below shows the shape; the branch structure is identical in the other three.
 
 ```go
 func OrderWorkflow(ctx *workflow.WorkflowContext) (any, error) {
@@ -157,6 +192,28 @@ func OrderWorkflow(ctx *workflow.WorkflowContext) (any, error) {
 - Patches cannot overlap (the same position in history cannot have two active patches).
 - Use descriptive patch IDs: `"add-fraud-check"` not `"patch-1"`.
 - Patching is for minor fixes; use named versioning for larger changes.
+- **Never remove, rename, reorder or reuse a patch identifier.** The identifier is matched
+  against recorded history, so changing one is the same class of break as reordering
+  activities. Step 3 of the lifecycle above is safe only once no instance predates the patch.
+
+## Retiring a version, and the stall that follows getting it wrong
+
+Do not delete an old named version because it looks unused. A workflow instance can sit
+dormant for weeks — waiting on an external event or a long timer — and still be pinned to
+the version it started on. Delete only after independently confirming nothing in flight or
+dormant uses it; `dapr workflow list` is the check, not an assumption about traffic.
+
+When a replica is asked to replay an instance whose version it does not have registered, the
+instance goes **STALLED** rather than failing:
+
+```
+reason=VERSION_NAME_MISMATCH;description=Version not available: <version>
+```
+
+This is recoverable and self-healing: the instance resumes as soon as it is scheduled on a
+replica that has the version registered. A STALLED instance during a rolling deployment is
+therefore expected and transient. One that stays stalled means no replica can run it any
+more — redeploy the missing version rather than terminating the instance.
 
 ## Migration Strategies for Long-Running Workflows
 

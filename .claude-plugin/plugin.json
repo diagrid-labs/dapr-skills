@@ -1,7 +1,7 @@
 {
   "name": "dapr-skills",
   "description": "Create, add, migrate and review Dapr applications that use Workflow, Pub/Sub, Dapr Agents or a Diagrid agent framework wrapper for durable agent applications. For Diagrid use the catalyst-ai plugin.",
-  "version": "1.30.0",
+  "version": "1.31.0",
   "author": {
     "name": "Diagrid",
     "url": "https://diagrid.io"

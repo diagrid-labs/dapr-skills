@@ -1,6 +1,8 @@
 # Declarative subscriber (.NET)
 
-The subscription lives in `resources/subscription.yaml` (see [dapr-pubsub-subscription.md](dapr-pubsub-subscription.md)); the code only maps the routes the YAML names. The handlers are in [dotnet-pubsub-handler.md](dotnet-pubsub-handler.md). Resolve every placeholder from the specification interview before copying this file; the vocabulary is in [pubsub-placeholders.md](pubsub-placeholders.md). Replace `<ProjectNamespace>` with the namespace of the project the file lives in. `Dapr.AspNetCore` 1.18.10 is referenced for `UseCloudEvents`.
+Package versions come from [dapr-versions.md](dapr-versions.md) — change a pin there, not here.
+
+The subscription lives in `resources/subscription.yaml` (see [dapr-pubsub-subscription.md](dapr-pubsub-subscription.md)); the code only maps the routes the YAML names. The handlers are in [dotnet-pubsub-handler.md](dotnet-pubsub-handler.md). Resolve every placeholder from the specification interview before copying this file; the vocabulary is in [pubsub-placeholders.md](pubsub-placeholders.md). Replace `<ProjectNamespace>` with the namespace of the project the file lives in. `Dapr.AspNetCore` 1.19.1 is referenced for `UseCloudEvents`.
 
 ## Minimal API form
 

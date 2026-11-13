@@ -26,6 +26,7 @@ import {
 } from './lib/pubsub-validation.mjs';
 import { checkReportExampleCounts } from './lib/review-validation.mjs';
 import { checkFamilyVocabulary, checkFamilyVocabularyLinks } from './lib/family-validation.mjs';
+import { checkVersionPins } from './lib/version-validation.mjs';
 import {
   checkVerifyRuns,
   checkDeclaredTools,
@@ -79,6 +80,7 @@ report('pubsub: templates link the placeholder vocabulary', checkVocabularyLinks
 report('pubsub: CEL matches cast with int()', checkCelCasts(skillsDir));
 report('workflow: placeholders are defined and used', checkFamilyVocabulary(skillsDir, 'workflow'));
 report('workflow: templates link the placeholder vocabulary', checkFamilyVocabularyLinks(skillsDir, 'workflow'));
+report('versions: Dapr package pins match dapr-versions.md', checkVersionPins(skillsDir, evalsDir));
 report('reviews: example Found: lines match their findings', checkReportExampleCounts(skillsDir));
 report('cross-cli: frontmatter keys are name, description, allowed-tools (support skills may also hide themselves)', checkFrontmatterKeys(skillsDir));
 report('cross-cli: support skills are hidden from model selection', checkSupportSkillsHidden(skillsDir));

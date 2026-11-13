@@ -6,7 +6,7 @@ Dapr Workflow Python serializes activity inputs and outputs as JSON. Any value p
 `call_activity` or `call_child_workflow` must be JSON-serializable. Return values from activities are also
 JSON-serialized before being stored in workflow history.
 
-As of `dapr-ext-workflow` 1.18, Pydantic v2 models may be passed directly as `input=` and returned
+As of Dapr Python SDK 1.18 (`dapr.ext.workflow`), Pydantic v2 models may be passed directly as `input=` and returned
 directly; the SDK serializes them to JSON for you.
 
 ## Basic JSON Serialization
@@ -80,7 +80,7 @@ def dataclass_workflow(ctx: DaprWorkflowContext, order_data: dict):
 
 ## Pydantic Models
 
-As of `dapr-ext-workflow` 1.18, Pydantic v2 models can be passed directly as `input=` to
+As of Dapr Python SDK 1.18 (`dapr.ext.workflow`), Pydantic v2 models can be passed directly as `input=` to
 `schedule_new_workflow`, `call_activity`, and `call_child_workflow`, and returned directly from activities
 and workflows — the SDK serializes them to JSON for you. To receive a reconstructed model in a callback,
 type-annotate the input parameter with the model class; without a type annotation the callback receives a
@@ -104,7 +104,7 @@ class PaymentResult(BaseModel):
     status: str
 
 
-# As of dapr-ext-workflow 1.18, pass and return Pydantic models directly.
+# As of Dapr Python SDK 1.18 (dapr.ext.workflow), pass and return Pydantic models directly.
 @wfr.activity(name='process_payment')
 def process_payment(ctx: WorkflowActivityContext, request: PaymentRequest) -> PaymentResult:
     # ... process payment ...

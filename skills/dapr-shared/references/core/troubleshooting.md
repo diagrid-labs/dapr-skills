@@ -46,6 +46,12 @@ Workflow in RUNNING but nothing is happening?
 
 **Key diagnostic commands:**
 
+> **The workflow HTTP API is deprecated.** The 1.19 docs head its reference "HTTP API reference
+> (Deprecated)" and say it "is deprecated and will eventually be removed". The supported surface is
+> the SDK clients and the gRPC `*Beta1` RPCs underneath them. The `curl` calls below still work and
+> are kept because they are the quickest way to reproduce a problem by hand — do not build an
+> application on them.
+
 ```bash
 # Check sidecar is running and healthy
 dapr list
@@ -56,6 +62,21 @@ curl "http://localhost:3500/v1.0/workflows/dapr/<instanceId>"
 # Check sidecar logs for workflow errors
 dapr logs --app-id <app-id>
 ```
+
+### Workflow is RUNNING but no activity ever starts
+
+No error, no exception, nothing in the logs, and the status stays `RUNNING`. The usual cause is an
+oversized payload: over 95% of `--max-body-size` (default 4 MiB) the sidecar does not send the work
+item and raises no `ResourceExhausted`, so the instance stalls durably across restarts.
+
+The two ratio metrics are the only documented confirmation — `runtime/workflow/payload/size_ratio`
+and `runtime/workflow/activity/payload/size_ratio`, where a value in (0.95, 1.0] tripped the threshold
+and ≥ 1.0 exceeded `--max-body-size`. There is no history event and no CLI command documented for
+this, so an empty `dapr workflow history` does **not** rule the payload out. The remedies and the full
+mechanism are in [gotchas.md](gotchas.md) → **The silent stall**.
+
+Rule out the ordinary causes first: a paused instance resumes only when told to, and a workflow
+waiting on an external event that never arrives looks identical from the outside.
 
 ---
 

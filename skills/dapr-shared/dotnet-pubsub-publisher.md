@@ -1,7 +1,9 @@
 # Publisher (.NET)
 
+Package versions come from [dapr-versions.md](dapr-versions.md) — change a pin there, not here.
+
 Code for publishing `<EventName>` events to the `<TopicName>` topic with `DaprClient` from
-`Dapr.AspNetCore` 1.18.10. Resolve every placeholder from the specification interview before copying
+`Dapr.AspNetCore` 1.19.1. Resolve every placeholder from the specification interview before copying
 this file; the vocabulary is in [pubsub-placeholders.md](pubsub-placeholders.md). Replace
 `<ProjectNamespace>` with the namespace of the project the file lives in.
 

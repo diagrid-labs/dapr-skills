@@ -1,6 +1,8 @@
 # Reference: Migrate an Existing TypeScript Application to Dapr
 
-This reference has three parts: **discovery heuristics** (how to find migration candidates), the **infra-to-component mapping** (how to configure Dapr against what the app already runs on), and **verified before/after transformations** for each of the 7 categories. The `@dapr/dapr` API shapes here are the same ones verified against the real `@dapr/dapr@3.18.0` package in [`../create-workflow-typescript/REFERENCE.md`](../create-workflow-typescript/REFERENCE.md) — read that file's "SDK gotchas" section too; every gotcha there (async-generator workflows, the pub/sub retry behavior, HTTP-vs-gRPC asymmetry, no Jobs client wrapper) applies here unchanged.
+Package versions come from [dapr-versions.md](../dapr-shared/dapr-versions.md) — change a pin there, not here.
+
+This reference has three parts: **discovery heuristics** (how to find migration candidates), the **infra-to-component mapping** (how to configure Dapr against what the app already runs on), and **verified before/after transformations** for each of the 7 categories. The `@dapr/dapr` API shapes here are the same ones compiled against the real `@dapr/dapr@3.19.0` package in [`../create-workflow-typescript/REFERENCE.md`](../create-workflow-typescript/REFERENCE.md) — read that file's "SDK gotchas" section too; the gotchas there (async-generator workflows, the pub/sub retry behavior, HTTP-vs-gRPC asymmetry) apply here unchanged. One has been superseded: 3.19.0 **does** wrap Jobs, so migrate a scheduler onto `client.jobs.schedule(...)` rather than hand-rolled calls to the sidecar's `/v1.0/jobs` HTTP API.
 
 ## Discovery heuristics
 
@@ -239,25 +241,29 @@ cron.schedule("0 * * * *", async () => {
   await sendHourlyDigest();
 });
 
-// AFTER (no SDK wrapper exists — see create-workflow-typescript's SDK gotchas)
-const daprHttpPort = process.env.DAPR_HTTP_PORT ?? "3500";
-await fetch(`http://localhost:${daprHttpPort}/v1.0/jobs/hourly-digest`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ data: {}, schedule: "0 * * * *", overwrite: true }),
+// AFTER (@dapr/dapr 3.19.0+ wraps Jobs — client and callback hook)
+await daprClient.jobs.schedule("hourly-digest", {
+  schedule: "0 0 * * * *", // six fields: sec min hour dayOfMonth month dayOfWeek
+  data: {},
+  overwrite: true,
 });
 ```
 
-and a callback route added to the app's existing HTTP server:
+and the callback registered on the `DaprServer`, before `server.start()`:
 
 ```typescript
-app.post("/job/hourly-digest", async (req: Request, res: Response) => {
+await server.jobs.listen("hourly-digest", async () => {
   await sendHourlyDigest();
-  res.status(200).send();
 });
 ```
 
-**Key points**: schedule once at startup with `overwrite: true` so restarts don't fail trying to re-register an existing job name (or check `GET /v1.0/jobs/hourly-digest` first and skip scheduling if it already exists). Remove the `node-cron` dependency only after confirming the Dapr-triggered path fires correctly — don't delete the fallback in the same change that adds the new path.
+**Key points**:
+
+- **The cron gains a field.** `node-cron` takes five fields (min hour dom mon dow); Dapr's job schedule is a **six**-field cron whose first field is seconds, so `"0 * * * *"` must become `"0 0 * * * *"` to stay hourly. Copying the five-field string across shifts every field by one and silently changes the schedule. `CronExpressionBuilder` from `@dapr/dapr` builds it for you if you would rather not count fields, and Dapr descriptors such as `"@every 1h"` and `"@daily"` also work.
+- **Schedule once at startup with `overwrite: true`.** `overwrite` defaults to `false`, so a restart otherwise fails trying to re-register an existing name. `daprClient.jobs.get("hourly-digest")` is the alternative if you would rather check and skip.
+- **Job names become URL path segments.** The SDK rejects a name containing `/ \ ? # % |` or control characters, so a name derived from user data needs sanitising first.
+- `server.jobs.listen` matches the job name **exactly** and answers 404 for anything unregistered. That is fine here, where the name is fixed; if the app schedules per-entity job names known only at run time, keep a catch-all `app.post("/job/:jobName")` route instead — see `create-workflow-typescript/REFERENCE.md`, "Jobs: which callback to use".
+- Remove the `node-cron` dependency only after confirming the Dapr-triggered path fires correctly — don't delete the fallback in the same change that adds the new path.
 
 ### 7. Workflow / saga (do this category last, and only after the simpler ones are working)
 

@@ -2,8 +2,9 @@
 
 ## Overview
 
-Dapr Workflow for Python is provided by the `dapr-ext-workflow` package, which is part of the `dapr` Python SDK
-extensions. Workflows are plain Python generator functions decorated with `@wfr.workflow`. Activities are plain Python
+Dapr Workflow for Python is provided by the `workflow` extra of the `dapr` package. From Dapr 1.19 it ships inside
+the `dapr` distribution — the separate `dapr-ext-workflow` package is no longer published — and the import path
+`dapr.ext.workflow` is unchanged. Workflows are plain Python generator functions decorated with `@wfr.workflow`. Activities are plain Python
 functions decorated with `@wfr.activity`. The `WorkflowRuntime` manages worker startup, and `DaprWorkflowClient`
 handles scheduling and lifecycle management.
 
@@ -12,10 +13,18 @@ There is no sandbox: **you** are responsible for writing deterministic workflow 
 ## Installation
 
 ```bash
-pip install dapr dapr-ext-workflow
+pip install "dapr[workflow]"
 ```
 
-Requires Python 3.10+ (`dapr-ext-workflow` 1.18). The `create-workflow-python` skill targets Python 3.12+.
+Quote the brackets: `[` is a glob character in POSIX shells and a wildcard in PowerShell. With uv, the same pin is
+`uv add "dapr[workflow]==1.19.0"`.
+
+Requires Python 3.10+ (`dapr` 1.19.0 declares `requires-python >=3.10`). The `create-workflow-python` skill targets
+Python 3.12+.
+
+A project created before Dapr 1.19 depends on `dapr-ext-workflow` instead. `dapr` 1.18.3 declares no extras at all,
+so the two shapes never overlap: migrate the whole project to `dapr[workflow]>=1.19.0`, or leave it on the old pair.
+Never pin `dapr==1.19.0` beside `dapr-ext-workflow`, which puts two copies of `dapr.ext.workflow` on the import path.
 
 ## Workflow Definition
 

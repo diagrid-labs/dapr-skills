@@ -5,11 +5,11 @@
       "id": 1,
       "name": "support-ticket-triage-chaining",
       "prompt": "Create a Python workflow app named tickettriage. A support ticket comes in with id, customer email, subject and body. The workflow classifies the ticket (category + priority), then assigns it to a support queue based on the category, then sends an acknowledgement email to the customer with the queue name. Return ticket id, category, priority and assigned queue. If any step throws, call an error handler activity and re-raise.",
-      "expected_output": "A tickettriage folder with the tickettriage-app Python project (pyproject.toml pinned to dapr-ext-workflow 1.18.0, runtime.py, workflow.py, activities.py, models.py, main.py), a chained workflow, consistent ports, statestore with actorStateStore, uv venv + uv sync run, README.md and the exact final message.",
+      "expected_output": "A tickettriage folder with the tickettriage-app Python project (pyproject.toml pinned to dapr[workflow] 1.19.0, runtime.py, workflow.py, activities.py, models.py, main.py), a chained workflow, consistent ports, statestore with actorStateStore, uv venv + uv sync run, README.md and the exact final message.",
       "files": [],
       "expectations": [
         "Creates tickettriage/.gitignore, tickettriage/dapr.yaml, tickettriage/local.http, tickettriage/resources/statestore.yaml and tickettriage/tickettriage-app/ containing pyproject.toml, main.py, models.py, runtime.py, workflow.py and activities.py",
-        "pyproject.toml declares requires-python \">=3.12\" and pins dapr-ext-workflow==1.18.0 and dapr==1.18.0",
+        "pyproject.toml declares requires-python \">=3.12\" and pins dapr[workflow]==1.19.0 as its only Dapr dependency",
         "runtime.py creates `wfr = wf.WorkflowRuntime()`; workflow.py and activities.py both import wfr from runtime, and activities.py does not import from workflow.py",
         "models.py defines Pydantic BaseModel classes for the workflow input and output",
         "workflow.py defines a function decorated with @wfr.workflow that yields ctx.call_activity three times in sequence (classify, assign, acknowledge), and on exception calls an error handler activity and re-raises",

@@ -5,13 +5,13 @@
       "id": 1,
       "name": "minimal-api-net8-with-tests",
       "prompt": "Add a Dapr workflow to the OrdersApi project in ./orders-api. When an order is placed it should reserve stock, charge the payment and then send a confirmation email, one after the other. Show me your plan first, then go ahead without waiting for my approval.",
-      "expected_output": "A plan, then targeted edits to OrdersApi: Dapr.Workflow 1.18.10, AddDaprWorkflow() registration, a chained workflow with three activities, workflow endpoints under /workflows/<route>, POST /orders also starting the workflow (default Yes), dapr.yaml and resources/statestore.yaml, an .http file, DAPR-WORKFLOW.md; the solution builds and both existing tests pass; README untouched.",
+      "expected_output": "A plan, then targeted edits to OrdersApi: Dapr.Workflow 1.19.1, AddDaprWorkflow() registration, a chained workflow with three activities, workflow endpoints under /workflows/<route>, POST /orders also starting the workflow (default Yes), dapr.yaml and resources/statestore.yaml, an .http file, DAPR-WORKFLOW.md; the solution builds and both existing tests pass; README untouched.",
       "files": [
         "evals/add-workflow-dotnet/files/orders-api/README.md"
       ],
       "expectations": [
         "Before the first file change, the response (or transcript) contains an Add Workflow Plan that names the target project OrdersApi, the target framework net8.0, the hosting mode `dapr run`, the endpoint style minimal API, and lists every file it will add or edit; before the first file change it asks whether `POST /orders` should also start the workflow, with Yes as the default",
-        "src/OrdersApi/OrdersApi.csproj references Dapr.Workflow version 1.18.10 and its TargetFramework is still net8.0",
+        "src/OrdersApi/OrdersApi.csproj references Dapr.Workflow version 1.19.1 and its TargetFramework is still net8.0",
         "src/OrdersApi/Program.cs still contains the existing `builder.Services.AddSingleton<OrderService>()` and `app.MapGet(\"/orders/{id}\"` lines unchanged and exactly one `AddDaprWorkflow()` call; the `app.MapPost(\"/orders\"` handler still adds the order through OrderService and returns `Results.Created(...)`, and (the default Yes answer) now also calls `ScheduleNewWorkflowAsync` for the workflow with the order id as instance id after the order is added",
         "A workflow class derived from Workflow<TInput, TOutput> calls three activities in sequence (reserve stock, charge payment, send confirmation) and contains no DateTime.Now, DateTime.UtcNow, Guid.NewGuid, HttpClient, Task.Delay or Thread.Sleep",
         "Workflow management endpoints exist for start and status at minimum (start schedules the workflow with DaprWorkflowClient.ScheduleNewWorkflowAsync; status checks state.Exists)",
@@ -32,8 +32,8 @@
         "evals/add-workflow-dotnet/files/billing-service/dapr.yaml"
       ],
       "expectations": [
-        "Directory.Packages.props gets `<PackageVersion Include=\"Dapr.Workflow\" Version=\"1.18.10\" />` and BillingService.csproj gets a version-less `<PackageReference Include=\"Dapr.Workflow\" />`",
-        "Before the first file change the plan says newer packages are available (Dapr.Client and Dapr.AspNetCore 1.17.9 → 1.18.10) and asks whether to update them with Yes as the default; with that default, Directory.Packages.props declares Dapr.Client, Dapr.AspNetCore and Dapr.Workflow at 1.18.10",
+        "Directory.Packages.props gets `<PackageVersion Include=\"Dapr.Workflow\" Version=\"1.19.1\" />` and BillingService.csproj gets a version-less `<PackageReference Include=\"Dapr.Workflow\" />`",
+        "Before the first file change the plan says newer packages are available (Dapr.Client and Dapr.AspNetCore 1.17.9 → 1.19.1) and asks whether to update them with Yes as the default; with that default, Directory.Packages.props declares Dapr.Client, Dapr.AspNetCore and Dapr.Workflow at 1.19.1",
         "Program.cs still calls `AddDaprClient()` and `AddControllers().AddDapr()`, and gains exactly one `AddDaprWorkflow()` call",
         "The workflow endpoints are a new controller class in src/BillingService/Controllers (decorated with [ApiController]), not minimal API Map* calls",
         "The workflow waits with context.CreateTimer (3 days), not Task.Delay, and the reminder loop is bounded (at most 3 iterations, no `while (true)`)",
@@ -56,7 +56,7 @@
         "The plan names the hosting mode Aspire and the AppHost project Catalog.AppHost",
         "Catalog.AppHost.csproj references CommunityToolkit.Aspire.Hosting.Dapr 13.0.0 and Aspire.Hosting.Valkey 13.6.0, and copies a Resources folder with a statestore component (actorStateStore true, redisHost localhost:16379) to the output",
         "AppHost.cs keeps the existing `AddProject<Projects.Catalog_ApiService>(\"catalog-api\")` resource name and adds `.WithDaprSidecar(...)` to it, plus `AddValkey(...)` and `builder.AddExecutable(\"dapr-dev-dashboard\", \"diagrid-dev-dashboard\", \".\", \"--port\", \"9090\", \"--no-open\").WithHttpEndpoint(port: 9090, isProxied: false)`",
-        "Catalog.ApiService references Dapr.Workflow 1.18.10, Program.cs keeps the existing `/products` endpoint and gains one AddDaprWorkflow() call, and the workflow fans out validation activities and awaits them with Task.WhenAll",
+        "Catalog.ApiService references Dapr.Workflow 1.19.1, Program.cs keeps the existing `/products` endpoint and gains one AddDaprWorkflow() call, and the workflow fans out validation activities and awaits them with Task.WhenAll",
         "No dapr.yaml is created",
         "The transcript shows a successful `dotnet build` of the solution",
         "DAPR-WORKFLOW.md says to start with `aspire run` and describes the Dev Dashboard as the `dapr-dev-dashboard` resource on http://localhost:9090",
@@ -82,12 +82,12 @@
       "id": 5,
       "name": "unsupported-net6",
       "prompt": "Add a Dapr workflow to ./legacy-api that runs a nightly data export.",
-      "expected_output": "Stops before planning: explains Dapr.Workflow 1.18 needs net8.0 or later; no changes.",
+      "expected_output": "Stops before planning: explains Dapr.Workflow 1.19 needs net8.0 or later; no changes.",
       "files": [
         "evals/add-workflow-dotnet/files/legacy-api/src/LegacyApi/LegacyApi.csproj"
       ],
       "expectations": [
-        "The response says the project targets net6.0 and that Dapr.Workflow 1.18 needs net8.0, net9.0 or net10.0, and suggests upgrading the target framework or creating a separate workflow service with create-workflow-dotnet",
+        "The response says the project targets net6.0 and that Dapr.Workflow 1.19 needs net8.0, net9.0 or net10.0, and suggests upgrading the target framework or creating a separate workflow service with create-workflow-dotnet",
         "No file in the legacy-api fixture is added, changed or deleted, and no `dotnet add` or `dotnet build` was run"
       ]
     },
@@ -95,10 +95,10 @@
       "id": 6,
       "name": "components-without-actor-store",
       "prompt": "In ./notify-service, add a Dapr workflow that sends a daily digest to a user: once a day it collects the user's unread notifications and emails one digest, and it stops after 7 days. Show the plan, then proceed without asking.",
-      "expected_output": "The existing Dapr setup (dapr.yaml with resourcesPath ./components and a pub/sub component, Dapr.AspNetCore 1.17.9) is extended: a new actor state store goes into components/, nothing else in components/ or dapr.yaml changes, the Dapr packages are updated to 1.18.10 (default Yes), and the workflow uses a bounded durable-timer loop.",
+      "expected_output": "The existing Dapr setup (dapr.yaml with resourcesPath ./components and a pub/sub component, Dapr.AspNetCore 1.17.9) is extended: a new actor state store goes into components/, nothing else in components/ or dapr.yaml changes, the Dapr packages are updated to 1.19.1 (default Yes), and the workflow uses a bounded durable-timer loop.",
       "files": [],
       "expectations": [
-        "Before the first file change the plan says newer packages are available (Dapr.AspNetCore 1.17.9 → 1.18.10) and asks whether to update with Yes as the default; with that default, NotifyService.csproj references Dapr.AspNetCore 1.18.10 and Dapr.Workflow 1.18.10",
+        "Before the first file change the plan says newer packages are available (Dapr.AspNetCore 1.17.9 → 1.19.1) and asks whether to update with Yes as the default; with that default, NotifyService.csproj references Dapr.AspNetCore 1.19.1 and Dapr.Workflow 1.19.1",
         "A new state store component with actorStateStore \"true\" (quoted or unquoted) is added inside the existing components/ folder; no resources/ folder is created and the plan says the existing folder has no actor state store",
         "components/pubsub.yaml and dapr.yaml are byte-for-byte unchanged",
         "Program.cs still calls `AddDaprClient()` and keeps the `MapPost(\"/notifications\"` endpoint, and gains exactly one `AddDaprWorkflow()` call",

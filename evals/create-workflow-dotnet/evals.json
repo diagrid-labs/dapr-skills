@@ -5,11 +5,11 @@
       "id": 1,
       "name": "invoice-batch-fan-out-fan-in",
       "prompt": "Create a .NET workflow application named InvoiceBatch. At the end of each month our finance team uploads a batch of invoice ids. The workflow should first load the batch (input: batch id + list of invoice ids), then validate every invoice in parallel (each validation returns the invoice id, whether it's valid, and the amount), and once all validations are done, aggregate the valid totals and send a summary email activity to finance. Output of the workflow: batch id, number of valid invoices, number of invalid invoices, and total amount.",
-      "expected_output": "An InvoiceBatch folder containing a .NET 10 web project InvoiceBatchApp that uses Dapr.Workflow 1.18.10, a fan-out/fan-in workflow over invoice validations, consistent ports across dapr.yaml / launchSettings.json / local.http, a Redis state store with actorStateStore, a successful dotnet build, a README.md, and the exact final message.",
+      "expected_output": "An InvoiceBatch folder containing a .NET 10 web project InvoiceBatchApp that uses Dapr.Workflow 1.19.1, a fan-out/fan-in workflow over invoice validations, consistent ports across dapr.yaml / launchSettings.json / local.http, a Redis state store with actorStateStore, a successful dotnet build, a README.md, and the exact final message.",
       "files": [],
       "expectations": [
         "Creates InvoiceBatch/dapr.yaml, InvoiceBatch/local.http, InvoiceBatch/.gitignore, InvoiceBatch/resources/statestore.yaml and the project folder InvoiceBatch/InvoiceBatchApp containing InvoiceBatchApp.csproj, Program.cs, Properties/launchSettings.json and the folders Models/, Workflows/ and Activities/",
-        "InvoiceBatchApp.csproj targets net10.0 and contains PackageReference Include=\"Dapr.Workflow\" Version=\"1.18.10\"",
+        "InvoiceBatchApp.csproj targets net10.0 and contains PackageReference Include=\"Dapr.Workflow\" Version=\"1.19.1\"",
         "resources/statestore.yaml defines a component named statestore of type state.redis with metadata actorStateStore set to \"true\"",
         "The port in applicationUrl of Properties/launchSettings.json equals appPort in dapr.yaml and the port in the @host line of local.http",
         "The workflow class in Workflows/ inherits Workflow<TInput, TOutput>, is declared internal sealed, and awaits Task.WhenAll over multiple context.CallActivityAsync calls for the invoice validations",
@@ -27,7 +27,7 @@
       "expected_output": "An ExpenseApproval solution using the human-in-the-loop pattern: WaitForExternalEventAsync with a 2-day timeout and TaskCanceledException fallback, a raise-event endpoint in Program.cs, and a matching raise-event request in local.http.",
       "files": [],
       "expectations": [
-        "Creates ExpenseApproval/ExpenseApprovalApp/ExpenseApprovalApp.csproj with Dapr.Workflow version 1.18.10",
+        "Creates ExpenseApproval/ExpenseApprovalApp/ExpenseApprovalApp.csproj with Dapr.Workflow version 1.19.1",
         "The workflow class calls context.WaitForExternalEventAsync<T> with a timeout of 2 days (e.g. TimeSpan.FromDays(2)) and the event name is declared as a constant",
         "The workflow catches TaskCanceledException for the timeout path and calls a notification activity in that branch",
         "Program.cs maps POST raise-event/{instanceId}/{eventName}, binds the body as JsonElement, checks state.Exists before calling RaiseEventAsync",

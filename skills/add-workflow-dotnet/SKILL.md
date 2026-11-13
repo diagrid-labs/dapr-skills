@@ -47,11 +47,11 @@ The user must have installed:
 Read-only. Follow **Detection** in `REFERENCE.md`. Determine and remember:
 
 - The solution file (`*.sln` or `*.slnx`) and the target project. If more than one ASP.NET Core project qualifies, ask which one (one question) and wait.
-- Target framework. `net8.0`, `net9.0` and `net10.0` are supported. For anything else (`net6.0`, `net7.0`, .NET Framework), stop now: say that `Dapr.Workflow` 1.18 needs net8.0 or later, suggest upgrading the target framework or creating a separate workflow service with `create-workflow-dotnet`, and change nothing.
+- Target framework. `net8.0`, `net9.0` and `net10.0` are supported. For anything else (`net6.0`, `net7.0`, .NET Framework), stop now: say that `Dapr.Workflow` 1.19 needs net8.0 or later, suggest upgrading the target framework or creating a separate workflow service with `create-workflow-dotnet`, and change nothing.
 - Host type. Only ASP.NET Core (`Microsoft.NET.Sdk.Web`) is supported. Worker Service, console, Azure Functions, Blazor WebAssembly and MAUI projects stop here with the same kind of explanation.
 - Hosting mode: **Aspire** when an AppHost project references the target project; otherwise **dapr run**.
 - `Program.cs` (top-level) or `Startup.cs`; minimal APIs or controllers; namespace style, nullable, folder layout.
-- Package management: `Directory.Packages.props` (Central Package Management) or per-project versions; existing `Dapr.*` packages and versions. Remember every `Dapr.*` package older than 1.18.10 (and, in Aspire mode, an AppHost on Aspire 9.0–9.4) as **newer packages available**.
+- Package management: `Directory.Packages.props` (Central Package Management) or per-project versions; existing `Dapr.*` packages and versions. Remember every `Dapr.*` package older than 1.19.1 (and, in Aspire mode, an AppHost on Aspire 9.0–9.4) as **newer packages available**.
 - Trigger endpoints: existing endpoints that create or accept the thing the workflow is about (for example `POST /orders` for an order workflow, `POST /invoices` for an invoice workflow). Read-only endpoints (`GET`) never qualify, and neither does an endpoint that only accepts or records something related to the workflow's subject (for example `POST /notifications` for a daily-digest workflow, where the workflow is about the user's digest, not the notification). When in doubt, treat the project as having no trigger endpoint. Remember the best match, and whether an existing test calls it over HTTP (`WebApplicationFactory`, `HttpClient`).
 - Existing Dapr files: `dapr.yaml`, the resources folder it points to (`resources/` or `components/`), and any component with `actorStateStore: "true"`.
 - Test projects and the build/test commands. Run them as exactly `dotnet build` and `dotnet test` when the session's working directory is the folder that holds a single `*.sln`/`*.slnx` file, so they match the allowed commands (the same on macOS, Linux and Windows). In every other case (the session sits in a parent folder, or the folder holds several solution files) use the quoted path form `dotnet build "<solution-path>"`; the user is then asked to approve it. Never prefix a command with `cd`, and never chain commands with `&&`.
@@ -71,7 +71,7 @@ Emit the **Add Workflow Plan** using the template in `REFERENCE.md`. It lists th
 
 The plan ends with a **Questions** section. Ask these before any file is created or changed, each with its default. Number only the questions that apply, starting at 1:
 
-1. **Package updates** — only when Phase 1 found newer packages available: list each package with its current and new version (`Dapr.Client` 1.17.9 → 1.18.10, …) and ask whether to update them. Default: **Yes, update.** Mixed `Dapr.*` versions in one app are a common source of runtime errors, which is why updating is the default.
+1. **Package updates** — only when Phase 1 found newer packages available: list each package with its current and new version (`Dapr.Client` 1.17.9 → 1.19.1, …) and ask whether to update them. Default: **Yes, update.** Mixed `Dapr.*` versions in one app are a common source of runtime errors, which is why updating is the default.
 2. **Start from the existing endpoint** — only when Phase 1 found a trigger endpoint: name it (`POST /orders`) and ask whether it should also start the workflow after its existing work succeeds. Default: **Yes.** Exception: when an existing test calls that endpoint over HTTP, the default is **No**, because the call would then need a running Dapr sidecar; say so in the question. When no endpoint qualifies, write "No existing endpoint starts the workflow; use the new start endpoint." instead of asking.
 
 Write the plan's file lists as if every default is accepted, and mark which items depend on a question.
@@ -84,7 +84,7 @@ If the baseline test run was kept, run `dotnet test` once now and remember which
 
 Apply the approved items in this fixed order, one step at a time:
 
-1. Package reference — `Dapr.Workflow` 1.18.10 (declared with `Edit`, see `REFERENCE.md`), plus the package updates when question 1 was answered yes.
+1. Package reference — `Dapr.Workflow` 1.19.1 (declared with `Edit`, see `REFERENCE.md`), plus the package updates when question 1 was answered yes.
 2. Dapr wiring — **dapr run** mode: `dapr.yaml` and the state store component, or reuse of the existing ones; **Aspire** mode: the AppHost edits from **Adding to an existing AppHost** in [`../dapr-shared/dotnet-aspire-dapr-wiring.md`](../dapr-shared/dotnet-aspire-dapr-wiring.md).
 3. Models, activities and workflow classes — new files, following [`../dapr-shared/dotnet-models.md`](../dapr-shared/dotnet-models.md), [`../dapr-shared/dotnet-activity-class.md`](../dapr-shared/dotnet-activity-class.md) and [`../dapr-shared/dotnet-workflow-class.md`](../dapr-shared/dotnet-workflow-class.md).
 4. Registration — `AddDaprWorkflow()` and `AddDaprWorkflowVersioning()`, together with the `using Dapr.Workflow;` and `using Dapr.Workflow.Versioning;` directives in the same edit (the build fails with CS1061 without them), per **Adding to an existing Program.cs** in [`../dapr-shared/dotnet-workflow-endpoints.md`](../dapr-shared/dotnet-workflow-endpoints.md).

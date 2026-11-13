@@ -81,7 +81,7 @@ Source: developing-applications/building-blocks/pubsub/pubsub-raw.md
 - JSON numbers are doubles, so compare with `int(event.data.amount) > 1000`. The cast truncates, so `1000.5` does not satisfy `> 1000`. `int()` is the required form; `double()` is not used, so routing stays consistent across projects.
 - Only nested JSON data is addressable. There are no time comparisons.
 - Rules live in `routes.rules` (declarative) or in `TopicOptions.Match` / `[Topic(..., match, priority)]` (.NET programmatic). Each rule needs its own POST endpoint, plus the `default` route.
-- There is no routing for streaming subscriptions, and none in `dapr-ext-fastapi`. Python routing is done declaratively.
+- There is no routing for streaming subscriptions, and none in `dapr.ext.fastapi`. Python routing is done declaratively.
 
 Source: developing-applications/building-blocks/pubsub/howto-route-messages.md
 
@@ -100,7 +100,7 @@ Source: developing-applications/building-blocks/pubsub/pubsub-scopes.md; operati
 | Type | Defined in | App endpoint needed | `appPort` needed | Hot reload | .NET API | Python API |
 |---|---|---|---|---|---|---|
 | Declarative (default) | `resources/subscription.yaml` (`dapr.io/v2alpha1`) | Yes, plain POST routes | Yes | Yes, by default | Plain minimal API / controller endpoint plus `app.UseCloudEvents()`; no `MapSubscribeHandler`, `WithTopic` or `[Topic]` | Plain FastAPI `@app.post` routes; no `DaprApp`, no Dapr package in the subscriber |
-| Programmatic | App code, advertised on `GET /dapr/subscribe` | Yes | Yes | No, read once at app start-up | `UseCloudEvents()`, `MapSubscribeHandler()`, then `.WithTopic(...)` or `[Topic(...)]` (`Dapr.AspNetCore`) | `DaprApp(app).subscribe(...)` (`dapr-ext-fastapi`) |
+| Programmatic | App code, advertised on `GET /dapr/subscribe` | Yes | Yes | No, read once at app start-up | `UseCloudEvents()`, `MapSubscribeHandler()`, then `.WithTopic(...)` or `[Topic(...)]` (`Dapr.AspNetCore`) | `DaprApp(app).subscribe(...)` (`dapr.ext.fastapi`, from `dapr[fastapi]`) |
 | Streaming | App code; the app opens a gRPC stream to its sidecar | No | No (create skills omit it; add skills keep the existing one) | Dynamic in code, not used by the scaffold | `Dapr.Messaging`: `AddDaprMessaging(...)` and an `ITopicHandler<T>` with `[DaprTopic(..., Delivery = DeliveryMode.Streaming)]` | `DaprClient().subscribe_with_handler(...)` (`dapr`) |
 
 - The default in these skills is declarative.
@@ -115,10 +115,10 @@ Source: developing-applications/building-blocks/pubsub/subscription-methods.md
 | Feature | Declarative | Programmatic | Streaming |
 |---|---|---|---|
 | Dead-letter topic | `spec.deadLetterTopic` | .NET `TopicOptions.DeadLetterTopic` or `[Topic(pubsub, topic, deadLetterTopic, false)]`; Python `dead_letter_topic=` | .NET `[DaprTopic(DeadLetterTopic = ...)]`; Python `dead_letter_topic=` |
-| CEL routing (`match` / priority) | `routes.rules[{match, path}]` plus `routes.default`. **Python routing goes here**, the only scaffolded way. | .NET `TopicOptions.Match` / `Priority` or `[Topic(pubsub, topic, match, priority)]`. **Python: not supported** by `dapr-ext-fastapi`; the skill offers declarative instead (default) or documents the grpc `Rule` alternative. | **Not supported**: no routes in streaming (`subscription-methods.md`; `Match` and `Priority` are ignored, analyzer DAPR1617). The skill offers declarative instead. |
+| CEL routing (`match` / priority) | `routes.rules[{match, path}]` plus `routes.default`. **Python routing goes here**, the only scaffolded way. | .NET `TopicOptions.Match` / `Priority` or `[Topic(pubsub, topic, match, priority)]`. **Python: not supported** by `dapr.ext.fastapi`; the skill offers declarative instead (default) or documents the grpc `Rule` alternative. | **Not supported**: no routes in streaming (`subscription-methods.md`; `Match` and `Priority` are ignored, analyzer DAPR1617). The skill offers declarative instead. |
 | Message TTL | Publisher side (`ttlInSeconds`), so it works with every type | same | same |
 | Raw payload (subscriber side) | `spec.metadata.rawPayload: "true"` | .NET `EnableRawPayload` / `[Topic(pubsub, topic, true)]`; Python `metadata={"rawPayload": "true"}` | .NET `[DaprTopic(EnableRawPayload = true)]`; Python `metadata={"rawPayload": "true"}` |
-| Bulk subscribe (recipe only) | `spec.bulkSubscribe` | .NET `WithBulkSubscribe` / `[BulkSubscribe]`; Python not in `dapr-ext-fastapi` | **Not supported** |
+| Bulk subscribe (recipe only) | `spec.bulkSubscribe` | .NET `WithBulkSubscribe` / `[BulkSubscribe]`; Python not in `dapr.ext.fastapi` | **Not supported** |
 | Hot reload of the subscription | Yes, by default (`HotReload` feature) | No. "only read once during application start-up" | Dynamic in code, but not used by the scaffold |
 | Inbound port and `appPort` needed | Yes | Yes | No |
 | .NET style choice | minimal API or controllers | minimal API or controllers | none (handler class) |

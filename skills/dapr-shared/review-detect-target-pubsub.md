@@ -10,7 +10,7 @@ Probe the project root (or the user-specified scope folder) for the markers belo
 | --- | --- |
 | `*.csproj` with `PackageReference Include="Dapr.AspNetCore"`, `"Dapr.Client"` or `"Dapr.Messaging"` | `dotnet` |
 | The same, plus an AppHost project referencing `CommunityToolkit.Aspire.Hosting.Dapr` | `aspire` (treat as `dotnet` plus Aspire-specific notes) |
-| `pyproject.toml` / `requirements*.txt` with `dapr`, `dapr-ext-fastapi` or `dapr-ext-grpc` | `python` |
+| `pyproject.toml` / `requirements*.txt` with `dapr`, an extra such as `dapr[fastapi]` or `dapr[grpc]` (1.19 and later), or the pre-1.19 `dapr-ext-fastapi` / `dapr-ext-grpc` packages | `python` |
 
 Also: if a `kind: Subscription` YAML exists and the scope has `.py` files containing `FastAPI(`, the language is `python`.
 
