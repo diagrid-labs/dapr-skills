@@ -107,7 +107,7 @@ The shared [`../dapr-shared/dotnet-local-http.md`](../dapr-shared/dotnet-local-h
 
 <Diagrid Dapr Dev Dashboard section from the README section of [../dapr-shared/dev-dashboard.md](../dapr-shared/dev-dashboard.md) — Aspire form in Aspire mode>
 
-## Run with Diagrid Catalyst
+## Run with Diagrid
 <`dapr run` mode only — omit this section in Aspire mode, which has no `dapr.yaml`. Content from [../dapr-shared/running-with-catalyst.md](../dapr-shared/running-with-catalyst.md), with `<ProjectName>` replaced by the target project name in lowercase.>
 
 ## Next steps
