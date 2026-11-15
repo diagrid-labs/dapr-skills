@@ -37,7 +37,7 @@ At-least-once delivery: the handler ignores duplicates by <dedupe key>. Invalid 
 
 <Diagrid Dapr Dev Dashboard section from ../dapr-shared/dev-dashboard.md README section; mention that its subscriptions view shows what each app registered>
 
-## Run with Diagrid Catalyst
+## Run with Diagrid
 <dapr run mode only, from ../dapr-shared/running-with-catalyst.md>
 
 ## Next steps

@@ -2,7 +2,7 @@
 
 Once the workflow app is completely built, run it with [Diagrid](https://catalyst.diagrid.io/) to visually inspect the workflow and perform workflow management operations.
 
-1. Sign up at [catalyst.diagrid.io](https://catalyst.diagrid.io/) and install the [Diagrid CLI](https://docs.diagrid.io/references/catalyst-cli-reference/intro/).
+1. Sign up at [catalyst.diagrid.io](https://catalyst.diagrid.io/) and install the [Diagrid CLI](https://docs.diagrid.io/references/diagrid/diagrid-cli-intro/).
 2. Run the application from the project root:
 
 ```shell
