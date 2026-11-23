@@ -67,6 +67,8 @@ The per-skill evals cannot catch a mis-route, because they assume the right skil
 
 To run it, follow the `method` array in the file: collect the `description:` field from every SKILL.md in **both** plugins, give a model those descriptions and nothing else, and ask which single skill it would invoke per query. Give it no hint of the expected answer — the `expect` values are for you to compare against afterwards. Watch the confidence ratings as well as the verdicts: a medium-confidence answer that still matched `expect` is an early warning that two descriptions are drifting together.
 
+To build the prompt, run `node scripts/triggering-prompt.mjs <path to diagrid skills dir>`. It prints the instructions, every skill description from this repo (as `dapr-skills:`) and from the given directory (as `diagrid:`), and the numbered queries, with no `expect`, `baseline` or `note` values, so you can paste it to a fresh model as is.
+
 Re-run it when:
 
 - any `description` in this repo changes, especially on the six overlapping skills;
