@@ -1,15 +1,17 @@
 // Renders every registered scene to <outDir>/<name>.svg, one themed file each.
-import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, realpathSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { svg } from './engine.mjs';
+import { projectPaths } from './paths.mjs';
 import { setIconScope } from './icons.mjs';
 import { setCanvasWidth } from './shapes.mjs';
 
-const here = dirname(fileURLToPath(import.meta.url));
-// Per-scene bbox origins; absent until measure-bbox has run. Shim for Task 1.
-let ORIGINS = {};
-try { ORIGINS = JSON.parse(readFileSync(join(here, 'bbox.json'), 'utf8')); } catch { /* no bbox.json yet */ }
+// Measured centring origins, keyed by scene name. Missing file means none measured yet.
+export function readOrigins(bboxPath) {
+  if (!existsSync(bboxPath)) return {};
+  return JSON.parse(readFileSync(bboxPath, 'utf8'));
+}
 // The colour tokens, light and dark, generated from dapr/docs' _tokens.scss by
 // scripts/diagram-tokens.mjs. Read from tokens.json so a token renamed there
 // fails loudly below rather than leaving a var() in the file.
@@ -113,7 +115,7 @@ function duplicateIds(nodes) {
 // Render one scene to the exact file content (LF, trailing newline).
 // The scene name is passed as svg()'s id so accessible-name ids are unique
 // by construction and stable under title edits.
-export function renderScene(name, scene) {
+export function renderScene(name, scene, origin = [0, 0]) {
   const fail = (m) => {
     throw new Error(`scene "${name}": ${m}`);
   };
@@ -152,7 +154,7 @@ export function renderScene(name, scene) {
     desc: scene.desc,
     id: name,
     children,
-    origin: ORIGINS[name] ?? [0, 0],
+    origin,
   });
   // Some vendored marks carry CR inside their path data (java.svg has CR CR LF),
   // and .gitattributes pins these files to eol=lf, so git rewrites those bytes on
@@ -165,15 +167,20 @@ export function renderScene(name, scene) {
 
 // Returns { ok, problems[], written[], removed[] } (removed = orphans deleted).
 // Renders everything before touching disk, so a bad scene leaves outDir untouched.
-export function run({ scenes, outDir, check = false } = {}) {
+export function run({ scenes, outDir, origins = {}, only, check = false } = {}) {
   if (!outDir) throw new Error('run(): outDir is required');
   const problems = [];
   const rendered = new Map();
+  if (only !== undefined && !Object.hasOwn(scenes, only)) {
+    problems.push(`no scene named "${only}" (known: ${Object.keys(scenes).join(', ') || 'none'})`);
+    return { ok: false, problems, written: [], removed: [] };
+  }
   try {
     const tokens = loadTokens();
     for (const [name, scene] of Object.entries(scenes)) {
+      if (only !== undefined && name !== only) continue;
       try {
-        rendered.set(name, themed(renderScene(name, scene), name, tokens));
+        rendered.set(name, themed(renderScene(name, scene, origins[name] ?? [0, 0]), name, tokens));
       } catch (e) {
         problems.push(e.message);
       }
@@ -184,7 +191,7 @@ export function run({ scenes, outDir, check = false } = {}) {
   if (problems.length) return { ok: false, problems, written: [], removed: [] };
 
   const existing = existsSync(outDir) ? readdirSync(outDir).filter((f) => f.endsWith('.svg')) : [];
-  const orphans = existing.filter((f) => !rendered.has(f.slice(0, -4)));
+  const orphans = only !== undefined ? [] : existing.filter((f) => !rendered.has(f.slice(0, -4)));
 
   if (check) {
     const fix = '(re-run the export)';
@@ -213,17 +220,60 @@ export function run({ scenes, outDir, check = false } = {}) {
   return { ok: true, problems: [], written, removed: orphans };
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const { scenes } = await import('./scenes/index.mjs');
-  const check = process.argv.includes('--check');
-  // Task 5 replaces this block with the real CLI; until then write beside the engine.
-  const { ok, problems, written, removed } = run({ scenes, outDir: join(here, '..', 'out'), check });
+const USAGE = 'Usage: node _engine/export.mjs [--check] [--only <name>] [--no-browser]';
+
+async function main(argv) {
+  let check = false;
+  let only;
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === '--check') check = true;
+    else if (a === '--no-browser') { /* browser features arrive with the PNG step */ }
+    else if (a === '--only') {
+      only = argv[++i];
+      if (!only || only.startsWith('--')) {
+        console.error(`--only needs a scene name\n${USAGE}`);
+        return 2;
+      }
+    } else {
+      console.error(`Unknown argument: ${a}\n${USAGE}`);
+      return 2;
+    }
+  }
+  const paths = projectPaths();
+  if (!existsSync(paths.scenes)) {
+    console.error(`Scenes file not found: ${paths.scenes}\nCreate it with: export const scenes = { '<name>': scene }`);
+    return 1;
+  }
+  const mod = await import(pathToFileURL(paths.scenes).href);
+  if (!mod.scenes || typeof mod.scenes !== 'object') {
+    console.error(`${paths.scenes} must export "scenes" (an object of name -> scene)`);
+    return 1;
+  }
+  const { scenes } = mod;
+  if (only !== undefined && !Object.hasOwn(scenes, only)) {
+    console.error(`No scene named "${only}" (known: ${Object.keys(scenes).join(', ') || 'none'})`);
+    return 2;
+  }
+  const { ok, problems, written, removed } = run({ scenes, outDir: paths.out, origins: readOrigins(paths.bbox), only, check });
   if (!ok) {
     console.error(check ? 'Diagram check failed:' : 'Diagram export failed:');
     for (const p of problems) console.error(`  ${p}`);
-    process.exitCode = 1;
-  } else {
-    for (const f of removed) console.log(`Removed orphan: ${f}`);
-    console.log(check ? `Diagrams up to date (${Object.keys(scenes).length}).` : `Exported ${written.length} diagram(s).`);
+    return 1;
   }
+  for (const f of removed) console.log(`Removed orphan: ${f}`);
+  console.log(check ? `Diagrams up to date (${Object.keys(scenes).length}).` : `Exported ${written.length} diagram(s) to ${paths.out}`);
+  return 0;
+}
+
+// realpath on both sides: a symlinked project folder (macOS /var -> /private/var) must still count as the entry point.
+const isEntry = () => {
+  try {
+    return process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+};
+if (isEntry()) {
+  process.exitCode = await main(process.argv.slice(2));
 }

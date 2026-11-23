@@ -4,7 +4,7 @@ import { mkdtempSync, readFileSync, readdirSync, writeFileSync, rmSync, existsSy
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { el, text, C } from '../../skills/create-diagram/engine/engine.mjs';
-import { run, renderScene, themed, loadTokens, BODY_STACK, MONO_STACK } from '../../skills/create-diagram/engine/export.mjs';
+import { run, readOrigins, renderScene, themed, loadTokens, BODY_STACK, MONO_STACK } from '../../skills/create-diagram/engine/export.mjs';
 
 const scene = (over = {}) => ({
   width: 100,
@@ -312,3 +312,60 @@ test('themed throws when the document does not start with <svg', () => {
 test('themed rejects a bad name', () => {
   assert.throws(() => themed(DOC(), 'Bad Name', tokens), /name must match/);
 });
+
+test('a throwing scene blocks every write and is named', withDir((d) => {
+  const out = join(d, 'out');
+  const scenes = {
+    one: scene(),
+    two: scene({ build: () => { throw new Error('boom'); } }),
+    three: scene(),
+  };
+  const r = run({ scenes, outDir: out });
+  assert.equal(r.ok, false);
+  assert.match(r.problems[0], /two/);
+  assert.deepEqual(snapshot(out), null);
+}));
+
+test('--only renders one scene and removes nothing', withDir((d) => {
+  run({ scenes: fixtures(), outDir: d });
+  writeFileSync(join(d, 'stale.svg'), 'x');
+  const r = run({ scenes: fixtures(), outDir: d, only: 'alpha' });
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.written, ['alpha.svg']);
+  assert.deepEqual(r.removed, []);
+  assert.ok(existsSync(join(d, 'stale.svg')));
+  assert.ok(existsSync(join(d, 'beta.svg')));
+}));
+
+test('--only with an unknown name fails', withDir((d) => {
+  const r = run({ scenes: fixtures(), outDir: d, only: 'nope' });
+  assert.equal(r.ok, false);
+  assert.match(r.problems[0], /nope/);
+}));
+
+test('missing bbox.json means origin 0 0', withDir((d) => {
+  assert.deepEqual(readOrigins(join(d, 'bbox.json')), {});
+  const a = join(d, 'a');
+  const b = join(d, 'b');
+  run({ scenes: fixtures(), outDir: a });
+  run({ scenes: fixtures(), outDir: b, origins: { alpha: [0, 0] } });
+  assert.deepEqual(snapshot(a), snapshot(b));
+}));
+
+test('origins are applied from run()', withDir((d) => {
+  const a = join(d, 'a');
+  const b = join(d, 'b');
+  run({ scenes: { alpha: scene() }, outDir: a });
+  run({ scenes: { alpha: scene() }, outDir: b, origins: { alpha: [7, 9] } });
+  assert.notDeepEqual(snapshot(a), snapshot(b));
+}));
+
+test('check reports missing and stale files', withDir((d) => {
+  run({ scenes: fixtures(), outDir: d });
+  writeFileSync(join(d, 'alpha.svg'), 'stale');
+  rmSync(join(d, 'beta.svg'));
+  const r = run({ scenes: fixtures(), outDir: d, check: true });
+  assert.equal(r.ok, false);
+  assert.ok(r.problems.some((p) => /alpha\.svg: differs/.test(p)));
+  assert.ok(r.problems.some((p) => /beta\.svg: missing/.test(p)));
+}));
