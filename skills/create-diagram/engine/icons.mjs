@@ -1,5 +1,5 @@
-// Brand marks: reads a vendored SVG from engine/icons/, checks it, and
-// inlines it as engine nodes. The file on disk is never modified; every change
+// Brand marks: reads a vendored SVG from icons/ next to this module, checks it,
+// and inlines it as engine nodes. The file on disk is never modified; every change
 // happens to the in-memory copy (ids and classes prefixed, outer <svg> replaced
 // by a positioned <g>). Pure: identical input gives byte-identical output.
 
@@ -160,8 +160,8 @@ function walk(node, fn) {
   for (const c of node.children) if (c.tag) walk(c, fn);
 }
 
-// Third-party content gets inlined into every docs page. Reject anything that can
-// run code or fetch a resource: <script>, <foreignObject> and friends, any on*
+// Third-party content gets inlined into every page that uses a diagram. Reject
+// anything that can run code or fetch a resource: <script>, <foreignObject> and friends, any on*
 // attribute, any href / xlink:href that is not a same-document "#fragment", any
 // url(...) that is not "#fragment", javascript: and data: URLs, @import.
 function assertSafe(root, name) {
@@ -355,7 +355,7 @@ function readMark(name, dir) {
     try {
       src = readFileSync(file, 'utf8');
     } catch (e) {
-      if (e.code === 'ENOENT') throw new IconError(`icon: no mark named "${name}" (expected ${name}.svg in engine/icons/)`);
+      if (e.code === 'ENOENT') throw new IconError(`icon: no mark named "${name}" (expected ${name}.svg in the engine's icons/ folder)`);
       throw e;
     }
     cache.set(file, src);
@@ -381,7 +381,7 @@ function inkBox(name) {
     inkTable = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : {};
   }
   const box = inkTable[name];
-  if (!box) throw new IconError(`mark "${name}": no entry in ink.json; run npm run measure:ink`);
+  if (!box) throw new IconError(`mark "${name}": no ink measurement; use the default fit: 'box'`);
   return box;
 }
 
@@ -404,7 +404,7 @@ export function icon({ name, x, y, size = 32, w, h, color = C.body, label, label
   // size come out at very different weights. That is tolerable in a row where
   // each mark carries its name and hopeless in a column where none do. The
   // drawn box cannot be computed from path data without a renderer, so it is
-  // measured into ink.json by `npm run measure:ink`.
+  // measured into ink.json by measure-ink.mjs.
   const [vx, vy, vw, vh] = fit === 'ink' ? inkBox(name) : mark.viewBox;
   const s = Math.min(boxW / vw, boxH / vh);
   const tx = x - (vw * s) / 2 - vx * s;

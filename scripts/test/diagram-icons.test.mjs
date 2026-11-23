@@ -566,3 +566,20 @@ test('LANGUAGES python row is a tinted square mark whose token exists in both th
   assert.ok(tokens.light['--d-brand-python'] && tokens.dark['--d-brand-python']);
   assert.match(serialize(icon({ name: 'python', x: 0, y: 0, w: row.w, h: row.h, color: row.color })), /fill="var\(--d-brand-python\)"/);
 });
+
+test('every vendored mark has an ink.json entry, so fit: ink works for all of them', () => {
+  const ink = JSON.parse(readFileSync(join(ICONS_DIR, 'ink.json'), 'utf8'));
+  const missing = listMarks().filter((name) => !Array.isArray(ink[name]) || ink[name].length !== 4);
+  assert.deepEqual(missing, []);
+  for (const name of listMarks()) {
+    assert.doesNotThrow(() => serialize(icon({ name, x: 50, y: 50, size: 32, fit: 'ink' })), name);
+  }
+});
+
+test('fit: ink on an unmeasured mark says to use the default fit', () => {
+  const svg = '<svg viewBox="0 0 10 10"><path d="M0 0h5v5z"/></svg>';
+  assert.throws(
+    () => render('unmeasured-mark', svg, { fit: 'ink' }),
+    (e) => e instanceof IconError && e.message === 'mark "unmeasured-mark": no ink measurement; use the default fit: \'box\'',
+  );
+});

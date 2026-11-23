@@ -7,7 +7,7 @@
 // that carry their names and hopeless in a column of marks that do not.
 //
 // A bounding box cannot be computed from path data without a renderer, so it
-// is measured once in a headless browser and committed. `npm run measure:ink`
+// is measured once in a headless browser and committed. `node measure-ink.mjs`
 // regenerates it; a test fails if a mark has no entry.
 
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -22,7 +22,7 @@ const round = (n) => +n.toFixed(3);
 
 export async function measure(dir = ICONS_DIR) {
   const chromium = await loadChromium();
-  if (!chromium) throw new Error('measure-ink: Chromium is not installed (npm i @playwright/test && npx playwright install chromium)');
+  if (!chromium) throw new Error('measure-ink: Chromium is not installed (npm i @playwright/test@1.56.1 && npx playwright install chromium)');
   const browser = await chromium.launch();
   const ink = {};
   try {

@@ -80,7 +80,7 @@ export async function withHarness(fn, {
   body = '', viewport = { width: 1000, height: 900 }, fonts = true, colorScheme = 'light', scale = 1,
 } = {}) {
   const chromium = await loadChromium();
-  if (!chromium) throw new Error('Chromium is not installed (npm i @playwright/test && npx playwright install chromium)');
+  if (!chromium) throw new Error('Chromium is not installed (npm i @playwright/test@1.56.1 && npx playwright install chromium)');
 
   const html = harnessHtml(body, { fonts });
   const server = createServer((req, res) => {
