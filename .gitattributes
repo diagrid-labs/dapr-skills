@@ -1,1 +1,2 @@
 skills/create-diagram/engine/icons/*.svg -text
+skills/create-diagram/**/*.md text eol=lf

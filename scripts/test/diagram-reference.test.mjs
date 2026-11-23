@@ -13,7 +13,9 @@ const SKILL = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'skills'
 const NAME = 'checkout-components';
 
 // The first fenced js block after the `## Worked example` heading.
-export function workedExample(markdown) {
+// A Windows checkout may have CRLF line endings, so normalise them first.
+export function workedExample(source) {
+  const markdown = source.replace(/\r\n/g, '\n');
   const at = markdown.search(/^## Worked example$/m);
   if (at < 0) throw new Error('REFERENCE.md has no "## Worked example" heading');
   const block = /^```js\n([\s\S]*?)^```$/m.exec(markdown.slice(at));
@@ -43,4 +45,11 @@ test('reference example exports', () => {
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
+});
+
+test('workedExample reads a CRLF checkout of REFERENCE.md', () => {
+  const lf = readFileSync(join(SKILL, 'REFERENCE.md'), 'utf8').replace(/\r\n/g, '\n');
+  const crlf = lf.replace(/\n/g, '\r\n');
+  assert.equal(workedExample(crlf), workedExample(lf));
+  assert.ok(!workedExample(crlf).includes('\r'));
 });
