@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, readdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { el, text } from '../../skills/create-diagram/engine/engine.mjs';
-import { run, renderScene, standalone, BODY_STACK, MONO_STACK, OUT_DIR } from '../../skills/create-diagram/engine/export.mjs';
+import { el, text, C } from '../../skills/create-diagram/engine/engine.mjs';
+import { run, renderScene, themed, loadTokens, BODY_STACK, MONO_STACK } from '../../skills/create-diagram/engine/export.mjs';
 
 const scene = (over = {}) => ({
   width: 100,
@@ -17,11 +17,6 @@ const scene = (over = {}) => ({
 // alpha and beta deliberately share title and desc.
 const fixtures = () => ({ alpha: scene(), beta: scene() });
 const tmp = () => mkdtempSync(join(tmpdir(), 'diagrams-'));
-// The standalone copies for a given output directory. Derived from it, so a
-// write and a later --check in the same test agree, and never the real one:
-// run() refuses a redirected outDir without this. A SIBLING of the output
-// directory, not a child, or the directory snapshots below read it as a file.
-const flat = (dir) => `${dir}-standalone`;
 const snapshot = (dir) =>
   existsSync(dir) ? Object.fromEntries(readdirSync(dir).sort().map((f) => [f, readFileSync(join(dir, f), 'utf8')])) : null;
 const withDir = (fn) => () => {
@@ -33,17 +28,13 @@ const withDir = (fn) => () => {
   }
 };
 
-test('the default output directory is daprdocs/assets/diagrams (tests never use it)', () => {
-  assert.ok(OUT_DIR.endsWith(join('daprdocs', 'assets', 'diagrams')));
-});
-
 test('exporting twice produces byte-identical output', () => {
   const a = tmp();
   const b = tmp();
   try {
-    run({ scenes: fixtures(), outDir: a, standaloneDir: flat(a) });
-    run({ scenes: fixtures(), outDir: b, standaloneDir: flat(b) });
-    run({ scenes: fixtures(), outDir: b, standaloneDir: flat(b) });
+    run({ scenes: fixtures(), outDir: a });
+    run({ scenes: fixtures(), outDir: b });
+    run({ scenes: fixtures(), outDir: b });
     const sa = snapshot(a);
     assert.deepEqual(Object.keys(sa), ['alpha.svg', 'beta.svg']);
     assert.deepEqual(snapshot(b), sa);
@@ -56,7 +47,7 @@ test('exporting twice produces byte-identical output', () => {
 test(
   'output is LF with one trailing newline, and ids come from the scene name',
   withDir((d) => {
-    run({ scenes: fixtures(), outDir: d, standaloneDir: flat(d) });
+    run({ scenes: fixtures(), outDir: d });
     const raw = readFileSync(join(d, 'alpha.svg'));
     assert.ok(!raw.includes(0x0d), 'no CR bytes');
     const s = raw.toString('utf8');
@@ -70,8 +61,8 @@ test(
 test(
   '--check exits 0 when committed files match',
   withDir((d) => {
-    run({ scenes: fixtures(), outDir: d, standaloneDir: flat(d) });
-    const r = run({ scenes: fixtures(), outDir: d, standaloneDir: flat(d), check: true });
+    run({ scenes: fixtures(), outDir: d });
+    const r = run({ scenes: fixtures(), outDir: d, check: true });
     assert.equal(r.ok, true);
     assert.deepEqual(r.problems, []);
   }),
@@ -80,10 +71,10 @@ test(
 test(
   '--check exits 1 and names the file when one differs, is missing or is orphaned',
   withDir((d) => {
-    run({ scenes: fixtures(), outDir: d, standaloneDir: flat(d) });
+    run({ scenes: fixtures(), outDir: d });
     writeFileSync(join(d, 'alpha.svg'), 'tampered\n');
     writeFileSync(join(d, 'gone.svg'), '<svg/>\n');
-    const r = run({ scenes: { ...fixtures(), gamma: scene() }, outDir: d, standaloneDir: flat(d), check: true });
+    const r = run({ scenes: { ...fixtures(), gamma: scene() }, outDir: d, check: true });
     assert.equal(r.ok, false);
     const msg = r.problems.join('\n');
     assert.match(msg, /alpha\.svg: differs/);
@@ -96,15 +87,15 @@ test(
 test(
   '--check does not write to disk',
   withDir((d) => {
-    run({ scenes: fixtures(), outDir: d, standaloneDir: flat(d) });
+    run({ scenes: fixtures(), outDir: d });
     writeFileSync(join(d, 'alpha.svg'), 'tampered\n');
     writeFileSync(join(d, 'gone.svg'), '<svg/>\n');
     const before = snapshot(d);
-    run({ scenes: { ...fixtures(), gamma: scene() }, outDir: d, standaloneDir: flat(d), check: true });
+    run({ scenes: { ...fixtures(), gamma: scene() }, outDir: d, check: true });
     assert.deepEqual(snapshot(d), before, 'no file created, changed or deleted');
     // a directory that does not exist must not be created either
     const nowhere = join(d, 'nested', 'out');
-    assert.equal(run({ scenes: fixtures(), outDir: nowhere, standaloneDir: flat(nowhere), check: true }).ok, false);
+    assert.equal(run({ scenes: fixtures(), outDir: nowhere, check: true }).ok, false);
     assert.equal(existsSync(join(d, 'nested')), false);
   }),
 );
@@ -114,26 +105,26 @@ test(
   withDir((d) => {
     writeFileSync(join(d, 'gone.svg'), '<svg/>\n');
     writeFileSync(join(d, 'keep.txt'), 'x');
-    const r = run({ scenes: fixtures(), outDir: d, standaloneDir: flat(d) });
+    const r = run({ scenes: fixtures(), outDir: d });
     assert.deepEqual(r.removed, ['gone.svg'], 'deletions are reported');
     assert.deepEqual(readdirSync(d).sort(), ['alpha.svg', 'beta.svg', 'keep.txt']);
-    assert.equal(run({ scenes: fixtures(), outDir: d, standaloneDir: flat(d), check: true }).ok, true);
+    assert.equal(run({ scenes: fixtures(), outDir: d, check: true }).ok, true);
   }),
 );
 
 test(
   'export refuses to delete committed svgs when the registry is empty',
   withDir((d) => {
-    run({ scenes: fixtures(), outDir: d, standaloneDir: flat(d) });
+    run({ scenes: fixtures(), outDir: d });
     const before = snapshot(d);
-    const r = run({ scenes: {}, outDir: d, standaloneDir: flat(d) });
+    const r = run({ scenes: {}, outDir: d });
     assert.equal(r.ok, false);
     assert.match(r.problems.join('\n'), /registry is empty but 2 svgs exist/);
     assert.deepEqual(snapshot(d), before);
     // an empty registry over an empty directory is fine
     const e = tmp();
     try {
-      assert.equal(run({ scenes: {}, outDir: e, standaloneDir: flat(e) }).ok, true);
+      assert.equal(run({ scenes: {}, outDir: e }).ok, true);
     } finally {
       rmSync(e, { recursive: true, force: true });
     }
@@ -146,11 +137,11 @@ for (const field of ['title', 'desc']) {
       `a scene with ${label} ${field} fails the export and writes nothing`,
       withDir((d) => {
         const bad = scene({ [field]: value });
-        const r = run({ scenes: { ...fixtures(), bad }, outDir: d, standaloneDir: flat(d) });
+        const r = run({ scenes: { ...fixtures(), bad }, outDir: d });
         assert.equal(r.ok, false);
         assert.match(r.problems.join('\n'), new RegExp(`scene "bad": ${field} is required`));
         assert.deepEqual(readdirSync(d), [], 'valid scenes are not written either');
-        assert.equal(run({ scenes: { bad }, outDir: d, standaloneDir: flat(d), check: true }).ok, false);
+        assert.equal(run({ scenes: { bad }, outDir: d, check: true }).ok, false);
       }),
     );
   }
@@ -215,7 +206,7 @@ test('run() reports the scene name when build() throws', () => {
         },
       }),
     },
-    outDir: here, standaloneDir: flat(here),
+    outDir: here,
   });
   assert.equal(ok, false);
   assert.match(problems.join('\n'), /scene "beta".*kaboom/s);
@@ -223,51 +214,101 @@ test('run() reports the scene name when build() throws', () => {
 
 // The stacks hold double quotes, so inside an attribute they are written &quot;.
 const q = (stack) => stack.replaceAll('"', '&quot;');
+const tokens = loadTokens();
+const DOC = (body = '<text>x</text>', fill = 'var(--d-blue)') =>
+  `<svg viewBox="0 0 1 1"><title id="t">T</title><desc id="d">D</desc><rect fill="${fill}"/>${body}</svg>`;
 
-test('standalone puts the body stack on the root svg', () => {
-  const out = standalone('<svg viewBox="0 0 1 1"><text>x</text></svg>');
-  assert.ok(out.startsWith(`<svg font-family="${q(BODY_STACK)}" viewBox="0 0 1 1">`), out);
-  assert.equal(out.split('font-family=').length, 2);
+test('run() requires outDir', () => {
+  assert.throws(() => run({ scenes: fixtures() }), /outDir is required/);
 });
 
-test('standalone resolves var(--font-mono) to the mono stack', () => {
-  const out = standalone('<svg><text font-family="var(--font-mono)">x</text></svg>');
-  assert.ok(!out.includes('var(--font-'));
+test(
+  'run() writes one themed svg per scene and nothing else',
+  withDir((d) => {
+    const r = run({ scenes: { alpha: scene({ build: () => [el('rect', { fill: C.navy })] }) }, outDir: d });
+    assert.deepEqual(r.written, ['alpha.svg']);
+    assert.deepEqual(readdirSync(d), ['alpha.svg']);
+    assert.match(readFileSync(join(d, 'alpha.svg'), 'utf8'), /^<svg class="dapr-diagram-alpha"/);
+  }),
+);
+
+test('every token used resolves in light and dark', () => {
+  const out = themed(DOC('<text fill="var(--d-body)">x</text>'), 'demo', tokens);
+  const [light, dark] = out.match(/<style>(.*)<\/style>/)[1].split('@media (prefers-color-scheme: dark)');
+  for (const t of ['--d-blue', '--d-body']) {
+    assert.ok(light.includes(`${t}:${tokens.light[t]}`), `${t} light`);
+    assert.ok(dark.includes(`${t}:${tokens.dark[t]}`), `${t} dark`);
+  }
+  assert.notEqual(tokens.light['--d-body'], tokens.dark['--d-body']);
+  assert.ok(out.indexOf('</desc><style>') > 0, 'style sits right after desc');
+});
+
+test('only the tokens the scene uses are included', () => {
+  const out = themed(DOC(), 'demo', tokens);
+  assert.ok(!out.includes('--d-orange:'));
+});
+
+test('a token whose value is another token pulls that token in, in both palettes', () => {
+  const t = {
+    light: { '--d-link': 'var(--d-blue)', '--d-blue': '#111111' },
+    dark: { '--d-link': 'var(--d-blue)', '--d-blue': '#222222' },
+  };
+  const out = themed(DOC('', 'var(--d-link)'), 'demo', t);
+  const [light, dark] = out.match(/<style>(.*)<\/style>/)[1].split('@media');
+  assert.match(light, /--d-blue:#111111/);
+  assert.match(dark, /--d-blue:#222222/);
+  // same with the real tokens: --d-link is var(--d-blue) there
+  const real = themed(DOC('', 'var(--d-link)'), 'demo', tokens);
+  for (const m of real.matchAll(/var\((--d-[a-z0-9-]+)\)/g)) {
+    assert.ok(real.includes(`${m[1]}:`), `${m[1]} is defined`);
+  }
+  assert.ok(real.includes(`--d-blue:${tokens.dark['--d-blue']}`));
+});
+
+test('style is scoped to the diagram class', () => {
+  const out = themed(DOC(), 'demo', tokens);
+  const css = out.match(/<style>(.*)<\/style>/)[1];
+  const selectors = [...css.matchAll(/([^{}]+)\{/g)].map((m) => m[1].trim());
+  assert.deepEqual(selectors, ['.dapr-diagram-demo', '@media (prefers-color-scheme: dark)', '.dapr-diagram-demo']);
+  assert.ok(out.startsWith('<svg class="dapr-diagram-demo" '));
+});
+
+test('unknown token throws naming it', () => {
+  assert.throws(() => themed(DOC('', 'var(--d-nope)'), 'demo', tokens), /--d-nope/);
+  const onlyLight = { light: { '--d-x': '#000' }, dark: {} };
+  assert.throws(() => themed(DOC('', 'var(--d-x)'), 'demo', onlyLight), /--d-x \(dark\)/);
+});
+
+test('font stacks are set', () => {
+  const out = themed('<svg viewBox="0 0 1 1"><desc>D</desc><text font-family="var(--font-mono)">x</text></svg>', 'demo', tokens);
+  assert.ok(out.includes(`font-family="${q(BODY_STACK)}"`));
   assert.ok(out.includes(`<text font-family="${q(MONO_STACK)}">`), out);
+  assert.equal(out.split('font-family=').length, 3);
 });
 
-test('standalone leaves no var(--font-*) unresolved', () => {
+test('no var(--font- left, in either reference form', () => {
+  assert.ok(!themed(DOC('<text font-family="var(--font-mono)">x</text>'), 'demo', tokens).includes('var(--font-'));
+  assert.throws(() => themed(DOC('<text font-family="var(--font-head)">x</text>'), 'demo', tokens), /no font for var\(--font-head\)/);
   assert.throws(
-    () => standalone('<svg><text font-family="var(--font-head)">x</text></svg>'),
-    /no font for var\(--font-head\)/,
-  );
-});
-
-test('standalone does not touch a font-family that is already a literal', () => {
-  const out = standalone('<svg><text font-family="Comic Sans">x</text></svg>');
-  assert.ok(out.includes('<text font-family="Comic Sans">'));
-});
-
-// The fallback form is a token reference too, and the narrower pattern this
-// guard used to carry - var(--font-[a-z-]+\) - saw no match at all in it, so
-// the file shipped with a token no reader's browser can resolve.
-test('standalone leaves no var(--font-*) unresolved in its fallback form either', () => {
-  assert.throws(
-    () => standalone('<svg><text font-family="var(--font-head, serif)">x</text></svg>'),
+    () => themed(DOC('<text font-family="var(--font-head, serif)">x</text>'), 'demo', tokens),
     /no font for var\(--font-head, serif\)/,
   );
 });
 
-// The one step here that used to fail silently. `String.replace` with a
-// non-matching pattern returns its input, so a document that stops starting
-// with `<svg` came out with no body font and no complaint - which is the serif
-// download the standalone copy exists to abolish.
-test('standalone throws when the document does not start with <svg', () => {
+test('a literal font-family is left alone', () => {
+  assert.ok(themed(DOC('<text font-family="Comic Sans">x</text>'), 'demo', tokens).includes('<text font-family="Comic Sans">'));
+});
+
+test('themed throws when the document does not start with <svg', () => {
   for (const doc of [
-    '﻿<svg viewBox="0 0 1 1"><text>x</text></svg>', // byte-order mark
-    '<?xml version="1.0"?><svg viewBox="0 0 1 1"><text>x</text></svg>', // xml prolog
-    '\n<svg viewBox="0 0 1 1"><text>x</text></svg>', // leading newline
+    '\ufeff' + DOC(), // byte-order mark
+    '<?xml version="1.0"?>' + DOC(), // xml prolog
+    '\n' + DOC(), // leading newline
   ]) {
-    assert.throws(() => standalone(doc), /does not start with <svg/, doc.slice(0, 20));
+    assert.throws(() => themed(doc, 'demo', tokens), /does not start with <svg/, doc.slice(0, 20));
   }
+});
+
+test('themed rejects a bad name', () => {
+  assert.throws(() => themed(DOC(), 'Bad Name', tokens), /name must match/);
 });

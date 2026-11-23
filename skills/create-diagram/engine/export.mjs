@@ -1,6 +1,4 @@
-// Renders every registered scene to daprdocs/assets/diagrams/<name>.svg.
-//   node diagrams/export.mjs           write the files
-//   node diagrams/export.mjs --check   write nothing; exit 1 if any file is stale
+// Renders every registered scene to <outDir>/<name>.svg, one themed file each.
 import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -12,15 +10,6 @@ const here = dirname(fileURLToPath(import.meta.url));
 // Per-scene bbox origins; absent until measure-bbox has run. Shim for Task 1.
 let ORIGINS = {};
 try { ORIGINS = JSON.parse(readFileSync(join(here, 'bbox.json'), 'utf8')); } catch { /* no bbox.json yet */ }
-export const OUT_DIR = join(here, '..', 'daprdocs', 'assets', 'diagrams');
-// A second copy of every scene, for the download and copy buttons. The inlined
-// svg paints in var(--d-*), which only resolves on a page that defines those
-// tokens: saved or pasted anywhere else it comes out black or blank. This copy
-// has the LIGHT values substituted in, so it is a picture that works on its
-// own. It cannot follow the theme - a file has to pick one - and light is the
-// one a reader is most likely to paste into.
-export const STANDALONE_DIR = join(here, '..', 'daprdocs', 'static', 'diagrams');
-
 // The colour tokens, light and dark, generated from dapr/docs' _tokens.scss by
 // scripts/diagram-tokens.mjs. Read from tokens.json so a token renamed there
 // fails loudly below rather than leaving a var() in the file.
@@ -28,47 +17,67 @@ export function loadTokens() {
   return JSON.parse(readFileSync(new URL('./tokens.json', import.meta.url), 'utf8'));
 }
 
-// The faces the standalone copy declares. Scenes set no font-family on body
+// The faces the exported file declares. Scenes set no font-family on body
 // text so the inlined copy inherits the page's face, and code labels point at
 // var(--font-mono), which only exists on a Dapr page. Outside it both fall back
-// to the browser's serif, so the download copy names them outright.
+// to the browser's serif, so the file names them outright.
 export const BODY_STACK = 'Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
 export const MONO_STACK = '"Geist Mono", ui-monospace, "Cascadia Mono", Consolas, monospace';
 // Both stacks sit inside a double-quoted attribute, so their quotes are escaped.
 const attr = (stack) => stack.replaceAll('"', '&quot;');
 
-// Replace every var(--d-*) with its light value. Throws on a token the
-// stylesheet does not define, because a silently unresolved one is exactly the
-// broken file this exists to prevent.
-export function standalone(svgText, tokens = loadTokens().light) {
-  const missing = new Set();
-  const out = svgText.replace(/var\((--d-[a-z-]+)\)/g, (whole, token) => {
-    const value = Object.hasOwn(tokens, token) ? tokens[token] : undefined;
-    if (value === undefined) {
-      missing.add(token);
-      return whole;
+// Turn a rendered scene into ONE file that carries both palettes. The scene
+// paints in var(--d-*); this adds a <style> that defines every token it uses
+// on .dapr-diagram-<name>, light first, then the dark values inside
+// prefers-color-scheme, so the file follows the viewer wherever it is opened
+// and, inlined into HTML, stays scoped to its own class. A token value can
+// itself be a var(--d-*) (--d-link is var(--d-blue)), so the tokens a used
+// token points at are included too, or that var() would not resolve.
+// Throws on a token with no light or dark value, a font the file cannot name,
+// or a document that does not start with <svg.
+export function themed(svgText, name, tokens = loadTokens()) {
+  if (!NAME.test(name)) throw new Error(`themed svg: name must match ${NAME}`);
+  const used = new Set();
+  const missing = [];
+  const visit = (token) => {
+    if (used.has(token)) return;
+    used.add(token);
+    for (const mode of ['light', 'dark']) {
+      const value = Object.hasOwn(tokens[mode] ?? {}, token) ? tokens[mode][token] : undefined;
+      if (value === undefined) {
+        missing.push(`${token} (${mode})`);
+        continue;
+      }
+      for (const m of value.matchAll(/var\((--d-[a-z0-9-]+)\)/g)) visit(m[1]);
     }
-    return value;
-  });
-  if (missing.size) throw new Error(`standalone svg: no light value for ${[...missing].join(', ')}`);
+  };
+  for (const m of svgText.matchAll(/var\((--d-[a-z0-9-]+)\)/g)) visit(m[1]);
+  if (missing.length) throw new Error(`themed svg: no value for ${[...new Set(missing)].join(', ')}`);
+
   // Mono text sets its own font-family, which wins over the root attribute
   // below, so the root only has to cover the body text that sets none.
-  const fonted = out.replaceAll('var(--font-mono)', attr(MONO_STACK));
+  const fonted = svgText.replaceAll('var(--font-mono)', attr(MONO_STACK));
   // Both shapes a token reference can take: the bare var(--font-x) a scene
-  // writes today, and the fallback form var(--font-x, y). A pattern ending in
-  // [a-z-]+\) reads the second as no match at all and ships the token.
+  // writes, and the fallback form var(--font-x, y).
   const fonts = new Set(fonted.match(/var\(--font-[^")]*\)?/g));
-  if (fonts.size) throw new Error(`standalone svg: no font for ${[...fonts].join(', ')}`);
-  // The body font is a presentation attribute on the ROOT, so it only lands if
+  if (fonts.size) throw new Error(`themed svg: no font for ${[...fonts].join(', ')}`);
+
+  const cls = `dapr-diagram-${name}`;
+  // Sorted so the output does not depend on the order a scene happens to draw in.
+  const decls = (mode) => [...used].sort().map((t) => `${t}:${tokens[mode][t]}`).join(';');
+  const style =
+    `<style>.${cls}{${decls('light')}}` +
+    `@media (prefers-color-scheme: dark){.${cls}{${decls('dark')}}}</style>`;
+
+  // The class and body font are attributes on the ROOT, so they only land if
   // the document really starts with `<svg`. A BOM, an XML prolog or a leading
-  // newline would make this replace a silent no-op and hand over a file with no
-  // body font at all - the serif download this copy exists to prevent. Every
-  // other step in this function throws rather than shrug; so does this one.
-  const rooted = fonted.replace(/^<svg(?=[ >])/, `<svg font-family="${attr(BODY_STACK)}"`);
-  if (rooted === fonted) {
-    throw new Error('standalone svg: document does not start with <svg, so no body font was set');
-  }
-  return rooted;
+  // newline would make this replace a silent no-op.
+  const rooted = fonted.replace(/^<svg(?=[ >])/, `<svg class="${cls}" font-family="${attr(BODY_STACK)}"`);
+  if (rooted === fonted) throw new Error('themed svg: document does not start with <svg');
+  const at = rooted.indexOf('</desc>');
+  if (at < 0) throw new Error('themed svg: no <desc> to put the style after');
+  const end = at + '</desc>'.length;
+  return rooted.slice(0, end) + style + rooted.slice(end);
 }
 
 // No doubled or trailing hyphens: those slug to the same svg id as their tidy twin.
@@ -154,62 +163,37 @@ export function renderScene(name, scene) {
   return lf.endsWith('\n') ? lf : `${lf}\n`;
 }
 
-// Returns { ok, problems[], written[], removed[] } (removed = orphans deleted). Renders everything before touching
-// disk, so a bad scene leaves the output directory untouched.
-export function run({ scenes, outDir = OUT_DIR, standaloneDir, check = false } = {}) {
-  // A caller that redirects outDir - every test does - must redirect the
-  // standalone directory too, or it writes to and DELETES FROM the real one.
-  // Defaulting it silently is how the test suite once emptied static/diagrams.
-  if (standaloneDir === undefined) {
-    if (outDir !== OUT_DIR) {
-      throw new Error('run(): pass standaloneDir whenever you pass outDir, or the real one is used');
-    }
-    standaloneDir = STANDALONE_DIR;
-  }
+// Returns { ok, problems[], written[], removed[] } (removed = orphans deleted).
+// Renders everything before touching disk, so a bad scene leaves outDir untouched.
+export function run({ scenes, outDir, check = false } = {}) {
+  if (!outDir) throw new Error('run(): outDir is required');
   const problems = [];
   const rendered = new Map();
-  for (const [name, scene] of Object.entries(scenes)) {
-    try {
-      rendered.set(name, renderScene(name, scene));
-    } catch (e) {
-      problems.push(e.message);
+  try {
+    const tokens = loadTokens();
+    for (const [name, scene] of Object.entries(scenes)) {
+      try {
+        rendered.set(name, themed(renderScene(name, scene), name, tokens));
+      } catch (e) {
+        problems.push(e.message);
+      }
     }
+  } catch (e) {
+    problems.push(e.message);
   }
   if (problems.length) return { ok: false, problems, written: [], removed: [] };
 
-  // The standalone copies are rendered from the same strings, so the two can
-  // never disagree about what the scene draws - only about how it is coloured.
-  const flat = new Map();
-  try {
-    const tokens = loadTokens().light;
-    for (const [name, content] of rendered) flat.set(name, standalone(content, tokens));
-  } catch (e) {
-    return { ok: false, problems: [e.message], written: [], removed: [] };
-  }
-
   const existing = existsSync(outDir) ? readdirSync(outDir).filter((f) => f.endsWith('.svg')) : [];
   const orphans = existing.filter((f) => !rendered.has(f.slice(0, -4)));
-  const flatExisting = existsSync(standaloneDir)
-    ? readdirSync(standaloneDir).filter((f) => f.endsWith('.svg'))
-    : [];
-  const flatOrphans = flatExisting.filter((f) => !flat.has(f.slice(0, -4)));
 
   if (check) {
-    const fix = '(run npm run export:diagrams)';
+    const fix = '(re-run the export)';
     for (const [name, content] of rendered) {
       const file = join(outDir, `${name}.svg`);
       if (!existsSync(file)) problems.push(`${name}.svg: missing ${fix}`);
       else if (readFileSync(file, 'utf8') !== content) problems.push(`${name}.svg: differs from a fresh render ${fix}`);
     }
     for (const f of orphans) problems.push(`${f}: no matching scene ${fix}`);
-    for (const [name, content] of flat) {
-      const file = join(standaloneDir, `${name}.svg`);
-      if (!existsSync(file)) problems.push(`static/diagrams/${name}.svg: missing ${fix}`);
-      else if (readFileSync(file, 'utf8') !== content) {
-        problems.push(`static/diagrams/${name}.svg: differs from a fresh render ${fix}`);
-      }
-    }
-    for (const f of flatOrphans) problems.push(`static/diagrams/${f}: no matching scene ${fix}`);
     return { ok: problems.length === 0, problems, written: [], removed: [] };
   }
 
@@ -220,25 +204,20 @@ export function run({ scenes, outDir = OUT_DIR, standaloneDir, check = false } =
   }
 
   mkdirSync(outDir, { recursive: true });
-  mkdirSync(standaloneDir, { recursive: true });
   const written = [];
   for (const [name, content] of rendered) {
     writeFileSync(join(outDir, `${name}.svg`), Buffer.from(content, 'utf8'));
     written.push(`${name}.svg`);
   }
-  for (const [name, content] of flat) {
-    writeFileSync(join(standaloneDir, `${name}.svg`), Buffer.from(content, 'utf8'));
-    written.push(`static/diagrams/${name}.svg`);
-  }
   for (const f of orphans) unlinkSync(join(outDir, f));
-  for (const f of flatOrphans) unlinkSync(join(standaloneDir, f));
-  return { ok: true, problems: [], written, removed: [...orphans, ...flatOrphans] };
+  return { ok: true, problems: [], written, removed: orphans };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const { scenes } = await import('./scenes/index.mjs');
   const check = process.argv.includes('--check');
-  const { ok, problems, written, removed } = run({ scenes, check });
+  // Task 5 replaces this block with the real CLI; until then write beside the engine.
+  const { ok, problems, written, removed } = run({ scenes, outDir: join(here, '..', 'out'), check });
   if (!ok) {
     console.error(check ? 'Diagram check failed:' : 'Diagram export failed:');
     for (const p of problems) console.error(`  ${p}`);

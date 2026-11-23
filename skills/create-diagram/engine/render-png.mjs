@@ -32,12 +32,13 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFile
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { withHarness } from './browser-harness.mjs';
-import { BODY_STACK, MONO_STACK, STANDALONE_DIR, renderScene, standalone } from './export.mjs';
+import { BODY_STACK, MONO_STACK, loadTokens, renderScene, themed } from './export.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 // Beside the download svg, under static/, so the committed file is served as
 // itself rather than inlined into a page.
-export const PNG_DIR = STANDALONE_DIR;
+// Task 6 rewrites this file; until then PNGs go to a local out/ folder.
+export const PNG_DIR = join(HERE, '..', 'out');
 export const MANIFEST = join(HERE, 'png-manifest.json');
 
 // Measured across the DRAWING, not the canvas: scene canvases carry between 2%
@@ -62,7 +63,7 @@ export const sha256 = (text) => createHash('sha256').update(Buffer.from(text, 'u
 // thing the manifest hashes, rendered once so the two cannot disagree.
 export function standaloneSvgs(scenes) {
   const out = new Map();
-  for (const [name, scene] of Object.entries(scenes)) out.set(name, standalone(renderScene(name, scene)));
+  for (const [name, scene] of Object.entries(scenes)) out.set(name, themed(renderScene(name, scene), name, { light: loadTokens().light, dark: loadTokens().light }));
   return out;
 }
 
