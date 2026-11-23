@@ -28,13 +28,18 @@ chosen at setup, `diagrams/` by default.
   dimensions, duplicate ids, every colour token resolvable) and fails if a file
   in `out/` differs from a fresh render. With Chromium it also fails when
   `bbox.json` or a PNG is out of date.
+- **`--no-browser`** exports SVGs only, even when Chromium is installed.
+- **A full export** removes any `*.svg`, `*-light.png` or `*-dark.png` in
+  `out/` that no scene claims.
+- **`--only <name>`** measures only that scene with Chromium and leaves the
+  other entries in `bbox.json` alone.
 - **Scene names** are lowercase letters and digits in hyphen-separated words:
   `order-flow`, not `Order_Flow` or `order--flow`.
 - **Slides:** see [topics/slides.md](topics/slides.md).
 
 ### With Chromium
 
-With Playwright and its Chromium installed, the export does three more things.
+With Playwright (in the diagrams folder or a folder above it) and its Chromium installed, the export does three more things.
 
 1. **Centring.** It measures where each drawing sits in its canvas and writes
    the viewBox origin that centres it to `bbox.json` (only when a value
@@ -302,6 +307,10 @@ the colour scheme.
 - **Marks that stand together are fitted the same way, with `fit: 'ink'`.**
   `icon()` fits a mark's viewBox by default, and many marks leave margin inside
   it. `fit: 'ink'` sizes the mark by what it draws, from `_engine/icons/ink.json`.
+- **Equal ink weight means equal `size`.** A Fluent glyph's stroke scales with
+  the glyph, so marks at 52 and 64 side by side differ in weight. Give every
+  standalone mark in a scene one size and every mark in a card another, as
+  constants.
 - **Capability cards are square.** A square card with a two-line name needs
   `glyphDy` and `nameDy` set explicitly, or the second line lands on the bottom
   edge. Leave about twice the line height under the last line.
