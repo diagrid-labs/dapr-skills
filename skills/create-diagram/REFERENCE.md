@@ -2,8 +2,9 @@
 
 The detailed guide for drawing a Dapr diagram in the docs.dapr.io house
 style. Read it while you build a scene: the design rules, how to turn a
-source into a layout, the scene contract, the engine API, a worked example
-and the traps that are easy to fall into.
+source into a layout, the scene contract, a worked example and the traps
+that are easy to fall into. The engine API, the full examples and the
+specialised topics are separate files that SKILL.md says when to open.
 
 A diagram is drawn in code, not stored as an image. A scene is an ES module
 that builds a plain element tree. The exporter turns it into one SVG that
@@ -18,40 +19,22 @@ chosen at setup, `diagrams/` by default.
 
 | Path | What it is |
 | --- | --- |
-| `<diagramsDir>/_engine/` | The engine. Do not edit it: setup replaces it on refresh, and an edit is lost |
 | `<diagramsDir>/scenes/<name>.mjs` | One scene per diagram. It imports the engine relatively, from `../_engine/` |
 | `<diagramsDir>/scenes/index.mjs` | The registry: `export const scenes = { '<name>': scene }` |
-| `<diagramsDir>/out/<name>.svg` | The exported SVG, light and dark in one file |
-| `<diagramsDir>/out/<name>-light.png`, `<name>-dark.png` | The PNGs, written only when Chromium is available |
 | `<diagramsDir>/out/png-manifest.json` | The render settings and a hash per scene, so unchanged PNGs are not re-rendered |
 | `<diagramsDir>/bbox.json` | The measured viewBox origin that centres each drawing, written only when Chromium is available |
 
-```bash
-node <diagramsDir>/_engine/export.mjs                  # export every scene
-node <diagramsDir>/_engine/export.mjs --only <name>    # export one scene
-node <diagramsDir>/_engine/export.mjs --check          # render and validate every scene, compare with out/
-node <diagramsDir>/_engine/export.mjs --no-browser     # SVGs only, even when Chromium is installed
-```
-
-- **`out/` belongs to the exporter.** A full export removes any `*.svg`,
-  `*-light.png` or `*-dark.png` there that no scene claims. Never put a
-  hand-made file in `out/`.
 - **`--check`** renders and validates every scene (title, desc, name,
   dimensions, duplicate ids, every colour token resolvable) and fails if a file
   in `out/` differs from a fresh render. With Chromium it also fails when
   `bbox.json` or a PNG is out of date.
-- **`--only <name>`** writes that scene's SVG and PNGs and, with Chromium,
-  measures only that scene. The other entries in `bbox.json` are left alone.
 - **Scene names** are lowercase letters and digits in hyphen-separated words:
   `order-flow`, not `Order_Flow` or `order--flow`.
+- **Slides:** see [topics/slides.md](topics/slides.md).
 
 ### With Chromium
 
-When Playwright is installed in the diagrams folder (or a folder above it)
-and its Chromium has been downloaded, the export does three more things. Only
-the `@playwright/test` package (about 13 MB) lives in the diagrams folder; the
-Chromium browser (about 150 MB) downloads once to the per-user Playwright
-cache and is shared by every project.
+With Playwright and its Chromium installed, the export does three more things.
 
 1. **Centring.** It measures where each drawing sits in its canvas and writes
    the viewBox origin that centres it to `bbox.json` (only when a value
@@ -82,42 +65,11 @@ things follow:
   never to the exact width. As a rough guide, a body-font character at weight
   600 advances about 0.55 of the type size, and a mono character 0.6.
 
-### Slides
-
-PowerPoint, Keynote and Google Slides ignore the SVG's light and dark switch.
-On a light slide background use `<name>-light.png`; on a dark one use
-`<name>-dark.png`. The dark PNG has a transparent background and light text,
-so it looks washed out in a light image viewer; check it on a dark ground.
-The SVG is the right file for the web, docs sites and READMEs, where it
-follows the viewer's colour scheme.
-
 ### Measuring labels
 
-Several rules below say a width is measured, not guessed. With Chromium, put
-this script in `<diagramsDir>/` (not in `_engine/`) and run
-`node <diagramsDir>/measure-labels.mjs <name>`. It prints every label's box in
-scene units, the same numbers the scene file uses.
-
-```js
-// Prints the measured box of every label in one scene, in scene units.
-import { withHarness } from './_engine/browser.mjs';
-import { renderScene } from './_engine/export.mjs';
-import { scenes } from './scenes/index.mjs';
-
-const name = process.argv[2];
-if (!scenes[name]) throw new Error(`no scene named "${name}"`);
-const body = `<div class="fig" style="width:900px">${renderScene(name, scenes[name])}</div>`;
-const boxes = await withHarness((page) => page.$$eval('svg text:not([aria-hidden])', (all) => all.map((t) => {
-  const b = t.getBBox();
-  const r = (v) => Math.round(v * 10) / 10;
-  return { text: t.textContent, x: r(b.x), y: r(b.y), w: r(b.width), h: r(b.height) };
-})), { body });
-console.table(boxes);
-```
-
-The boxes are measured before centring, so they compare directly with the
-constants in the scene. Without Chromium, estimate and leave slack (see
-above).
+Rules below say a width is measured, not guessed. With Chromium, run
+`node "<diagramsDir>/_engine/measure-labels.mjs" <name>`. It prints every
+label's box (text, x, y, w, h) in scene units, before centring.
 
 ## Design rules
 
@@ -424,51 +376,7 @@ below. A part that is reused is a part that cannot disagree with itself.
 | An HTTP request and response | `httpCard()` |
 | A file or a few lines of code | `codeCard()` |
 
-### Dapr API blocks
-
-A Dapr API is always drawn the same way: a rounded square, its Fluent mark,
-its name in blue, and `alpha` in the corner where that applies. That drawing
-is `apiTile()`, and the definitions behind it are `APIS` and `CROSS_CUTTING` in
-`_engine/apis.mjs`.
-
-- **Never re-declare a mark or a name in a scene.** Name the API and let the
-  catalogue supply both: `apiTile({ key: 'pubsub', x, y, w, h })`.
-- **An unknown key throws.** A typo would otherwise draw a tile with no mark
-  and the word `undefined` on it.
-- **Two forms of each name:** `name` is the one-line form; `wrap: true` asks
-  for the agreed two-line break for a narrow tile.
-- **The `alpha` tag comes from the catalogue,** so no tile ships untagged.
-- **`glyph` is the mark's drawn size** and is separate from `tile()`'s own
-  `glyphSize`.
-- **Descriptions stay in the scene.** They are broken to a card width, so they
-  are layout, not identity.
-
-#### The HTTP call
-
-When the diagram sits next to the HTTP call it describes, show the call. Take
-it from the user's own code or docs, character for character.
-
-- **Three lines, one block:** the method above (weight 700, `C.blue`), the
-  path in the middle (`richLabel()` with `mono: true`, the building block's
-  own segment in `C.orange` at weight 700), and the request body below
-  (`label()`, `mono: true`, weight 400). Omit the body where the call sends
-  none.
-- **The path only. Leave the host and port off.** The port is whatever the
-  reader's `dapr run` chose.
-- **It sits under the app that makes the call, never on the arrow to the
-  component.** The app calls its own sidecar; the sidecar then speaks the
-  component's protocol. On that arrow it would read as the app calling Redis
-  directly, which is exactly what Dapr stops being true.
-- **Clamp it to the margin:** centre it on the app but never past the edge,
-  `Math.max(EDGE + width / 2, appX)`. The width is measured.
-- **The bare block shows the request and nothing else.** A value the call
-  returns does not belong in it.
-- **`httpCard()` is the block with a border,** for an exchange: request above
-  a status chip, response below. Take the status and the payloads from the
-  docs (saving state answers `204 No Content`, not `200 OK`). A payload of
-  several lines is set left with its indentation kept. Size the card with
-  `httpCardH()`; it refuses a card too shallow for its contents. Cards in a
-  row share a top and each take their own depth.
+- **Dapr API blocks and the HTTP call:** see [topics/api-blocks.md](topics/api-blocks.md).
 
 ### Grouping and centering
 
@@ -604,45 +512,8 @@ Java mark: name Java with a text label.
   `C.appInk` when it sits on a solid fill), Kafka is `kafka` (full colour),
   Kubernetes is `kubernetes` (tint `C.kubernetes`), the Dapr logo is
   `logo-blue`.
-- **A mark the engine does not ship goes in `<diagramsDir>/icons/`,** never in
-  `_engine/icons/`, which setup replaces. Draw it with `icon({ name, dir })`,
-  where `dir` is that folder's absolute path:
-
-  ```js
-  import { fileURLToPath } from 'node:url';
-  const MY_ICONS = fileURLToPath(new URL('../icons/', import.meta.url));
-  icon({ name: 'acme', dir: MY_ICONS, x, y, size: 32 });
-  ```
-
-  `fit: 'ink'` reads only the engine's measurements, so a project mark uses
-  the default `fit: 'box'`; give it `w` and `h` that match its drawn shape.
-- **Source, in order of preference:** [Simple Icons](https://simpleicons.org)
-  (CC0, single colour, tinted with `color`); Wikimedia Commons for company
-  logos and full-colour marks; the vendor's official architecture icon set
-  ([Azure](https://learn.microsoft.com/azure/architecture/icons/),
-  [AWS](https://aws.amazon.com/architecture/icons/),
-  [Google Cloud](https://cloud.google.com/icons)).
-- **Keep the file unmodified, byte for byte.** Vendor terms forbid cropping,
-  recolouring or distorting. The engine changes only its in-memory copy.
-- **Record every mark you add** in `<diagramsDir>/icons/README.md`: the file,
-  what it is, the source URL, the licence, single or full colour.
-- **A mark that is not freely licensed** needs the user's explicit go-ahead.
-  If no official file can be found, ask before using a substitute.
-- **Wide logos and wordmarks keep their proportions:** give `icon()` a `w` and
-  `h`. A logo that carries its own name needs no label beside it.
-- **A dark wordmark cannot be recoloured for dark mode.** Put it on a backing
-  in `C.markPlate`, which is transparent in light mode and a light plate in
-  dark.
-- **A logo published as a raster inside an SVG wrapper** is allowed when it is
-  the official mark. It does not scale crisply, adds its payload to the file,
-  and must have an alpha channel or it shows as a rectangle in one theme. It is
-  never tinted.
-- **Every file is screened on load:** no `<script>`, no event handlers, no
-  external `href`, only an allowlist of elements. A `<style>` with a bare
-  element selector is refused, because it would restyle the page the SVG is
-  inlined into. If removing that one element is the only change needed and it
-  does not change how the mark draws, remove it and record the edit in the
-  README; otherwise find another file.
+- **A mark the engine does not ship** goes in `<diagramsDir>/icons/`, never in
+  `_engine/icons/`. See [topics/brand-marks-custom.md](topics/brand-marks-custom.md).
 
 ### Accessibility and copy
 
@@ -696,45 +567,8 @@ new.
    centre line comes from its band (`const ROW_Y = BAND.y + BAND.h / 2`), and
    one size constant drives every tile that should match.
 
-### Matching an existing diagram
-
-When a diagram exists somewhere and this one should look like it, read its
-source if you have it, not a screenshot.
-
-- **Carry its numbers, scaled.** Put its coordinates and sizes through one
-  factor (`const S = ourPanelWidth / theirPanelWidth`) and a helper that maps
-  its x into ours, rather than re-laying it out by eye. Hand-placed, unevenly
-  spaced positions are not reproduced by nudging an even layout.
-- **The vertical may not scale with the horizontal.** If the canvas keeps a
-  different aspect, scale what reads as proportion and hand-fit the rest.
-- **A reference is not automatically right.** Check contrast on anything you
-  copy, and keep a departure only with its reason written in the scene.
-
-### Converting a Mermaid block
-
-A Mermaid block has no arrangement to match: its positions are the layout
-engine's output, not anybody's decision. What it gives you is the graph.
-
-**First, decide whether it converts at all.** A flowchart that draws a
-mechanism (participants, calls between them, a decision with outcomes)
-converts. A sequence diagram stays Mermaid: this engine has no lifelines. Two
-participants whose messages strictly alternate can be drawn as two columns
-with horizontal runs read top to bottom, but five participants with looping
-messages cannot. A gantt chart stays Mermaid. Tell the user which blocks you
-will not convert and why.
-
-1. **Read the graph, not the picture:** node ids and text, every edge with its
-   label and direction, and the `subgraph` blocks. A subgraph is a lane:
-   `flowLane()`.
-2. **Take the axis from the declaration.** `flowchart LR` puts lanes side by
-   side; `TD` stacks them. A subgraph's own `direction TB` means that lane runs
-   down while the diagram runs across.
-3. **Take the order from the surrounding text.** It outranks the Mermaid.
-   Where the two disagree, ask the user.
-4. **Map each node to the house shape for what it is,** not the bracket it was
-   written in. A box labelled "Dapr sidecar" is `markHex()`.
-5. **The house constraints apply, Mermaid's do not.** `decision()` holds one
-   short word, with the condition above it as a `note()`.
+To match an existing diagram: [topics/matching.md](topics/matching.md). To
+convert a Mermaid block: [topics/mermaid.md](topics/mermaid.md).
 
 ## The scene contract
 
@@ -767,226 +601,12 @@ The exporter validates before writing anything: the name, a non-empty
 no two elements share an id, and that every colour token resolves. A scene
 that throws leaves `out/` untouched and names the scene in the error.
 
-## Engine API
-
-Every builder takes one options object and returns a plain node; builders are
-pure, so the same input gives byte-identical output. Every builder takes
-`x, y` as the shape's **centre**, except `panel()`, `region()` and `pod()`,
-which take the top-left corner because a region is placed by its extent.
-Coordinates are in the scene's canvas.
-
-### `_engine/engine.mjs`
-
-| Export | Returns |
-| --- | --- |
-| `el(tag, attrs, children)` | A node; children may be nodes or strings |
-| `text(content)` | A text node, escaped on serialize |
-| `serialize(node)` | A string; attributes keep insertion order |
-| `svg({ width, height, title, desc, id, children, origin })` | A complete document with `<title>` and `<desc>` wired to `role="img"`. The exporter calls it |
-| `C` | The colour tokens: `navy`, `blue`, `orange`, `teal`, `mint`, `red`, `lavender`, `grey`, `caption`, `green`, `appInk`, `appSky`, `appGold`, `appTeal`, `appBlue`, `paper`, `kubernetes`, `redisBrand`, `markPlate`, `body`, `bg`, `plate`, `plateInk`, `tealFill`, `blueFill`, `navyFill` |
-| `APP` | Five `{ stroke, fill, ink, solid }` entries: green, light blue, yellow, teal, dark blue |
-
-### `_engine/shapes.mjs`
-
-| Builder | Options (defaults) | Draws |
-| --- | --- | --- |
-| `group(children)` | an array, or `{ children, ...attrs }` | A `<g>` |
-| `slots(x0, x1, n)` | | `n` evenly spaced centres across the span (numbers) |
-| `label(o)` | `x, y, text, size` (11), `weight` (600), `color` (`C.body`), `halo`, `anchor` (`'middle'`), `mono` | Text; `\n` starts a line; `y` is the block's vertical centre |
-| `richLabel(o)` | `x, y, parts, size` (13), `weight` (400), `color`, `anchor` (`'start'`), `mono` | One line whose `parts` (`{ text, color, weight, mono }`) differ in colour or weight |
-| `hex(o)` | `x, y, r` (42.5), `stroke, fill, ink, solid, label` (`'App'`), `size` (r/3), `labelDx, labelDy, sub, subSize` | A pointy-top app hexagon with its name; `sub` is a code line under the name |
-| `hexPoints(x, y, r)` | | The six points as a `points` string |
-| `hexHalfWidth(r)`, `hexHalfWidthAt(r, dy)`, `hexEdgeAt(r, dx)` | | Half width; half width at height `dy`; the boundary's depth at offset `dx` |
-| `badge(o)` | `x, y, r` (19), `mark` | The small solid navy Dapr hexagon |
-| `daprApp(o)` | `x, y, r` (42.5), `stroke, fill, label, size, labelDx, badgeLeft, mark` | An app with the badge docked bottom right (or left). Does not pass `ink` or `solid` |
-| `stepMark(o)` | `x, y, step, r` (15), `size` | A numbered disc |
-| `box(o)` | `x, y, w` (194), `h` (30), `label, stroke` (`C.teal`), `fill` (`C.tealFill`), `size` (11), `labelDx, solid` | A workflow activity rectangle |
-| `decision(o)`, `decisionPoints(o)` | `x, y, w` (92), `h` (64), `label, stroke, fill` (`C.appGold`), `size, solid` | A diamond; its four points by name |
-| `node(o)` | `x, y, r` (16), `stroke, fill, label, labelDy, labelInside, ink, size` | A workflow start or end circle |
-| `cylinder(o)` | `x, y, w`, or `x, top, bottom, rx, ry`; `label, ink, size` (14), `stroke, fill` (`C.appGold`) | A standing data store, `STORE_RATIO` (1.2) wide to tall |
-| `pipe(o)` | `x1, x2, y, ry` (34), `rx` (14), `label, ink, size` (14), `stroke, fill` (`C.green`) | A broker lying down; body 2 to 3 diameters long; drawn from `x1 - rx` to `x2 + rx` |
-| `callout(o)` | `x, y, w` (210), `h` (54), `text, size` (13), `to` | A note card with a dashed leader to `to` |
-| `envelope(o)`, `broker(o)` | `x, y, w, label, labelDy, stroke, fill` | A message; two stacked envelopes |
-| `lockBox(o)`, `secureLock(o)` | `x, y, size` (44), `stroke, fill, label, labelDy` | A secret store; secure communication (sky shield) |
-| `panel(o)` | `x, y, w, h, stroke` (`C.caption`), `r` (10) | A dashed rounded area; top-left corner |
-| `region(o)` | `x, y, w, h, stroke, r, caption, captionW, captionX, captionH` (26), `captionSize` (15) | A dashed area with its name on the top border |
-| `pod(o)` | `x, y, w, h, name` (`'Pod'`), `captionW` (56), `captionX, size` (13) | A Kubernetes pod |
-| `pill(o)` | `x, y, w, h` (26), `text, color` (`C.navy`), `filled, size` (15) | A rounded caption tag |
-| `tile(o)` | `x, y, icon, label, color, filled, size` (99), `w, h, inline, tag, labelSize, glyphSize, glyphGap, glyphDy, nameDy, desc, descSize, inlinePad, inlineGap` | A card with an icon over or beside a label. Prefer `card()` or `apiTile()` |
-| `httpCard(o)`, `httpCardH(o)` | `x, y, w, h, method, url, status, request, body, size` (13), `statusW` | An HTTP exchange; the least height it needs |
-| `codeCard(o)` | `x, y, w, h, title, code, size` (12), `titleSize` (13), `pad` (14) | A file or code in a bordered card, name above |
-| `indentCode(code)` | | Leading spaces turned non-breaking, so indentation survives |
-| `roundedPath(o)` | `points, r` (10), `color` (`C.navy`), `width, dash` | A run that turns each corner with an arc |
-| `elbowArrow(o)` | `points, r` (12), `color` (`C.navy`), `heads` (`'end'`, `'start'`, `'both'`, `'none'`), `dash` | A turning line with its chevron, as one path |
-| `arrow(o)` | `from, to, head` (true), `color` (`C.navy`), `gap` (2), `dash` | A straight arrow between shape edges |
-| `lollipop(o)`, `socket(o)` | `x, y, to, toY, elbowX, r`; `x, y, from, r` | A UML provided interface; the socket that cups it |
-| `lineWidth()` | | The stroke for this canvas |
-| `captionReach()`, `captionPad(size)` | | How far a pill hangs inside its region (13); a pill's end padding |
-| Constants | | `MIN_LABEL` 10, `HEAD` 8, `FILL_OPACITY` 0.6, `CAPTION_H` 26, `CAPTION_INSET` 20, `STORE_RATIO` 1.2, `BALL_R` 10, `SOCKET_R` 21, `STEP_R` 15, `MONO` |
-
-`arrow()`'s `from` and `to` take a point `[x, y]` (used as is) or a shape
-descriptor: a circle `{ x, y, r }`, a hexagon `{ x, y, r, hex: true }` or a
-rectangle `{ x, y, w, h }`.
-
-### `_engine/app.mjs`
-
-| Export | Returns |
-| --- | --- |
-| `appSidecar(o)` | `x, y, r` (54), `label` (`'App'`), `size, mirror, sub, subSize`, plus a spread `APP[n]`: the app hexagon with the Dapr sidecar overlapping it |
-| `sidecarAt(o)` | Same options: the sidecar as an arrow descriptor `{ x, y, r, hex: true }` |
-| `pairExtent(o)` | The pair's `{ left, right, top, bottom }` about the app's centre |
-| `appSidecarCentre(o)` | `{ x, y }` for the app so that the whole pair is centred on the given point |
-| `sidecarDx(r)` | How far right of the app's centre the sidecar sits |
-| `SIDECAR_R`, `SIDECAR_CLEARANCE`, `SIDECAR_GAP` | 0.75 of `r`; 0.15 of `r` below the app's lowest point; 7 units under the name |
-
-### `_engine/icons.mjs`
-
-| Export | Returns |
-| --- | --- |
-| `icon(o)` | `name, x, y, size` (32), `w, h, color` (`C.body`), `label, labelDy, labelSize` (13), `dir, fit` (`'box'` or `'ink'`). The mark fitted into the box, aspect kept. `color` tints single-colour marks only |
-| `markHex(o)` | `x, y, r, mark, size, stroke` (`C.blue`), `fill, color`: a hexagon with a mark centred in it. `logo-blue` needs no `size` |
-| `plate(o)`, `brand(o)` | A neutral backing; a mark on its plate, with an optional name inside |
-| `logoStrip(o)`, `logoStripSize(o)` | `x, y, marks` (`{ mark, name, color }`), `caption, cols, markSize` (30), `size` (13), `plated`: vendor marks with names in a captioned region; its size |
-| `serviceInvocation(o)` | The service-invocation glyph, sized by ink |
-| `listMarks(dir)` | Every mark name in a folder |
-| `DAPR_MARK`, `MARK_IN_HEX`, `PLATE_H`, `PLATE_PAD` | 4/3 and 0.8 of the radius; 68; 28 |
-| `IconError` | Thrown for a missing mark, a bad name, or a file that fails the screen |
-
-### `_engine/cards.mjs` and `_engine/apis.mjs`
-
-| Export | Returns |
-| --- | --- |
-| `card(o)` | `mark, name, w, h, inline, color` (`C.blue`), `filled, tag`, plus `tile()` options: a card with the mark and name sized from it |
-| `cardSizes(o)` | `{ glyph, label }` for a card; throws below the 10-unit floor |
-| `APIS`, `CROSS_CUTTING` | The 16 APIs and the 3 cross-cutting concerns, each `{ key, mark, name, wrap, tag }` |
-| `api(key)` | One entry; throws on an unknown key |
-| `apiTile(o)` | `key, wrap, glyph`, plus `card()` options: the API block |
-
-Keys: `workflows`, `pubsub`, `service-invocation`, `state`, `actors`, `jobs`,
-`configuration`, `secrets`, `bindings`, `middleware`, `cryptography`,
-`distributed-lock`, `conversation`, `binary-store`, `search`, `vector`, and
-`observability`, `security`, `resiliency`.
-
-### `_engine/services.mjs`
-
-| Export | Returns |
-| --- | --- |
-| `serviceHex(o)` | `key, x, y, r` (`SERVICE_R`, 34), `role, wrap, size, side` (`'below'` or `'right'`): a Dapr hexagon with the service's name, and its role in blue |
-| `SERVICES`, `service(key)` | `placement`, `scheduler`, `sentry`, `operator`, `injector` |
-| `serviceLabel(r)` | The name size for a radius, for a neighbour that is not a Dapr service; throws below 10 |
-| `NAME_DY`, `ROLE_DY`, `NAME_DX` | The name's and role's offsets as multiples of `r` |
-
-### `_engine/brands.mjs`
-
-| Export | Returns |
-| --- | --- |
-| `LANGUAGES` | `nodejs`, `python`, `dotnet`, `go`, `php`, `rust`, each `{ name, w, h, content, color }` |
-| `CLOUDS` | `azure`, `aws`, `google-cloud`, `kubernetes` |
-| `scaleMarks(marks, k)` | Every size in a row scaled by one factor, so the marks stay in proportion |
-| `cloudMark(o)` | `mark, x, y, k` (1): one cloud mark with its backing and name |
-| `LANG_PLATE_H`, `CLOUD_LABEL`, `CLOUD_TEXT_DX`, `MARK_PLATE_H`, `MARK_PLATE_PAD` | 80, 15, 21, 56, 16 |
-
-### `_engine/flow.mjs`
-
-| Export | Returns |
-| --- | --- |
-| `FLOW` | `W` 172, `H` 46, `SIZE` 13, `CAPTION_SIZE` 13, `NOTE_SIZE` 12, `PAD`, `LANE_TERMINAL_H`, `LANE_ACTIVITY_H`, `GAP_X` 58, `GAP_Y` 28, `NODE_R` 30, and the styles `start`, `end`, `step`, `wait` to spread into `node()` or `box()` |
-| `flowLane(o)` | `x, y, w, h, caption, captionW, captionX`: a lane, a `region()` with the flow caption size |
-| `note(o)` | `x, y, text, anchor, halo`: a remark on the flow |
-
 ## Worked example
 
-An app with its Dapr sidecar that saves state to Redis and publishes to
-Kafka. Save it as `<diagramsDir>/scenes/checkout-components.mjs`, register it
-in `scenes/index.mjs` as `'checkout-components'`, and export.
-
-```js
-// An app with its Dapr sidecar, saving state to Redis and publishing to Kafka.
-// One app, so it takes APP[0] (green) and the broker takes sky instead of the
-// house green. The sidecar is what reaches the components, so both runs start
-// at the sidecar, as one trunk that forks on a bus.
-import { C, APP } from '../_engine/engine.mjs';
-import { cylinder, elbowArrow, group, hexHalfWidth, label, pipe, STORE_RATIO } from '../_engine/shapes.mjs';
-import { appSidecar, sidecarAt } from '../_engine/app.mjs';
-import { icon } from '../_engine/icons.mjs';
-
-const W = 560; // 16:9, the extra air on the long axis
-const H = 315;
-
-const TEXT = 13; // the labels on the runs
-const NAME = 15; // every shape's name, so the three names match
-
-// The app and its sidecar. sidecarAt() says where the sidecar lands, so the
-// runs start on the drawing rather than on a copy of its offsets.
-const APP_R = 54;
-const APP_X = 103;
-const APP_Y = 92;
-const SIDE = sidecarAt({ x: APP_X, y: APP_Y, r: APP_R, size: NAME });
-
-// One trunk leaves the sidecar square out of its right edge and forks at BUS_X.
-const TRUNK_X0 = SIDE.x + hexHalfWidth(SIDE.r) + 2;
-const BUS_X = TRUNK_X0 + 44;
-const SPREAD = 86; // each component sits this far above or below the trunk
-const LEG = 120; // bus to component: the label's width plus two characters each side
-
-// Both components share a left edge, so both legs are the same length.
-const LEFT = BUS_X + LEG;
-
-const STORE_W = 120;
-const STORE_X = LEFT + STORE_W / 2;
-const STORE_Y = SIDE.y - SPREAD;
-const STORE_H = STORE_W / STORE_RATIO;
-
-const PIPE_RX = 12;
-const PIPE_RY = 30;
-const PIPE_X1 = LEFT + PIPE_RX;
-const PIPE_X2 = PIPE_X1 + 140; // 2.33 diameters, inside pipe()'s 2 to 3
-const PIPE_X = (PIPE_X1 + PIPE_X2) / 2;
-const PIPE_Y = SIDE.y + SPREAD;
-
-const MARK = 40; // both marks, fitted to their ink so they weigh the same
-const WORD_DY = 14; // a label rides this far above its run
-const NAME_DY = 18; // a name sits this far below its shape
-
-const run = (y) => [[TRUNK_X0, SIDE.y], [BUS_X, SIDE.y], [BUS_X, y], [LEFT - 2, y]];
-const SPAN_X = (BUS_X + LEFT) / 2; // labels centre on the leg they name
-
-export default {
-  width: W,
-  height: H,
-  title: 'An app saving state and publishing messages through its Dapr sidecar',
-  desc:
-    'A green hexagon named Checkout with its Dapr sidecar overlapping its lower right. '
-    + 'From the sidecar one line forks in two. The upper branch, labelled Save state, ends at '
-    + 'a gold data store holding the Redis mark, named Redis state store. The lower branch, '
-    + 'labelled Publish, ends at a blue message broker lying on its side, holding the Kafka '
-    + 'mark, named Kafka pub/sub broker.',
-
-  build() {
-    return [
-      // Runs first, so the shapes paint over their ends.
-      elbowArrow({ points: run(STORE_Y) }),
-      elbowArrow({ points: run(PIPE_Y) }),
-      label({ x: SPAN_X, y: STORE_Y - WORD_DY, text: 'Save state', size: TEXT, halo: true }),
-      label({ x: SPAN_X, y: PIPE_Y - WORD_DY, text: 'Publish', size: TEXT, halo: true }),
-
-      appSidecar({ x: APP_X, y: APP_Y, r: APP_R, label: 'Checkout', size: NAME, ...APP[0] }),
-
-      group([
-        cylinder({ x: STORE_X, y: STORE_Y, w: STORE_W }),
-        icon({ name: 'redis', x: STORE_X, y: STORE_Y, size: MARK, color: C.appInk, fit: 'ink' }),
-        label({ x: STORE_X, y: STORE_Y + STORE_H / 2 + NAME_DY, text: 'Redis state store', size: NAME }),
-      ]),
-
-      group([
-        pipe({ x1: PIPE_X1, x2: PIPE_X2, y: PIPE_Y, ry: PIPE_RY, rx: PIPE_RX, fill: C.appSky }),
-        icon({ name: 'kafka', x: PIPE_X, y: PIPE_Y, size: MARK, fit: 'ink' }),
-        label({ x: PIPE_X, y: PIPE_Y + PIPE_RY + NAME_DY, text: 'Kafka pub/sub broker', size: NAME }),
-      ]),
-    ];
-  },
-};
-```
+The full scenes are files in [examples/](examples/). Copy one into
+`<diagramsDir>/scenes/`, register it and export. The first,
+[checkout-components.mjs](examples/checkout-components.mjs), is an app with its
+Dapr sidecar saving state to Redis and publishing to Kafka.
 
 ### Key points
 
@@ -1015,11 +635,6 @@ export default {
   not looks. Render it and look at both themes: open the SVG in a browser
   with light and dark schemes, or look at both PNGs (the dark one on a dark
   ground).
-- **Equal ink weight means equal `size`.** A Fluent glyph's stroke scales with
-  the glyph, so marks at 52 and 64 side by side differ in weight. Give every
-  standalone mark in a scene one size and every mark in a card another, as
-  constants. And a mark's viewBox is not its content (`go` draws 24x9 inside a
-  24x24 box), so fit shipped marks with `fit: 'ink'`.
 - **A definition copied into a scene drifts, and nothing tells you.** Two
   scenes each carrying their own list of APIs ended up with different lengths
   while every check passed. Shared facts belong in one module the scenes
@@ -1033,8 +648,6 @@ export default {
   as `fill` for single-colour marks. If you wrap a glyph yourself, do the same.
 - **Never inline a vendored SVG by hand.** Its ids collide with other marks and
   with the page; `icon()` prefixes and de-duplicates them.
-- **Passing a left edge to a centre-based builder** hangs the shape off by half
-  its width. Only `panel()`, `region()` and `pod()` take a top-left corner.
 - **Shrinking the canvas and a shape together changes nothing you can see.**
   Only ratios inside the scene are visible. When a shape is too big beside
   another, change the two sizes against each other, name the shape everything
@@ -1061,9 +674,6 @@ export default {
   property, not an SVG attribute, and as an attribute it is silently ignored.
   `label()` and `richLabel()` handle it for `mono` text; do the same if you set
   code text yourself.
-- **A label wider than its own card passes every structural check.** Only the
-  fallback-font check, measuring or looking catches it, and raising a label or
-  glyph size is exactly the change that causes it.
 - **`getBBox()` on a transformed element returns its local box.** Every mark
   sits in a translated, scaled group. Measure untransformed elements (a
   `<text>`, a `<rect>` you placed) with `getBBox()`, and anything transformed

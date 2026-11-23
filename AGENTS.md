@@ -70,7 +70,10 @@ This repository contains skill definitions for building Dapr Workflow applicatio
 ### Diagram skills
 
   - `create-diagram/SKILL.md` — Skill for drawing Dapr architecture diagrams as SVG (and optional PNGs) in the docs.dapr.io style
-  - `create-diagram/REFERENCE.md` — Design rules, scene contract, engine API and a worked example
+  - `create-diagram/REFERENCE.md` — Design rules, the layout method, the scene contract, a worked example and traps
+  - `create-diagram/API.md` — The engine API: every builder and its options
+  - `create-diagram/examples/` — Worked example scenes (`.mjs`), each exported by a test
+  - `create-diagram/topics/` — Specialised topics SKILL.md says when to open: Mermaid, matching an existing diagram, API blocks and the HTTP call, custom brand marks, slides
   - `create-diagram/scripts/setup.mjs` — Copies the engine into the user's `diagrams/` folder, refreshes it and optionally installs Chromium
   - `create-diagram/engine/` — The diagram engine derived from dapr/docs (modules, `tokens.json`, icons, fonts, `VERSION`); see [Refreshing the diagram engine](#refreshing-the-diagram-engine)
   - `create-diagram/engine/NOTICE`, `engine/LICENSE-APACHE-2.0` — Attribution and licence for the engine, inside `engine/` so setup copies them into every project
@@ -188,7 +191,7 @@ All skills require:
 
 The engine in `skills/create-diagram/engine/` comes from the newest dapr/docs release branch. To refresh it:
 
-1. Copy the kept modules from that branch: `engine`, `shapes`, `icons`, `apis`, `app`, `services`, `brands`, `cards`, `flow`, `export`, `measure-bbox`, `measure-ink` and `render-png`. Merge, do not overwrite: `browser.mjs`, `font-guard.mjs` and `paths.mjs` are local additions, and `export.mjs` and `render-png.mjs` carry local changes.
+1. Copy the kept modules from that branch: `engine`, `shapes`, `icons`, `apis`, `app`, `services`, `brands`, `cards`, `flow`, `export`, `measure-bbox`, `measure-ink` and `render-png`. Merge, do not overwrite: `browser.mjs`, `font-guard.mjs`, `measure-labels.mjs` and `paths.mjs` are local additions, and `export.mjs` and `render-png.mjs` carry local changes.
 2. Regenerate the colour tokens: `node scripts/diagram-tokens.mjs <path to _tokens.scss>`.
 3. Re-apply the local changes: the Java mark is removed, the Python mark is the CC0 Simple Icons mark with `--d-brand-python`, the export writes one themed SVG, paths resolve from the project, and Chromium loads through `browser.mjs`.
 4. Set `skill` in `engine/VERSION` to the current plugin version (`setup.mjs` compares it) and update `source` there and in `engine/NOTICE` with the branch and commit.

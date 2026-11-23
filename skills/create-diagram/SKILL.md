@@ -7,7 +7,7 @@ description: Draws Dapr architecture diagrams in the docs.dapr.io style as SVG, 
 
 ## Overview
 
-This skill draws a Dapr diagram as code and exports it to an SVG (and, with Chromium, PNGs) in the user's project. It copies a small engine into a `diagrams/` folder, you write one scene file per diagram, and the exporter renders it. All design rules, the layout method and the engine API are in [`REFERENCE.md`](REFERENCE.md). This file is only the workflow.
+This skill draws a Dapr diagram as code and exports it to an SVG (and, with Chromium, PNGs) in the user's project. It copies a small engine into a `diagrams/` folder, you write one scene file per diagram, and the exporter renders it. The design rules and the layout method are in [`REFERENCE.md`](REFERENCE.md), the engine API in [`API.md`](API.md), and specialised topics in `topics/`. This file is only the workflow.
 
 `<skill dir>` is the directory that contains this SKILL.md. Relative paths in this file, such as `scripts/setup.mjs`, resolve from there. `<diagramsDir>` is the folder you set up below, `diagrams` by default. Run every command from the project root, because a relative `<diagramsDir>` resolves against the current directory. Remember the absolute path of the `setup.mjs` you run: you need it again for refreshes.
 
@@ -41,13 +41,23 @@ Work from what the user gave you:
 
 - **A description**: list the components and connections you read from it.
 - **An image or sketch**: read it, then list what you see. Do not copy anything you doubt.
-- **A Mermaid block**: some convert and some do not (sequence and gantt stay Mermaid). See [Converting a Mermaid block](REFERENCE.md#converting-a-mermaid-block).
+- **A Mermaid block**: some convert and some do not (sequence and gantt stay Mermaid). See [`topics/mermaid.md`](topics/mermaid.md).
 
 Confirm that list with the user before drawing, and ask about anything ambiguous. Use docs.dapr.io terms for Dapr concepts (sidecar, building block, component). See [Turning a source into a layout](REFERENCE.md#turning-a-source-into-a-layout).
 
 ## Build the scene
 
-Read [`REFERENCE.md`](REFERENCE.md) first: [Design rules](REFERENCE.md#design-rules), [The scene contract](REFERENCE.md#the-scene-contract), [Engine API](REFERENCE.md#engine-api) and the [Worked example](REFERENCE.md#worked-example). Then:
+Always read [`REFERENCE.md`](REFERENCE.md) first: [Design rules](REFERENCE.md#design-rules), [The scene contract](REFERENCE.md#the-scene-contract) and the [Worked example](REFERENCE.md#worked-example). Open the other files when you need them:
+
+- [`API.md`](API.md): while writing the code, for every builder's options.
+- [`examples/`](examples/): before the first scene, and copy the closest one.
+- [`topics/mermaid.md`](topics/mermaid.md): the source is a Mermaid block.
+- [`topics/matching.md`](topics/matching.md): you are matching an existing picture.
+- [`topics/api-blocks.md`](topics/api-blocks.md): the diagram shows an HTTP call or a Dapr API block.
+- [`topics/brand-marks-custom.md`](topics/brand-marks-custom.md): you need a mark that is not built in.
+- [`topics/slides.md`](topics/slides.md): the diagram is for slides.
+
+Then:
 
 1. Write `<diagramsDir>/scenes/<name>.mjs`. The name is lowercase words joined by hyphens, such as `order-flow`.
 2. Register it in `<diagramsDir>/scenes/index.mjs`.
@@ -60,6 +70,7 @@ Read [`REFERENCE.md`](REFERENCE.md) first: [Design rules](REFERENCE.md#design-ru
 3. With Chromium the fallback-font check runs after the SVGs are written. If it fails, widen the shape or shorten the label, then export again.
 4. Look at the result in both themes. Read `<diagramsDir>/out/<name>-light.png` and `<name>-dark.png` if they exist. A transparent dark PNG looks washed out on a white viewer, so judge it as if on a dark background. Without PNGs you cannot view the result yourself: ask the user to open `<diagramsDir>/out/<name>.svg` in a browser, in light and in dark mode, and confirm it looks right.
 5. Fix what you see (overlaps, crowded labels, arrows that cross) and export again.
+6. When a rule says a width is measured, run `node "<diagramsDir>/_engine/measure-labels.mjs" <name>` (needs Chromium). It prints every label's box in scene units.
 
 `out/` belongs to the exporter. Never put a hand-made file there.
 
