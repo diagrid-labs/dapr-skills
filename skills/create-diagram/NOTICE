@@ -1,0 +1,16 @@
+create-diagram
+
+The diagram engine in engine/ is derived from dapr/docs
+(https://github.com/dapr/docs), branch v1.19, commit 2b6e64ec4.
+It is licensed under the Apache License 2.0 (see LICENSE-APACHE-2.0).
+Copyright The Dapr Authors.
+
+Changes from the original:
+- Modules trimmed to the engine; the dapr/docs scenes and page-specific
+  modules are not included.
+- The Java mark was removed.
+- The Python mark is replaced.
+
+engine/icons/README.md lists the licence of each vendored mark.
+Fonts in engine/fonts/ are licensed under the SIL Open Font License
+(see OFL-Inter.txt and OFL-Geist.txt).
