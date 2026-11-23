@@ -165,7 +165,8 @@ export function renderScene(name, scene, origin = [0, 0]) {
   return lf.endsWith('\n') ? lf : `${lf}\n`;
 }
 
-// Returns { ok, problems[], written[], removed[] } (removed = orphans deleted).
+// Returns { ok, problems[], written[], removed[], svgs } (removed = orphans deleted;
+// svgs = name -> file content, present whenever every scene rendered).
 // Renders everything before touching disk, so a bad scene leaves outDir untouched.
 export function run({ scenes, outDir, origins = {}, only, check = false } = {}) {
   if (!outDir) throw new Error('run(): outDir is required');
@@ -201,7 +202,7 @@ export function run({ scenes, outDir, origins = {}, only, check = false } = {}) 
       else if (readFileSync(file, 'utf8') !== content) problems.push(`${name}.svg: differs from a fresh render ${fix}`);
     }
     for (const f of orphans) problems.push(`${f}: no matching scene ${fix}`);
-    return { ok: problems.length === 0, problems, written: [], removed: [] };
+    return { ok: problems.length === 0, problems, written: [], removed: [], svgs: rendered };
   }
 
   // An emptied registry (typo, bad merge) must not silently wipe every committed diagram.
@@ -217,18 +218,26 @@ export function run({ scenes, outDir, origins = {}, only, check = false } = {}) 
     written.push(`${name}.svg`);
   }
   for (const f of orphans) unlinkSync(join(outDir, f));
-  return { ok: true, problems: [], written, removed: orphans };
+  return { ok: true, problems: [], written, removed: orphans, svgs: rendered };
 }
 
 const USAGE = 'Usage: node _engine/export.mjs [--check] [--only <name>] [--no-browser]';
+export const NO_CHROMIUM = 'Chromium not installed: skipped centring, fallback-font check and PNGs. See SKILL.md to enable.';
+
+const report = (check, problems) => {
+  console.error(check ? 'Diagram check failed:' : 'Diagram export failed:');
+  for (const p of problems) console.error(`  ${p}`);
+  return 1;
+};
 
 async function main(argv) {
   let check = false;
+  let noBrowser = false;
   let only;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--check') check = true;
-    else if (a === '--no-browser') { /* browser features arrive with the PNG step */ }
+    else if (a === '--no-browser') noBrowser = true;
     else if (a === '--only') {
       only = argv[++i];
       if (!only || only.startsWith('--')) {
@@ -255,14 +264,66 @@ async function main(argv) {
     console.error(`No scene named "${only}" (known: ${Object.keys(scenes).join(', ') || 'none'})`);
     return 2;
   }
-  const { ok, problems, written, removed } = run({ scenes, outDir: paths.out, origins: readOrigins(paths.bbox), only, check });
-  if (!ok) {
-    console.error(check ? 'Diagram check failed:' : 'Diagram export failed:');
-    for (const p of problems) console.error(`  ${p}`);
-    return 1;
+
+  // The browser modules load only when they are wanted, so --no-browser and a
+  // project without Playwright never touch them.
+  let chromium = null;
+  if (!noBrowser) {
+    const { loadChromium } = await import('./browser.mjs');
+    chromium = await loadChromium({ root: paths.root });
+    if (!chromium) console.warn(NO_CHROMIUM);
   }
-  for (const f of removed) console.log(`Removed orphan: ${f}`);
-  console.log(check ? `Diagrams up to date (${Object.keys(scenes).length}).` : `Exported ${written.length} diagram(s) to ${paths.out}`);
+
+  const problems = [];
+  // 1. Centring. bbox.json is rewritten only when a value moves.
+  let origins = readOrigins(paths.bbox);
+  if (chromium) {
+    const { measureOrigins, originsCurrent, writeOrigins } = await import('./measure-bbox.mjs');
+    let measured;
+    try {
+      measured = await measureOrigins(scenes);
+    } catch (e) {
+      return report(check, [e.message]);
+    }
+    if (check) {
+      if (!originsCurrent(paths.bbox, measured)) problems.push('bbox.json: the measured centring has changed (re-run the export)');
+    } else {
+      if (writeOrigins(paths.bbox, measured)) console.log(`Updated ${paths.bbox}`);
+      origins = measured;
+    }
+  }
+
+  // 2. The SVGs.
+  const result = run({ scenes, outDir: paths.out, origins, only, check });
+  problems.push(...result.problems);
+  if (!result.svgs || (!check && !result.ok)) return report(check, problems);
+  for (const f of result.removed) console.log(`Removed orphan: ${f}`);
+  if (!check) console.log(`Exported ${result.written.length} diagram(s) to ${paths.out}`);
+
+  if (chromium) {
+    // 3. Every label still fits its shape in a fallback face.
+    const { checkFallbackFonts } = await import('./font-guard.mjs');
+    problems.push(...await checkFallbackFonts(result.svgs));
+    if (problems.length && !check) return report(check, problems);
+
+    // 4. Light and dark PNGs. A single-scene export leaves the others alone.
+    const { renderPngs } = await import('./render-png.mjs');
+    let png;
+    try {
+      png = await renderPngs({
+        svgs: result.svgs, outDir: paths.out, manifestPath: paths.pngManifest, check, prune: only === undefined,
+      });
+    } catch (e) {
+      return report(check, [...problems, e.message]);
+    }
+    problems.push(...png.problems);
+    if (problems.length) return report(check, problems);
+    for (const f of png.removed) console.log(`Removed orphan: ${f}`);
+    if (!check) console.log(png.written.length ? `Rendered ${png.written.length} png(s).` : 'PNGs already up to date.');
+  }
+
+  if (problems.length) return report(check, problems);
+  if (check) console.log(`Diagrams up to date (${Object.keys(scenes).length}).`);
   return 0;
 }
 
@@ -274,6 +335,13 @@ const isEntry = () => {
     return false;
   }
 };
+// No top-level await: the browser modules import this file back, and an entry
+// module still awaiting its own body would leave that import waiting forever.
 if (isEntry()) {
-  process.exitCode = await main(process.argv.slice(2));
+  main(process.argv.slice(2)).then((code) => {
+    process.exitCode = code;
+  }, (e) => {
+    console.error(e && e.stack ? e.stack : String(e));
+    process.exitCode = 1;
+  });
 }

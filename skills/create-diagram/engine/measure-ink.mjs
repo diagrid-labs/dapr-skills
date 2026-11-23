@@ -14,30 +14,35 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ICONS_DIR, listMarks, parseMark } from './icons.mjs';
 import { serialize } from './engine.mjs';
+import { loadChromium } from './browser.mjs';
 
 const OUT = join(ICONS_DIR, 'ink.json');
 
 const round = (n) => +n.toFixed(3);
 
 export async function measure(dir = ICONS_DIR) {
-  const { chromium } = await import('@playwright/test');
+  const chromium = await loadChromium();
+  if (!chromium) throw new Error('measure-ink: Chromium is not installed (npm i @playwright/test && npx playwright install chromium)');
   const browser = await chromium.launch();
-  const page = await browser.newPage();
   const ink = {};
-  for (const name of listMarks(dir)) {
-    const mark = parseMark(readFileSync(join(dir, `${name}.svg`), 'utf8'), { name, prefix: `m-${name}-` });
-    const [vx, vy, vw, vh] = mark.viewBox;
-    const doc = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vx} ${vy} ${vw} ${vh}" width="${vw}" height="${vh}">`
-      + `<g id="ink">${mark.children.map(serialize).join('')}</g></svg>`;
-    await page.setContent(`<!doctype html><body style="margin:0">${doc}</body>`);
-    const box = await page.evaluate(() => {
-      const b = document.getElementById('ink').getBBox();
-      return [b.x, b.y, b.width, b.height];
-    });
-    if (!(box[2] > 0) || !(box[3] > 0)) throw new Error(`measure-ink: "${name}" draws nothing measurable`);
-    ink[name] = box.map(round);
+  try {
+    const page = await browser.newPage();
+    for (const name of listMarks(dir)) {
+      const mark = parseMark(readFileSync(join(dir, `${name}.svg`), 'utf8'), { name, prefix: `m-${name}-` });
+      const [vx, vy, vw, vh] = mark.viewBox;
+      const doc = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vx} ${vy} ${vw} ${vh}" width="${vw}" height="${vh}">`
+        + `<g id="ink">${mark.children.map(serialize).join('')}</g></svg>`;
+      await page.setContent(`<!doctype html><body style="margin:0">${doc}</body>`);
+      const box = await page.evaluate(() => {
+        const b = document.getElementById('ink').getBBox();
+        return [b.x, b.y, b.width, b.height];
+      });
+      if (!(box[2] > 0) || !(box[3] > 0)) throw new Error(`measure-ink: "${name}" draws nothing measurable`);
+      ink[name] = box.map(round);
+    }
+  } finally {
+    await browser.close();
   }
-  await browser.close();
   // Sorted, so the file is stable and a diff shows only what changed.
   const sorted = Object.fromEntries(Object.keys(ink).sort().map((k) => [k, ink[k]]));
   writeFileSync(OUT, `${JSON.stringify(sorted, null, 2)}\n`);
