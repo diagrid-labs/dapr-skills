@@ -4,13 +4,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readdirSync, readFileSync, copyFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, copyFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { requireChromium } from './helpers/chromium.mjs';
 
 const SKILL = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'skills', 'create-diagram');
 const EXAMPLES = join(SKILL, 'examples');
+// Where the skill installs Playwright is <diagramsDir>/node_modules; link this repo's.
+const NODE_MODULES = join(SKILL, '..', '..', 'node_modules');
 const exampleFiles = existsSync(EXAMPLES) ? readdirSync(EXAMPLES).filter((f) => f.endsWith('.mjs')) : [];
 
 test('there is at least one example', () => {
@@ -43,6 +46,56 @@ for (const file of exampleFiles) {
     }
   });
 }
+
+// The top-level shapes the balance check counts: apps, sidecars, stores,
+// pipes and brokers. These are the classes the engine's own builders put on
+// each shape's group (hexagon(), the sidecar mark, cylinder(), pipe(),
+// broker()), so the check needs nothing from the scene and labels never count.
+const SHAPES = '.d-hex, .d-mark-hex, .d-cylinder, .d-pipe, .d-broker';
+
+// Every quarter of the drawing, split around the centre of its measured box,
+// must hold part of a shape. Returns the quarters that hold none.
+async function emptyQuarters(file) {
+  const name = basename(file, '.mjs');
+  const tmp = mkdtempSync(join(tmpdir(), 'diagram-balance-'));
+  const dir = join(tmp, 'diagram ref', 'diagrams');
+  try {
+    const setup = spawnSync(process.execPath, [join(SKILL, 'scripts', 'setup.mjs'), dir], { encoding: 'utf8' });
+    assert.equal(setup.status, 0, setup.stderr);
+    if (existsSync(NODE_MODULES)) symlinkSync(NODE_MODULES, join(dir, 'node_modules'), 'junction');
+    copyFileSync(join(EXAMPLES, file), join(dir, 'scenes', file));
+    const url = (p) => pathToFileURL(join(dir, p)).href;
+    const { default: scene } = await import(url(`scenes/${file}`));
+    const { renderScene } = await import(url('_engine/export.mjs'));
+    const { withHarness } = await import(url('_engine/browser.mjs'));
+    const body = `<div class="fig" style="width:900px">${renderScene(name, scene)}</div>`;
+    return await withHarness((tab) => tab.evaluate((selector) => {
+      const svg = document.querySelector('svg');
+      // The same measure measure-bbox.mjs centres by.
+      const all = svg.getBBox();
+      const cx = all.x + all.width / 2;
+      const cy = all.y + all.height / 2;
+      const boxes = [...svg.querySelectorAll(selector)].map((g) => g.getBBox());
+      const quarters = {
+        'top-left': [all.x, all.y, cx, cy],
+        'top-right': [cx, all.y, all.x + all.width, cy],
+        'bottom-left': [all.x, cy, cx, all.y + all.height],
+        'bottom-right': [cx, cy, all.x + all.width, all.y + all.height],
+      };
+      const hits = ([x1, y1, x2, y2]) => boxes.some((b) =>
+        b.x < x2 && b.x + b.width > x1 && b.y < y2 && b.y + b.height > y1);
+      return Object.keys(quarters).filter((q) => !hits(quarters[q]));
+    }, SHAPES), { body });
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
+test('orders-payments is balanced', async (t) => {
+  if (!(await requireChromium(t))) return;
+  const empty = await emptyQuarters('orders-payments.mjs');
+  assert.deepEqual(empty, [], `no shape in the ${empty.join(', ')} quarter(s): rebalance the scene`);
+});
 
 test('REFERENCE core stays small', () => {
   const lines = readFileSync(join(SKILL, 'REFERENCE.md'), 'utf8').split('\n').length;

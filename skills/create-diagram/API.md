@@ -37,8 +37,8 @@ Coordinates are in the scene's canvas.
 | `box(o)` | `x, y, w` (194), `h` (30), `label, stroke` (`C.teal`), `fill` (`C.tealFill`), `size` (11), `labelDx, solid` | A workflow activity rectangle |
 | `decision(o)`, `decisionPoints(o)` | `x, y, w` (92), `h` (64), `label, stroke, fill` (`C.appGold`), `size, solid` | A diamond; its four points by name |
 | `node(o)` | `x, y, r` (16), `stroke, fill, label, labelDy, labelInside, ink, size` | A workflow start or end circle |
-| `cylinder(o)` | `x, y, w`, or `x, top, bottom, rx, ry`; `label, ink, size` (14), `stroke, fill` (`C.appGold`) | A standing data store, `STORE_RATIO` (1.2) wide to tall |
-| `pipe(o)` | `x1, x2, y, ry` (34), `rx` (14), `label, ink, size` (14), `stroke, fill` (`C.green`) | A broker lying down; body 2 to 3 diameters long; drawn from `x1 - rx` to `x2 + rx` |
+| `cylinder(o)` | `x, y, w`, or `x, top, bottom, rx, ry`; `label, ink, size` (14), `stroke, fill` (`C.appGold`) | A standing data store, `STORE_RATIO` (1.2) wide to tall. As an arrow target pass its bounding rect, `{ x, y, w, h: w / STORE_RATIO }` |
+| `pipe(o)` | `x1, x2, y, ry` (34), `rx` (14), `label, ink, size` (14), `stroke, fill` (`C.green`) | A broker lying down; body 2 to 3 diameters long; drawn from `x1 - rx` to `x2 + rx`. As an arrow target pass its bounding rect, `{ x: (x1 + x2) / 2, y, w: x2 - x1 + 2 * rx, h: 2 * ry }` |
 | `callout(o)` | `x, y, w` (210), `h` (54), `text, size` (13), `to` | A note card with a dashed leader to `to` |
 | `envelope(o)`, `broker(o)` | `x, y, w, label, labelDy, stroke, fill` | A message; two stacked envelopes |
 | `lockBox(o)`, `secureLock(o)` | `x, y, size` (44), `stroke, fill, label, labelDy` | A secret store; secure communication (sky shield) |

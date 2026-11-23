@@ -230,6 +230,10 @@ the colour scheme.
   vertical run sits on the head and its halo hides the direction. Where a word
   sits over the end of a run, give it its own constant (about 24 units above)
   and say why in a comment.
+- **A label beside a vertical run is anchored `start` on the right** (`end` on
+  the left), about one character (12 units at 13) clear of the line, centred on
+  the run between the two shape edges, on the side away from the nearest shape
+  and clear of the 8-unit head.
 - **A word on a run names one run.** Two runs through one label name neither.
   Keep at least six units between any two free labels.
 
@@ -253,6 +257,9 @@ the colour scheme.
   shape descriptor (`{ x, y, r, hex: true }`, `{ x, y, r }` or
   `{ x, y, w, h }`) rather than a point wherever you can. `arrow()` throws when
   the shapes touch.
+- **A pipe or a store is an arrow target by its bounding rect,** given in the
+  `pipe()` and `cylinder()` rows of [API.md](API.md). A diagonal stops at the
+  rect, short of the cap or rim, so run lines along the axes.
 - **An elbowed line with a head is `elbowArrow()`,** not a `roundedPath()`
   with an `arrow()` laid over it. `heads` puts the chevron on the end, the
   start, both or neither. A feeder running into a bus takes `heads: 'none'`.
@@ -456,6 +463,9 @@ instead of the group it belongs to.
   ```
 
   For an app and its sidecar, `pairExtent()` and `appSidecarCentre()` do this.
+- **When one branch hangs off one side, check the four quarters.** Move the
+  branch under the centre on an elbow, mirror it, or trim the canvas. Never
+  add a shape to fill space. If a corner stays empty, say why in a comment.
 - **Over a short run, alignment beats centring.** A lean of fifteen units is
   invisible over a long arrow and obvious over a short one. Align the shape to
   what it points at.
@@ -612,31 +622,31 @@ that throws leaves `out/` untouched and names the scene in the error.
 
 ## Worked example
 
-The full scenes are files in [examples/](examples/). Copy one into
-`<diagramsDir>/scenes/`, register it and export. The first,
-[checkout-components.mjs](examples/checkout-components.mjs), is an app with its
-Dapr sidecar saving state to Redis and publishing to Kafka.
+The full scenes are files in [examples/](examples/): copy one into
+`<diagramsDir>/scenes/`, register it and export.
+[checkout-components.mjs](examples/checkout-components.mjs) is one app whose
+sidecar saves state to Redis and publishes to Kafka;
+[orders-payments.mjs](examples/orders-payments.mjs) is two apps talking through
+Kafka, with Orders also saving state to Redis.
 
-### Key points
+### Key points: checkout-components.mjs
 
-- **Every position is derived.** The sidecar comes from `sidecarAt()`, the
-  legs from the sidecar's edge, the store and the broker from one shared left
-  edge. Moving the app moves everything with it.
-- **One trunk, one fork.** Both runs leave the sidecar on the same line and
-  split on a bus, rather than two arrows leaving the sidecar at two angles.
-- **One app, so the broker is sky, not green.** The store is the house gold,
-  and the Redis mark on it takes `C.appInk` because it sits on a solid fill.
-- **Proportions are the builders'.** `cylinder()` takes a width and derives the
-  height; the pipe is 140 long and 60 across, inside the 2 to 3 range
-  `pipe()` enforces.
-- **Labels on runs have halos and sit on their own leg,** centred on the span
-  between the bus and the shapes' shared left edge.
-- **Names sit outside their shapes,** because the marks fill the inside.
-  `appSidecar()` sets the app's name on its solid fill.
-- **The canvas is 16:9 and the drawing is centred by construction.** The
-  measured origin in `bbox.json` comes out under half a unit, so the scene
-  looks the same with or without Chromium. The spare air is on the long axis,
-  left and right.
+- **Every position is derived,** from `sidecarAt()` and one shared left edge
+  for the store and the broker. Both runs leave the sidecar as one trunk and
+  fork on a bus.
+- **One app, so the broker is sky, not green.** The Redis mark takes `C.appInk`
+  on the solid gold store; the 140 by 60 pipe is inside `pipe()`'s 2 to 3.
+- **Names sit outside their shapes; labels on runs have halos.** The canvas is
+  16:9 and centred by construction, so it looks the same without Chromium.
+
+### Key points: orders-payments.mjs
+
+- **Mirrored pairs from the canvas centre.** Payments takes `mirror: true`, so
+  the sidecars face the pipe and one straight line runs through it. Two apps
+  take `APP[0]` and `APP[1]`; the broker stays the house green.
+- **Balanced by moving, not adding.** Redis hangs under the pipe on an elbow
+  from the Orders sidecar, so every quarter holds a shape. "Save state" sits
+  beside the vertical leg; the pipe and store are rect targets.
 
 ## Traps already hit
 
