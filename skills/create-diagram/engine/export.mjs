@@ -333,7 +333,9 @@ async function main(argv) {
     try {
       manifest = existsSync(paths.pngManifest) ? JSON.parse(readFileSync(paths.pngManifest, 'utf8')) : null;
     } catch {
-      // An unreadable manifest is a Chromium run's problem to report.
+      const line = 'png-manifest.json: unreadable; re-export with Chromium';
+      if (check) problems.push(line);
+      else console.warn(line);
     }
     for (const name of staleWithoutBrowser(result.svgs, manifest)) {
       const line = `${name}: changed since the last Chromium export; centring and PNGs are stale. Re-export with Chromium.`;

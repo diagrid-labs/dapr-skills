@@ -22,6 +22,7 @@ const BUILD_COMMANDS = [
   'go build',
   'mvn ',
   'export.mjs --check',
+  'export.mjs" --check',
 ];
 
 /** Skill folders whose name begins with `create-`, sorted. */

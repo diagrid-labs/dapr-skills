@@ -194,7 +194,7 @@
       "id": 16,
       "query": "I've got my own agent loop calling the model API directly, no framework - make it durable on Catalyst",
       "expect": "diagrid:diagrid-agent-harness",
-      "rationale": "Added 2026-11-13 for catalyst-ai 0.8.1's new catalyst-agent-harness skill. Tests a three-way boundary: an EXISTING hand-written loop being made durable (harness) against standing up a NEW agent on Catalyst (catalyst-agent-scaffold) against building one locally (dapr-skills create-agent-*). The explicit Catalyst target should exclude the dapr-skills pair outright; catalyst-agent-scaffold is the expected runner-up, and the discriminator is \"no framework\" plus an existing loop rather than a new app. A dapr-skills answer here is a real mis-route; AMBIGUOUS between the two catalyst-ai skills is a wording warning, not a boundary failure.",
+      "rationale": "Added 2026-11-13 for catalyst-ai 0.8.1's new catalyst-agent-harness skill. Tests a three-way boundary: an EXISTING hand-written loop being made durable (harness) against standing up a NEW agent on Catalyst (diagrid-agent-scaffold) against building one locally (dapr-skills create-agent-*). The explicit Catalyst target should exclude the dapr-skills pair outright; diagrid-agent-scaffold is the expected runner-up, and the discriminator is \"no framework\" plus an existing loop rather than a new app. A dapr-skills answer here is a real mis-route; AMBIGUOUS between the two diagrid skills is a wording warning, not a boundary failure.",
       "baseline": {
         "picked": "diagrid:diagrid-agent-harness",
         "confidence": "high"

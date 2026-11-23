@@ -3,7 +3,7 @@
 // Usage: node scripts/triggering-prompt.mjs <path to diagrid skills dir>
 // Skills with `disable-model-invocation: true` (e.g. dapr-shared) are hidden from the
 // model in Claude Code, so they are left out of the prompt.
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readDescriptions } from './lib/frontmatter-validation.mjs';
@@ -40,7 +40,14 @@ export function buildPrompt(data, ownSkills, otherSkills) {
   return lines.join('\n') + '\n';
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+const isEntry = () => {
+  try {
+    return process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+};
+if (isEntry()) {
   const dir = process.argv[2];
   let other = {};
   try { other = dir ? visibleDescriptions(dir) : {}; } catch { /* reported below */ }

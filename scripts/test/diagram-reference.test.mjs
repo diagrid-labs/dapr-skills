@@ -111,3 +111,61 @@ test('every split file is linked from SKILL.md', () => {
     assert.ok(skill.includes(needle), `SKILL.md does not mention ${needle}`);
   }
 });
+
+// GitHub's heading anchors: lowercase, backticks and punctuation dropped
+// (hyphens and spaces kept), spaces become hyphens.
+const slugify = (h) => h.trim().toLowerCase().replace(/`/g, '').replace(/[^\p{L}\p{N} _-]/gu, '').replace(/ /g, '-');
+const headingSlugs = (file) => {
+  const slugs = new Set();
+  const seen = new Map();
+  let fence = false;
+  for (const line of readFileSync(file, 'utf8').split('\n')) {
+    if (/^\s*(```|~~~)/.test(line)) fence = !fence;
+    const m = !fence && line.match(/^#{1,6}\s+(.*?)\s*#*\s*$/);
+    if (!m) continue;
+    const base = slugify(m[1]);
+    const n = seen.get(base) ?? 0;
+    seen.set(base, n + 1);
+    slugs.add(n ? `${base}-${n}` : base);
+  }
+  return slugs;
+};
+// Returns the anchors that point at a heading that does not exist.
+const brokenAnchors = (files) => {
+  const broken = [];
+  for (const file of files) {
+    let fence = false;
+    readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
+      if (/^\s*(```|~~~)/.test(line)) fence = !fence;
+      if (fence) return;
+      for (const m of line.matchAll(/\]\(([^)\s]*)#([^)\s]+)\)/g)) {
+        if (/^[a-z][a-z0-9+.-]*:/i.test(m[1])) continue;
+        const target = m[1] ? join(dirname(file), m[1]) : file;
+        if (!existsSync(target)) continue;
+        if (!headingSlugs(target).has(m[2])) broken.push(`${basename(file)}:${i + 1} -> ${m[1]}#${m[2]}`);
+      }
+    });
+  }
+  return broken;
+};
+const linkSources = () => {
+  const topics = join(SKILL, 'topics');
+  return [
+    join(SKILL, 'SKILL.md'), join(SKILL, 'REFERENCE.md'), join(SKILL, 'API.md'),
+    ...readdirSync(topics).filter((f) => f.endsWith('.md')).map((f) => join(topics, f)),
+  ];
+};
+
+test('every #anchor link points at a real heading', () => {
+  assert.deepEqual(brokenAnchors(linkSources()), []);
+});
+
+test('the anchor check goes red on a broken anchor', () => {
+  const tmp = mkdtempSync(join(tmpdir(), 'diagram-anchor-'));
+  try {
+    writeFileSync(join(tmp, 'a.md'), '# Top\n\n## The `thing` (1)\n\nsee [x](#the-thing-1) and [y](#nope)\n');
+    assert.deepEqual(brokenAnchors([join(tmp, 'a.md')]), ['a.md:5 -> #nope']);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});

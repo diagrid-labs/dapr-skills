@@ -53,7 +53,7 @@ Coordinates are in the scene's canvas.
 | `roundedPath(o)` | `points, r` (10), `color` (`C.navy`), `width, dash` | A run that turns each corner with an arc |
 | `elbowArrow(o)` | `points, r` (12), `color` (`C.navy`), `heads` (`'end'`, `'start'`, `'both'`, `'none'`), `dash` | A turning line with its chevron, as one path |
 | `arrow(o)` | `from, to, head` (true), `color` (`C.navy`), `gap` (2), `dash` | A straight arrow between shape edges |
-| `lollipop(o)`, `socket(o)` | `x, y, to, toY, elbowX, elbowR` (10), `r` (10), `color`; `x, y, from, r` | A UML provided interface; the socket that cups it |
+| `lollipop(o)`, `socket(o)` | `x, y, to, toY, elbowX, elbowR` (10), `r` (10), `color`; `x, y, from, r` (21), `color` | A UML provided interface; the socket that cups it |
 | `lineWidth()` | | The stroke for this canvas |
 | `captionReach()`, `captionPad(size)` | | How far a pill hangs inside its region (13); a pill's end padding |
 | **Constants (import these)** | | `MIN_LABEL` 10, `HEAD` 8, `HEAD_RUN` 26 (the longest run an arrow head takes), `FILL_OPACITY` 0.6, `CAPTION_H` 26, `CAPTION_INSET` 20, `CAPTION_PAD_EM` 0.5 (a pill's end padding, in em), `STORE_RATIO` 1.2, `STORE_RIM` 0.115 (a cylinder's rim depth as a fraction of its width), `BALL_R` 10, `SOCKET_R` 21, `STEP_R` 15, `MONO` (`var(--font-mono)`), `NO_LIGATURES` (`font-variant-ligatures: none`, the style code text carries) |
@@ -81,7 +81,7 @@ rectangle `{ x, y, w, h }`.
 | `markHex(o)` | `x, y, r, mark, size, stroke` (`C.blue`), `fill, color`: a hexagon with a mark centred in it. `logo-blue` needs no `size` |
 | `plate(o)` | `x, y, w, h, fill` (`C.plate`): a neutral backing, near-white in both themes |
 | `brand(o)` | `name, x, y, w, h, content, plate, dx` (0), `inside, insideDx` (0), `insideSize` (15), `plateH` (`PLATE_H`), `pad` (`PLATE_PAD`): a mark on its plate. `w, h` is the box the mark fits, `content` the ink width the plate is sized around, `plate` overrides the plate width, `inside` sets a name within the plate and `dx` moves the mark to make room |
-| `logoStrip(o)`, `logoStripSize(o)` | `x, y, marks` (`{ mark, name, color }`), `caption, cols, markSize` (30), `size` (13), `plated`: vendor marks with names in a captioned region; its size |
+| `logoStrip(o)`, `logoStripSize(o)` | `x, y, marks` (`{ mark, name, color }`), `caption, cols, markSize` (30), `size` (13), `plated`, `gapX` (120), `gapY`, `pad` (26), `itemW`, `stroke`, `captionW`, `captionSize`: vendor marks with names in a captioned region; its size |
 | `serviceInvocation(o)` | `x, y, w` (`SI_W`), `color` (`C.blue`): the service-invocation glyph, sized by its drawn width |
 | `stripPitch(markSize, size, plated)` | The least row pitch a `logoStrip` needs to clear a mark and the name under it |
 | `listMarks(dir)` | Every mark name in a folder |

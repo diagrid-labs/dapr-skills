@@ -31,7 +31,7 @@ Check before creating any file:
    - npm may print install-scripts warnings during the install (for example about `fsevents`). Ignore them. Setup prints "Chromium ready" when it worked.
    - On Linux the font check needs Arial and Courier-metric fonts, for example the `fonts-liberation` package.
    - If the project or a parent folder already has its own `@playwright/test`, the engine may use that one. Its Chromium still has to be downloaded, so `--with-browser` is still needed unless `npx playwright install chromium` was already run.
-   - To enable Chromium later, re-run setup with `--with-browser`, then re-export (`node <diagramsDir>/_engine/export.mjs`) so the PNGs and `bbox.json` are produced.
+   - To enable Chromium later, re-run setup with `--with-browser`, then re-export (`node "<diagramsDir>/_engine/export.mjs"`) so the PNGs and `bbox.json` are produced.
 
 Never edit `<diagramsDir>/_engine/`. Setup replaces it on refresh, so edits are lost.
 
@@ -65,10 +65,10 @@ Then:
 
 ## Export and look
 
-1. Run `node <diagramsDir>/_engine/export.mjs --only <name>` (or without `--only` for every scene).
+1. Run `node "<diagramsDir>/_engine/export.mjs" --only <name>` (or without `--only` for every scene).
 2. Without Chromium it prints "Chromium not installed: skipped centring, fallback-font check and PNGs. To enable, ask your coding agent to run the create-diagram setup with --with-browser." That is expected. Offer the Chromium step above only if the user did not decline it. See [Without Chromium](REFERENCE.md#without-chromium) for what to do differently. If the project was exported with Chromium before, a changed scene also prints "<name>: changed since the last Chromium export; centring and PNGs are stale. Re-export with Chromium." and `--check` fails on it. Only a machine with Chromium can clear that line, so tell the user instead of editing `out/` or `bbox.json` by hand.
 3. With Chromium the fallback-font check runs after the SVGs are written and prints "Font check: N label(s) fit in the fallback fonts." If it fails, widen the shape or shorten the label, then export again. If it prints "Font check skipped: Arial and Courier New ... are not installed", no overflow was checked: on Linux install `fonts-liberation` and export again.
-4. Look at the result in both themes. Read `<diagramsDir>/out/<name>-light.png` and `<name>-dark.png` if they exist. A transparent dark PNG looks washed out on a white viewer, so judge it as if on a dark background. Without PNGs you cannot view the result yourself: ask the user to open `<diagramsDir>/out/<name>.svg` in a browser, in light and in dark mode, and confirm it looks right.
+4. Look at the result in both themes. Read `<diagramsDir>/out/<name>-light.png` and `<name>-dark.png` if they exist. A transparent dark PNG looks washed out on a white viewer, so judge it as if on a dark background; if you cannot view it on one, ask the user to check it on a dark slide. Without PNGs you cannot view the result yourself: ask the user to open `<diagramsDir>/out/<name>.svg` in a browser, in light and in dark mode, and confirm it looks right.
 5. Fix what you see (overlaps, crowded labels, arrows that cross) and export again.
 6. When a rule says a width is measured, run `node "<diagramsDir>/_engine/measure-labels.mjs" <name>` (needs Chromium). It prints every label's box in scene units.
 
@@ -79,7 +79,7 @@ Then:
 You MUST run this and fix every failure it reports:
 
 ```bash
-node <diagramsDir>/_engine/export.mjs --check
+node "<diagramsDir>/_engine/export.mjs" --check
 ```
 
 It renders and validates every scene and fails if a file in `out/` is out of date.
@@ -105,5 +105,5 @@ Tell the user, briefly:
 
 - Where the files are: `<diagramsDir>/out/<name>.svg` and, if made, the two PNGs.
 - Which file to use where. The SVG follows light and dark mode in browsers, so use it for docs sites and READMEs. In slides, use `<name>-light.png` on a light background and `<name>-dark.png` on a dark one.
-- How to regenerate: `node <diagramsDir>/_engine/export.mjs`, with the real folder name.
+- How to regenerate: `node "<diagramsDir>/_engine/export.mjs"`, with the real folder name.
 - How to refresh the engine: print the absolute path of the `setup.mjs` you used, as `node <that path> <diagramsDir> --refresh`. If you no longer have it, tell the user to ask you to refresh the diagram engine. Do not show the placeholder `<skill dir>` to the user.

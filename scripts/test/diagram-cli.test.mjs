@@ -198,6 +198,34 @@ test('--check --no-browser fails on the same project', () => {
   }
 });
 
+const UNREADABLE = 'png-manifest.json: unreadable; re-export with Chromium';
+
+test('--check --no-browser fails on an unreadable png-manifest', () => {
+  const tmp = layout();
+  try {
+    assert.equal(cli(tmp, tmp, '--no-browser').status, 0);
+    writeFileSync(join(tmp, 'diagrams', 'out', 'png-manifest.json'), '{ not json');
+    const r = cli(tmp, tmp, '--check', '--no-browser');
+    assert.equal(r.status, 1);
+    assert.deepEqual(lines(r, /png-manifest\.json: unreadable/).map((l) => l.trim()), [UNREADABLE]);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('--no-browser warns about an unreadable png-manifest', () => {
+  const tmp = layout();
+  try {
+    assert.equal(cli(tmp, tmp, '--no-browser').status, 0);
+    writeFileSync(join(tmp, 'diagrams', 'out', 'png-manifest.json'), '{ not json');
+    const r = cli(tmp, tmp, '--no-browser');
+    assert.equal(r.status, 0, r.stderr);
+    assert.deepEqual(lines(r, /png-manifest\.json: unreadable/), [UNREADABLE]);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
 test('--no-browser with no png-manifest prints no STALE line', () => {
   const tmp = layout();
   try {

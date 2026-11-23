@@ -53,7 +53,7 @@ With Playwright (in the diagrams folder or a folder above it) and its Chromium i
    room its shape leaves fails the export. The SVGs are already on disk by
    then, so a failure means: widen the shape or shorten the label, then export
    again. On Linux this needs the metric-compatible fonts
-   (`fonts-liberation`), or the check measures the wrong face.
+   (`fonts-liberation`), or the check is skipped with a warning.
 3. **PNGs.** A light and a dark PNG per scene, trimmed to the drawing, at 2x,
    with a transparent background.
 
@@ -281,8 +281,8 @@ the colour scheme.
   from a centre and a width, and refuses a store taller than it is wide.
   `pipe()` draws a broker two to three times as long as it is across and
   refuses anything else. Proportion is the only thing that tells them apart.
-  Both carry their name inside; pick the pipe's length from its name, so the
-  rounded caps stay clear of the letters.
+  With a mark, the mark goes inside and the name under; without one, the name
+  goes inside, so pick the pipe's length from it and the caps clear the letters.
 - **A shape with no name needs a solid fill.** A tint with a dark outline
   disappears on the dark ground. Pass `solid: true` to `box()`, `decision()` or
   `hex()`.
@@ -336,8 +336,7 @@ the colour scheme.
 ### Compose, do not re-create
 
 A scene is assembled from parts that already exist. Before drawing anything,
-look at the scenes already in `scenes/` and at the builders in the engine API
-below. A part that is reused is a part that cannot disagree with itself.
+look at the scenes already in `scenes/` and at the builders in the [engine API](API.md). A part that is reused is a part that cannot disagree with itself.
 
 - **Survey first.** Search the scenes for the thing you are about to draw.
   Reuse what fits.
@@ -563,7 +562,7 @@ wrong and what the house style draws differently. A regrouping that reads
 better is a proposal to make before drawing it.
 
 Start by shopping, not drawing. List what the diagram needs, find each item
-in the existing scenes and the builder tables below, and design only what is
+in the existing scenes and the [builder tables](API.md), and design only what is
 new.
 
 1. **Components:** every one the source names: apps, Dapr, brokers, stores,
