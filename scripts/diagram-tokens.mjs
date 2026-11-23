@@ -26,13 +26,26 @@ export function parseTokens(scss) {
   return { light, dark: { ...light, ...defs(scss.slice(at)) } };
 }
 
+// Tokens the engine needs that dapr/docs' _tokens.scss does not define. They are merged
+// over the parsed result when the CLI writes tokens.json, so regenerating keeps them.
+// --d-brand-python: the Python mark's blue (#3776AB). The dark value is Python's lighter
+// blue, #4B8BBE: 5.28:1 on --d-ground and 4.94:1 on --d-panel.
+export const EXTRA_TOKENS = Object.freeze({
+  light: Object.freeze({ '--d-brand-python': '#3776AB' }),
+  dark: Object.freeze({ '--d-brand-python': '#4B8BBE' }),
+});
+
+export function withExtraTokens({ light, dark }) {
+  return { light: { ...light, ...EXTRA_TOKENS.light }, dark: { ...dark, ...EXTRA_TOKENS.dark } };
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const src = process.argv[2];
   if (!src) {
     console.error('usage: node scripts/diagram-tokens.mjs <path/to/_tokens.scss>');
     process.exit(2);
   }
-  const tokens = parseTokens(readFileSync(src, 'utf8'));
+  const tokens = withExtraTokens(parseTokens(readFileSync(src, 'utf8')));
   writeFileSync(TOKENS_JSON, JSON.stringify(tokens, null, 2) + '\n');
   console.log(`wrote ${TOKENS_JSON} (${Object.keys(tokens.light).length} light, ${Object.keys(tokens.dark).length} dark)`);
 }

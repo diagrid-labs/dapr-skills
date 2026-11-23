@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -260,10 +261,10 @@ test('a single-color mark is filled with the color argument; a full-color mark i
 
   // Real marks: Simple Icons marks carry no colour, Commons logos carry their own.
   const tinted = (n) => serialize(icon({ name: n, x: 0, y: 0, color: C.navy })).includes('fill="var(--d-blue)"');
-  for (const n of ['cpp', 'rust', 'kubernetes']) assert.ok(tinted(n), `${n} should be single-colour`);
+  for (const n of ['cpp', 'rust', 'kubernetes', 'python']) assert.ok(tinted(n), `${n} should be single-colour`);
   // go and php moved from Simple Icons to the full-colour Commons files dapr.io
   // vendors, so they now keep their own blue and purple.
-  for (const n of ['nodejs', 'python', 'dotnet', 'go', 'php', 'azure', 'aws', 'google-cloud']) {
+  for (const n of ['nodejs', 'dotnet', 'go', 'php', 'azure', 'aws', 'google-cloud']) {
     assert.ok(!tinted(n), `${n} should be full-colour`);
   }
   // Root-level paint (dotnet: fill="none" on <svg>) is carried to the wrapper so the mark renders as authored.
@@ -317,10 +318,6 @@ test('a missing viewBox is derived from width and height', () => {
   const out = render('nobox', '<svg width="200" height="100" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h200v100z"/></svg>', { x: 50, y: 50, size: 50 });
   assert.match(out, /transform="translate\(25 37\.5\) scale\(0\.25\)"/);
   assert.throws(() => render('nosize', '<svg><path d="M0 0"/></svg>'), /no viewBox and no usable width\/height/);
-  // Real file: python has width/height (pt) and no viewBox.
-  assert.ok(!/viewBox/i.test(readFileSync(join(ICONS_DIR, 'python.svg'), 'utf8').match(/<svg[^>]*>/)[0]));
-  // Its width is 388.8pt = 518.4 user units, so a 518.4-wide box draws it at scale 1 (not 1.33).
-  assert.match(serialize(icon({ name: 'python', x: 0, y: 0, w: 518.4, h: 153.3333 })), /scale\(1\)/);
   assert.match(render('pt', '<svg width="30pt" height="30pt"><path d="M0 0h40v40z"/></svg>', { size: 80 }), /scale\(2\)/);
   assert.throws(() => render('pct', '<svg width="100%" height="100%"><path d="M0 0"/></svg>'), /no viewBox/);
 });
@@ -537,4 +534,35 @@ test('logoStrip refuses a row pitch too small for a mark and its name', () => {
   );
   setIconScope('');
   setCanvasWidth(null);
+});
+
+const README_ROWS = () => readFileSync(join(ICONS_DIR, 'README.md'), 'utf8').split('\n').filter((l) => l.startsWith('|'));
+
+test('python mark is the Simple Icons CC0 file', () => {
+  const row = README_ROWS().find((r) => r.includes('`python.svg`'));
+  assert.ok(row, 'README has a python row');
+  assert.match(row, /simple-icons\/16\.36\.0\/icons\/python\.svg/);
+  assert.match(row, /CC0 1\.0/);
+  assert.match(row, /\| single \|/);
+  const sha = createHash('sha256').update(readFileSync(join(ICONS_DIR, 'python.svg'))).digest('hex').slice(0, 12);
+  assert.ok(row.includes(`\`${sha}\``), `README python row does not carry sha ${sha}`);
+});
+
+test('no vendored mark is java', () => {
+  assert.ok(!listMarks().includes('java'));
+  assert.ok(!README_ROWS().some((r) => r.includes('`java.svg`')));
+});
+
+test('no README row carries a GPL or non-free licence', () => {
+  for (const r of README_ROWS()) assert.ok(!/GPL|Not freely licensed/.test(r), `row has a disallowed licence: ${r.slice(0, 60)}`);
+});
+
+test('LANGUAGES python row is a tinted square mark whose token exists in both themes', async () => {
+  const { LANGUAGES } = await import('../../skills/create-diagram/engine/brands.mjs');
+  const row = LANGUAGES.find((m) => m.name === 'python');
+  assert.deepEqual([row.w, row.h, row.content], [54, 54, 54]);
+  assert.equal(row.color, 'var(--d-brand-python)');
+  const tokens = JSON.parse(readFileSync(new URL('../../skills/create-diagram/engine/tokens.json', import.meta.url), 'utf8'));
+  assert.ok(tokens.light['--d-brand-python'] && tokens.dark['--d-brand-python']);
+  assert.match(serialize(icon({ name: 'python', x: 0, y: 0, w: row.w, h: row.h, color: row.color })), /fill="var\(--d-brand-python\)"/);
 });

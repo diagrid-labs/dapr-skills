@@ -24,6 +24,10 @@ Sources, in order of preference:
    architecture-icon terms do not cover the company mark, so the AWS, Azure and
    Google Cloud icon sets are not used for these.
 
+This copy differs from the one in dapr/docs only in Python and Java. Python is the
+Simple Icons CC0 mark (the Wikimedia file is GPL), and the Java mark is not
+vendored.
+
 Go and PHP were Simple Icons single-colour marks and are now the full-colour
 Commons files; Kubernetes went the other way, from the Commons wordmark to the
 Simple Icons helm, which the diagram tints with the brand blue and names beside
@@ -36,7 +40,7 @@ Add a row here for every file you add. `scripts/test/diagram-icons.test.mjs` fai
 | File | Mark | Source | Licence | Colour | SHA-256 |
 | --- | --- | --- | --- | --- | --- |
 | `nodejs.svg` | Node.js logo with wordmark | [Commons file page](https://commons.wikimedia.org/wiki/File:Node.js_logo.svg), downloaded from https://upload.wikimedia.org/wikipedia/commons/d/d9/Node.js_logo.svg | MIT, author Ryan Dahl (as recorded on Commons). Node.js is a trademark of the OpenJS Foundation. | full | `dc8800bf2811` |
-| `python.svg` | Python logo and wordmark | [Commons file page](https://commons.wikimedia.org/wiki/File:Python_logo_and_wordmark.svg), downloaded from https://upload.wikimedia.org/wikipedia/commons/f/f8/Python_logo_and_wordmark.svg | GPL, as recorded on Commons, marked trademarked, credited to the Python Software Foundation. Python and the logos are trademarks of the Python Software Foundation; see the PSF trademark policy. | full | `6e2d5537fdf5` |
+| `python.svg` | Python logo | [Simple Icons 16.36.0](https://github.com/simple-icons/simple-icons/blob/16.36.0/icons/python.svg), downloaded from https://raw.githubusercontent.com/simple-icons/simple-icons/16.36.0/icons/python.svg | CC0 1.0 (Simple Icons). Python and the logos are trademarks of the Python Software Foundation. | single | `ad9468e1c490` |
 | `dotnet.svg` | Microsoft .NET logo | [Commons file page](https://commons.wikimedia.org/wiki/File:Microsoft_.NET_logo.svg), downloaded from https://upload.wikimedia.org/wikipedia/commons/7/7d/Microsoft_.NET_logo.svg | Public domain, as recorded on Commons (author Microsoft), marked trademarked. | full | `f222062c4f59` |
 | `go.svg` | Go logo, blue wordmark with speed lines | [Commons file page](https://commons.wikimedia.org/wiki/File:Go_Logo_Blue.svg), downloaded from https://upload.wikimedia.org/wikipedia/commons/0/05/Go_Logo_Blue.svg | Public domain, as recorded on Commons (author The Go Authors), marked trademarked. Go and the Go logo are trademarks of Google LLC. | full | `70388e1c0dc7` |
 | `consul.svg` | HashiCorp Consul logo, no wordmark | [Simple Icons 16.36.0](https://github.com/simple-icons/simple-icons/blob/16.36.0/icons/consul.svg), downloaded from https://raw.githubusercontent.com/simple-icons/simple-icons/16.36.0/icons/consul.svg | CC0 1.0 (Simple Icons). Consul is a trademark of HashiCorp. | single | `e02fc7a81731` |
@@ -163,9 +167,9 @@ scene draws them.
   full-colour mark. `--d-diagram-plate` is near-white in both themes, so the mark
   keeps the contrast its vendor designed for on the light and the dark page.
 - **Licences.** Every row has a licence that permits redistribution of the file
-  itself (CC0, MIT, Apache-2.0, public domain or GPL as Commons records it),
-  though the trademarks remain with their owners. The Java mark was removed
-  from this vendored copy.
+  itself (CC0, MIT, Apache-2.0 or public domain),
+  though the trademarks remain with their owners. No GPL or non-free file is
+  vendored; the Java mark is not vendored, and Python is the CC0 Simple Icons mark.
 - **Checks on every file.** `engine/icons.mjs` rejects a mark that contains
   `<script>`, `<foreignObject>`, an event handler attribute, an `href` or `url()`
   that is not a same-document fragment, or a `<style>` rule that is not scoped to

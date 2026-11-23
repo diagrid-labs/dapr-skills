@@ -21,13 +21,14 @@ import { icon, plate } from './icons.mjs';
 // ---- languages -------------------------------------------------------------
 // C++ is deliberately absent on the maintainer's instruction; cpp.svg stays
 // vendored for a later scene. No mark carries a text label: each is a wordmark
-// or a logo readers know. Go and PHP are the full-colour Commons files dapr.io
+// or a logo readers know. Python is the single-colour Simple Icons mark, tinted
+// with its brand blue. Go and PHP are the full-colour Commons files dapr.io
 // vendors, so they are wide wordmarks rather than square glyphs.
 //
 // `w` and `h` bound the mark; `content` is the ink the plate is sized around.
 export const LANGUAGES = Object.freeze([
   Object.freeze({ name: 'nodejs', w: 81, h: 50, content: 81 }),
-  Object.freeze({ name: 'python', w: 148, h: 44, content: 135 }),
+  Object.freeze({ name: 'python', w: 54, h: 54, content: 54, color: 'var(--d-brand-python)' }),
   Object.freeze({ name: 'dotnet', w: 54, h: 54, content: 54 }),
   Object.freeze({ name: 'go', w: 112, h: 42, content: 112 }),
   Object.freeze({ name: 'php', w: 104, h: 56, content: 104 }),

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { parseTokens } from '../diagram-tokens.mjs';
+import { parseTokens, withExtraTokens, EXTRA_TOKENS } from '../diagram-tokens.mjs';
 
 const tokensJson = new URL('../../skills/create-diagram/engine/tokens.json', import.meta.url);
 
@@ -42,4 +42,14 @@ test('tokens.json has 40 or more --d- keys per theme', () => {
     assert.ok(keys.length >= 40, `only ${keys.length} keys`);
     assert.ok(keys.every((k) => k.startsWith('--d-')));
   }
+});
+
+test('EXTRA_TOKENS overlay survives regeneration and is in tokens.json', () => {
+  const regenerated = withExtraTokens(parseTokens(':root {\n  --d-a: 1;\n}\n[data-bs-theme="dark"] {\n  --d-a: 2;\n}'));
+  assert.equal(regenerated.light['--d-brand-python'], '#3776AB');
+  assert.equal(regenerated.dark['--d-brand-python'], EXTRA_TOKENS.dark['--d-brand-python']);
+  assert.equal(regenerated.light['--d-a'], '1');
+  const { light, dark } = JSON.parse(readFileSync(tokensJson, 'utf8'));
+  assert.equal(light['--d-brand-python'], '#3776AB');
+  assert.equal(dark['--d-brand-python'], EXTRA_TOKENS.dark['--d-brand-python']);
 });

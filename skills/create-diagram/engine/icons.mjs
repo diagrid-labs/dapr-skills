@@ -1,4 +1,4 @@
-// Brand marks: reads a vendored SVG from daprdocs/assets/icons/, checks it, and
+// Brand marks: reads a vendored SVG from engine/icons/, checks it, and
 // inlines it as engine nodes. The file on disk is never modified; every change
 // happens to the in-memory copy (ids and classes prefixed, outer <svg> replaced
 // by a positioned <g>). Pure: identical input gives byte-identical output.
