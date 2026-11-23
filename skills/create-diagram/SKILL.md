@@ -1,6 +1,6 @@
 ---
 name: create-diagram
-description: Draws Dapr architecture and concept diagrams in the docs.dapr.io style from a description, a sketch, an image or a Mermaid block. Writes an SVG that follows light and dark mode, plus optional light and dark PNGs for slides, into a diagrams/ folder. Use for "draw a diagram of my Dapr app". To turn a diagram into workflow code, use create-workflow-from-diagram.
+description: Draws Dapr architecture diagrams in the docs.dapr.io style as SVG, with optional PNGs for slides. Use for "draw a diagram of my Dapr app". For diagram to workflow code use create-workflow-from-diagram.
 ---
 
 # Create a Dapr Diagram
@@ -61,7 +61,7 @@ Read [`REFERENCE.md`](REFERENCE.md) first: [Design rules](REFERENCE.md#design-ru
 
 ## Verify
 
-Run this and fix every failure it reports:
+You MUST run this and fix every failure it reports:
 
 ```bash
 node <diagramsDir>/_engine/export.mjs --check
