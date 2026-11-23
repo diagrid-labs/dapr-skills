@@ -61,7 +61,7 @@ Notes:
 
 ## Triggering check
 
-[`triggering/queries.json`](triggering/queries.json) checks **which** skill fires for a request when both this plugin and [catalyst-ai](https://github.com/diagridio/catalyst-ai) are installed. Six skill pairs across the two plugins overlap (workflow scaffolding, from-diagram, agent scaffolding, determinism, activity idempotency, and — since catalyst-ai 0.8.1 added `catalyst-agent-harness` — making an existing agent loop durable), and skill triggering is decided by the `description` front matter — Claude Code namespaces skill *names* per plugin, but defines no precedence when two descriptions match the same request.
+[`triggering/queries.json`](triggering/queries.json) checks **which** skill fires for a request when both this plugin and [catalyst-ai](https://github.com/diagridio/catalyst-ai) are installed. Six skill pairs across the two plugins overlap (workflow scaffolding, from-diagram, agent scaffolding, determinism, activity idempotency, and — since catalyst-ai 0.8.1 added `catalyst-agent-harness` — making an existing agent loop durable), plus one boundary inside this plugin (`create-diagram` draws a diagram, `create-workflow-from-diagram` turns one into workflow code), and skill triggering is decided by the `description` front matter — Claude Code namespaces skill *names* per plugin, but defines no precedence when two descriptions match the same request.
 
 The per-skill evals cannot catch a mis-route, because they assume the right skill already ran.
 

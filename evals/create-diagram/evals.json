@@ -39,11 +39,11 @@
     {
       "id": 3,
       "name": "existing-diagrams-folder-not-ours",
-      "prompt": "Draw a diagram of my Dapr app: a checkout service and its sidecar publishing to RabbitMQ. This repo already has a diagrams/ folder, which I use for my own draw.io files.",
+      "prompt": "Draw a diagram of my Dapr app: a checkout service and its sidecar publishing to RabbitMQ. This project already has a diagrams/ folder, which I use for my own draw.io files. (Run from a copy of the foreign-diagrams fixture.)",
       "expected_output": "Setup exits with code 3 because diagrams/ is not a create-diagram folder. The agent does not touch the existing files and asks the user for another folder name instead of overwriting or merging into diagrams/.",
-      "files": [],
+      "files": ["evals/create-diagram/files/foreign-diagrams/"],
       "expectations": [
-        "Before running the evals, the scratch folder contains diagrams/ with at least one file, such as diagrams/architecture.drawio, that is not a create-diagram folder",
+        "diagrams/architecture.drawio is unchanged at the end of the run, and diagrams/ contains no _engine folder",
         "The agent ran scripts/setup.mjs and it exited 3 because the folder is not a create-diagram folder",
         "The agent asked the user for another folder name instead of choosing one silently",
         "No existing file in diagrams/ was modified, moved or deleted, and no _engine, scenes or out folder was created inside it",

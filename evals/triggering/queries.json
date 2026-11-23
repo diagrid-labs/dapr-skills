@@ -1,7 +1,7 @@
 {
   "name": "cross-plugin-triggering",
   "description": "Checks WHICH skill fires for a request when both the dapr-skills and catalyst-ai plugins are installed. Unlike the per-skill evals, this grades skill selection, not the files a skill produces.",
-  "why": "Claude Code namespaces skill names per plugin, but skill TRIGGERING is decided by the description text and the docs specify no precedence between two plugins whose descriptions match the same request. Five skill pairs across these two plugins overlap, so a wording change on either side can silently re-route requests. The per-skill evals under evals/<skill-name>/ cannot catch that: they assume the right skill already ran.",
+  "why": "Claude Code namespaces skill names per plugin, but skill TRIGGERING is decided by the description text and the docs specify no precedence between two plugins whose descriptions match the same request. Six skill pairs across these two plugins overlap, and one boundary sits inside this plugin: create-diagram (draw a diagram) against create-workflow-from-diagram (diagram in, workflow code out). A wording change on either side can silently re-route requests. The per-skill evals under evals/<skill-name>/ cannot catch that: they assume the right skill already ran.",
   "plugins": {
     "dapr-skills": {
       "repo": "diagrid-labs/dapr-skills",
