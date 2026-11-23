@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { el, text } from '../../skills/create-diagram/engine/engine.mjs';
 import { FACES, fontCss, harnessHtml, loadChromium, withHarness } from '../../skills/create-diagram/engine/browser.mjs';
+import { requireChromium } from './helpers/chromium.mjs';
 import { measureOrigins } from '../../skills/create-diagram/engine/measure-bbox.mjs';
 
 test('fontCss declares every face in FACES, served from /fonts/', () => {
@@ -39,7 +40,7 @@ test('loadChromium returns the same answer on every call', async () => {
 });
 
 test('withHarness loads the bundled faces', async (t) => {
-  if (!(await loadChromium())) return t.skip('no chromium');
+  if (!(await requireChromium(t))) return;
   const loaded = await withHarness((tab) => tab.evaluate(async () => {
     await document.fonts.load('16px Inter');
     await document.fonts.load('16px "Geist Mono"');
@@ -50,13 +51,13 @@ test('withHarness loads the bundled faces', async (t) => {
 });
 
 test('withHarness with fonts: false declares no webfont', async (t) => {
-  if (!(await loadChromium())) return t.skip('no chromium');
+  if (!(await requireChromium(t))) return;
   const count = await withHarness((tab) => tab.evaluate(() => document.fonts.size), { fonts: false });
   assert.equal(count, 0);
 });
 
 test('withHarness applies colorScheme and scale', async (t) => {
-  if (!(await loadChromium())) return t.skip('no chromium');
+  if (!(await requireChromium(t))) return;
   const got = await withHarness(
     (tab) => tab.evaluate(() => [matchMedia('(prefers-color-scheme: dark)').matches, devicePixelRatio]),
     { colorScheme: 'dark', scale: 2 },
@@ -65,7 +66,7 @@ test('withHarness applies colorScheme and scale', async (t) => {
 });
 
 test('withHarness rejects with the error fn throws and can be used again', async (t) => {
-  if (!(await loadChromium())) return t.skip('no chromium');
+  if (!(await requireChromium(t))) return;
   await assert.rejects(() => withHarness(() => { throw new Error('boom'); }), /boom/);
   assert.equal(await withHarness(() => 42), 42);
 });
@@ -79,7 +80,7 @@ const lopsided = () => ({
 });
 
 test('measureOrigins centres an off-centre drawing', async (t) => {
-  if (!(await loadChromium())) return t.skip('no chromium');
+  if (!(await requireChromium(t))) return;
   const origins = await measureOrigins({ lopsided: lopsided() });
   assert.deepEqual(Object.keys(origins), ['lopsided']);
   const [x, y] = origins.lopsided;
@@ -90,7 +91,7 @@ test('measureOrigins centres an off-centre drawing', async (t) => {
 });
 
 test('measureOrigins throws on a scene with nothing to measure', async (t) => {
-  if (!(await loadChromium())) return t.skip('no chromium');
+  if (!(await requireChromium(t))) return;
   await assert.rejects(
     () => measureOrigins({ empty: { ...lopsided(), build: () => [el('text', { x: 0, y: 0 }, [text('')])] } }),
     /empty/,

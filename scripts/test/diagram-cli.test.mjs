@@ -5,7 +5,7 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, 
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadChromium } from '../../skills/create-diagram/engine/browser.mjs';
+import { requireChromium } from './helpers/chromium.mjs';
 
 const ENGINE = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'skills', 'create-diagram', 'engine');
 const SCENES = `import { el } from '../_engine/engine.mjs';
@@ -91,7 +91,7 @@ test('--no-browser says nothing about Chromium', () => {
 const NODE_MODULES = join(ENGINE, '..', '..', '..', 'node_modules');
 
 test('export with chromium writes bbox.json, svgs and both pngs, and --check holds them to it', async (t) => {
-  if (!(await loadChromium())) return t.skip('no chromium');
+  if (!(await requireChromium(t))) return;
   if (!existsSync(join(NODE_MODULES, '@playwright', 'test'))) return t.skip('playwright is not in the repo node_modules');
   const tmp = layout();
   try {
@@ -133,7 +133,7 @@ test('export with chromium writes bbox.json, svgs and both pngs, and --check hol
 });
 
 test('--only measures just its scene and leaves the other bbox.json entries alone', async (t) => {
-  if (!(await loadChromium())) return t.skip('no chromium');
+  if (!(await requireChromium(t))) return;
   if (!existsSync(join(NODE_MODULES, '@playwright', 'test'))) return t.skip('playwright is not in the repo node_modules');
   const tmp = layout();
   try {

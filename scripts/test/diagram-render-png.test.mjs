@@ -5,7 +5,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { el, text } from '../../skills/create-diagram/engine/engine.mjs';
 import { renderScene, themed } from '../../skills/create-diagram/engine/export.mjs';
-import { loadChromium, withHarness } from '../../skills/create-diagram/engine/browser.mjs';
+import { withHarness } from '../../skills/create-diagram/engine/browser.mjs';
+import { requireChromium } from './helpers/chromium.mjs';
 import {
   settings, stale, orphans, renderPngs, pngNames, PNG_SCALE, PNG_MARGIN, GENERATOR, SCHEMES,
 } from '../../skills/create-diagram/engine/render-png.mjs';
@@ -23,7 +24,7 @@ const withDir = (fn) => async (t) => {
   }
 };
 const needsChromium = (fn) => withDir(async (dir, manifestPath, t) => {
-  if (!(await loadChromium())) return t.skip('no chromium');
+  if (!(await requireChromium(t))) return;
   return fn(dir, manifestPath, t);
 });
 

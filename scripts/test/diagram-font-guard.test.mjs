@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { el, text } from '../../skills/create-diagram/engine/engine.mjs';
 import { renderScene, themed } from '../../skills/create-diagram/engine/export.mjs';
-import { loadChromium, withHarness } from '../../skills/create-diagram/engine/browser.mjs';
+import { withHarness } from '../../skills/create-diagram/engine/browser.mjs';
+import { requireChromium } from './helpers/chromium.mjs';
 import {
   checkFallbackFonts, unpinnedFaces, guardHtml, TOLERANCE, ARIAL_DIGIT_RUN, COURIER_DIGIT_RUN,
 } from '../../skills/create-diagram/engine/font-guard.mjs';
@@ -35,7 +36,7 @@ test('unpinnedFaces names a label with a baked face the guard does not pin', () 
 });
 
 test('font guard flags a label wider than its box', async (t) => {
-  if (!(await loadChromium())) return t.skip('no chromium');
+  if (!(await requireChromium(t))) return;
   const label = 'A label thirty characters long';
   assert.equal(label.length, 30);
   const problems = await checkFallbackFonts(svgs({ narrow: boxed(40, label) }));
@@ -45,12 +46,12 @@ test('font guard flags a label wider than its box', async (t) => {
 });
 
 test('font guard passes a label with slack', async (t) => {
-  if (!(await loadChromium())) return t.skip('no chromium');
+  if (!(await requireChromium(t))) return;
   assert.deepEqual(await checkFallbackFonts(svgs({ roomy: boxed(200, 'Fits') })), []);
 });
 
 test('font guard measures a mono label in Courier New, not the sans face', async (t) => {
-  if (!(await loadChromium())) return t.skip('no chromium');
+  if (!(await requireChromium(t))) return;
   // 20 mono characters at 12: about 144 units in Courier New, about 100 in
   // Times. A 140-unit box leaves 128 of room, so only the mono pin makes this
   // overflow. The label names a proportional face ahead of `monospace`: on a
@@ -64,7 +65,7 @@ test('font guard measures a mono label in Courier New, not the sans face', async
 });
 
 test('font guard reports a label with a face it cannot pin', async (t) => {
-  if (!(await loadChromium())) return t.skip('no chromium');
+  if (!(await requireChromium(t))) return;
   const problems = await checkFallbackFonts(svgs({ serif: boxed(200, 'Fits', { 'font-family': 'Georgia, serif' }) }));
   assert.equal(problems.length, 1);
   assert.match(problems[0], /serif.*Georgia/);
@@ -81,13 +82,13 @@ const digitRun = (attrs) => withHarness((tab) => tab.evaluate(() => document.get
 });
 
 test('the pinned fallback face displaces the baked font stack', async (t) => {
-  if (!(await loadChromium())) return t.skip('no chromium');
+  if (!(await requireChromium(t))) return;
   const run = await digitRun({ root: ' font-family="Inter, &quot;Segoe UI&quot;, Roboto, Helvetica, Arial, sans-serif"' });
   assert.ok(Math.abs(run - ARIAL_DIGIT_RUN) / ARIAL_DIGIT_RUN < 0.01, `ten digits ran ${run}, not Arial's ${ARIAL_DIGIT_RUN}`);
 });
 
 test("the pinned fallback face reaches a mono tspan's own font-family", async (t) => {
-  if (!(await loadChromium())) return t.skip('no chromium');
+  if (!(await requireChromium(t))) return;
   // A proportional face ahead of `monospace`, for the reason given above.
   const run = await digitRun({ tspan: ' font-family="&quot;Times New Roman&quot;, Times, monospace"' });
   assert.ok(Math.abs(run - COURIER_DIGIT_RUN) / COURIER_DIGIT_RUN < 0.01, `ten mono digits ran ${run}, not Courier New's ${COURIER_DIGIT_RUN}`);
