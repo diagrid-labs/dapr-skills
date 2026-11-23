@@ -19,7 +19,9 @@
     "dotnet",
     "python",
     "typescript",
-    "aspire"
+    "aspire",
+    "diagrams",
+    "svg"
   ],
   "skills": "./skills/"
 }

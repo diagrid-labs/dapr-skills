@@ -204,6 +204,18 @@
         "picked": "catalyst-ai:catalyst-agent-harness",
         "confidence": "high"
       }
+    },
+    {
+      "id": 17,
+      "query": "draw an architecture diagram of my Dapr app with a sidecar, Redis state and Kafka pub/sub, as an SVG",
+      "expect": "dapr-skills:create-diagram",
+      "rationale": "Added for create-diagram. Drawing a new diagram of an app. No catalyst-ai skill draws diagrams, and no workflow code is wanted."
+    },
+    {
+      "id": 18,
+      "query": "create a workflow from this diagram",
+      "expect": "dapr-skills:create-workflow-from-diagram",
+      "rationale": "Added for create-diagram. The diagram is an input and workflow code is the output, so this must NOT fire create-diagram, whose description points here for diagram to workflow code. Mirrors query 17."
     }
   ]
 }
