@@ -9,7 +9,7 @@ description: Draws Dapr architecture diagrams in the docs.dapr.io style as SVG, 
 
 This skill draws a Dapr diagram as code and exports it to an SVG (and, with Chromium, PNGs) in the user's project. It copies a small engine into a `diagrams/` folder, you write one scene file per diagram, and the exporter renders it. All design rules, the layout method and the engine API are in [`REFERENCE.md`](REFERENCE.md). This file is only the workflow.
 
-`<skill dir>` is the directory that contains this SKILL.md. Relative paths in this file, such as `scripts/setup.mjs`, resolve from there. `<diagramsDir>` is the folder you set up below, `diagrams` by default.
+`<skill dir>` is the directory that contains this SKILL.md. Relative paths in this file, such as `scripts/setup.mjs`, resolve from there. `<diagramsDir>` is the folder you set up below, `diagrams` by default. Run every command from the project root, because a relative `<diagramsDir>` resolves against the current directory. Remember the absolute path of the `setup.mjs` you run: you need it again for refreshes.
 
 ## Prerequisites
 
@@ -24,10 +24,12 @@ Check before creating any file:
    - **0**: created, or already up to date. Missing scaffold files are restored.
    - **2**: the skill ships a newer engine than the project's copy. Ask the user whether to refresh. On yes, re-run with `--refresh`. Scenes and `out/` are not touched.
    - **3**: the folder exists and is not a create-diagram folder. Ask the user for another folder name and re-run.
+   - **1**: read the message. If the Chromium install failed, continue with SVG only and tell the user. Otherwise fix the cause or report it.
+   Setup prints a "Next: ... --no-browser" hint. It is only a default, so still ask the PNG question below.
 3. Ask the user once whether they want PNGs for slides. Chromium (installed with `@playwright/test` 1.56.1 into the diagrams folder, about 150 MB) gives three things: drawings centred in their canvas, a check that labels still fit when Inter is not installed, and light and dark PNGs. On yes, run the setup command again with `--with-browser`. On no, you get SVG only. Do not ask again.
    - On Linux the font check needs Arial and Courier-metric fonts, for example the `fonts-liberation` package.
-   - If the project or a parent folder already has its own `@playwright/test`, the engine may use that one.
-   - To enable Chromium later, re-run setup with `--with-browser`.
+   - If the project or a parent folder already has its own `@playwright/test`, the engine may use that one. Its Chromium still has to be downloaded, so `--with-browser` is still needed unless `npx playwright install chromium` was already run.
+   - To enable Chromium later, re-run setup with `--with-browser`, then re-export (`node <diagramsDir>/_engine/export.mjs`) so the PNGs and `bbox.json` are produced.
 
 Never edit `<diagramsDir>/_engine/`. Setup replaces it on refresh, so edits are lost.
 
@@ -88,5 +90,5 @@ Tell the user, briefly:
 
 - Where the files are: `<diagramsDir>/out/<name>.svg` and, if made, the two PNGs.
 - Which file to use where. The SVG follows light and dark mode in browsers, so use it for docs sites and READMEs. In slides, use `<name>-light.png` on a light background and `<name>-dark.png` on a dark one.
-- How to regenerate: `node diagrams/_engine/export.mjs`.
-- How to refresh the engine: `node <skill dir>/scripts/setup.mjs diagrams --refresh`.
+- How to regenerate: `node <diagramsDir>/_engine/export.mjs`, with the real folder name.
+- How to refresh the engine: print the absolute path of the `setup.mjs` you used, as `node <that path> <diagramsDir> --refresh`. If you no longer have it, tell the user to ask you to refresh the diagram engine. Do not show the placeholder `<skill dir>` to the user.
