@@ -6,6 +6,7 @@ import { svg } from './engine.mjs';
 import { projectPaths } from './paths.mjs';
 import { setIconScope } from './icons.mjs';
 import { setCanvasWidth } from './shapes.mjs';
+import { sha256 } from './hash.mjs';
 
 // Measured centring origins, keyed by scene name. Missing file means none measured yet.
 export function readOrigins(bboxPath) {
@@ -226,6 +227,15 @@ export function run({ scenes, outDir, origins = {}, only, check = false } = {}) 
 const USAGE = 'Usage: node _engine/export.mjs [--check] [--only <name>] [--no-browser]';
 export const NO_CHROMIUM = 'Chromium not installed: skipped centring, fallback-font check and PNGs. To enable, ask your coding agent to run the create-diagram setup with --with-browser.';
 
+// Scenes whose SVG no longer matches what the last Chromium export recorded in
+// png-manifest.json, so their centring and PNGs are out of date. A scene the
+// manifest has never seen counts too. No manifest means no Chromium export was
+// ever committed, so there is nothing to be stale against.
+export function staleWithoutBrowser(svgs, manifest) {
+  if (!manifest) return [];
+  return [...svgs].filter(([name, text]) => manifest.scenes?.[name] !== sha256(text)).map(([name]) => name).sort();
+}
+
 const report = (check, problems) => {
   console.error(check ? 'Diagram check failed:' : 'Diagram export failed:');
   for (const p of problems) console.error(`  ${p}`);
@@ -316,10 +326,32 @@ async function main(argv) {
   for (const f of result.removed) console.log(`Removed orphan: ${f}`);
   if (!check) console.log(`Exported ${result.written.length} diagram(s) to ${paths.out}`);
 
+  if (!chromium) {
+    // Centring and PNGs came from an earlier Chromium export; flag any scene
+    // that has changed since, because this run cannot refresh them.
+    let manifest = null;
+    try {
+      manifest = existsSync(paths.pngManifest) ? JSON.parse(readFileSync(paths.pngManifest, 'utf8')) : null;
+    } catch {
+      // An unreadable manifest is a Chromium run's problem to report.
+    }
+    for (const name of staleWithoutBrowser(result.svgs, manifest)) {
+      const line = `${name}: changed since the last Chromium export; centring and PNGs are stale. Re-export with Chromium.`;
+      if (check) problems.push(line);
+      else console.warn(line);
+    }
+  }
+
   if (chromium) {
     // 3. Every label still fits its shape in a fallback face.
-    const { checkFallbackFonts } = await import('./font-guard.mjs');
-    problems.push(...await checkFallbackFonts(result.svgs));
+    const { fallbackFontReport } = await import('./font-guard.mjs');
+    const fonts = await fallbackFontReport(result.svgs);
+    problems.push(...fonts.problems);
+    if (!fonts.pinned) {
+      console.warn('Font check skipped: Arial and Courier New (or Liberation Sans and Mono) are not installed. On Linux install fonts-liberation.');
+    } else if (!problems.length && !check) {
+      console.log(`Font check: ${fonts.labels} label(s) fit in the fallback fonts.`);
+    }
     if (problems.length && !check) return report(check, problems);
 
     // 4. Light and dark PNGs. A single-scene export leaves the others alone.

@@ -191,7 +191,7 @@ All skills require:
 
 The engine in `skills/create-diagram/engine/` comes from the newest dapr/docs release branch. To refresh it:
 
-1. Copy the kept modules from that branch: `engine`, `shapes`, `icons`, `apis`, `app`, `services`, `brands`, `cards`, `flow`, `export`, `measure-bbox`, `measure-ink` and `render-png`. Merge, do not overwrite: `browser.mjs`, `font-guard.mjs`, `measure-labels.mjs` and `paths.mjs` are local additions, and `export.mjs` and `render-png.mjs` carry local changes.
+1. Copy the kept modules from that branch: `engine`, `shapes`, `icons`, `apis`, `app`, `services`, `brands`, `cards`, `flow`, `export`, `measure-bbox`, `measure-ink` and `render-png`. Merge, do not overwrite: `browser.mjs`, `font-guard.mjs`, `hash.mjs`, `measure-labels.mjs` and `paths.mjs` are local additions, and `export.mjs` and `render-png.mjs` carry local changes.
 2. Regenerate the colour tokens: `node scripts/diagram-tokens.mjs <path to _tokens.scss>`.
 3. Re-apply the local changes: the Java mark is removed, the Python mark is the CC0 Simple Icons mark with `--d-brand-python` (`C` gets a `pythonBrand: 'var(--d-brand-python)'` entry after `redisBrand`, and `brands.mjs` tints the mark with `C.pythonBrand`), the export writes one themed SVG, paths resolve from the project, and Chromium loads through `browser.mjs`.
 4. Set `skill` in `engine/VERSION` to the current plugin version (`setup.mjs` compares it) and update `source` there and in `engine/NOTICE` with the branch and commit.

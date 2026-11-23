@@ -84,6 +84,7 @@ function labelsOverflowing({ tolerance }) {
     return null;
   };
   const out = [];
+  let labels = 0;
   for (const text of svg.querySelectorAll('text')) {
     if (text.getAttribute('aria-hidden') === 'true') continue;
     const g = containerFor(text);
@@ -98,6 +99,7 @@ function labelsOverflowing({ tolerance }) {
     const cx = (t.left + t.right) / 2;
     const cy = (t.top + t.bottom) / 2;
     if (cx < s.left || cx > s.right || cy < s.top || cy > s.bottom) continue;
+    labels += 1;
     const em = parseFloat(getComputedStyle(text).fontSize) || 0;
     const room = Math.max(1, s.width - em);
     const ratio = t.width / room;
@@ -105,20 +107,42 @@ function labelsOverflowing({ tolerance }) {
       out.push({ label: (text.textContent || '').replace(/\s+/g, ' ').trim(), ratio: +ratio.toFixed(3) });
     }
   }
-  return out;
+  return { out, labels };
 }
 
-// One problem string per overflowing label or unpinned face, across every
-// scene. Empty means every label fits without Inter.
-export async function checkFallbackFonts(svgs, tolerance = TOLERANCE) {
+// Whether the two pinned stacks resolved to Arial and Courier New metrics (or
+// their Liberation twins). Without them every overflow verdict would measure
+// some third face, so the caller skips the check rather than report it.
+export async function probePins(tab) {
+  const run = await tab.evaluate((markup) => {
+    document.body.innerHTML = markup;
+    const len = (id) => document.getElementById(id).getComputedTextLength();
+    return [len('probe-sans'), len('probe-mono')];
+  }, guardHtml(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="300">'
+    + '<text><tspan id="probe-sans" x="10" y="100" font-size="100">0123456789</tspan></text>'
+    + '<text><tspan id="probe-mono" x="10" y="250" font-size="100" font-family="&quot;Times New Roman&quot;, Times, monospace">0123456789</tspan></text></svg>',
+  ));
+  const near = (got, want) => Math.abs(got - want) / want < 0.01;
+  return near(run[0], ARIAL_DIGIT_RUN) && near(run[1], COURIER_DIGIT_RUN);
+}
+
+// What the check found across every scene: problems (an overflowing label or
+// an unpinned face), how many labels it measured, and whether the pinned faces
+// are installed. When they are not, overflow is not reported at all.
+export async function fallbackFontReport(svgs, { tolerance = TOLERANCE, probe = probePins } = {}) {
   const problems = [];
   for (const [name, svgText] of svgs) {
     for (const face of unpinnedFaces(svgText)) {
       problems.push(`${name}: a label sets font-family "${face}", which the fallback-font check cannot pin; use mono: true or no font-family`);
     }
   }
-  if (!svgs.size) return problems;
+  if (!svgs.size) return { problems, labels: 0, pinned: true };
+  let labels = 0;
+  let pinned = true;
   await withHarness(async (tab) => {
+    pinned = await probe(tab);
+    if (!pinned) return;
     for (const [name, svgText] of svgs) {
       await tab.evaluate((markup) => {
         document.body.innerHTML = markup;
@@ -129,10 +153,18 @@ export async function checkFallbackFonts(svgs, tolerance = TOLERANCE) {
         el.style.width = `${vb.width}px`;
         el.style.height = `${vb.height}px`;
       }, guardHtml(svgText));
-      for (const { label, ratio } of await tab.evaluate(labelsOverflowing, { tolerance })) {
+      const found = await tab.evaluate(labelsOverflowing, { tolerance });
+      labels += found.labels;
+      for (const { label, ratio } of found.out) {
         problems.push(`${name}: label "${label}" is ${ratio}x the room its shape leaves in a fallback font (limit ${tolerance}); widen the shape or shorten the label`);
       }
     }
   }, { fonts: false });
-  return problems;
+  return { problems, labels, pinned };
+}
+
+// One problem string per overflowing label or unpinned face, across every
+// scene. Empty means every label fits without Inter.
+export async function checkFallbackFonts(svgs, tolerance = TOLERANCE) {
+  return (await fallbackFontReport(svgs, { tolerance })).problems;
 }

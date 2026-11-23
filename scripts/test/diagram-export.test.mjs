@@ -4,7 +4,8 @@ import { mkdtempSync, readFileSync, readdirSync, writeFileSync, rmSync, existsSy
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { el, text, C } from '../../skills/create-diagram/engine/engine.mjs';
-import { run, readOrigins, renderScene, themed, loadTokens, BODY_STACK, MONO_STACK } from '../../skills/create-diagram/engine/export.mjs';
+import { sha256 } from '../../skills/create-diagram/engine/hash.mjs';
+import { run, staleWithoutBrowser, readOrigins, renderScene, themed, loadTokens, BODY_STACK, MONO_STACK } from '../../skills/create-diagram/engine/export.mjs';
 
 const scene = (over = {}) => ({
   width: 100,
@@ -392,3 +393,16 @@ test('check with a throwing scene among good ones names it and writes nothing', 
   assert.deepEqual(r.removed, []);
   assert.deepEqual(snapshot(out), before);
 }));
+
+test('staleWithoutBrowser lists changed scenes', () => {
+  const manifest = { scenes: { a: sha256('x'), b: sha256('y') } };
+  assert.deepEqual(staleWithoutBrowser(new Map([['a', 'x'], ['b', 'z']]), manifest), ['b']);
+});
+
+test('staleWithoutBrowser counts a scene the manifest has not seen, and sorts', () => {
+  assert.deepEqual(staleWithoutBrowser(new Map([['z', 'x'], ['a', 'x']]), { scenes: {} }), ['a', 'z']);
+});
+
+test('staleWithoutBrowser with no manifest', () => {
+  assert.deepEqual(staleWithoutBrowser(new Map([['a', 'x']]), null), []);
+});

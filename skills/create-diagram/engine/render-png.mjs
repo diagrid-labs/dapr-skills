@@ -14,10 +14,10 @@
 // guaranteed byte-stable across versions, and re-rendering an unchanged scene
 // would churn a binary in git for no visible change. `force` re-renders.
 
-import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { withHarness } from './browser.mjs';
+import { sha256 } from './hash.mjs';
 import { BODY_STACK, MONO_STACK } from './export.mjs';
 
 export const PNG_SCALE = 2;
@@ -36,7 +36,7 @@ export function settings() {
   };
 }
 
-export const sha256 = (text) => createHash('sha256').update(Buffer.from(text, 'utf8')).digest('hex');
+export { sha256 };
 
 const SUFFIX = new RegExp(`^(.+)-(${SCHEMES.join('|')})\\.png$`);
 export const pngNames = {

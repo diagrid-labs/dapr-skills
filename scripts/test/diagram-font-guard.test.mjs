@@ -5,7 +5,7 @@ import { renderScene, themed } from '../../skills/create-diagram/engine/export.m
 import { withHarness } from '../../skills/create-diagram/engine/browser.mjs';
 import { requireChromium } from './helpers/chromium.mjs';
 import {
-  checkFallbackFonts, unpinnedFaces, guardHtml, TOLERANCE, ARIAL_DIGIT_RUN, COURIER_DIGIT_RUN,
+  checkFallbackFonts, fallbackFontReport, probePins, unpinnedFaces, guardHtml, TOLERANCE, ARIAL_DIGIT_RUN, COURIER_DIGIT_RUN,
 } from '../../skills/create-diagram/engine/font-guard.mjs';
 
 // A box with one label centred in it. The label's centre lies inside the box,
@@ -92,4 +92,31 @@ test("the pinned fallback face reaches a mono tspan's own font-family", async (t
   // A proportional face ahead of `monospace`, for the reason given above.
   const run = await digitRun({ tspan: ' font-family="&quot;Times New Roman&quot;, Times, monospace"' });
   assert.ok(Math.abs(run - COURIER_DIGIT_RUN) / COURIER_DIGIT_RUN < 0.01, `ten mono digits ran ${run}, not Courier New's ${COURIER_DIGIT_RUN}`);
+});
+
+test('report skips overflow when pins are missing', async (t) => {
+  if (!(await requireChromium(t))) return;
+  const report = await fallbackFontReport(svgs({ narrow: boxed(40, 'A label thirty characters long') }), { probe: async () => false });
+  assert.deepEqual(report.problems, []);
+  assert.equal(report.pinned, false);
+});
+
+test('report counts labels', async (t) => {
+  if (!(await requireChromium(t))) return;
+  const two = {
+    width: 400, height: 100, title: 'Two', desc: 'Two labelled boxes',
+    build: () => [40, 240].map((x) => el('g', {}, [
+      el('rect', { x, y: 30, width: 120, height: 40, fill: 'var(--d-sky)' }),
+      el('text', { x: x + 60, y: 55, 'text-anchor': 'middle', 'font-size': 12 }, [text('Label')]),
+    ])),
+  };
+  const report = await fallbackFontReport(svgs({ two }));
+  assert.equal(report.labels, 2);
+  assert.equal(report.pinned, true);
+  assert.deepEqual(report.problems, []);
+});
+
+test('probePins is true on this machine', async (t) => {
+  if (!(await requireChromium(t))) return;
+  assert.equal(await withHarness((tab) => probePins(tab), { fonts: false }), true);
 });

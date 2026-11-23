@@ -165,3 +165,60 @@ export const scenes = {
     rmSync(tmp, { recursive: true, force: true });
   }
 });
+
+const STALE = 'demo: changed since the last Chromium export; centring and PNGs are stale. Re-export with Chromium.';
+const staleManifest = (tmp) => writeFileSync(
+  join(tmp, 'diagrams', 'out', 'png-manifest.json'),
+  JSON.stringify({ settings: {}, scenes: { demo: 'not-the-hash' } }),
+);
+
+test('--no-browser warns about scenes changed since a Chromium export', () => {
+  const tmp = layout();
+  try {
+    assert.equal(cli(tmp, tmp, '--no-browser').status, 0);
+    staleManifest(tmp);
+    const r = cli(tmp, tmp, '--no-browser');
+    assert.equal(r.status, 0, r.stderr);
+    assert.deepEqual(lines(r, /changed since the last Chromium export/), [STALE]);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('--check --no-browser fails on the same project', () => {
+  const tmp = layout();
+  try {
+    assert.equal(cli(tmp, tmp, '--no-browser').status, 0);
+    staleManifest(tmp);
+    const r = cli(tmp, tmp, '--check', '--no-browser');
+    assert.equal(r.status, 1);
+    assert.deepEqual(lines(r, /changed since the last Chromium export/).map((l) => l.trim()), [STALE]);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('--no-browser with no png-manifest prints no STALE line', () => {
+  const tmp = layout();
+  try {
+    const r = cli(tmp, tmp, '--no-browser');
+    assert.equal(r.status, 0, r.stderr);
+    assert.deepEqual(lines(r, /changed since the last Chromium export/), []);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('export prints the font-check line', async (t) => {
+  if (!(await requireChromium(t))) return;
+  if (!existsSync(join(NODE_MODULES, '@playwright', 'test'))) return t.skip('playwright is not in the repo node_modules');
+  const tmp = layout();
+  try {
+    symlinkSync(NODE_MODULES, join(tmp, 'diagrams', 'node_modules'), 'junction');
+    const r = cli(tmp, tmp);
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(r.stdout, /^Font check: \d+ label\(s\) fit/m);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});

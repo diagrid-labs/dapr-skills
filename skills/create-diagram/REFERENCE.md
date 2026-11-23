@@ -62,9 +62,9 @@ With Playwright (in the diagrams folder or a folder above it) and its Chromium i
 The export writes SVGs only and prints one line saying what it skipped. Two
 things follow:
 
-- **The drawing may sit slightly off-centre in its canvas.** It is exported
-  at origin `0 0`. Keep the margins even by construction (derive positions
-  from the canvas centre) since nothing measures them.
+- **The drawing may sit slightly off-centre in its canvas.** It uses the origin
+  last measured in `bbox.json`, or `0 0` when there is none. Keep the margins
+  even by construction (derive positions from the canvas centre).
 - **No font check ran.** Leave slack around every label: size a box, pill or
   card to its label's estimated width plus at least a character on each side,
   never to the exact width. As a rough guide, a body-font character at weight
