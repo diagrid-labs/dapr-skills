@@ -16,7 +16,7 @@ Coordinates are in the scene's canvas.
 | `text(content)` | A text node, escaped on serialize |
 | `serialize(node)` | A string; attributes keep insertion order |
 | `svg({ width, height, title, desc, id, children, origin })` | A complete document with `<title>` and `<desc>` wired to `role="img"`. The exporter calls it |
-| `C` | The colour tokens: `navy`, `blue`, `orange`, `teal`, `mint`, `red`, `lavender`, `grey`, `caption`, `green`, `appInk`, `appSky`, `appGold`, `appTeal`, `appBlue`, `paper`, `kubernetes`, `redisBrand`, `markPlate`, `body`, `bg`, `plate`, `plateInk`, `tealFill`, `blueFill`, `navyFill` |
+| `C` | The colour tokens: `navy`, `blue`, `orange`, `teal`, `mint`, `red`, `lavender`, `grey`, `caption`, `green`, `appInk`, `appSky`, `appGold`, `appTeal`, `appBlue`, `paper`, `kubernetes`, `redisBrand`, `pythonBrand`, `markPlate`, `body`, `bg`, `plate`, `plateInk`, `tealFill`, `blueFill`, `navyFill` |
 | `APP` | Five `{ stroke, fill, ink, solid }` entries: green, light blue, yellow, teal, dark blue |
 
 ## `_engine/shapes.mjs`
@@ -29,6 +29,7 @@ Coordinates are in the scene's canvas.
 | `richLabel(o)` | `x, y, parts, size` (13), `weight` (400), `color`, `anchor` (`'start'`), `mono` | One line whose `parts` (`{ text, color, weight, mono }`) differ in colour or weight |
 | `hex(o)` | `x, y, r` (42.5), `stroke, fill, ink, solid, label` (`'App'`), `size` (r/3), `labelDx, labelDy, sub, subSize` | A pointy-top app hexagon with its name; `sub` is a code line under the name |
 | `hexPoints(x, y, r)` | | The six points as a `points` string |
+| `hexNameBlock(o)` | `size, sub, subSize, lines` (1) | `{ lead, size, bottom }`: the name block inside a hexagon, how far apart its two lines sit and how far the lower one reaches below the centre. `hex()` draws from it; use it to clear something placed under a hexagon |
 | `hexHalfWidth(r)`, `hexHalfWidthAt(r, dy)`, `hexEdgeAt(r, dx)` | | Half width; half width at height `dy`; the boundary's depth at offset `dx` |
 | `badge(o)` | `x, y, r` (19), `mark` | The small solid navy Dapr hexagon |
 | `daprApp(o)` | `x, y, r` (42.5), `stroke, fill, label, size, labelDx, badgeLeft, mark` | An app with the badge docked bottom right (or left). Does not pass `ink` or `solid` |
@@ -45,17 +46,17 @@ Coordinates are in the scene's canvas.
 | `region(o)` | `x, y, w, h, stroke, r, caption, captionW, captionX, captionH` (26), `captionSize` (15) | A dashed area with its name on the top border |
 | `pod(o)` | `x, y, w, h, name` (`'Pod'`), `captionW` (56), `captionX, size` (13) | A Kubernetes pod |
 | `pill(o)` | `x, y, w, h` (26), `text, color` (`C.navy`), `filled, size` (15) | A rounded caption tag |
-| `tile(o)` | `x, y, icon, label, color, filled, size` (99), `w, h, inline, tag, labelSize, glyphSize, glyphGap, glyphDy, nameDy, desc, descSize, inlinePad, inlineGap` | A card with an icon over or beside a label. Prefer `card()` or `apiTile()` |
+| `tile(o)` | `x, y, icon, label, color, filled, size` (99), `w, h, inline, tag, labelSize, glyphSize, glyphGap, glyphDy, nameDy, desc, descSize, inlinePad, inlineGap`; with `desc` the card is laid out from its top edge by `iconDy` (48), `titleDy` (96), `descDy` (124) and `tagPush` (0) | A card with an icon over or beside a label. Prefer `card()` or `apiTile()`, which size the mark and name for you; reach for `iconDy`, `titleDy`, `descDy` and `tagPush` only on a capability card with a `desc` |
 | `httpCard(o)`, `httpCardH(o)` | `x, y, w, h, method, url, status, request, body, size` (13), `statusW` | An HTTP exchange; the least height it needs |
 | `codeCard(o)` | `x, y, w, h, title, code, size` (12), `titleSize` (13), `pad` (14) | A file or code in a bordered card, name above |
 | `indentCode(code)` | | Leading spaces turned non-breaking, so indentation survives |
 | `roundedPath(o)` | `points, r` (10), `color` (`C.navy`), `width, dash` | A run that turns each corner with an arc |
 | `elbowArrow(o)` | `points, r` (12), `color` (`C.navy`), `heads` (`'end'`, `'start'`, `'both'`, `'none'`), `dash` | A turning line with its chevron, as one path |
 | `arrow(o)` | `from, to, head` (true), `color` (`C.navy`), `gap` (2), `dash` | A straight arrow between shape edges |
-| `lollipop(o)`, `socket(o)` | `x, y, to, toY, elbowX, r`; `x, y, from, r` | A UML provided interface; the socket that cups it |
+| `lollipop(o)`, `socket(o)` | `x, y, to, toY, elbowX, elbowR` (10), `r` (10), `color`; `x, y, from, r` | A UML provided interface; the socket that cups it |
 | `lineWidth()` | | The stroke for this canvas |
 | `captionReach()`, `captionPad(size)` | | How far a pill hangs inside its region (13); a pill's end padding |
-| Constants | | `MIN_LABEL` 10, `HEAD` 8, `FILL_OPACITY` 0.6, `CAPTION_H` 26, `CAPTION_INSET` 20, `STORE_RATIO` 1.2, `BALL_R` 10, `SOCKET_R` 21, `STEP_R` 15, `MONO` |
+| **Constants (import these)** | | `MIN_LABEL` 10, `HEAD` 8, `HEAD_RUN` 26 (the longest run an arrow head takes), `FILL_OPACITY` 0.6, `CAPTION_H` 26, `CAPTION_INSET` 20, `CAPTION_PAD_EM` 0.5 (a pill's end padding, in em), `STORE_RATIO` 1.2, `STORE_RIM` 0.115 (a cylinder's rim depth as a fraction of its width), `BALL_R` 10, `SOCKET_R` 21, `STEP_R` 15, `MONO` (`var(--font-mono)`), `NO_LIGATURES` (`font-variant-ligatures: none`, the style code text carries) |
 
 `arrow()`'s `from` and `to` take a point `[x, y]` (used as is) or a shape
 descriptor: a circle `{ x, y, r }`, a hexagon `{ x, y, r, hex: true }` or a
@@ -70,19 +71,21 @@ rectangle `{ x, y, w, h }`.
 | `pairExtent(o)` | The pair's `{ left, right, top, bottom }` about the app's centre |
 | `appSidecarCentre(o)` | `{ x, y }` for the app so that the whole pair is centred on the given point |
 | `sidecarDx(r)` | How far right of the app's centre the sidecar sits |
-| `SIDECAR_R`, `SIDECAR_CLEARANCE`, `SIDECAR_GAP` | 0.75 of `r`; 0.15 of `r` below the app's lowest point; 7 units under the name |
+| **Constants (import these)** | `SIDECAR_R` 0.75 of `r`; `SIDECAR_CLEARANCE` 0.15 of `r` below the app's lowest point; `SIDECAR_GAP` 7 units under the name |
 
 ## `_engine/icons.mjs`
 
 | Export | Returns |
 | --- | --- |
-| `icon(o)` | `name, x, y, size` (32), `w, h, color` (`C.body`), `label, labelDy, labelSize` (13), `dir, fit` (`'box'` or `'ink'`). The mark fitted into the box, aspect kept. `color` tints single-colour marks only |
+| `icon(o)` | `name, x, y, size` (32), `w, h, color` (`C.body`), `label, labelDy, labelSize` (13), `scope, dir, fit` (`'box'` or `'ink'`). `scope` is a diagram id, for a page that holds several diagrams: it keeps two diagrams that draw the same mark at the same spot from sharing ids. Leave it out in a scene, the exporter scopes ids per scene. The mark fitted into the box, aspect kept. `color` tints single-colour marks only |
 | `markHex(o)` | `x, y, r, mark, size, stroke` (`C.blue`), `fill, color`: a hexagon with a mark centred in it. `logo-blue` needs no `size` |
-| `plate(o)`, `brand(o)` | A neutral backing; a mark on its plate, with an optional name inside |
+| `plate(o)` | `x, y, w, h, fill` (`C.plate`): a neutral backing, near-white in both themes |
+| `brand(o)` | `name, x, y, w, h, content, plate, dx` (0), `inside, insideDx` (0), `insideSize` (15), `plateH` (`PLATE_H`), `pad` (`PLATE_PAD`): a mark on its plate. `w, h` is the box the mark fits, `content` the ink width the plate is sized around, `plate` overrides the plate width, `inside` sets a name within the plate and `dx` moves the mark to make room |
 | `logoStrip(o)`, `logoStripSize(o)` | `x, y, marks` (`{ mark, name, color }`), `caption, cols, markSize` (30), `size` (13), `plated`: vendor marks with names in a captioned region; its size |
-| `serviceInvocation(o)` | The service-invocation glyph, sized by ink |
+| `serviceInvocation(o)` | `x, y, w` (`SI_W`), `color` (`C.blue`): the service-invocation glyph, sized by its drawn width |
+| `stripPitch(markSize, size, plated)` | The least row pitch a `logoStrip` needs to clear a mark and the name under it |
 | `listMarks(dir)` | Every mark name in a folder |
-| `DAPR_MARK`, `MARK_IN_HEX`, `PLATE_H`, `PLATE_PAD` | 4/3 and 0.8 of the radius; 68; 28 |
+| **Constants (import these)** | `DAPR_MARK` 4/3 and `MARK_IN_HEX` 0.8, both of the radius; `PLATE_H` 68; `PLATE_PAD` 28; `PLATE_SCALE` 1.6 (a plate's width as a multiple of its mark); `SI_W` 42 and `SI_H` 23.1 (the service-invocation glyph's width and height) |
 | `IconError` | Thrown for a missing mark, a bad name, or a file that fails the screen |
 
 ## `_engine/cards.mjs` and `_engine/apis.mjs`
@@ -91,6 +94,7 @@ rectangle `{ x, y, w, h }`.
 | --- | --- |
 | `card(o)` | `mark, name, w, h, inline, color` (`C.blue`), `filled, tag`, plus `tile()` options: a card with the mark and name sized from it |
 | `cardSizes(o)` | `{ glyph, label }` for a card; throws below the 10-unit floor |
+| **Constants (import these)** | `cards.mjs`: `CARD_W` 112 (the reference card), `CARD_GLYPH` 44/112 and `STACKED_LABEL` 14/112 (mark and name size as a share of the short side), `INLINE_LABEL` 14/76. `apis.mjs` re-exports them as `TILE_W`, `TILE_GLYPH`, `TILE_LABEL` and `INLINE_LABEL` |
 | `APIS`, `CROSS_CUTTING` | The 16 APIs and the 3 cross-cutting concerns, each `{ key, mark, name, wrap, tag }` |
 | `api(key)` | One entry; throws on an unknown key |
 | `apiTile(o)` | `key, wrap, glyph`, plus `card()` options: the API block |
@@ -107,7 +111,7 @@ Keys: `workflows`, `pubsub`, `service-invocation`, `state`, `actors`, `jobs`,
 | `serviceHex(o)` | `key, x, y, r` (`SERVICE_R`, 34), `role, wrap, size, side` (`'below'` or `'right'`): a Dapr hexagon with the service's name, and its role in blue |
 | `SERVICES`, `service(key)` | `placement`, `scheduler`, `sentry`, `operator`, `injector` |
 | `serviceLabel(r)` | The name size for a radius, for a neighbour that is not a Dapr service; throws below 10 |
-| `NAME_DY`, `ROLE_DY`, `NAME_DX` | The name's and role's offsets as multiples of `r` |
+| **Constants (import these)** | `SERVICE_R` 34 (the reference radius), `SERVICE_LABEL` 13/34 (the name size as a multiple of `r`), `NAME_DY` 1.4, `ROLE_DY` 2.4 and `NAME_DX` 1.15 (the name's and role's offsets as multiples of `r`) |
 
 ## `_engine/brands.mjs`
 
@@ -116,8 +120,8 @@ Keys: `workflows`, `pubsub`, `service-invocation`, `state`, `actors`, `jobs`,
 | `LANGUAGES` | `nodejs`, `python`, `dotnet`, `go`, `php`, `rust`, each `{ name, w, h, content, color }` |
 | `CLOUDS` | `azure`, `aws`, `google-cloud`, `kubernetes` |
 | `scaleMarks(marks, k)` | Every size in a row scaled by one factor, so the marks stay in proportion |
-| `cloudMark(o)` | `mark, x, y, k` (1): one cloud mark with its backing and name |
-| `LANG_PLATE_H`, `CLOUD_LABEL`, `CLOUD_TEXT_DX`, `MARK_PLATE_H`, `MARK_PLATE_PAD` | 80, 15, 21, 56, 16 |
+| `cloudMark(o)` | `mark, x, y, k` (1), `textDx` (`CLOUD_TEXT_DX`), `backingH` (`MARK_PLATE_H`): one cloud mark with its backing and name. `x` is the mark's centre; the name starts `textDx` to its right. The backing does not scale with `k`; raise `backingH` for a row too shallow for the default |
+| **Constants (import these)** | `LANG_PLATE_H` 80, `CLOUD_LABEL` 15, `CLOUD_TEXT_DX` 21, `MARK_PLATE_H` 56, `MARK_PLATE_PAD` 16 |
 
 ## `_engine/flow.mjs`
 

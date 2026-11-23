@@ -28,7 +28,7 @@ import { icon, plate } from './icons.mjs';
 // `w` and `h` bound the mark; `content` is the ink the plate is sized around.
 export const LANGUAGES = Object.freeze([
   Object.freeze({ name: 'nodejs', w: 81, h: 50, content: 81 }),
-  Object.freeze({ name: 'python', w: 54, h: 54, content: 54, color: 'var(--d-brand-python)' }),
+  Object.freeze({ name: 'python', w: 54, h: 54, content: 54, color: C.pythonBrand }),
   Object.freeze({ name: 'dotnet', w: 54, h: 54, content: 54 }),
   Object.freeze({ name: 'go', w: 112, h: 42, content: 112 }),
   Object.freeze({ name: 'php', w: 104, h: 56, content: 104 }),

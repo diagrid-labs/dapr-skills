@@ -514,7 +514,7 @@ by looking at the PNG) rather than deciding from the picture in your head.
 
 The engine ships the marks in `_engine/icons/`, each recorded with its source
 and licence in [engine/icons/README.md](engine/icons/README.md). The Python
-mark is the Simple Icons mark, tinted `var(--d-brand-python)`. There is no
+mark is the Simple Icons mark, tinted `C.pythonBrand`. There is no
 Java mark: name Java with a text label.
 
 - **Prefer a shipped mark.** Redis is `redis` (tint it with `C.redisBrand`, or
