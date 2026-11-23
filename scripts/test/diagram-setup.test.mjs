@@ -5,6 +5,7 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSy
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { browserInstallCommands, PLAYWRIGHT, setup } from '../../skills/create-diagram/scripts/setup.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SETUP = join(HERE, '..', '..', 'skills', 'create-diagram', 'scripts', 'setup.mjs');
@@ -231,6 +232,98 @@ test('a foreign folder with bare _engine.old/_engine.new is refused untouched', 
     assert.ok(existsSync(join(dir, '_engine.new')));
     assert.ok(!existsSync(join(dir, '_engine')));
     assert.deepEqual(readdirSync(dir).sort(), ['_engine.new', '_engine.old', 'mine.txt']);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('the engine copy carries NOTICE and the Apache licence', () => {
+  const tmp = tmpRoot();
+  try {
+    const dir = join(tmp, 'diagrams');
+    assert.equal(run(dir).status, 0);
+    assert.ok(existsSync(join(dir, '_engine', 'NOTICE')));
+    assert.ok(existsSync(join(dir, '_engine', 'LICENSE-APACHE-2.0')));
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('setup writes .gitattributes and .gitignore and never overwrites them', () => {
+  const tmp = tmpRoot();
+  try {
+    const dir = join(tmp, 'd');
+    assert.equal(run(dir).status, 0);
+    assert.equal(read(join(dir, '.gitattributes')), 'out/*.svg text eol=lf\nout/*.png binary\n');
+    assert.equal(read(join(dir, '.gitignore')), 'node_modules/\n');
+    writeFileSync(join(dir, '.gitattributes'), 'mine\n');
+    writeFileSync(join(dir, '.gitignore'), 'mine too\n');
+    assert.equal(run(dir).status, 0);
+    assert.equal(read(join(dir, '.gitattributes')), 'mine\n');
+    assert.equal(read(join(dir, '.gitignore')), 'mine too\n');
+    rmSync(join(dir, '.gitignore'));
+    const r = run(dir);
+    assert.match(r.stdout, /Restored missing scaffold: .*\.gitignore/);
+    assert.equal(read(join(dir, '.gitignore')), 'node_modules/\n');
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('a folder holding only dotfiles counts as empty and keeps them', () => {
+  const tmp = tmpRoot();
+  try {
+    const dir = join(tmp, 'diagrams');
+    mkdirSync(dir);
+    writeFileSync(join(dir, '.gitkeep'), '');
+    writeFileSync(join(dir, '.DS_Store'), 'x');
+    writeFileSync(join(dir, '.gitattributes'), 'keep me\n');
+    const r = run(dir);
+    assert.equal(r.status, 0, r.stderr);
+    assert.ok(existsSync(join(dir, '_engine', 'VERSION')));
+    assert.ok(existsSync(join(dir, '.gitkeep')));
+    assert.equal(read(join(dir, '.DS_Store')), 'x');
+    assert.equal(read(join(dir, '.gitattributes')), 'keep me\n');
+    // A dot-folder is not a dotfile: that is still someone else's folder.
+    const other = join(tmp, 'other');
+    mkdirSync(join(other, '.git'), { recursive: true });
+    assert.equal(run(other).status, 3);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('browserInstallCommands runs in the folder with no path argument and pins exactly', () => {
+  const dir = join(tmpdir(), 'a folder with spaces', 'diagrams');
+  assert.equal(PLAYWRIGHT, '@playwright/test@1.56.1');
+  for (const [platform, npm, npx, shell] of [['win32', 'npm.cmd', 'npx.cmd', true], ['darwin', 'npm', 'npx', false], ['linux', 'npm', 'npx', false]]) {
+    const steps = browserInstallCommands(dir, platform);
+    assert.deepEqual(steps.map((s) => s.cmd), [npm, npx], platform);
+    assert.deepEqual(steps[0].args, ['install', '--save-exact', '@playwright/test@1.56.1'], platform);
+    assert.deepEqual(steps[1].args, ['playwright', 'install', 'chromium'], platform);
+    for (const s of steps) {
+      assert.equal(s.options.cwd, dir, platform);
+      assert.equal(s.options.shell, shell, platform);
+      assert.equal(s.options.stdio, 'inherit', platform);
+      assert.ok(!s.args.some((a) => a.includes(dir) || a === '--prefix'), platform);
+    }
+  }
+});
+
+test('a successful browser install says what the next export will do', () => {
+  const tmp = tmpRoot();
+  try {
+    const dir = join(tmp, 'd');
+    const out = [];
+    const err = [];
+    let installedIn;
+    const code = setup(dir, { withBrowser: true, install: (d) => { installedIn = d; return true; } }, (m) => out.push(m), (m) => err.push(m));
+    assert.equal(code, 0, err.join('\n'));
+    assert.equal(installedIn, dir);
+    assert.equal(out.at(-1), 'Chromium ready: PNGs, centring and the fallback-font check will run on the next export.');
+    const failed = [];
+    assert.equal(setup(dir, { withBrowser: true, install: () => false }, (m) => failed.push(m), () => {}), 1);
+    assert.ok(!failed.some((m) => m.startsWith('Chromium ready')));
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }

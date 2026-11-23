@@ -59,9 +59,13 @@ export function ensureScaffold(dir) {
       restored.push(`${sub}/`);
     }
   }
+  // .gitattributes keeps a Windows clone (core.autocrlf) from rewriting the SVGs,
+  // which would make --check report every diagram as changed.
   const files = [
     [join(dir, 'scenes', 'index.mjs'), 'export const scenes = {};\n', 'scenes/index.mjs'],
     [join(dir, 'package.json'), '{"private":true,"type":"module"}\n', 'package.json'],
+    [join(dir, '.gitattributes'), 'out/*.svg text eol=lf\nout/*.png binary\n', '.gitattributes'],
+    [join(dir, '.gitignore'), 'node_modules/\n', '.gitignore'],
   ];
   for (const [path, content, label] of files) {
     if (!existsSync(path)) {
@@ -72,21 +76,31 @@ export function ensureScaffold(dir) {
   return restored;
 }
 
-function installBrowser(dir) {
-  const win = process.platform === 'win32';
-  const steps = [
-    [win ? 'npm.cmd' : 'npm', ['install', '--prefix', dir, PLAYWRIGHT]],
-    [win ? 'npx.cmd' : 'npx', ['--prefix', dir, 'playwright', 'install', 'chromium']],
+// The two commands that put Playwright and its Chromium in the diagrams folder.
+// They run with cwd set to the folder instead of taking it as --prefix, so no
+// argument is a path: on Windows the .cmd shims need shell: true, and a path
+// with spaces would otherwise have to be quoted for cmd.exe.
+export function browserInstallCommands(dir, platform = process.platform) {
+  const win = platform === 'win32';
+  const options = { cwd: dir, stdio: 'inherit', shell: win };
+  return [
+    { cmd: win ? 'npm.cmd' : 'npm', args: ['install', '--save-exact', PLAYWRIGHT], options },
+    { cmd: win ? 'npx.cmd' : 'npx', args: ['playwright', 'install', 'chromium'], options },
   ];
-  for (const [cmd, args] of steps) {
-    const r = spawnSync(cmd, args, { stdio: 'inherit', shell: win });
+}
+
+function installBrowser(dir) {
+  for (const { cmd, args, options } of browserInstallCommands(dir)) {
+    const r = spawnSync(cmd, args, options);
     if (r.status !== 0) return false;
   }
   return true;
 }
 
 // Returns an exit code; messages go to the given out/err writers.
-export function setup(target, { refresh = false, withBrowser = false, engineSrc = SKILL_ENGINE } = {}, out = console.log, err = console.error) {
+export function setup(target, {
+  refresh = false, withBrowser = false, engineSrc = SKILL_ENGINE, install = installBrowser,
+} = {}, out = console.log, err = console.error) {
   const dir = resolve(target);
   const next = `node ${join(dir, '_engine', 'export.mjs')}`;
   const skill = readVersion(engineSrc);
@@ -107,7 +121,9 @@ export function setup(target, { refresh = false, withBrowser = false, engineSrc 
     }
   }
   const hasEngine = existsSync(join(dir, '_engine', 'VERSION'));
-  if (existsSync(dir) && !hasEngine && readdirSync(dir).length > 0) {
+  // Dotfiles such as .gitkeep or .DS_Store do not make a folder someone else's.
+  const isDotfile = (f) => f.startsWith('.') && statSync(join(dir, f)).isFile();
+  if (existsSync(dir) && !hasEngine && readdirSync(dir).some((f) => !isDotfile(f))) {
     err(`${dir} is not a create-diagram folder; choose another name`);
     return 3;
   }
@@ -139,9 +155,13 @@ export function setup(target, { refresh = false, withBrowser = false, engineSrc 
   }
 
   if (restored.length) out(`Restored missing scaffold: ${restored.join(', ')}`);
-  if (withBrowser && !installBrowser(dir)) {
-    err('Browser install failed. SVG export still works without it (--no-browser).');
-    code = 1;
+  if (withBrowser) {
+    if (install(dir)) {
+      out('Chromium ready: PNGs, centring and the fallback-font check will run on the next export.');
+    } else {
+      err('Browser install failed. SVG export still works without it (--no-browser).');
+      code = 1;
+    }
   }
   return code;
 }
