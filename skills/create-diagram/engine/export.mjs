@@ -20,17 +20,12 @@ export const OUT_DIR = join(here, '..', 'daprdocs', 'assets', 'diagrams');
 // own. It cannot follow the theme - a file has to pick one - and light is the
 // one a reader is most likely to paste into.
 export const STANDALONE_DIR = join(here, '..', 'daprdocs', 'static', 'diagrams');
-const TOKENS = join(here, '..', 'daprdocs', 'assets', 'scss', '_tokens.scss');
 
-// The :root values, which is the light theme. Read from the stylesheet so the
-// two cannot drift: a token renamed there must be renamed here or the
-// substitution below fails loudly rather than leaving a var() in the file.
-function lightTokens() {
-  const scss = readFileSync(TOKENS, 'utf8');
-  const root = scss.slice(0, scss.indexOf('[data-bs-theme="dark"]'));
-  const out = new Map();
-  for (const m of root.matchAll(/^\s*(--d-[a-z-]+)\s*:\s*([^;]+);/gm)) out.set(m[1], m[2].trim());
-  return out;
+// The colour tokens, light and dark, generated from dapr/docs' _tokens.scss by
+// scripts/diagram-tokens.mjs. Read from tokens.json so a token renamed there
+// fails loudly below rather than leaving a var() in the file.
+export function loadTokens() {
+  return JSON.parse(readFileSync(new URL('./tokens.json', import.meta.url), 'utf8'));
 }
 
 // The faces the standalone copy declares. Scenes set no font-family on body
@@ -45,10 +40,10 @@ const attr = (stack) => stack.replaceAll('"', '&quot;');
 // Replace every var(--d-*) with its light value. Throws on a token the
 // stylesheet does not define, because a silently unresolved one is exactly the
 // broken file this exists to prevent.
-export function standalone(svgText, tokens = lightTokens()) {
+export function standalone(svgText, tokens = loadTokens().light) {
   const missing = new Set();
   const out = svgText.replace(/var\((--d-[a-z-]+)\)/g, (whole, token) => {
-    const value = tokens.get(token);
+    const value = Object.hasOwn(tokens, token) ? tokens[token] : undefined;
     if (value === undefined) {
       missing.add(token);
       return whole;
@@ -186,7 +181,7 @@ export function run({ scenes, outDir = OUT_DIR, standaloneDir, check = false } =
   // never disagree about what the scene draws - only about how it is coloured.
   const flat = new Map();
   try {
-    const tokens = lightTokens();
+    const tokens = loadTokens().light;
     for (const [name, content] of rendered) flat.set(name, standalone(content, tokens));
   } catch (e) {
     return { ok: false, problems: [e.message], written: [], removed: [] };
