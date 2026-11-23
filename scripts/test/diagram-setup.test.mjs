@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -284,10 +284,54 @@ test('a folder holding only dotfiles counts as empty and keeps them', () => {
     assert.ok(existsSync(join(dir, '.gitkeep')));
     assert.equal(read(join(dir, '.DS_Store')), 'x');
     assert.equal(read(join(dir, '.gitattributes')), 'keep me\n');
-    // A dot-folder is not a dotfile: that is still someone else's folder.
+    // A dot-folder counts as ignorable too, but a visible file still makes it someone else's.
     const other = join(tmp, 'other');
     mkdirSync(join(other, '.git'), { recursive: true });
+    writeFileSync(join(other, 'notes.txt'), 'x');
     assert.equal(run(other).status, 3);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('a dot-directory alone is treated as empty', () => {
+  const tmp = tmpRoot();
+  try {
+    const dir = join(tmp, 'diagrams');
+    mkdirSync(join(dir, '.vscode'), { recursive: true });
+    writeFileSync(join(dir, '.vscode', 'settings.json'), '{}');
+    assert.equal(setup(dir, {}, () => {}, () => {}), 0);
+    assert.ok(existsSync(join(dir, '_engine')));
+    assert.ok(existsSync(join(dir, '.vscode', 'settings.json')));
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('a broken dotfile symlink does not throw', { skip: process.platform === 'win32' }, () => {
+  const tmp = tmpRoot();
+  try {
+    const dir = join(tmp, 'diagrams');
+    mkdirSync(dir);
+    symlinkSync('missing', join(dir, '.link'));
+    assert.equal(setup(dir, {}, () => {}, () => {}), 0);
+    assert.ok(existsSync(join(dir, '_engine')));
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('Next hint quotes the path so it runs from a folder with spaces', () => {
+  const tmp = tmpRoot();
+  try {
+    const dir = join(tmp, 'My Drive', 'diagrams');
+    mkdirSync(join(tmp, 'My Drive'));
+    const r = run(dir);
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(r.stdout, /Next: node ".*My Drive.*export\.mjs" --no-browser/);
+    const cmd = r.stdout.match(/Next: (.*--no-browser)/)[1];
+    const exported = spawnSync(cmd, { shell: true, encoding: 'utf8' });
+    assert.equal(exported.status, 0, exported.stdout + exported.stderr);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }

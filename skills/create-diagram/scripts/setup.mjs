@@ -3,7 +3,7 @@
 // Usage: node setup.mjs <diagramsDir> [--refresh] [--with-browser]
 // Exit codes: 0 created or up to date, 1 failure, 2 refresh available, 3 foreign folder.
 import {
-  cpSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, statSync, writeFileSync,
+  cpSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, statSync, writeFileSync,
 } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
@@ -102,7 +102,7 @@ export function setup(target, {
   refresh = false, withBrowser = false, engineSrc = SKILL_ENGINE, install = installBrowser,
 } = {}, out = console.log, err = console.error) {
   const dir = resolve(target);
-  const next = `node ${join(dir, '_engine', 'export.mjs')}`;
+  const next = `node "${join(dir, '_engine', 'export.mjs')}"`;
   const skill = readVersion(engineSrc);
   let code = 0;
   let restored = [];
@@ -121,8 +121,17 @@ export function setup(target, {
     }
   }
   const hasEngine = existsSync(join(dir, '_engine', 'VERSION'));
-  // Dotfiles such as .gitkeep or .DS_Store do not make a folder someone else's.
-  const isDotfile = (f) => f.startsWith('.') && statSync(join(dir, f)).isFile();
+  // Dotfiles and dot-directories such as .gitkeep, .DS_Store or .vscode do not make a
+  // folder someone else's. lstat keeps a broken symlink from throwing.
+  const isDotfile = (f) => {
+    if (!f.startsWith('.')) return false;
+    try {
+      const st = lstatSync(join(dir, f));
+      return st.isFile() || st.isDirectory() || st.isSymbolicLink();
+    } catch {
+      return true;
+    }
+  };
   if (existsSync(dir) && !hasEngine && readdirSync(dir).some((f) => !isDotfile(f))) {
     err(`${dir} is not a create-diagram folder; choose another name`);
     return 3;
