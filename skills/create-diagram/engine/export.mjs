@@ -87,8 +87,8 @@ const NAME = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const blank = (v) => typeof v !== 'string' || !v.trim();
 
 // The first id drawn twice anywhere in a scene, or null. Ids reach the page
-// verbatim once the shortcode inlines the svg, so a collision here is invalid
-// HTML on a real docs page - and it is not otherwise detectable, because every
+// verbatim once a page inlines the svg, so a collision here is invalid
+// HTML on that page - and it is not otherwise detectable, because every
 // guard upstream of this one looks at a single mark rather than a whole scene.
 function duplicateIds(nodes) {
   const seen = new Set();
@@ -199,7 +199,9 @@ export function run({ scenes, outDir, origins = {}, only, check = false } = {}) 
     for (const [name, content] of rendered) {
       const file = join(outDir, `${name}.svg`);
       if (!existsSync(file)) problems.push(`${name}.svg: missing ${fix}`);
-      else if (readFileSync(file, 'utf8') !== content) problems.push(`${name}.svg: differs from a fresh render ${fix}`);
+      // A Windows clone with core.autocrlf checks the file out with CRLF; that is
+      // not a change, so compare with LF line endings.
+      else if (readFileSync(file, 'utf8').replace(/\r\n/g, '\n') !== content) problems.push(`${name}.svg: differs from a fresh render ${fix}`);
     }
     for (const f of orphans) problems.push(`${f}: no matching scene ${fix}`);
     return { ok: problems.length === 0, problems, written: [], removed: [], svgs: rendered };
@@ -222,7 +224,7 @@ export function run({ scenes, outDir, origins = {}, only, check = false } = {}) 
 }
 
 const USAGE = 'Usage: node _engine/export.mjs [--check] [--only <name>] [--no-browser]';
-export const NO_CHROMIUM = 'Chromium not installed: skipped centring, fallback-font check and PNGs. See SKILL.md to enable.';
+export const NO_CHROMIUM = 'Chromium not installed: skipped centring, fallback-font check and PNGs. To enable, ask your coding agent to run the create-diagram setup with --with-browser.';
 
 const report = (check, problems) => {
   console.error(check ? 'Diagram check failed:' : 'Diagram export failed:');

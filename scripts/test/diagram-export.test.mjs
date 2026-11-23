@@ -369,3 +369,26 @@ test('check reports missing and stale files', withDir((d) => {
   assert.ok(r.problems.some((p) => /alpha\.svg: differs/.test(p)));
   assert.ok(r.problems.some((p) => /beta\.svg: missing/.test(p)));
 }));
+
+test('check passes on a CRLF copy of a current svg (Windows core.autocrlf)', withDir((d) => {
+  run({ scenes: fixtures(), outDir: d });
+  const file = join(d, 'alpha.svg');
+  writeFileSync(file, readFileSync(file, 'utf8').replace(/\n/g, '\r\n'));
+  const r = run({ scenes: fixtures(), outDir: d, check: true });
+  assert.deepEqual(r.problems, []);
+  assert.equal(r.ok, true);
+}));
+
+test('check with a throwing scene among good ones names it and writes nothing', withDir((d) => {
+  const out = join(d, 'out');
+  run({ scenes: fixtures(), outDir: out });
+  const before = snapshot(out);
+  const scenes = { ...fixtures(), broken: scene({ build: () => { throw new Error('boom'); } }), gamma: scene() };
+  const r = run({ scenes, outDir: out, check: true });
+  assert.equal(r.ok, false);
+  assert.equal(r.problems.length, 1);
+  assert.match(r.problems[0], /scene "broken": boom/);
+  assert.deepEqual(r.written, []);
+  assert.deepEqual(r.removed, []);
+  assert.deepEqual(snapshot(out), before);
+}));

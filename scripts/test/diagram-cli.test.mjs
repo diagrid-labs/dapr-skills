@@ -55,7 +55,7 @@ test('cli rejects unknown flags, bad --only, missing scenes', () => {
   }
 });
 
-const NO_CHROMIUM = 'Chromium not installed: skipped centring, fallback-font check and PNGs. See SKILL.md to enable.';
+const NO_CHROMIUM = 'Chromium not installed: skipped centring, fallback-font check and PNGs. To enable, ask your coding agent to run the create-diagram setup with --with-browser.';
 const lines = (r, pattern) => `${r.stdout}${r.stderr}`.split(/\r?\n/).filter((l) => pattern.test(l));
 
 test('export without playwright writes svg and warns once', () => {
