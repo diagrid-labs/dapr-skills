@@ -99,10 +99,12 @@ export function setup(target, { refresh = false, withBrowser = false, engineSrc 
   }
   // Recover from an interrupted refresh: put the old engine back, drop a half copy.
   if (existsSync(dir)) {
-    if (!existsSync(join(dir, '_engine')) && existsSync(join(dir, '_engine.old'))) {
+    if (!existsSync(join(dir, '_engine')) && existsSync(join(dir, '_engine.old', 'VERSION'))) {
       renameSync(join(dir, '_engine.old'), join(dir, '_engine'));
     }
-    rmSync(join(dir, '_engine.new'), { recursive: true, force: true });
+    if (existsSync(join(dir, '_engine', 'VERSION')) || existsSync(join(dir, '_engine.old', 'VERSION'))) {
+      rmSync(join(dir, '_engine.new'), { recursive: true, force: true });
+    }
   }
   const hasEngine = existsSync(join(dir, '_engine', 'VERSION'));
   if (existsSync(dir) && !hasEngine && readdirSync(dir).length > 0) {
@@ -126,6 +128,8 @@ export function setup(target, { refresh = false, withBrowser = false, engineSrc 
       restored = ensureScaffold(dir);
     } else if (!refresh) {
       out(`Engine refresh available: project ${have.skill} (${have.source}), skill ${skill.skill} (${skill.source}). Re-run with --refresh.`);
+      const missing = ensureScaffold(dir);
+      if (missing.length) out(`Restored missing scaffold: ${missing.join(', ')}`);
       return 2;
     } else {
       replaceEngine(engineSrc, dir);

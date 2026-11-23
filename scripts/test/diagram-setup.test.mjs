@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -212,6 +212,25 @@ test('recovers from an interrupted refresh', () => {
     r = run(dir);
     assert.equal(r.status, 0, r.stderr);
     assert.ok(existsSync(join(dir, '_engine', 'VERSION')));
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('a foreign folder with bare _engine.old/_engine.new is refused untouched', () => {
+  const tmp = tmpRoot();
+  try {
+    const dir = join(tmp, 'f');
+    mkdirSync(join(dir, '_engine.old'), { recursive: true });
+    mkdirSync(join(dir, '_engine.new'));
+    writeFileSync(join(dir, 'mine.txt'), 'keep');
+    const r = run(dir);
+    assert.equal(r.status, 3);
+    assert.equal(read(join(dir, 'mine.txt')), 'keep');
+    assert.ok(existsSync(join(dir, '_engine.old')));
+    assert.ok(existsSync(join(dir, '_engine.new')));
+    assert.ok(!existsSync(join(dir, '_engine')));
+    assert.deepEqual(readdirSync(dir).sort(), ['_engine.new', '_engine.old', 'mine.txt']);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
