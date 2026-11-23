@@ -1,6 +1,6 @@
 ---
 name: review-workflow-determinism
-description: Read-only audit of existing Dapr Workflow code for non-determinism that breaks replay, with DWF-DET-NNN findings. Use for "review workflow for determinism" or "audit Dapr workflow replay safety". For guidance while writing a workflow body use the catalyst-ai plugin.
+description: Read-only audit of existing Dapr Workflow code for non-determinism that breaks replay, with DWF-DET-NNN findings. Use for "review workflow for determinism" or "audit Dapr workflow replay safety". For guidance while writing a workflow body use the diagrid plugin.
 allowed-tools:
   - Read
   - Grep

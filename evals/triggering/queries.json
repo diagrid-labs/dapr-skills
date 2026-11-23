@@ -1,16 +1,16 @@
 {
   "name": "cross-plugin-triggering",
-  "description": "Checks WHICH skill fires for a request when both the dapr-skills and catalyst-ai plugins are installed. Unlike the per-skill evals, this grades skill selection, not the files a skill produces.",
+  "description": "Checks WHICH skill fires for a request when both the dapr-skills and diagrid plugins are installed. Unlike the per-skill evals, this grades skill selection, not the files a skill produces.",
   "why": "Claude Code namespaces skill names per plugin, but skill TRIGGERING is decided by the description text and the docs specify no precedence between two plugins whose descriptions match the same request. Six skill pairs across these two plugins overlap, and one boundary sits inside this plugin: create-diagram (draw a diagram) against create-workflow-from-diagram (diagram in, workflow code out). A wording change on either side can silently re-route requests. The per-skill evals under evals/<skill-name>/ cannot catch that: they assume the right skill already ran.",
   "plugins": {
     "dapr-skills": {
       "repo": "diagrid-labs/dapr-skills",
       "descriptions": "skills/*/SKILL.md front matter in this repository"
     },
-    "catalyst-ai": {
-      "repo": "diagridio/catalyst-ai",
+    "diagrid": {
+      "repo": "diagridio/diagrid-ai",
       "descriptions": "skills/*/SKILL.md front matter in an installed copy",
-      "note": "Not vendored here. Install the plugin, or read the marketplace cache, e.g. ~/.claude/plugins/marketplaces/diagrid/skills/*/SKILL.md. Because this half lives in a repository we do not control, re-run this check when catalyst-ai releases."
+      "note": "Not vendored here. Read a fresh origin/main with git show (git -C <clone> fetch, then git -C <clone> show origin/main:skills/<name>/SKILL.md), not the marketplace cache, which can be versions stale. Because this half lives in a repository we do not control, re-run this check when the diagrid plugin releases."
     }
   },
   "method": [
@@ -118,7 +118,7 @@
     {
       "id": 9,
       "query": "I'm writing a workflow body right now - how do I avoid replay issues with timestamps and random ids?",
-      "expect": "catalyst-ai:catalyst-workflow-determinism",
+      "expect": "diagrid:diagrid-workflow-determinism",
       "rationale": "Inline rails while authoring. Must NOT route to the audit skill.",
       "baseline": {
         "picked": "catalyst-ai:catalyst-workflow-determinism",
@@ -129,7 +129,7 @@
     {
       "id": 10,
       "query": "is this activity safe to retry? it charges a credit card",
-      "expect": "catalyst-ai:catalyst-activity-idempotency",
+      "expect": "diagrid:diagrid-activity-idempotency",
       "rationale": "A single activity body under the author's hands, not a codebase sweep.",
       "baseline": {
         "picked": "catalyst-ai:catalyst-activity-idempotency",
@@ -140,7 +140,7 @@
     {
       "id": 11,
       "query": "create a Dapr workflow and deploy it to Catalyst",
-      "expect": "catalyst-ai:catalyst-workflow-scaffold",
+      "expect": "diagrid:diagrid-workflow-scaffold",
       "rationale": "Explicit Diagrid target.",
       "baseline": {
         "picked": "catalyst-ai:catalyst-workflow-scaffold",
@@ -151,7 +151,7 @@
     {
       "id": 12,
       "query": "my workflow run on Catalyst is stuck, help me debug it",
-      "expect": "catalyst-ai:catalyst-debug",
+      "expect": "diagrid:diagrid-debug",
       "rationale": "Operating a running system, which dapr-skills does not cover.",
       "baseline": {
         "picked": "catalyst-ai:catalyst-debug",
@@ -161,7 +161,7 @@
     {
       "id": 13,
       "query": "stand up a durable agent on Diagrid Catalyst",
-      "expect": "catalyst-ai:catalyst-agent-scaffold",
+      "expect": "diagrid:diagrid-agent-scaffold",
       "rationale": "Explicit Diagrid target.",
       "baseline": {
         "picked": "catalyst-ai:catalyst-agent-scaffold",
@@ -198,7 +198,7 @@
     {
       "id": 16,
       "query": "I've got my own agent loop calling the model API directly, no framework - make it durable on Catalyst",
-      "expect": "catalyst-ai:catalyst-agent-harness",
+      "expect": "diagrid:diagrid-agent-harness",
       "rationale": "Added 2026-11-13 for catalyst-ai 0.8.1's new catalyst-agent-harness skill. Tests a three-way boundary: an EXISTING hand-written loop being made durable (harness) against standing up a NEW agent on Catalyst (catalyst-agent-scaffold) against building one locally (dapr-skills create-agent-*). The explicit Catalyst target should exclude the dapr-skills pair outright; catalyst-agent-scaffold is the expected runner-up, and the discriminator is \"no framework\" plus an existing loop rather than a new app. A dapr-skills answer here is a real mis-route; AMBIGUOUS between the two catalyst-ai skills is a wording warning, not a boundary failure.",
       "baseline": {
         "picked": "catalyst-ai:catalyst-agent-harness",
@@ -209,7 +209,7 @@
       "id": 17,
       "query": "draw an architecture diagram of my Dapr app with a sidecar, Redis state and Kafka pub/sub, as an SVG",
       "expect": "dapr-skills:create-diagram",
-      "rationale": "Added for create-diagram. Drawing a new diagram of an app. No catalyst-ai skill draws diagrams, and no workflow code is wanted."
+      "rationale": "Added for create-diagram. Drawing a new diagram of an app. No diagrid skill draws diagrams, and no workflow code is wanted."
     },
     {
       "id": 18,

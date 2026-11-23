@@ -1,6 +1,6 @@
 ---
 name: review-workflow-activity
-description: Read-only audit of existing Dapr Workflow activities for idempotency, retries, error boundaries and conventions, with DWF-ACT-NNN findings. Use for "review workflow activities" or "audit Dapr activities". For guidance while writing an activity use the catalyst-ai plugin.
+description: Read-only audit of existing Dapr Workflow activities for idempotency, retries, error boundaries and conventions, with DWF-ACT-NNN findings. Use for "review workflow activities" or "audit Dapr activities". For guidance while writing an activity use the diagrid plugin.
 allowed-tools:
   - Read
   - Grep

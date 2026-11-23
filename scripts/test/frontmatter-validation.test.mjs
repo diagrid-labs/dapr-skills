@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   frontmatterKeys,
   checkFrontmatterKeys,
@@ -15,6 +16,7 @@ import {
   checkDescriptionSimilarity,
   checkDescriptionYaml,
   isLanguageTwin,
+  readDescriptions,
 } from '../lib/frontmatter-validation.mjs';
 
 function fixture(files) {
@@ -136,4 +138,18 @@ test('checkDescriptionYaml rejects an unquoted colon-space', () => {
   const failures = checkDescriptionYaml(dir);
   assert.equal(failures.length, 1);
   assert.match(failures[0], /^a\/SKILL.md/);
+});
+
+const REAL_SKILLS = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'skills');
+
+test('descriptions leave headroom under the cap', () => {
+  const total = Object.values(readDescriptions(REAL_SKILLS)).reduce((sum, d) => sum + d.length, 0);
+  assert.ok(total <= 6850, `descriptions total ${total} characters, over 6850`);
+});
+
+test('no description names the catalyst-ai plugin', () => {
+  const offenders = Object.entries(readDescriptions(REAL_SKILLS))
+    .filter(([, d]) => d.includes('catalyst-ai'))
+    .map(([name]) => name);
+  assert.deepEqual(offenders, []);
 });
