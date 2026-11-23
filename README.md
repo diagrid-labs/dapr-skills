@@ -24,7 +24,7 @@ This repository contains skill definitions that can be used with Claude Code, Gi
 
 ### Diagram skills
 
-- Draw skill: `create-diagram` — describe a Dapr app (or paste a Mermaid flowchart) and the skill draws it as an SVG in the [docs.dapr.io](https://docs.dapr.io) style, using a small diagram engine it copies into your project's `diagrams/` folder. It can also export light and dark PNGs for slides. This is not the same as `create-workflow-from-diagram`, which turns an existing diagram into workflow code.
+- Draw skill: `create-diagram` — describe a Dapr app, paste a Mermaid flowchart or attach an image (a sketch or an existing diagram to redraw) and the skill draws it as an SVG in the [docs.dapr.io](https://docs.dapr.io) style, using a small diagram engine it copies into your project's `diagrams/` folder. It can also export light and dark PNGs for slides. This is not the same as `create-workflow-from-diagram`, which turns an existing diagram into workflow code.
 
 ## Prerequisites
 
@@ -50,7 +50,7 @@ This repository contains skill definitions that can be used with Claude Code, Gi
 ### For diagram skills
 
 - Node.js 22+ (LTS) — [download Node.js](https://nodejs.org/en/download)
-- Optional: Chromium for PNG export. The skill offers to install it into the `diagrams/` folder (about 150 MB). Without it you still get SVGs.
+- Optional: Chromium for PNG export. The skill offers to install it: the `@playwright/test` package (about 13 MB) goes into the `diagrams/` folder, and the Chromium browser (about 150 MB) downloads once to the per-user Playwright cache, shared by every project. Without it you still get SVGs.
 
 ### For agent skills
 

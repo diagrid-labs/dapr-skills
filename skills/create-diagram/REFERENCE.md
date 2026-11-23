@@ -3,7 +3,7 @@
 The detailed guide for drawing a Dapr diagram in the docs.dapr.io house
 style. Read it while you build a scene: the design rules, how to turn a
 source into a layout, the scene contract, the engine API, a worked example
-and the traps that have already cost a review round.
+and the traps that are easy to fall into.
 
 A diagram is drawn in code, not stored as an image. A scene is an ES module
 that builds a plain element tree. The exporter turns it into one SVG that
@@ -47,8 +47,11 @@ node <diagramsDir>/_engine/export.mjs --no-browser     # SVGs only, even when Ch
 
 ### With Chromium
 
-When Playwright's Chromium is installed in the diagrams folder (or a folder
-above it), the export does three more things:
+When Playwright is installed in the diagrams folder (or a folder above it)
+and its Chromium has been downloaded, the export does three more things. Only
+the `@playwright/test` package (about 13 MB) lives in the diagrams folder; the
+Chromium browser (about 150 MB) downloads once to the per-user Playwright
+cache and is shared by every project.
 
 1. **Centring.** It measures where each drawing sits in its canvas and writes
    the viewBox origin that centres it to `bbox.json` (only when a value

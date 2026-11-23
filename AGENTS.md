@@ -107,7 +107,7 @@ Run `add-pubsub-dotnet` or `add-pubsub-python` on an existing project (.NET: ASP
 
 **Draw a diagram:**
 
-Run `create-diagram` to draw a Dapr architecture diagram from a description or a Mermaid flowchart. It needs Node.js 22+, copies the engine into a `diagrams/` folder in the user's project (or another name if `diagrams/` belongs to something else), writes one scene file per diagram and exports an SVG. Chromium (about 150 MB, optional) adds light and dark PNGs. It is not a workflow scaffolder: for diagram to workflow code use `create-workflow-from-diagram`.
+Run `create-diagram` to draw a Dapr architecture diagram from a description, a Mermaid flowchart or an image (a sketch or an existing diagram to redraw). It needs Node.js 22+, copies the engine into a `diagrams/` folder in the user's project (or another name if `diagrams/` belongs to something else), writes one scene file per diagram and exports an SVG. Chromium (optional) adds light and dark PNGs: the `@playwright/test` package (about 13 MB) goes into the diagrams folder and the browser (about 150 MB) downloads once to the per-user Playwright cache. It is not a workflow scaffolder: for diagram to workflow code use `create-workflow-from-diagram`.
 
 **Review an existing workflow application** (run any combination, in any order):
 
