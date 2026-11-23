@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -167,6 +167,51 @@ export const scenes = { demo: { width: 100, height: 50, title: 't', desc: 'd', b
     const r = spawnSync(process.execPath, [join(dir, '_engine', 'export.mjs'), '--no-browser'], { encoding: 'utf8' });
     assert.equal(r.status, 0, r.stderr);
     assert.ok(existsSync(join(dir, 'out', 'demo.svg')));
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('re-running restores a missing scaffold and keeps existing scenes', () => {
+  const tmp = tmpRoot();
+  try {
+    const dir = join(tmp, 'd');
+    run(dir);
+    rmSync(join(dir, 'scenes', 'index.mjs'));
+    rmSync(join(dir, 'package.json'));
+    rmSync(join(dir, 'out'), { recursive: true });
+    const r = run(dir);
+    assert.equal(r.status, 0, r.stderr);
+    assert.equal(read(join(dir, 'scenes', 'index.mjs')).trim(), 'export const scenes = {};');
+    assert.deepEqual(JSON.parse(read(join(dir, 'package.json'))), { private: true, type: 'module' });
+    assert.ok(existsSync(join(dir, 'out')));
+    writeFileSync(join(dir, 'scenes', 'index.mjs'), 'export const scenes = {z:1};');
+    assert.equal(run(dir).status, 0);
+    assert.equal(read(join(dir, 'scenes', 'index.mjs')), 'export const scenes = {z:1};');
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('recovers from an interrupted refresh', () => {
+  const tmp = tmpRoot();
+  try {
+    const dir = join(tmp, 'd');
+    run(dir);
+    setVersion(dir, { skill: '0.9.0', source: 'old' });
+    renameSync(join(dir, '_engine'), join(dir, '_engine.old'));
+    mkdirSync(join(dir, '_engine.new'));
+    let r = run(dir);
+    assert.equal(r.status, 2, r.stderr);
+    assert.equal(JSON.parse(read(join(dir, '_engine', 'VERSION'))).skill, '0.9.0');
+    assert.ok(!existsSync(join(dir, '_engine.old')));
+    assert.ok(!existsSync(join(dir, '_engine.new')));
+    rmSync(join(dir, '_engine'), { recursive: true });
+    mkdirSync(join(dir, '_engine.old'));
+    writeFileSync(join(dir, '_engine.old', 'VERSION'), read(join(ENGINE, 'VERSION')));
+    r = run(dir);
+    assert.equal(r.status, 0, r.stderr);
+    assert.ok(existsSync(join(dir, '_engine', 'VERSION')));
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }

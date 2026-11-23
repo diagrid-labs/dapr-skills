@@ -50,6 +50,28 @@ function replaceEngine(src, dir) {
   rmSync(old, { recursive: true, force: true });
 }
 
+// Creates only what is missing; returns what it restored.
+export function ensureScaffold(dir) {
+  const restored = [];
+  for (const sub of ['scenes', 'out']) {
+    if (!existsSync(join(dir, sub))) {
+      mkdirSync(join(dir, sub), { recursive: true });
+      restored.push(`${sub}/`);
+    }
+  }
+  const files = [
+    [join(dir, 'scenes', 'index.mjs'), 'export const scenes = {};\n', 'scenes/index.mjs'],
+    [join(dir, 'package.json'), '{"private":true,"type":"module"}\n', 'package.json'],
+  ];
+  for (const [path, content, label] of files) {
+    if (!existsSync(path)) {
+      writeFileSync(path, content);
+      restored.push(label);
+    }
+  }
+  return restored;
+}
+
 function installBrowser(dir) {
   const win = process.platform === 'win32';
   const steps = [
@@ -69,10 +91,18 @@ export function setup(target, { refresh = false, withBrowser = false, engineSrc 
   const next = `node ${join(dir, '_engine', 'export.mjs')}`;
   const skill = readVersion(engineSrc);
   let code = 0;
+  let restored = [];
 
   if (existsSync(dir) && !statSync(dir).isDirectory()) {
     err(`${dir} is a file, not a create-diagram folder; choose another name`);
     return 3;
+  }
+  // Recover from an interrupted refresh: put the old engine back, drop a half copy.
+  if (existsSync(dir)) {
+    if (!existsSync(join(dir, '_engine')) && existsSync(join(dir, '_engine.old'))) {
+      renameSync(join(dir, '_engine.old'), join(dir, '_engine'));
+    }
+    rmSync(join(dir, '_engine.new'), { recursive: true, force: true });
   }
   const hasEngine = existsSync(join(dir, '_engine', 'VERSION'));
   if (existsSync(dir) && !hasEngine && readdirSync(dir).length > 0) {
@@ -81,30 +111,30 @@ export function setup(target, { refresh = false, withBrowser = false, engineSrc 
   }
 
   if (!hasEngine) {
-    mkdirSync(join(dir, 'scenes'), { recursive: true });
-    mkdirSync(join(dir, 'out'), { recursive: true });
+    mkdirSync(dir, { recursive: true });
     copyEngine(engineSrc, join(dir, '_engine'));
-    const scenes = join(dir, 'scenes', 'index.mjs');
-    if (!existsSync(scenes)) writeFileSync(scenes, 'export const scenes = {};\n');
-    const pkg = join(dir, 'package.json');
-    if (!existsSync(pkg)) writeFileSync(pkg, '{"private":true,"type":"module"}\n');
+    ensureScaffold(dir);
     out(`Created ${dir} (engine ${skill.skill}). Next: ${next} --no-browser`);
   } else {
     const have = readVersion(join(dir, '_engine'));
     const cmp = compareVersions(have.skill, skill.skill);
     if (cmp > 0) {
       out(`Engine in ${dir} (${have.skill}) is newer than this skill's (${skill.skill}); leaving it alone.`);
+      restored = ensureScaffold(dir);
     } else if (cmp === 0 && have.source === skill.source) {
       out(`Engine ${have.skill} is up to date.`);
+      restored = ensureScaffold(dir);
     } else if (!refresh) {
       out(`Engine refresh available: project ${have.skill} (${have.source}), skill ${skill.skill} (${skill.source}). Re-run with --refresh.`);
       return 2;
     } else {
       replaceEngine(engineSrc, dir);
+      restored = ensureScaffold(dir);
       out(`Refreshed engine ${have.skill} -> ${skill.skill}. Scenes and out/ untouched. Next: ${next}`);
     }
   }
 
+  if (restored.length) out(`Restored missing scaffold: ${restored.join(', ')}`);
   if (withBrowser && !installBrowser(dir)) {
     err('Browser install failed. SVG export still works without it (--no-browser).');
     code = 1;
