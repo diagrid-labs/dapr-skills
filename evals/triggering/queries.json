@@ -21,17 +21,16 @@
     "Compare each answer against `expect`, or against `accept` where present. Update the `baseline` block when the result changes."
   ],
   "baseline": {
-    "date": "2026-11-13",
+    "date": "2026-11-23",
     "model": "sonnet (Claude Sonnet 5.5)",
     "dapr_skills_version": "1.31.0",
-    "catalyst_ai_version": "0.8.1",
-    "result": "16 of 16 matched `expect`, up from 14 of 15 (query 16 is new). Query 11 recovered from AMBIGUOUS at low confidence to catalyst-workflow-scaffold at high, because catalyst-ai 0.8.1 added \"not a local sidecar\" to that description, which also removed it as a candidate from query 15. Queries 9 and 10 stayed at medium; every other answer was high, including the new query 16. Query 15 is still correctly AMBIGUOUS, now between two dapr-skills create skills rather than three candidates. No query was routed to a dapr-skills skill that should have gone to catalyst-ai, or the reverse. The set was run twice, at 15 and then 16 queries; answers 1-15 were identical both times, so these results are reproducible rather than a single sample.",
-    "known_risk": "Queries 9 and 10 remain the only medium-confidence answers. Both trace to \"writing, changing or reviewing\" in catalyst-ai's catalyst-workflow-determinism and catalyst-activity-idempotency descriptions, which still claims the reviewing case that dapr-skills' review-workflow-determinism and review-workflow-activity own. Narrowing it to the authoring case should lift them to high.",
+    "diagrid_version": "0.10.2 (diagridio/diagrid-ai origin/main 866ddd4)",
+    "result": "17 of 18 matched `expect`. Query 11 (\"create a Dapr workflow and deploy it to Catalyst\") came back AMBIGUOUS at low confidence in both runs, down from high at catalyst-ai 0.8.1. Queries 9, 10 and 18 were medium; every other answer was high, including the new queries 17 (create-diagram) and 18 (create-workflow-from-diagram). Query 15 is correctly AMBIGUOUS. No query was routed to the wrong plugin. The set was run twice with the same verdicts, so the result is reproducible.",
+    "known_risk": "Query 11 regressed after the plugin rename. diagrid-workflow-scaffold now says \"runs on Diagrid (formerly Catalyst), not a local sidecar\" and no longer reads as covering a deploy, so the model splits create and deploy. Either the diagrid description or the query wording needs a look; dapr-skills was not changed to chase it. Queries 9 and 10 stay medium for the reason recorded at 0.8.1: the diagrid determinism and idempotency descriptions still claim the reviewing case.",
     "notes": [
-      "The previous known_risk listed queries 2, 10 and 11 as the medium answers. That did not match its own per-query baselines or its result sentence, both of which say 9 and 10. Corrected here to 9 and 10.",
-      "Run against catalyst-ai 0.8.1 read from a fresh read-only clone of diagridio/catalyst-ai, NOT from the local marketplace cache, which was two minor versions stale at 0.6.1. Check the remote version before trusting ~/.claude/plugins/marketplaces/diagrid.",
-      "Query 16 was added for catalyst-ai 0.8.1's new catalyst-agent-harness skill. It passed at high confidence on its first run: the model separated an existing hand-written loop (harness) from standing up a new agent on Catalyst (catalyst-agent-scaffold) without hesitating, and the explicit Catalyst target kept the dapr-skills create-agent-* pair out of contention. Watch it if either catalyst-ai agent description is reworded, since those two are the close pair.",
-      "docs/catalyst-ai-description-proposal.md, referenced by the old known_risk and by evals/README.md, does not exist in this repository."
+      "Generated with `node scripts/triggering-prompt.mjs <diagrid skills dir>` from a read-only `git archive` of diagridio/diagrid-ai origin/main, not the marketplace cache.",
+      "The catalyst-ai plugin is now the `diagrid` plugin; its skills were renamed from catalyst-* to diagrid-*. The `expect` values were renamed to match before this run.",
+      "Queries 17 and 18 got their first baseline in this run."
     ]
   },
   "queries": [
@@ -121,7 +120,7 @@
       "expect": "diagrid:diagrid-workflow-determinism",
       "rationale": "Inline rails while authoring. Must NOT route to the audit skill.",
       "baseline": {
-        "picked": "catalyst-ai:catalyst-workflow-determinism",
+        "picked": "diagrid:diagrid-workflow-determinism",
         "confidence": "medium",
         "note": "dapr-skills:review-workflow-determinism is the runner-up"
       }
@@ -132,7 +131,7 @@
       "expect": "diagrid:diagrid-activity-idempotency",
       "rationale": "A single activity body under the author's hands, not a codebase sweep.",
       "baseline": {
-        "picked": "catalyst-ai:catalyst-activity-idempotency",
+        "picked": "diagrid:diagrid-activity-idempotency",
         "confidence": "medium",
         "note": "dapr-skills:review-workflow-activity is the runner-up"
       }
@@ -143,9 +142,9 @@
       "expect": "diagrid:diagrid-workflow-scaffold",
       "rationale": "Explicit Diagrid target.",
       "baseline": {
-        "picked": "catalyst-ai:catalyst-workflow-scaffold",
-        "confidence": "high",
-        "note": "recovered from AMBIGUOUS/low at catalyst-ai 0.7.1; 0.8.1's \"not a local sidecar\" wording settled it against catalyst-deploy"
+        "picked": "AMBIGUOUS",
+        "confidence": "low",
+        "note": "Regressed from high at catalyst-ai 0.8.1. Both runs split the request into a create skill plus a Diagrid skill (diagrid-workflow-scaffold in run 1, diagrid-deploy in run 2). diagrid 0.10.2 calls the product \"Diagrid (formerly Catalyst)\" and the query says Catalyst."
       }
     },
     {
@@ -154,7 +153,7 @@
       "expect": "diagrid:diagrid-debug",
       "rationale": "Operating a running system, which dapr-skills does not cover.",
       "baseline": {
-        "picked": "catalyst-ai:catalyst-debug",
+        "picked": "diagrid:diagrid-debug",
         "confidence": "high"
       }
     },
@@ -164,7 +163,7 @@
       "expect": "diagrid:diagrid-agent-scaffold",
       "rationale": "Explicit Diagrid target.",
       "baseline": {
-        "picked": "catalyst-ai:catalyst-agent-scaffold",
+        "picked": "diagrid:diagrid-agent-scaffold",
         "confidence": "high"
       }
     },
@@ -188,10 +187,6 @@
       "rationale": "No language and no runtime. Picking silently is the failure mode here; the right move is to ask or state the assumption.",
       "baseline": {
         "picked": "AMBIGUOUS",
-        "candidates": [
-          "dapr-skills:create-workflow-python",
-          "dapr-skills:create-workflow-dotnet"
-        ],
         "confidence": "low"
       }
     },
@@ -201,7 +196,7 @@
       "expect": "diagrid:diagrid-agent-harness",
       "rationale": "Added 2026-11-13 for catalyst-ai 0.8.1's new catalyst-agent-harness skill. Tests a three-way boundary: an EXISTING hand-written loop being made durable (harness) against standing up a NEW agent on Catalyst (catalyst-agent-scaffold) against building one locally (dapr-skills create-agent-*). The explicit Catalyst target should exclude the dapr-skills pair outright; catalyst-agent-scaffold is the expected runner-up, and the discriminator is \"no framework\" plus an existing loop rather than a new app. A dapr-skills answer here is a real mis-route; AMBIGUOUS between the two catalyst-ai skills is a wording warning, not a boundary failure.",
       "baseline": {
-        "picked": "catalyst-ai:catalyst-agent-harness",
+        "picked": "diagrid:diagrid-agent-harness",
         "confidence": "high"
       }
     },
@@ -209,13 +204,22 @@
       "id": 17,
       "query": "draw an architecture diagram of my Dapr app with a sidecar, Redis state and Kafka pub/sub, as an SVG",
       "expect": "dapr-skills:create-diagram",
-      "rationale": "Added for create-diagram. Drawing a new diagram of an app. No diagrid skill draws diagrams, and no workflow code is wanted."
+      "rationale": "Added for create-diagram. Drawing a new diagram of an app. No diagrid skill draws diagrams, and no workflow code is wanted.",
+      "baseline": {
+        "picked": "dapr-skills:create-diagram",
+        "confidence": "high"
+      }
     },
     {
       "id": 18,
       "query": "create a workflow from this diagram",
       "expect": "dapr-skills:create-workflow-from-diagram",
-      "rationale": "Added for create-diagram. The diagram is an input and workflow code is the output, so this must NOT fire create-diagram, whose description points here for diagram to workflow code. Mirrors query 17."
+      "rationale": "Added for create-diagram. The diagram is an input and workflow code is the output, so this must NOT fire create-diagram, whose description points here for diagram to workflow code. Mirrors query 17.",
+      "baseline": {
+        "picked": "dapr-skills:create-workflow-from-diagram",
+        "confidence": "medium",
+        "note": "diagrid:diagrid-workflow-from-diagram is the runner-up; the query names no diagram format"
+      }
     }
   ]
 }
