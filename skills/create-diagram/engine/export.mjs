@@ -275,18 +275,32 @@ async function main(argv) {
   }
 
   const problems = [];
-  // 1. Centring. bbox.json is rewritten only when a value moves.
+  // 1. Centring. bbox.json is rewritten only when a value moves. With --only,
+  // only that scene is measured, so a broken sibling cannot block it, and the
+  // other entries in the file are left exactly as they are.
   let origins = readOrigins(paths.bbox);
   if (chromium) {
     const { measureOrigins, originsCurrent, writeOrigins } = await import('./measure-bbox.mjs');
     let measured;
     try {
-      measured = await measureOrigins(scenes);
+      measured = await measureOrigins(only === undefined ? scenes : { [only]: scenes[only] });
     } catch (e) {
       return report(check, [e.message]);
     }
-    if (check) {
-      if (!originsCurrent(paths.bbox, measured)) problems.push('bbox.json: the measured centring has changed (re-run the export)');
+    const stale = 'bbox.json: the measured centring has changed (re-run the export)';
+    if (only !== undefined) {
+      const moved = JSON.stringify(origins[only]) !== JSON.stringify(measured[only]);
+      if (check) {
+        if (moved) problems.push(stale);
+      } else {
+        origins = { ...origins, [only]: measured[only] };
+        if (moved) {
+          writeOrigins(paths.bbox, Object.fromEntries(Object.keys(origins).sort().map((k) => [k, origins[k]])));
+          console.log(`Updated ${paths.bbox}`);
+        }
+      }
+    } else if (check) {
+      if (!originsCurrent(paths.bbox, measured)) problems.push(stale);
     } else {
       if (writeOrigins(paths.bbox, measured)) console.log(`Updated ${paths.bbox}`);
       origins = measured;
@@ -323,7 +337,7 @@ async function main(argv) {
   }
 
   if (problems.length) return report(check, problems);
-  if (check) console.log(`Diagrams up to date (${Object.keys(scenes).length}).`);
+  if (check) console.log(`Diagrams up to date (${only === undefined ? Object.keys(scenes).length : 1}).`);
   return 0;
 }
 

@@ -131,3 +131,37 @@ test('export with chromium writes bbox.json, svgs and both pngs, and --check hol
     rmSync(tmp, { recursive: true, force: true });
   }
 });
+
+test('--only measures just its scene and leaves the other bbox.json entries alone', async (t) => {
+  if (!(await loadChromium())) return t.skip('no chromium');
+  if (!existsSync(join(NODE_MODULES, '@playwright', 'test'))) return t.skip('playwright is not in the repo node_modules');
+  const tmp = layout();
+  try {
+    symlinkSync(NODE_MODULES, join(tmp, 'diagrams', 'node_modules'), 'junction');
+    writeFileSync(join(tmp, 'diagrams', 'scenes', 'index.mjs'), `import { el } from '../_engine/engine.mjs';
+export const scenes = {
+  a: { width: 100, height: 50, title: 't', desc: 'd', build: () => [el('rect', { x: 0, y: 0, width: 10, height: 10 })] },
+  b: { width: 100, height: 50, title: 't', desc: 'd', build: () => { throw new Error('b is broken'); } },
+};
+`);
+    const bboxPath = join(tmp, 'diagrams', 'bbox.json');
+    writeFileSync(bboxPath, '{"a":[0,0],"b":[1,2],"gone":[3,4]}\n');
+    const r = cli(tmp, tmp, '--only', 'a');
+    assert.equal(r.status, 0, r.stderr);
+    const bbox = JSON.parse(readFileSync(bboxPath, 'utf8'));
+    assert.deepEqual(bbox, { a: [-45, -20], b: [1, 2], gone: [3, 4] });
+    assert.ok(existsSync(join(tmp, 'diagrams', 'out', 'a-light.png')));
+
+    const c = cli(tmp, tmp, '--check', '--only', 'a');
+    assert.equal(c.status, 0, c.stderr);
+    assert.match(c.stdout, /Diagrams up to date \(1\)\./);
+
+    writeFileSync(bboxPath, '{"a":[0,0],"b":[1,2]}\n');
+    const stale = cli(tmp, tmp, '--check', '--only', 'a');
+    assert.equal(stale.status, 1);
+    assert.match(stale.stderr, /bbox\.json/);
+    assert.equal(readFileSync(bboxPath, 'utf8'), '{"a":[0,0],"b":[1,2]}\n', '--check writes nothing');
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
