@@ -22,9 +22,9 @@ A rule fires only for the types in its **Types** column. HTTP = declarative or p
 | DPS-SUB-014 | warning | all | One app subscribes the same pubsub and topic via two or more types: a declarative Subscription scoped to it (or unscoped), plus programmatic code, plus streaming code | The precedence between types is undocumented; duplicate or missing delivery | Keep one type | `subscription-methods.md`; spec §3.1 |
 | DPS-SUB-015 | critical | declarative | A Subscription `routes.default` or `rules[].path` with no matching POST endpoint (`MapPost`, `[HttpPost]`) in the app(s) it is scoped to | Dapr receives a 404 and drops the message | Add the endpoint, or fix the path | `pubsub_api.md`; `subscription-methods.md` |
 
-DPS-SUB-011, DPS-SUB-013 and DPS-SUB-016 are Python-only and are not part of this file; see `review-pubsub-subscriptions-python.md`.
+DPS-SUB-011, DPS-SUB-013 and DPS-SUB-016 do not apply to .NET and are not part of this file; see `review-pubsub-subscriptions-python.md` and `review-pubsub-subscriptions-java.md`.
 
-Dapr.Messaging analyzer diagnostics (DAPR1601–1617) are not duplicated; every `ITopicHandler` path returns a value by construction, so DPS-SUB-013 is Python-only.
+Dapr.Messaging analyzer diagnostics (DAPR1601–1617) are not duplicated; every `ITopicHandler` path returns a value by construction, so DPS-SUB-013 does not apply to .NET.
 
 ## Streaming notes (.NET)
 

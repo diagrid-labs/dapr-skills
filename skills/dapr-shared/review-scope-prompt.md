@@ -25,4 +25,4 @@ Do not enumerate every file in scope. The point of the prompt is to set a single
 
 ## Multi-language repositories
 
-If the scope contains both .NET and Python code of the reviewed kind, run the review once per language. Emit one report per language so the severity counts and rule ids stay coherent.
+If the scope contains code of the reviewed kind in more than one language (for example .NET, Python and Java), run the review once per language. Emit one report per language so the severity counts and rule ids stay coherent.

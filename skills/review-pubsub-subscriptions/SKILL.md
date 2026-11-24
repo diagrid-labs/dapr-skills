@@ -44,11 +44,11 @@ The full rule list, including detection patterns, severities, applicable subscri
 
 - [.NET / Aspire rules](../dapr-shared/review-pubsub-subscriptions-dotnet.md) — `DPS-SUB-001` … `DPS-SUB-016`
 - [Python rules](../dapr-shared/review-pubsub-subscriptions-python.md) — `DPS-SUB-001` … `DPS-SUB-016`
-- [Java rules](../dapr-shared/review-pubsub-subscriptions-java.md) — `DPS-SUB-001` … `DPS-SUB-020` (`001`, `003` and `011` reserved, `013` does not apply)
+- [Java rules](../dapr-shared/review-pubsub-subscriptions-java.md) — `DPS-SUB-001` … `DPS-SUB-020` (`001`, `003` and `011` reserved, `013` for the listener form only)
 
-A rule id that applies to only one language is reserved on the other side (`DPS-SUB-001` and `DPS-SUB-003` are .NET-only; `DPS-SUB-011` and `DPS-SUB-013` are Python-only; `DPS-SUB-016` applies to Python and Java; `DPS-SUB-017` … `DPS-SUB-020` are Java-only). Rule ids are stable across releases. New rules append; deprecated rule ids are reserved. Never reuse `DWF-*` or `DAG-*` ids.
+A rule id that applies to only one language is reserved on the other side (`DPS-SUB-001` and `DPS-SUB-003` are .NET-only; `DPS-SUB-011` is Python-only; `DPS-SUB-013` applies to Python and to the Java listener form; `DPS-SUB-016` applies to Python and Java; `DPS-SUB-017` … `DPS-SUB-020` are Java-only). Rule ids are stable across releases. New rules append; deprecated rule ids are reserved. Never reuse `DWF-*` or `DAG-*` ids.
 
-Follow the checklist's streaming notes and confidence notes: never describe `DROP` as silently discarded, never report a missing `appPort` for a streaming-only app, do not suggest `Drop` for malformed JSON on a .NET streaming handler, and never suggest returning `RETRY` or `DROP` from a Java streaming consumer (the SDK acks every event it emits).
+Follow the checklist's streaming notes and confidence notes: never describe `DROP` as silently discarded, never report a missing `appPort` for a streaming-only app, do not suggest `Drop` for malformed JSON on a .NET streaming handler, and never suggest returning `RETRY` or `DROP` from a Java Flux consumer (`subscribeToTopic`; the SDK acks every event it emits). The deprecated Java listener form returns its own status.
 
 If the scope has apps in more than one language, produce one report per language.
 

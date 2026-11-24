@@ -11,11 +11,16 @@ Probe the project root (or the user-specified scope folder) for the markers belo
 | `*.csproj` containing `Sdk="Microsoft.NET.Sdk.Web"` and `PackageReference Include="Dapr.Workflow"` | `dotnet`        |
 | `*.csproj` referencing `CommunityToolkit.Aspire.Hosting.Dapr` or an `*.AppHost` project | `aspire` (treat as `dotnet` plus Aspire-specific notes) |
 | `pyproject.toml` with `dapr[workflow]` (1.19 and later), `dapr-ext-workflow` (pre-1.19), or plain `dapr` in a scope whose `.py` files import `dapr.ext.workflow` | `python`        |
-| `pom.xml` that depends on `io.dapr.spring` (the `dapr-spring-boot-starter` or the `dapr-spring-bom`) or on `io.dapr:dapr-sdk-workflows`, in a scope with `.java` files | `java`          |
+| `pom.xml` that depends on `io.dapr.spring` (the `dapr-spring-boot-starter` or the `dapr-spring-bom`) or on `io.dapr:dapr-sdk-workflows`, in a scope with `.java` files, and that uses Spring Boot: the `io.dapr.spring` starter or BOM, a `spring-boot-starter-parent` parent, or an `org.springframework.boot` dependency (the `spring-boot-maven-plugin` alone does not count) | `java`          |
 
 If multiple targets exist (e.g., a `.NET` Aspire solution with a sibling Python app), confirm the scope with the user before continuing.
 
-If a `build.gradle` or `build.gradle.kts` references `io.dapr`, stop the review and tell the user: "Gradle projects are not supported by the Java review checklists; the checklists assume Maven and Spring Boot".
+Two Java builds are not supported:
+
+- a `build.gradle` or `build.gradle.kts` that references `io.dapr` (Gradle);
+- a `pom.xml` that depends on `io.dapr:dapr-sdk-workflows` without Spring Boot (plain Java).
+
+If the only Java Dapr build in scope is one of these and no other marker above is present, stop the review and tell the user, for Gradle: "Gradle projects are not supported by the Java review checklists; the checklists assume Maven and Spring Boot", and for plain Java: "Plain Java projects without Spring Boot are not supported by the Java review checklists; the checklists assume Maven and Spring Boot". If a marker above is also present (a Maven Spring Boot module or another language), treat the unsupported module as out of scope (leave its folder out of every file list), add its folder to `skipped` with the same sentence as the reason, name it in one `Next steps` bullet of the report (and in the scope prompt when one is asked), and continue with the supported target.
 
 If no marker is found, stop the review and tell the user the target is not a recognized Dapr Workflow project.
 
@@ -41,7 +46,7 @@ Build three file lists. Globbing must be limited to the scope folder agreed in `
 - **Activity files** — files containing a class that implements `io.dapr.workflows.WorkflowActivity` (use `Grep` for `implements .*\bWorkflowActivity\b` in `**/*.java`). A nested activity class counts: the file that declares it is an activity file.
 - **Management endpoints** — files that use `DaprWorkflowClient` together with Spring MVC mappings (use `Grep` for `DaprWorkflowClient` and `@(Get|Post|Put|Delete|Request)Mapping` in `**/*.java`, and keep the files that match both), typically one `@RestController`.
 
-Ignore everything under `target/` (Maven build output).
+Ignore everything under `target/` (Maven build output) and under `src/test/` (tests and their mocks).
 
 ## Step 3: Record the target
 
@@ -52,6 +57,7 @@ language: dotnet | aspire | python | java
 workflow_files: [ ... ]
 activity_files: [ ... ]
 management_files: [ ... ]
+skipped: [ ... ]
 scope_root: <absolute path>
 ```
 

@@ -166,6 +166,53 @@
         "Does not say that Java review support is not available, and does not claim the project is not a Dapr Workflow project",
         "Uses only Read, Grep and Glob; does not call Bash, Write or Edit (no mvn call), and no file in the fixture is modified"
       ]
+    },
+    {
+      "id": 7,
+      "name": "java-plain-without-spring-stops",
+      "prompt": "check the workflow in evals/review-workflow-determinism/files/plain-java for replay problems",
+      "expected_output": "Target detection finds a pom.xml that depends on io.dapr:dapr-sdk-workflows with no Spring Boot (no io.dapr.spring starter or BOM, no spring-boot-starter-parent, no org.springframework.boot dependency), and no other marker, so the review stops with the message that plain Java projects without Spring Boot are not supported by the Java review checklists because the checklists assume Maven and Spring Boot. No rule is applied: no DWF-DET finding is reported (not even for the Instant.now() in ParcelRoutingWorkflow.java).",
+      "files": [
+        "evals/review-workflow-determinism/files/plain-java/pom.xml",
+        "evals/review-workflow-determinism/files/plain-java/src/main/java/com/example/parcelrouting/AssignDepotActivity.java",
+        "evals/review-workflow-determinism/files/plain-java/src/main/java/com/example/parcelrouting/Parcel.java",
+        "evals/review-workflow-determinism/files/plain-java/src/main/java/com/example/parcelrouting/ParcelRoutingApp.java",
+        "evals/review-workflow-determinism/files/plain-java/src/main/java/com/example/parcelrouting/ParcelRoutingWorkflow.java",
+        "evals/review-workflow-determinism/files/plain-java/src/main/java/com/example/parcelrouting/RoutingResult.java"
+      ],
+      "expectations": [
+        "Stops after target detection and tells the user that plain Java projects without Spring Boot are not supported by the Java review checklists, because the checklists assume Maven and Spring Boot",
+        "Does not report any DWF-DET-* finding, including DWF-DET-001 for Instant.now() at src/main/java/com/example/parcelrouting/ParcelRoutingWorkflow.java:13",
+        "Does not say that Java review support is not available, does not mention Gradle, and does not claim the project is not a Dapr Workflow project",
+        "Uses only Read, Grep and Glob; does not call Bash, Write or Edit (no mvn call), and no file in the fixture is modified"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "java-mixed-maven-and-gradle-skips-gradle",
+      "prompt": "Replay-safety review of the workflows in evals/review-workflow-determinism/files/mixed-java please.",
+      "expected_output": "Target detection finds a Maven Spring Boot module (returns/pom.xml with dapr-spring-boot-starter) and a Gradle module that references io.dapr (legacy-meter/build.gradle). Because a supported Java target is present, the review does not stop: legacy-meter is treated as out of scope and named as skipped in one Next steps bullet (Gradle projects are not supported by the Java review checklists). The report has 'Language: java' and reviews ReturnWorkflow.java only. Critical: DWF-DET-002 (returns/src/main/java/com/example/returns/ReturnWorkflow.java:15, UUID.randomUUID()). Nothing is reported for legacy-meter (not the Instant.now() in MeterReadingWorkflow.java:15).",
+      "files": [
+        "evals/review-workflow-determinism/files/mixed-java/legacy-meter/build.gradle",
+        "evals/review-workflow-determinism/files/mixed-java/legacy-meter/settings.gradle",
+        "evals/review-workflow-determinism/files/mixed-java/legacy-meter/src/main/java/com/example/meterreadings/MeterReading.java",
+        "evals/review-workflow-determinism/files/mixed-java/legacy-meter/src/main/java/com/example/meterreadings/MeterReadingResult.java",
+        "evals/review-workflow-determinism/files/mixed-java/legacy-meter/src/main/java/com/example/meterreadings/MeterReadingWorkflow.java",
+        "evals/review-workflow-determinism/files/mixed-java/returns/pom.xml",
+        "evals/review-workflow-determinism/files/mixed-java/returns/src/main/resources/application.properties",
+        "evals/review-workflow-determinism/files/mixed-java/returns/src/main/java/com/example/returns/Application.java",
+        "evals/review-workflow-determinism/files/mixed-java/returns/src/main/java/com/example/returns/CreateReturnLabelActivity.java",
+        "evals/review-workflow-determinism/files/mixed-java/returns/src/main/java/com/example/returns/ReturnLabel.java",
+        "evals/review-workflow-determinism/files/mixed-java/returns/src/main/java/com/example/returns/ReturnRequest.java",
+        "evals/review-workflow-determinism/files/mixed-java/returns/src/main/java/com/example/returns/ReturnWorkflow.java"
+      ],
+      "expectations": [
+        "Does not stop with the Gradle message: emits a review report whose header contains 'Language: java' and whose 'Target:' line names ReturnWorkflow.java (or the returns module) and not legacy-meter",
+        "The Critical section contains DWF-DET-002 at returns/src/main/java/com/example/returns/ReturnWorkflow.java:15 (UUID.randomUUID()) with a Fix that uses ctx.newUuid(); the Found: line reads 'Found: 1 critical, 0 warnings, 0 suggestions, 0 to verify'",
+        "No finding cites a file under legacy-meter/, including DWF-DET-001 for Instant.now() at legacy-meter/src/main/java/com/example/meterreadings/MeterReadingWorkflow.java:15",
+        "One '## Next steps' bullet names legacy-meter as skipped because Gradle projects are not supported by the Java review checklists; there is no text after the Next steps section",
+        "Uses only Read, Grep and Glob; does not call Bash, Write or Edit (no mvn call), and no file in the fixture is modified"
+      ]
     }
   ]
 }

@@ -11,19 +11,24 @@ Probe the project root (or the user-specified scope folder) for the markers belo
 | `*.csproj` with `PackageReference Include="Dapr.AspNetCore"`, `"Dapr.Client"` or `"Dapr.Messaging"` | `dotnet` |
 | The same, plus an AppHost project referencing `CommunityToolkit.Aspire.Hosting.Dapr` | `aspire` (treat as `dotnet` plus Aspire-specific notes) |
 | `pyproject.toml` / `requirements*.txt` with `dapr`, an extra such as `dapr[fastapi]` or `dapr[grpc]` (1.19 and later), or the pre-1.19 `dapr-ext-fastapi` / `dapr-ext-grpc` packages | `python` |
-| `pom.xml` that depends on `io.dapr.spring` (the `dapr-spring-boot-starter` or the `dapr-spring-bom`) or on `io.dapr:dapr-sdk`, in a scope with `.java` files | `java` |
+| `pom.xml` that depends on `io.dapr.spring` (the `dapr-spring-boot-starter` or the `dapr-spring-bom`) or on `io.dapr:dapr-sdk`, in a scope with `.java` files, and that uses Spring Boot: the `io.dapr.spring` starter or BOM, a `spring-boot-starter-parent` parent, or an `org.springframework.boot` dependency (the `spring-boot-maven-plugin` alone does not count) | `java` |
 
 Also: if a `kind: Subscription` YAML exists and the scope has `.py` files containing `FastAPI(`, the language is `python`.
 
 If multiple targets exist (for example a .NET solution with a sibling Python app), confirm the scope with the user before continuing, or review once per language as described in `review-scope-prompt.md`.
 
-If a `build.gradle` or `build.gradle.kts` references `io.dapr`, stop the review and tell the user: "Gradle projects are not supported by the Java review checklists; the checklists assume Maven and Spring Boot".
+Two Java builds are not supported:
+
+- a `build.gradle` or `build.gradle.kts` that references `io.dapr` (Gradle);
+- a `pom.xml` that depends on `io.dapr:dapr-sdk` without Spring Boot (plain Java).
+
+If the only Java Dapr build in scope is one of these and no other marker above is present, stop the review and tell the user, for Gradle: "Gradle projects are not supported by the Java review checklists; the checklists assume Maven and Spring Boot", and for plain Java: "Plain Java projects without Spring Boot are not supported by the Java review checklists; the checklists assume Maven and Spring Boot". If a marker above is also present (a Maven Spring Boot module or another language), treat the unsupported module as out of scope (leave its folder out of every file list), add its folder to `skipped` with the same sentence as the reason, name it in one `Next steps` bullet of the report (and in the scope prompt when one is asked), and continue with the supported target.
 
 If no marker is found, stop the review and tell the user the target is not a recognized Dapr pub/sub project.
 
 ## Step 2: Build the lists
 
-Globbing must be limited to the scope folder agreed in `review-scope-prompt.md`. For `java`, ignore everything under `target/` (Maven build output).
+Globbing must be limited to the scope folder agreed in `review-scope-prompt.md`. For `java`, ignore everything under `target/` (Maven build output) and under `src/test/` (tests and their mocks).
 
 ### `publisher_files`
 
@@ -47,7 +52,7 @@ Build one entry per pubsub+topic subscription. Every entry records `type`, `pubs
 - **streaming** —
   - .NET: `\[DaprTopic\(` without `Delivery`, or with `DeliveryMode.Streaming`, and `SubscribeAsync\(`;
   - Python: `subscribe_with_handler\(`, `\.subscribe\(pubsub_name=`;
-  - Java: `subscribeToTopic\(` and the deprecated `subscribeToEvents\(` in `**/*.java`. The arguments are `(pubsubName, topic, [deadLetterTopic,] TypeRef[, metadata])`; resolve each from the field or constructor parameter it comes from. `location` is the `subscribeToTopic(` / `subscribeToEvents(` line.
+  - Java: `subscribeToTopic\(` and the deprecated `subscribeToEvents\(` in `**/*.java`. The `Flux` forms take `(pubsubName, topic, [deadLetterTopic,] TypeRef[, metadata])`; resolve each from the field or constructor parameter it comes from. `location` is the `subscribeToTopic(` / `subscribeToEvents(` line. A `subscribeToEvents(` call whose argument before the `TypeRef` is a `SubscriptionListener` (an anonymous `new SubscriptionListener<…>()`, a variable or field of that type, or a class implementing it) is the older listener form `(pubsubName, topic, [deadLetterTopic,] listener, TypeRef)`, which returns a `Subscription`, not a `Flux`: record it as streaming with `listener: true`, and add the file that declares the listener to `handler_files`.
 
 **Java placeholders.** `@Topic` values and `@Value("${…}")` arguments are usually `${…}` property placeholders. Resolve them from the app's `src/main/resources/application.properties`, or from `application.yml` when that file exists (`${key:default}` falls back to `default` when the key is missing). A Maven module is one app; its `app_id` is the `dapr.yaml` `appID` whose `appDirPath` is the module folder. When a placeholder cannot be resolved, record the raw text (for example `${orders.topic}`) and report any finding that depends on its value under Please verify.
 
@@ -69,7 +74,7 @@ Pass the following structured result back to the calling skill:
 ```
 language: dotnet | aspire | python | java
 publisher_files: [ ... ]
-subscriptions: [ {type: declarative|programmatic|streaming, pubsub, topic, route_or_handler, dead_letter_topic, raw: bool, match, app_id, location: file:line} ]
+subscriptions: [ {type: declarative|programmatic|streaming, pubsub, topic, route_or_handler, dead_letter_topic, raw: bool, match, app_id, location: file:line, listener: bool (Java streaming only)} ]
 handler_files: [ ... ]
 component_files: [ ... ]
 subscription_files: [ ... ]
