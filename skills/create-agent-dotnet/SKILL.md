@@ -1,6 +1,6 @@
 ---
 name: create-agent-dotnet
-description: Creates a durable AI agent app in .NET with Microsoft Agent Framework on Dapr Workflow, run locally with dapr run. Use for "create an agent in .NET" or "scaffold a .NET agent". For Diagrid use the catalyst-ai plugin.
+description: Creates a durable AI agent app in .NET with Microsoft Agent Framework on Dapr Workflow, run locally with dapr run. Use for "create an agent in .NET" or "scaffold a .NET agent". For Diagrid use the diagrid plugin.
 allowed-tools:
   - Write
   - Edit

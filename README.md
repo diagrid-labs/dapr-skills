@@ -22,6 +22,10 @@ This repository contains skill definitions that can be used with Claude Code, Gi
 - Add skills: `add-pubsub-dotnet`, `add-pubsub-python` — add Dapr pub/sub to an **existing** project (ASP.NET Core, or a FastAPI app for Python) after you approve a plan, keeping the subscription type the project already uses.
 - Review skills: `review-pubsub-publishing`, `review-pubsub-subscriptions`, `review-pubsub-components` — audit publishing code, subscriptions and handlers, and pub/sub components and wiring on an existing .NET or Python project.
 
+### Diagram skills
+
+- Draw skill: `create-diagram` — describe a Dapr app, paste a Mermaid flowchart or attach an image (a sketch or an existing diagram to redraw) and the skill draws it as an SVG in the [docs.dapr.io](https://docs.dapr.io) style, using a small diagram engine it copies into your project's `diagrams/` folder. It can also export light and dark PNGs for slides. This is not the same as `create-workflow-from-diagram`, which turns an existing diagram into workflow code.
+
 ## Prerequisites
 
 - One of: [Claude Code](https://claude.com/product/claude-code), [GitHub Copilot CLI](https://docs.github.com/en/copilot/how-tos/set-up/install-copilot-cli), or [OpenAI Codex CLI](https://developers.openai.com/codex/cli)
@@ -42,6 +46,11 @@ This repository contains skill definitions that can be used with Claude Code, Gi
 ### For TypeScript skills
 
 - [Node.js 22+ (LTS)](https://nodejs.org/en/download)
+
+### For diagram skills
+
+- Node.js 22+ (LTS) — [download Node.js](https://nodejs.org/en/download)
+- Optional: Chromium for PNG export. The skill offers to install it: the `@playwright/test` package (about 13 MB) goes into the `diagrams/` folder, and the Chromium browser (about 150 MB) downloads once to the per-user Playwright cache, shared by every project. Without it you still get SVGs.
 
 ### For agent skills
 
@@ -105,7 +114,7 @@ npx skills update
 To remove the skills, run `npx skills remove` and select the Dapr skills in the interactive list, or remove them by name (add `-g` if you installed them with `-g`):
 
 ```shell
-npx skills remove add-pubsub-dotnet add-pubsub-python add-workflow-dotnet check-prereq-agent-dotnet check-prereq-agent-python check-prereq-aspire check-prereq-dotnet check-prereq-python create-agent-dotnet create-agent-python create-pubsub-dotnet create-pubsub-python create-workflow-aspire create-workflow-dotnet create-workflow-from-diagram create-workflow-python create-workflow-typescript dapr-shared migrate-workflow-typescript review-agent-memory review-agent-observability review-agent-orchestration review-agent-tools review-pubsub-components review-pubsub-publishing review-pubsub-subscriptions review-workflow-activity review-workflow-determinism review-workflow-management -y
+npx skills remove add-pubsub-dotnet add-pubsub-python add-workflow-dotnet check-prereq-agent-dotnet check-prereq-agent-python check-prereq-aspire check-prereq-dotnet check-prereq-python create-agent-dotnet create-agent-python create-diagram create-pubsub-dotnet create-pubsub-python create-workflow-aspire create-workflow-dotnet create-workflow-from-diagram create-workflow-python create-workflow-typescript dapr-shared migrate-workflow-typescript review-agent-memory review-agent-observability review-agent-orchestration review-agent-tools review-pubsub-components review-pubsub-publishing review-pubsub-subscriptions review-workflow-activity review-workflow-determinism review-workflow-management -y
 ```
 
 Do not use `npx skills remove --skill "*"`: it removes **every** installed skill, including skills from other sources.
@@ -124,23 +133,23 @@ If you install only some skills (`--skill <name>`), also install their dependenc
 
 `node scripts/validate-skills.mjs` prints the current dependency list; update this table when it changes.
 
-## Relationship to the catalyst-ai plugin
+## Relationship to the diagrid plugin
 
-Diagrid also publishes the [catalyst-ai](https://github.com/diagridio/catalyst-ai) plugin. Both cover Dapr Workflows and durable agents, and they are designed to be installed together. The split is:
+Diagrid also publishes the [diagrid](https://github.com/diagridio/diagrid-ai) plugin (formerly `catalyst-ai@diagrid`). Both cover Dapr Workflows and durable agents, and they are designed to be installed together. The split is:
 
 - **This plugin (`dapr-skills`)** — build and audit Dapr applications that run locally with the Dapr CLI (`dapr run`) or .NET Aspire. The review skills perform read-only audits of existing code and emit structured reports with stable rule ids.
-- **`catalyst-ai`** — build, deploy and operate applications on [Diagrid](https://www.diagrid.io/catalyst), including its MCP tools for the running system. Its determinism and idempotency skills give inline guidance while you write workflow code.
+- **`diagrid`** — build, deploy and operate applications on [Diagrid](https://www.diagrid.io/catalyst), including its MCP tools for the running system. Its determinism and idempotency skills guide you while you write workflow code that runs on Diagrid. For local Dapr apps, use this plugin's review skills.
 
-Install `catalyst-ai` with:
+Install `diagrid` with:
 
 ```text
-/plugin marketplace add diagridio/catalyst-ai
-/plugin install catalyst-ai@diagrid
+claude plugin marketplace add diagridio/diagrid-ai
+claude plugin install diagrid@diagrid
 ```
 
 ## How to use this
 
-1. Start your agent (Claude Code, Copilot CLI, or Codex) in the directory where you want the generated project to be created, or in your existing project for `add-workflow-dotnet`, `add-pubsub-dotnet`, `add-pubsub-python` and `migrate-workflow-typescript`.
+1. Start your agent (Claude Code, Copilot CLI, or Codex) in the directory where you want the generated project to be created, or in your existing project for `create-diagram` (the `diagrams/` folder is created there), `add-workflow-dotnet`, `add-pubsub-dotnet`, `add-pubsub-python` and `migrate-workflow-typescript`.
 2. Make sure the skills are installed (see [Installation](#installation)).
 3. OPTIONAL: Run a `check-prereq-<language>` skill to verify your environment (e.g., "check prerequisites for .NET", "check prerequisites for Aspire", "check prerequisites for Python", or "check prerequisites for Python agents"). Follow the instructions if the prerequisites are not met.
 4. Run a `create-workflow-<language>`, `create-agent-<language>` or `create-pubsub-<language>` skill to scaffold the project (see the prompt examples below).
@@ -170,6 +179,21 @@ Invoke a skill by asking your agent in natural language — the example phrases 
 | `create-workflow-python` | "create a workflow in Python named ..." |
 | `create-workflow-typescript` | "create a Dapr building blocks app in TypeScript named ..." |
 | `create-workflow-from-diagram` | "create a Dapr workflow in `<language>` from this diagram" (attach a PNG/JPG/GIF/WebP image or a `.bpmn` file; supported output languages: Go, Python, .NET, Java, JavaScript) |
+
+### Draw a diagram
+
+| Skill | Example prompt |
+| --- | --- |
+| `create-diagram` | "draw a diagram of my Dapr app: a service with a sidecar, Redis state and Kafka pub/sub", "make an architecture diagram from this Mermaid flowchart" |
+
+The skill asks once whether you want PNGs next to the SVG. To turn an existing diagram into workflow code, use `create-workflow-from-diagram` instead.
+
+This diagram comes from the example scene [`skills/create-diagram/examples/orders-payments.mjs`](skills/create-diagram/examples/orders-payments.mjs): two apps with their sidecars, a Kafka pub/sub broker and a Redis state store. GitHub shows the light or dark PNG to match your theme.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="skills/create-diagram/examples/orders-payments-dark.png">
+  <img alt="Orders and Payments apps with Dapr sidecars. The Orders sidecar publishes to Kafka pub/sub, which delivers to the Payments sidecar, and saves state to a Redis state store." src="skills/create-diagram/examples/orders-payments-light.png" width="632">
+</picture>
 
 ### Migrate an existing application
 

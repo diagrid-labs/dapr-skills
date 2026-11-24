@@ -67,6 +67,17 @@ This repository contains skill definitions for building Dapr Workflow applicatio
   - `review-pubsub-components/SKILL.md` — Skill for reviewing Dapr pub/sub configuration (components, Subscription files, resiliency, dapr.yaml and Aspire AppHost wiring: secrets, scopes, dead-letter retry policies, app-id and port collisions)
   - `review-pubsub-components/REFERENCE.md` — Detailed reference and worked example for the pub/sub components review skill
 
+### Diagram skills
+
+  - `create-diagram/SKILL.md` — Skill for drawing Dapr architecture diagrams as SVG (and optional PNGs) in the docs.dapr.io style
+  - `create-diagram/REFERENCE.md` — Design rules, the layout method, the scene contract, a worked example and traps
+  - `create-diagram/API.md` — The engine API: every builder and its options
+  - `create-diagram/examples/` — Worked example scenes (`.mjs`), each exported by a test
+  - `create-diagram/topics/` — Specialised topics SKILL.md says when to open: Mermaid, matching an existing diagram, API blocks and the HTTP call, custom brand marks, slides
+  - `create-diagram/scripts/setup.mjs` — Copies the engine into the user's `diagrams/` folder, refreshes it and optionally installs Chromium
+  - `create-diagram/engine/` — The diagram engine derived from dapr/docs (modules, `tokens.json`, icons, fonts, `VERSION`); see [Refreshing the diagram engine](#refreshing-the-diagram-engine)
+  - `create-diagram/engine/NOTICE`, `engine/LICENSE-APACHE-2.0` — Attribution and licence for the engine, inside `engine/` so setup copies them into every project
+
 ## Usage
 
 **Verify your environment (user-invoked only):**
@@ -96,6 +107,10 @@ Run `create-pubsub-dotnet` or `create-pubsub-python` to scaffold a publisher and
 **Add pub/sub to an existing project:**
 
 Run `add-pubsub-dotnet` or `add-pubsub-python` on an existing project (.NET: ASP.NET Core, plain or Aspire; Python: FastAPI only). They inspect it, show a plan for approval, and then apply targeted edits, keeping the subscription type the project already uses. They never change git state and write a `DAPR-PUBSUB.md` instead of editing the README.
+
+**Draw a diagram:**
+
+Run `create-diagram` to draw a Dapr architecture diagram from a description, a Mermaid flowchart or an image (a sketch or an existing diagram to redraw). It needs Node.js 22+, copies the engine into a `diagrams/` folder in the user's project (or another name if `diagrams/` belongs to something else), writes one scene file per diagram and exports an SVG. Chromium (optional) adds light and dark PNGs: the `@playwright/test` package (about 13 MB) goes into the diagrams folder and the browser (about 150 MB) downloads once to the per-user Playwright cache. It is not a workflow scaffolder: for diagram to workflow code use `create-workflow-from-diagram`.
 
 **Review an existing workflow application** (run any combination, in any order):
 
@@ -171,6 +186,16 @@ All skills require:
 - Shared content goes in `skills/dapr-shared/`; SKILL.md and REFERENCE.md files reference it as `../dapr-shared/<file>` to avoid duplication. Do not reference files outside the `skills/` folder from skill files — installers copy only the `skills/<name>/` folders.
 - Every folder under `skills/` must contain a `SKILL.md` whose `name` equals the folder name and that has a `description`.
 - Run `node scripts/validate-skills.mjs` (and `node --test "scripts/test/*.test.mjs"` when changing the scripts) before committing skill changes; CI runs both.
+
+## Refreshing the diagram engine
+
+The engine in `skills/create-diagram/engine/` comes from the newest dapr/docs release branch. To refresh it:
+
+1. Copy the kept modules from that branch: `engine`, `shapes`, `icons`, `apis`, `app`, `services`, `brands`, `cards`, `flow`, `export`, `measure-bbox`, `measure-ink` and `render-png`. Merge, do not overwrite: `browser.mjs`, `font-guard.mjs`, `hash.mjs`, `measure-labels.mjs` and `paths.mjs` are local additions, and `export.mjs` and `render-png.mjs` carry local changes.
+2. Regenerate the colour tokens: `node scripts/diagram-tokens.mjs <path to _tokens.scss>`.
+3. Re-apply the local changes: the Java mark is removed, the Python mark is the CC0 Simple Icons mark with `--d-brand-python` (`C` gets a `pythonBrand: 'var(--d-brand-python)'` entry after `redisBrand`, and `brands.mjs` tints the mark with `C.pythonBrand`), the export writes one themed SVG, paths resolve from the project, and Chromium loads through `browser.mjs`. `export.mjs` flags scenes changed since the last Chromium export (`staleWithoutBrowser`, using `hash.mjs`) and prints the font-check and fonts-missing lines through `fallbackFontReport`; `render-png.mjs` imports `sha256` from `hash.mjs`; `font-guard.mjs` has `probePins` and `fallbackFontReport`.
+4. Set `skill` in `engine/VERSION` to the current plugin version (`setup.mjs` compares it) and update `source` there and in `engine/NOTICE` with the branch and commit.
+5. Run `node --test "scripts/test/*.test.mjs"` and `node scripts/validate-skills.mjs`.
 
 ## Supported tools
 

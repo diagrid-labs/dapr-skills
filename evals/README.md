@@ -10,7 +10,7 @@ evals/
 │   ├── evals.json      # 3-5 evals: happy path, variants, edge case
 │   └── files/          # input fixtures (projects to review or migrate), when needed
 └── triggering/
-    └── queries.json    # which skill fires, across this plugin and catalyst-ai
+    └── queries.json    # which skill fires, across this plugin and diagrid
 ```
 
 - The evals live here, **not** inside `skills/<skill-name>/`, because installers (`npx skills`, the Claude Code and Copilot plugins) copy whole skill folders. Keeping evals out of them means users never install test fixtures, some of which contain deliberately broken code.
@@ -61,18 +61,20 @@ Notes:
 
 ## Triggering check
 
-[`triggering/queries.json`](triggering/queries.json) checks **which** skill fires for a request when both this plugin and [catalyst-ai](https://github.com/diagridio/catalyst-ai) are installed. Six skill pairs across the two plugins overlap (workflow scaffolding, from-diagram, agent scaffolding, determinism, activity idempotency, and — since catalyst-ai 0.8.1 added `catalyst-agent-harness` — making an existing agent loop durable), and skill triggering is decided by the `description` front matter — Claude Code namespaces skill *names* per plugin, but defines no precedence when two descriptions match the same request.
+[`triggering/queries.json`](triggering/queries.json) checks **which** skill fires for a request when both this plugin and [diagrid](https://github.com/diagridio/diagrid-ai) are installed. Six skill pairs across the two plugins overlap (workflow scaffolding, from-diagram, agent scaffolding, determinism, activity idempotency, and — since the plugin added `diagrid-agent-harness` (as `catalyst-agent-harness` in catalyst-ai 0.8.1) — making an existing agent loop durable), plus one boundary inside this plugin (`create-diagram` draws a diagram, `create-workflow-from-diagram` turns one into workflow code), and skill triggering is decided by the `description` front matter — Claude Code namespaces skill *names* per plugin, but defines no precedence when two descriptions match the same request.
 
 The per-skill evals cannot catch a mis-route, because they assume the right skill already ran.
 
 To run it, follow the `method` array in the file: collect the `description:` field from every SKILL.md in **both** plugins, give a model those descriptions and nothing else, and ask which single skill it would invoke per query. Give it no hint of the expected answer — the `expect` values are for you to compare against afterwards. Watch the confidence ratings as well as the verdicts: a medium-confidence answer that still matched `expect` is an early warning that two descriptions are drifting together.
 
+To build the prompt, run `node scripts/triggering-prompt.mjs <path to diagrid skills dir>`. It prints the instructions, every skill description from this repo (as `dapr-skills:`) and from the given directory (as `diagrid:`), and the numbered queries, with no `expect`, `baseline` or `note` values, so you can paste it to a fresh model as is.
+
 Re-run it when:
 
 - any `description` in this repo changes, especially on the six overlapping skills;
-- `catalyst-ai` publishes a release, since that half of the wording lives in a repository we do not control;
+- `diagrid` publishes a release, since that half of the wording lives in a repository we do not control;
 - you add a skill whose purpose is close to one of theirs.
 
-Read the catalyst-ai descriptions from a **fresh clone of the remote**, not from the local marketplace cache. On 2026-11-13 that cache sat at 0.6.1 against an 0.8.1 remote, so running it as written would have graded two-version-old wording. Check the remote's `.claude-plugin/plugin.json` version first and clone read-only rather than pulling the cache, which would change an installed plugin.
+Read the diagrid descriptions from a fresh `origin/main` with `git show` (for example `git -C <clone> fetch` then `git -C <clone> show origin/main:skills/<name>/SKILL.md`), not from the local marketplace cache. On 2026-11-13 that cache sat at 0.6.1 against an 0.8.1 remote, so running it as written would have graded two-version-old wording. Check the remote's `.claude-plugin/plugin.json` version first and clone read-only rather than pulling the cache, which would change an installed plugin.
 
 Update the `baseline` block with the date, model and result whenever the outcome changes.

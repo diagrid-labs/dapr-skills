@@ -1,6 +1,6 @@
 ---
 name: create-workflow-python
-description: Creates a Dapr workflow app in Python, run locally with dapr run. Use for "create a workflow in Python" or "build a workflow app in Python". For Diagrid use the catalyst-ai plugin.
+description: Creates a Dapr workflow app in Python, run locally with dapr run. Use for "create a workflow in Python" or "build a workflow app in Python". For Diagrid use the diagrid plugin.
 allowed-tools:
   - Write
   - Edit

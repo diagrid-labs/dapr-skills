@@ -1,6 +1,6 @@
 ---
 name: review-agent-memory
-description: Reviews agent memory and state-store configuration for correctness. Use for "review agent memory", "check state store config" or "audit agent persistence".
+description: Reviews memory and state-store configuration in Dapr agent projects in Python or .NET. Use for "review agent memory", "check my agent's state store" or "audit agent persistence".
 allowed-tools:
   - Read
   - Grep

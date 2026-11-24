@@ -1,0 +1,55 @@
+{
+  "skill_name": "create-diagram",
+  "evals": [
+    {
+      "id": 1,
+      "name": "text-description-sidecar-redis-kafka",
+      "prompt": "Draw a diagram of my Dapr app: an order service with its Dapr sidecar, which saves state to Redis and publishes order events to Kafka through pub/sub. No PNGs are needed, SVG only.",
+      "expected_output": "A diagrams/ folder with the engine, a scenes/order-service.mjs-style scene registered in scenes/index.mjs, an exported out/<name>.svg with the app, its sidecar, a Redis state store and a Kafka pub/sub component, and a passing export.mjs --check.",
+      "files": [],
+      "expectations": [
+        "The agent checked node --version before creating any file",
+        "The agent ran scripts/setup.mjs from the skill with the folder name diagrams, and it exited 0",
+        "The agent listed the components and connections it read from the description (app, sidecar, Redis state store, Kafka pub/sub) and confirmed them with the user, or stated them, before writing the scene",
+        "diagrams/scenes/<name>.mjs exists, the name is lowercase words joined by hyphens, and it is registered in diagrams/scenes/index.mjs",
+        "The scene refers to the Dapr sidecar, a Redis state store and a Kafka pub/sub component, using the docs.dapr.io terms sidecar and component",
+        "The agent did not edit any file under diagrams/_engine/",
+        "diagrams/out/<name>.svg exists and nothing in diagrams/out/ was written by hand",
+        "The agent ran `node diagrams/_engine/export.mjs --check` and it succeeded",
+        "The agent did not install Chromium and produced no PNG files, because the user said SVG only",
+        "The final message names diagrams/out/<name>.svg and gives the regenerate command node diagrams/_engine/export.mjs with the real folder name, and contains no unresolved <skill dir> placeholder"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "mermaid-flowchart",
+      "prompt": "Turn this Mermaid flowchart into a Dapr architecture diagram:\n\n```mermaid\nflowchart LR\n  Client --> Gateway\n  Gateway --> OrderService\n  OrderService --> Redis[(Redis state)]\n  OrderService --> Kafka{{Kafka topic orders}}\n  Kafka --> ShippingService\n```\n\nSVG only, please.",
+      "expected_output": "A scene that converts the flowchart: five nodes and four or five connections laid out left to right, with the Redis state and Kafka topic shown as Dapr components, exported to an SVG and passing export.mjs --check.",
+      "files": [],
+      "expectations": [
+        "The agent read the Converting a Mermaid block section of REFERENCE.md, or followed its rules, and treated the flowchart as convertible (it is not a sequence or gantt chart)",
+        "The agent listed the nodes and edges it read from the Mermaid block before drawing: Client, Gateway, OrderService, Redis, Kafka and ShippingService, with their connections",
+        "The scene contains labels for Client, Gateway, OrderService, Redis, Kafka and ShippingService, and an arrow for every edge in the Mermaid block",
+        "The diagram flows left to right, matching flowchart LR",
+        "The scene is registered in diagrams/scenes/index.mjs and exported to diagrams/out/<name>.svg",
+        "The agent ran `node diagrams/_engine/export.mjs --check` and it succeeded",
+        "No Mermaid block or Mermaid dependency is added to the project"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "existing-diagrams-folder-not-ours",
+      "prompt": "Draw a diagram of my Dapr app: a checkout service and its sidecar publishing to RabbitMQ. This project already has a diagrams/ folder, which I use for my own draw.io files. (Run from a copy of the foreign-diagrams fixture.)",
+      "expected_output": "Setup exits with code 3 because diagrams/ is not a create-diagram folder. The agent does not touch the existing files and asks the user for another folder name instead of overwriting or merging into diagrams/.",
+      "files": ["evals/create-diagram/files/foreign-diagrams/"],
+      "expectations": [
+        "diagrams/architecture.drawio is unchanged at the end of the run, and diagrams/ contains no _engine folder",
+        "The agent ran scripts/setup.mjs and it exited 3 because the folder is not a create-diagram folder",
+        "The agent asked the user for another folder name instead of choosing one silently",
+        "No existing file in diagrams/ was modified, moved or deleted, and no _engine, scenes or out folder was created inside it",
+        "The agent did not use --refresh or any other flag to force setup into the existing folder",
+        "After the user gives a new name such as diagram-art, the agent re-ran setup with that name and used it in every later command and in the final message"
+      ]
+    }
+  ]
+}

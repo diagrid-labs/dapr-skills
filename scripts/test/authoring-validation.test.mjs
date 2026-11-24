@@ -101,6 +101,14 @@ test('checkVerifyRuns does not accept an optional getDiagnostics line as the bui
   assert.match(checkVerifyRuns(dir).join('\n'), /no command that compiles or builds/);
 });
 
+test('export.mjs --check counts as a build command', (t) => {
+  const dir = fixture({
+    'create-diagramish/SKILL.md': skill('create-diagramish', verify('run these exact verification instructions', '1. Run `node diagrams/_engine/export.mjs --check`. It must succeed.')),
+  });
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  assert.deepEqual(checkVerifyRuns(dir), []);
+});
+
 test('checkVerifyRuns reports a create skill with no Verify section', (t) => {
   const dir = fixture({ 'create-none/SKILL.md': skill('create-none', '## Overview\n\nnothing else') });
   t.after(() => rmSync(dir, { recursive: true, force: true }));

@@ -8,3 +8,6 @@
 **/obj/
 **/bin/
 __pycache__/
+
+# Playwright, installed locally (npm i --no-save) to run the browser tests.
+node_modules/
