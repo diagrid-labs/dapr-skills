@@ -38,12 +38,12 @@ dead-letters the message.
 - Add a `@RestControllerAdvice` that maps `HttpMessageNotReadableException` to 200 `{"status": "DROP"}`.
   Without it a malformed message is retried for the whole policy before it is dead-lettered. Verified:
   with the advice, an unparseable `scannedAt` was dropped once and dead-lettered.
-- Never return 404 from a subscription route (Dapr drops the message; from the repo's subscription docs, not rerun here).
+- Never return 404 from a subscription route: Dapr drops the message (from `skills/dapr-shared/dapr-pubsub-subscription.md:59`, not rerun here).
 
 ## 2. `DaprMessagingTemplate` publishes every message with a 10-second TTL
 
 **Finding.** `DaprMessagingTemplate` hard-codes `ttlInSeconds=10` on every publish
-(`dapr-spring/dapr-spring-messaging/.../DaprMessagingTemplate.java:44` and `:74`). Neither `send` nor
+(`dapr-spring/dapr-spring-messaging/src/main/java/io/dapr/spring/messaging/DaprMessagingTemplate.java:44` and `:74`). Neither `send` nor
 the `newMessage(...)` builder can change it. Observed:
 
 - A message published with the template whose handler kept throwing was delivered 6 times over 25s,
@@ -54,18 +54,16 @@ the `newMessage(...)` builder can change it. Observed:
 - The same failing message published with `DaprClient.publishEvent(pubsubName, topic, event).block()`
   (no TTL) was delivered 6 times and then dead-lettered, as expected.
 
-**Rule.** Do not use `DaprMessagingTemplate` when retries or dead-lettering matter or the subscriber
-can be offline for more than 10 seconds. Publish with the autoconfigured `DaprClient`
+**Rule.** Never use `DaprMessagingTemplate`. Publish with the autoconfigured `DaprClient`
 (`publishEvent(...).block()`), taking the pub/sub name from `dapr.pubsub.name` through
-`DaprPubSubProperties`. If the template is kept, say in the README that messages expire after 10 seconds
-and keep the resiliency policy's total retry time under that.
+`DaprPubSubProperties`.
 
 ## 3. Streaming subscriptions (`DaprPreviewClient.subscribeToTopic`)
 
 **Finding.** `subscribeToTopic(pubsub, topic, deadLetterTopic, TypeRef<T>)` returns a `Flux<T>` built
-with `Flux.create`; disposing it completes the gRPC stream (`sdk/.../client/DaprClientImpl.java:635-653`).
+with `Flux.create`; disposing it completes the gRPC stream (`sdk/src/main/java/io/dapr/client/DaprClientImpl.java:635-653`).
 The SDK emits each event to the subscriber and only then sends the ack
-(`sdk/.../internal/subscription/EventSubscriberStreamObserver.java:159-167`). Observed, with a dead-letter
+(`sdk/src/main/java/io/dapr/internal/subscription/EventSubscriberStreamObserver.java:159-167`). Observed, with a dead-letter
 topic set:
 
 - **Handler returns normally:** the SDK acks SUCCESS, whatever the handler decided. A handler that
@@ -78,7 +76,9 @@ topic set:
   `stream closed`, retries per the resiliency policy against `no streamer subscribed`, and leaves the
   message pending in Redis (`XINFO GROUPS` showed `pending 1`). Redis redelivered it about 60s later,
   the handler threw again, and the cycle repeated. The message was never dead-lettered, and later
-  events were not delivered while no stream was open.
+  events were not delivered while no stream was open. This also happened with `retryWhen` in place
+  but no catch in the handler (`run-streaming-3`): the stream reopened, but the message was
+  redelivered and threw again, a poison loop.
 
 The app cannot choose RETRY or DROP for an event it received.
 
@@ -94,7 +94,7 @@ The app cannot choose RETRY or DROP for an event it received.
 - `DaprPreviewClient` is not autoconfigured. Declare it as a bean built from the autoconfigured
   `DaprClientBuilder` (`daprClientBuilder.buildPreviewClient()`), so it shares the connection settings and
   the Jackson 3 serializer of the `DaprClient` bean
-  (`dapr-spring-boot-autoconfigure/.../DaprClientAutoConfiguration.java:53`). Start the subscriptions from
+  (`dapr-spring/dapr-spring-boot-autoconfigure/src/main/java/io/dapr/spring/boot/autoconfigure/client/DaprClientAutoConfiguration.java:53`). Start the subscriptions from
   a `SmartLifecycle` bean and dispose them in `stop()`.
 - The streaming subscriber has no `appPort` in `dapr.yaml`; the sidecar then logs
   `App channel is not initialized`, which is expected.
@@ -102,7 +102,7 @@ The app cannot choose RETRY or DROP for an event it received.
 ## 4. Records as workflow input, output and event payloads
 
 **Finding.** Workflow and activity payloads are serialized by durabletask's own static Jackson 2 mapper
-(`durabletask-client/.../JacksonDataConverter.java:25-27`, `com.fasterxml` with `findAndAddModules()`), not
+(`durabletask-client/src/main/java/io/dapr/durabletask/JacksonDataConverter.java:25-27`, `com.fasterxml` with `findAndAddModules()`), not
 by Spring's Jackson 3 `JsonMapper`. The resolved classpath has Jackson 2.21.7 with
 `jackson-datatype-jsr310` and Jackson 3.1.5. Verified by a run: top-level records round-tripped as
 workflow input (`ShipmentRequest`), activity output (`ParcelLabel` with an `Instant` field), activity input
@@ -110,14 +110,14 @@ holding another record (`DispatchRequest(ParcelLabel, String)`), external event 
 (`PickupConfirmation`), and workflow output read with `state.readOutputAs(ShipmentResult.class)`.
 
 **Rule.** Use top-level records for every workflow payload. Use only `com.fasterxml.jackson.annotation`
-annotations on them (both Jackson versions read those) and nothing from `tools.jackson`. `java.time`
+annotations on them (from source, not run: both Jackson versions read those) and nothing from `tools.jackson`. `java.time`
 fields work.
 
 ## 5. Calling activities by class name
 
 **Finding.** `@EnableDaprWorkflows` registers each `Workflow` and `WorkflowActivity` bean under
-`instance.getClass().getCanonicalName()` (`sdk-workflows/.../WorkflowRuntimeBuilder.java:257-258` and
-`:335-336`); `scheduleNewWorkflow(Class, ...)` also uses the canonical name (`DaprWorkflowClient.java:174`).
+`instance.getClass().getCanonicalName()` (`sdk-workflows/src/main/java/io/dapr/workflows/runtime/WorkflowRuntimeBuilder.java:257-258` and
+`:335-336`); `scheduleNewWorkflow(Class, ...)` also uses the canonical name (`sdk-workflows/src/main/java/io/dapr/workflows/client/DaprWorkflowClient.java:174`).
 Verified: `ctx.callActivity(RegisterParcelActivity.class.getName(), request, ParcelLabel.class).await()`
 resolved for a top-level `@Component` activity (startup log: `Registered Activity:
 com.example.parcelshipping.RegisterParcelActivity`). For a nested class `getName()` returns `Outer$Inner`
@@ -144,25 +144,25 @@ the SDK picked up the ports `dapr run` exports (`DAPR_HTTP_PORT`, `DAPR_GRPC_POR
   exists` (observed, a 500 if unhandled). Treat a state as missing when it is `null` or its
   `getWorkflowId()` is empty, and answer 404 from the status and raise-event endpoints.
 - **Reusing an instance id.** `scheduleNewWorkflow` with the id of a COMPLETED instance started a new run
-  under the same id (observed). The start endpoint should check the existing state first if that matters.
+  under the same id (observed). Match the .NET start endpoint (`skills/dapr-shared/dotnet-workflow-endpoints.md`): use the request's own entity id as the instance id (`scheduleNewWorkflow(Workflow.class, request, request.parcelId())` in the reference app), and do not pre-check existing state.
 - **External event timeout.** `ctx.waitForExternalEvent(name, Duration, Class).await()` throws
-  `io.dapr.durabletask.TaskCanceledException` when the timeout expires (verified with a 30s timeout).
+  `io.dapr.durabletask.TaskCanceledException` when the timeout expires (verified with a 30s timeout). Wrap the `.await()` in `try`/`catch (TaskCanceledException e)`, log it and `ctx.complete(...)` with a timed-out result such as `PICKUP_TIMED_OUT`, as `ShipmentWorkflow` does; never let the exception fail the workflow.
 - **Retry policy.** `new WorkflowTaskOptions(WorkflowTaskRetryPolicy.newBuilder()...build())` passed to
-  `callActivity` retried a failing activity, which succeeded on attempt 2 (verified).
+  `callActivity` retried a failing activity, which succeeded on attempt 2 (verified). Pass a `WorkflowTaskOptions` with a `WorkflowTaskRetryPolicy` to `callActivity` for every activity that can fail transiently.
 - **Raise-event body.** Binding the request body as `Object` and passing it to `raiseEvent` works for any
-  event: the workflow deserializes it into the record passed to `waitForExternalEvent` (verified).
+  event: the workflow deserializes it into the record passed to `waitForExternalEvent` (verified). Bind the raise-event body as `Object` so one endpoint serves every event.
 - **Logging.** `ctx.getLogger()` logged the workflow's start line once per run, although the workflow
-  replayed after each activity (verified).
+  replayed after each activity (verified). Log from workflow code only through `ctx.getLogger()`.
 
 ## 8. More pub/sub findings
 
 - `@Topic(name = "${app.topic}", pubsubName = "${dapr.pubsub.name}", deadLetterTopic = "${...}",
   rule = @Rule(match = "...", priority = 1))` placeholders resolve, and the starter serves
-  `GET /dapr/subscribe` with the rule, the default route and the dead-letter topic (verified).
+  `GET /dapr/subscribe` with the rule, the default route and the dead-letter topic (verified). Use these `@Topic` placeholders for the topic, pub/sub name and dead-letter topic rather than hard-coded strings.
 - Spring MVC's Jackson 3 binds `@RequestBody CloudEvent<T>` to a record, including an `Instant` field
-  (verified).
+  (verified). Declare subscriber handler parameters as `@RequestBody CloudEvent<T>` with `T` a record.
 - `appLogDestination: fileAndConsole` writes `.dapr/logs/` inside each app folder, so the generated
-  `.gitignore` lists `.dapr/`.
+  `.gitignore` must list `.dapr/`.
 
 ## Open
 
