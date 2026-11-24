@@ -21,6 +21,11 @@ public class ShipmentEventsController {
     return ResponseEntity.ok(handler.handle(event.getData()));
   }
 
+  @PostMapping("/events/pubsub/shipments/bulk")
+  public ResponseEntity<TopicEventStatus> onShipmentDispatchedBulk(@RequestBody CloudEvent<ShipmentDispatched> event) {
+    return ResponseEntity.ok(handler.handle(event.getData()));
+  }
+
   @PostMapping("/events/pubsub/shipments-deadletter")
   public ResponseEntity<TopicEventStatus> onDeadLetter(@RequestBody CloudEvent<Object> event) {
     handler.handleDeadLetter(event.getId(), event.getData());

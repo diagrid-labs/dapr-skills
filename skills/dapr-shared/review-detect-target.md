@@ -20,7 +20,13 @@ Two Java builds are not supported:
 - a `build.gradle` or `build.gradle.kts` that references `io.dapr` (Gradle);
 - a `pom.xml` that depends on `io.dapr:dapr-sdk-workflows` without Spring Boot (plain Java).
 
-If the only Java Dapr build in scope is one of these and no other marker above is present, stop the review and tell the user, for Gradle: "Gradle projects are not supported by the Java review checklists; the checklists assume Maven and Spring Boot", and for plain Java: "Plain Java projects without Spring Boot are not supported by the Java review checklists; the checklists assume Maven and Spring Boot". If a marker above is also present (a Maven Spring Boot module or another language), treat the unsupported module as out of scope (leave its folder out of every file list), add its folder to `skipped` with the same sentence as the reason, name it in one `Next steps` bullet of the report (and in the scope prompt when one is asked), and continue with the supported target.
+If the only Java Dapr build in scope is one of these and no other marker above is present, stop the review without applying any rule and emit the "Nothing to review" report from [`review-report-format.md`](review-report-format.md) exactly as that template shows (the skill's heading, `Target:` the scope root, `Found: 0 critical, 0 warnings, 0 suggestions, 0 to verify`), with these fixed parts:
+
+- `Language: java`
+- `Nothing to review: ` followed by the stop sentence below and a full stop
+- `## Next steps` with exactly one bullet: `- The Java review checklists cover Maven projects that use Spring Boot and the Dapr Spring Boot starter; create-workflow-java and create-pubsub-java show that layout.`
+
+The stop sentence is, for Gradle: "Gradle projects are not supported by the Java review checklists; the checklists assume Maven and Spring Boot", and for plain Java: "Plain Java projects without Spring Boot are not supported by the Java review checklists; the checklists assume Maven and Spring Boot". If a marker above is also present (a Maven Spring Boot module or another language), treat the unsupported module as out of scope (leave its folder out of every file list), add its folder to `skipped` with the same stop sentence as the reason, name it in one `Next steps` bullet of the report (and in the scope prompt when one is asked), and continue with the supported target.
 
 If no marker is found, stop the review and tell the user the target is not a recognized Dapr Workflow project.
 
@@ -44,9 +50,11 @@ Build three file lists. Globbing must be limited to the scope folder agreed in `
 
 - **Workflow files** — files containing a class that implements `io.dapr.workflows.Workflow` (use `Grep` for `implements .*\bWorkflow\b` in `**/*.java`, and drop matches that only implement `WorkflowActivity`). There is no conventional folder; the create skill puts every class in the application package.
 - **Activity files** — files containing a class that implements `io.dapr.workflows.WorkflowActivity` (use `Grep` for `implements .*\bWorkflowActivity\b` in `**/*.java`). A nested activity class counts: the file that declares it is an activity file.
-- **Management endpoints** — files that use `DaprWorkflowClient` together with Spring MVC mappings (use `Grep` for `DaprWorkflowClient` and `@(Get|Post|Put|Delete|Request)Mapping` in `**/*.java`, and keep the files that match both), typically one `@RestController`.
+- **Management endpoints** — files that use `DaprWorkflowClient` together with Spring MVC mappings (use `Grep` for `DaprWorkflowClient` and `@(Get|Post|Put|Delete|Request)Mapping` in `**/*.java`, and keep the files that match both), typically one `@RestController`. Controllers often delegate to a service bean instead (the controller → `WorkflowService` split): when a `@RestController` with Spring MVC mappings calls a method of an injected bean whose class uses `DaprWorkflowClient`, add both files to `management_files` and treat the pair as one management surface. Follow the call one level only (controller → bean).
 
 Ignore everything under `target/` (Maven build output) and under `src/test/` (tests and their mocks).
+
+**Java properties.** Read a Spring property from the app module's `src/main/resources/`: `application.properties`, `application.yml` and `application.yaml`, plus the profile files `application-<profile>.properties`, `application-<profile>.yml` and `application-<profile>.yaml` for each active profile. The active profiles come from `SPRING_PROFILES_ACTIVE` in the app's `env` in `dapr.yaml`, else from `spring.profiles.active` in the base files. Precedence follows Spring: a profile file wins over the base files, a later active profile wins over an earlier one, and in the same folder a `.properties` file wins over a `.yml` / `.yaml` file. `${key:default}` falls back to `default` when no file sets the key. Use it when a rule needs a property value, for example a `@Value("${…}")` argument.
 
 ## Step 3: Record the target
 

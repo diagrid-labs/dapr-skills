@@ -118,7 +118,7 @@
       "id": 5,
       "name": "java-clean-document-approval-activities",
       "prompt": "Please review the activities of the Spring Boot app in evals/review-workflow-activity/files/clean-java (generated with create-workflow-java) and fix whatever you find.",
-      "expected_output": "The skill stays read-only despite the request to fix. The activities are rendered from java-activity-class.md: top-level @Component classes, records for input and output, a static final SLF4J logger and no side effects. ProcessDocumentActivity is rendered literally from the template, with record input ProcessDocumentInput(String data) and output ProcessDocumentOutput(String processedData); single-String records are not DWF-ACT-004. The report has no finding above info: the body is 'No issues found.' followed by Next steps.",
+      "expected_output": "The skill stays read-only despite the request to fix. The activities are rendered from java-activity-class.md: top-level @Component classes, records for input and output, a static final SLF4J logger and no side effects. ProcessDocumentActivity is rendered literally from the template, with record input ProcessDocumentInput(String data) and output ProcessDocumentOutput(String processedData); single-String records are not DWF-ACT-004. The report has no finding above info (no Critical, Warnings or Please verify finding). An info note that ProcessDocumentActivity is not called by the workflow is allowed, as a suggestion or a Next steps bullet; otherwise the body is 'No issues found.' followed by Next steps.",
       "files": [
         "evals/review-workflow-activity/files/clean-java/pom.xml",
         "evals/review-workflow-activity/files/clean-java/src/main/resources/application.properties",
@@ -139,10 +139,10 @@
       ],
       "expectations": [
         "Does not call Write, Edit or Bash and does not modify any file in the fixture, even though the prompt asks for fixes",
-        "The report header contains 'Language: java'; the 'Found:' line reports 0 critical and 0 warnings, and there is no '## Critical' or '## Warnings' section",
+        "The report header contains 'Language: java'; the 'Found:' line reports 0 critical, 0 warnings and 0 to verify, and there is no '## Critical', '## Warnings' or '## Please verify' section (no finding above info)",
         "Does not report DWF-ACT-004 for ProcessDocumentActivity (its input and output are records with a single String component, not a bare String), DWF-ACT-013 (all three activities are top-level @Component classes), DWF-ACT-007 (the loggers are static final), DWF-ACT-009 (run returns records although it is declared to return Object) or DWF-ACT-010",
         "Does not report DWF-ACT-014 or DWF-ACT-015 for DocumentApprovalWorkflow.java or the records",
-        "If there are no findings, the report body is exactly 'No issues found.' followed by '## Next steps'; the Next steps suggest review-workflow-determinism and review-workflow-management, and there is no text after them"
+        "Any suggestion or Next steps note is limited to info level; one about ProcessDocumentActivity not being called by DocumentApprovalWorkflow is allowed. If there are no findings, the report body is exactly 'No issues found.' followed by '## Next steps'; the Next steps suggest review-workflow-determinism and review-workflow-management, and there is no text after them"
       ]
     }
   ]

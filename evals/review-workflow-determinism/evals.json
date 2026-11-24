@@ -152,7 +152,7 @@
       "id": 6,
       "name": "java-gradle-project-stops",
       "prompt": "review the workflow in evals/review-workflow-determinism/files/gradle-java for replay safety",
-      "expected_output": "Target detection finds a build.gradle that references io.dapr and no Maven pom.xml, so the review stops with the message that Gradle projects are not supported by the Java review checklists because the checklists assume Maven and Spring Boot. No rule is applied: no DWF-DET finding is reported (not even for the Instant.now() in MeterReadingWorkflow.java).",
+      "expected_output": "Target detection finds a build.gradle that references io.dapr and no Maven pom.xml, so the review stops without applying any rule and emits the \"Nothing to review\" report defined for unsupported Java builds: '# Dapr review — review-workflow-determinism', 'Target: <scope_root>', 'Language: java', 'Found: 0 critical, 0 warnings, 0 suggestions, 0 to verify', 'Nothing to review: Gradle projects are not supported by the Java review checklists; the checklists assume Maven and Spring Boot.', then '## Next steps' with the single bullet 'The Java review checklists cover Maven projects that use Spring Boot and the Dapr Spring Boot starter; create-workflow-java and create-pubsub-java show that layout.'. No rule is applied: no DWF-DET finding is reported (not even for the Instant.now() in MeterReadingWorkflow.java).",
       "files": [
         "evals/review-workflow-determinism/files/gradle-java/build.gradle",
         "evals/review-workflow-determinism/files/gradle-java/settings.gradle",
@@ -161,7 +161,7 @@
         "evals/review-workflow-determinism/files/gradle-java/src/main/java/com/example/meterreadings/MeterReadingWorkflow.java"
       ],
       "expectations": [
-        "Stops after target detection and tells the user that Gradle projects are not supported by the Java review checklists, because the checklists assume Maven and Spring Boot",
+        "Stops after target detection and emits the \"Nothing to review\" report in this shape: the '# Dapr review — review-workflow-determinism' heading, 'Target:' naming the scope, 'Language: java', 'Found: 0 critical, 0 warnings, 0 suggestions, 0 to verify', the line 'Nothing to review: Gradle projects are not supported by the Java review checklists; the checklists assume Maven and Spring Boot.', and '## Next steps' with one bullet saying the Java review checklists cover Maven projects that use Spring Boot and the Dapr Spring Boot starter (create-workflow-java and create-pubsub-java show that layout); there is no text after it",
         "Does not report any DWF-DET-* finding, including DWF-DET-001 for Instant.now() at src/main/java/com/example/meterreadings/MeterReadingWorkflow.java:15",
         "Does not say that Java review support is not available, and does not claim the project is not a Dapr Workflow project",
         "Uses only Read, Grep and Glob; does not call Bash, Write or Edit (no mvn call), and no file in the fixture is modified"
@@ -171,7 +171,7 @@
       "id": 7,
       "name": "java-plain-without-spring-stops",
       "prompt": "check the workflow in evals/review-workflow-determinism/files/plain-java for replay problems",
-      "expected_output": "Target detection finds a pom.xml that depends on io.dapr:dapr-sdk-workflows with no Spring Boot (no io.dapr.spring starter or BOM, no spring-boot-starter-parent, no org.springframework.boot dependency), and no other marker, so the review stops with the message that plain Java projects without Spring Boot are not supported by the Java review checklists because the checklists assume Maven and Spring Boot. No rule is applied: no DWF-DET finding is reported (not even for the Instant.now() in ParcelRoutingWorkflow.java).",
+      "expected_output": "Target detection finds a pom.xml that depends on io.dapr:dapr-sdk-workflows with no Spring Boot (no io.dapr.spring starter or BOM, no spring-boot-starter-parent, no org.springframework.boot dependency), and no other marker, so the review stops without applying any rule and emits the \"Nothing to review\" report defined for unsupported Java builds: '# Dapr review — review-workflow-determinism', 'Target: <scope_root>', 'Language: java', 'Found: 0 critical, 0 warnings, 0 suggestions, 0 to verify', 'Nothing to review: Plain Java projects without Spring Boot are not supported by the Java review checklists; the checklists assume Maven and Spring Boot.', then '## Next steps' with the single bullet 'The Java review checklists cover Maven projects that use Spring Boot and the Dapr Spring Boot starter; create-workflow-java and create-pubsub-java show that layout.'. No rule is applied: no DWF-DET finding is reported (not even for the Instant.now() in ParcelRoutingWorkflow.java).",
       "files": [
         "evals/review-workflow-determinism/files/plain-java/pom.xml",
         "evals/review-workflow-determinism/files/plain-java/src/main/java/com/example/parcelrouting/AssignDepotActivity.java",
@@ -181,7 +181,7 @@
         "evals/review-workflow-determinism/files/plain-java/src/main/java/com/example/parcelrouting/RoutingResult.java"
       ],
       "expectations": [
-        "Stops after target detection and tells the user that plain Java projects without Spring Boot are not supported by the Java review checklists, because the checklists assume Maven and Spring Boot",
+        "Stops after target detection and emits the \"Nothing to review\" report in this shape: the '# Dapr review — review-workflow-determinism' heading, 'Target:' naming the scope, 'Language: java', 'Found: 0 critical, 0 warnings, 0 suggestions, 0 to verify', the line 'Nothing to review: Plain Java projects without Spring Boot are not supported by the Java review checklists; the checklists assume Maven and Spring Boot.', and '## Next steps' with one bullet saying the Java review checklists cover Maven projects that use Spring Boot and the Dapr Spring Boot starter (create-workflow-java and create-pubsub-java show that layout); there is no text after it",
         "Does not report any DWF-DET-* finding, including DWF-DET-001 for Instant.now() at src/main/java/com/example/parcelrouting/ParcelRoutingWorkflow.java:13",
         "Does not say that Java review support is not available, does not mention Gradle, and does not claim the project is not a Dapr Workflow project",
         "Uses only Read, Grep and Glob; does not call Bash, Write or Edit (no mvn call), and no file in the fixture is modified"

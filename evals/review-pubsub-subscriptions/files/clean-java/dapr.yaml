@@ -18,3 +18,8 @@ apps:
     appDirPath: streaming-subscriber
     daprHTTPPort: 3522
     command: ["mvn", "spring-boot:run"]
+  - appID: shiptrack-raw-subscriber
+    appDirPath: raw-subscriber
+    appPort: 8022
+    daprHTTPPort: 3532
+    command: ["mvn", "spring-boot:run"]

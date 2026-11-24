@@ -13,5 +13,6 @@
     <module>declarative-subscriber</module>
     <module>programmatic-subscriber</module>
     <module>streaming-subscriber</module>
+    <module>raw-subscriber</module>
   </modules>
 </project>

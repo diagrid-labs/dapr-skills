@@ -134,6 +134,63 @@
         "Any finding is a suggestion; the only one allowed is DWF-MGT-015 at src/main/java/com/example/documentapproval/DocumentApprovalWorkflowController.java:15. The report ends with '## Next steps' suggesting review-workflow-determinism and review-workflow-activity, with no text after it",
         "Uses only Read, Grep and Glob; does not call Bash, Write or Edit (no mvn call), and no file in the fixture is modified"
       ]
+    },
+    {
+      "id": 6,
+      "name": "java-controller-service-split-management",
+      "prompt": "Review the workflow management API of the Spring Boot app in evals/review-workflow-management/files/travel-booking-split-java. The controller hands every call to TripWorkflowService. It only runs locally with dapr run for now.",
+      "expected_output": "Detection finds no single file with both DaprWorkflowClient and Spring MVC mappings: TripBookingController has the mappings and calls TripWorkflowService, which uses DaprWorkflowClient. Both files go into management_files and are reviewed as one surface, so the review does not stop with \"Nothing to review\". 'Language: java'. Warnings: DWF-MGT-004 (src/main/java/com/example/travelbooking/TripBookingController.java:14, the controller class declaration; no path calls suspendWorkflow), DWF-MGT-007 (src/main/java/com/example/travelbooking/TripWorkflowService.java:20, hard-coded instance id \"trip-booking\", cited at the service call), DWF-MGT-008 (src/main/java/com/example/travelbooking/TripBookingController.java:25, /start returns 202 with no instance id; the mapping line :22 is acceptable), DWF-MGT-011 (src/main/java/com/example/travelbooking/TripWorkflowService.java:25, waitForWorkflowCompletion with a 90-second timeout on the request thread, cited at the service call). Suggestions: DWF-MGT-015 (src/main/java/com/example/travelbooking/TripBookingController.java:14). Found: 0 critical, 4 warnings, 1 suggestion, 0 to verify. Not reported: DWF-MGT-001, 002, 003, 005 and 006 (start, status, terminate, resume and raise-event exist through the service), DWF-MGT-009 (the service checks exists(state) and the controller returns 404), DWF-MGT-010 (the user said local-only), DWF-MGT-013 (raise-event checks the instance first), DWF-MGT-014 (StatusResponse), DWF-MGT-012, 016 and 017.",
+      "files": [
+        "evals/review-workflow-management/files/travel-booking-split-java/pom.xml",
+        "evals/review-workflow-management/files/travel-booking-split-java/src/main/java/com/example/travelbooking/Application.java",
+        "evals/review-workflow-management/files/travel-booking-split-java/src/main/java/com/example/travelbooking/ManagerApproval.java",
+        "evals/review-workflow-management/files/travel-booking-split-java/src/main/java/com/example/travelbooking/ReserveTripActivity.java",
+        "evals/review-workflow-management/files/travel-booking-split-java/src/main/java/com/example/travelbooking/StatusResponse.java",
+        "evals/review-workflow-management/files/travel-booking-split-java/src/main/java/com/example/travelbooking/TripBookingController.java",
+        "evals/review-workflow-management/files/travel-booking-split-java/src/main/java/com/example/travelbooking/TripBookingWorkflow.java",
+        "evals/review-workflow-management/files/travel-booking-split-java/src/main/java/com/example/travelbooking/TripRequest.java",
+        "evals/review-workflow-management/files/travel-booking-split-java/src/main/java/com/example/travelbooking/TripReserved.java",
+        "evals/review-workflow-management/files/travel-booking-split-java/src/main/java/com/example/travelbooking/TripResult.java",
+        "evals/review-workflow-management/files/travel-booking-split-java/src/main/java/com/example/travelbooking/TripWorkflowService.java",
+        "evals/review-workflow-management/files/travel-booking-split-java/src/main/resources/application.properties"
+      ],
+      "expectations": [
+        "Does not emit a \"Nothing to review\" report: the 'Target:' line names TripBookingController.java and TripWorkflowService.java (or their folder), and the header contains 'Language: java'",
+        "The 'Found:' line reads 'Found: 0 critical, 4 warnings, 1 suggestions, 0 to verify' (or '1 suggestion'), and there is no '## Critical' section",
+        "The Warnings section contains DWF-MGT-004 at src/main/java/com/example/travelbooking/TripBookingController.java:14 (no handler reaches suspendWorkflow) and DWF-MGT-008 at src/main/java/com/example/travelbooking/TripBookingController.java:25 (lines 22-25 acceptable; /start returns 202 without the instance id) — both cite the controller",
+        "The Warnings section contains DWF-MGT-007 at src/main/java/com/example/travelbooking/TripWorkflowService.java:20 (hard-coded instance id \"trip-booking\") and DWF-MGT-011 at src/main/java/com/example/travelbooking/TripWorkflowService.java:25 (waitForWorkflowCompletion with Duration.ofSeconds(90)) — both cite the service line with the DaprWorkflowClient call, not the controller",
+        "The Suggestions section contains DWF-MGT-015 at src/main/java/com/example/travelbooking/TripBookingController.java:14",
+        "Does not report DWF-MGT-001, DWF-MGT-002, DWF-MGT-003, DWF-MGT-005 or DWF-MGT-006 (the endpoints exist through TripWorkflowService, including raise-event for the waitForExternalEvent in TripBookingWorkflow.java:23), nor DWF-MGT-009, DWF-MGT-010, DWF-MGT-012, DWF-MGT-013, DWF-MGT-014, DWF-MGT-016 or DWF-MGT-017",
+        "Uses only Read, Grep and Glob; does not call Bash, Write or Edit (no mvn call), no file in the fixture is modified, and the report ends with '## Next steps' with no text after it"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "java-clean-endpoints-deployment-target-unknown",
+      "prompt": "Check the workflow management endpoints of the Spring Boot app in evals/review-workflow-management/files/clean-java before we put it in front of other teams.",
+      "expected_output": "The same clean controller as eval 5, but the prompt does not say whether the app is local-only. Following the DWF-MGT-010 confidence note, the skill asks whether the deployment target is local-only before emitting the report. When no answer is available (a non-interactive run), the checklist default applies: DWF-MGT-010 is reported once as a warning at the first mutating handler (src/main/java/com/example/documentapproval/DocumentApprovalWorkflowController.java:23, the /start mapping; :24 acceptable). The only other finding is the DWF-MGT-015 suggestion at src/main/java/com/example/documentapproval/DocumentApprovalWorkflowController.java:15. Found: 0 critical, 1 warnings, 1 suggestions, 0 to verify. If the user answers that it is local-only, DWF-MGT-010 is not reported.",
+      "files": [
+        "evals/review-workflow-management/files/clean-java/pom.xml",
+        "evals/review-workflow-management/files/clean-java/src/main/resources/application.properties",
+        "evals/review-workflow-management/files/clean-java/src/main/java/com/example/documentapproval/Application.java",
+        "evals/review-workflow-management/files/clean-java/src/main/java/com/example/documentapproval/ApprovalDecision.java",
+        "evals/review-workflow-management/files/clean-java/src/main/java/com/example/documentapproval/ApprovalRequest.java",
+        "evals/review-workflow-management/files/clean-java/src/main/java/com/example/documentapproval/ApprovalRequested.java",
+        "evals/review-workflow-management/files/clean-java/src/main/java/com/example/documentapproval/ApprovalResult.java",
+        "evals/review-workflow-management/files/clean-java/src/main/java/com/example/documentapproval/DocumentApprovalWorkflow.java",
+        "evals/review-workflow-management/files/clean-java/src/main/java/com/example/documentapproval/DocumentApprovalWorkflowController.java",
+        "evals/review-workflow-management/files/clean-java/src/main/java/com/example/documentapproval/DocumentPublished.java",
+        "evals/review-workflow-management/files/clean-java/src/main/java/com/example/documentapproval/PublishDocumentActivity.java",
+        "evals/review-workflow-management/files/clean-java/src/main/java/com/example/documentapproval/RequestApprovalActivity.java",
+        "evals/review-workflow-management/files/clean-java/src/main/java/com/example/documentapproval/StatusResponse.java"
+      ],
+      "expectations": [
+        "Either asks whether the deployment target is local-only (a clarifying question outside the report) or, when no answer is available, reports DWF-MGT-010; it never silently omits DWF-MGT-010 without asking",
+        "When no answer is given, the Warnings section contains exactly one finding, DWF-MGT-010 at src/main/java/com/example/documentapproval/DocumentApprovalWorkflowController.java:23 (line 24 acceptable), whose Fix names Spring Security (a SecurityFilterChain or @PreAuthorize) or an authenticating gateway; it is not in Critical or Please verify",
+        "The Suggestions section contains only DWF-MGT-015 at src/main/java/com/example/documentapproval/DocumentApprovalWorkflowController.java:15, and the 'Found:' line reads 'Found: 0 critical, 1 warnings, 1 suggestions, 0 to verify' when DWF-MGT-010 is reported",
+        "Does not report any other DWF-MGT rule (DWF-MGT-001 to 009 and 011 to 017)",
+        "Uses only Read, Grep and Glob; does not call Bash, Write or Edit, no file in the fixture is modified, and the report ends with '## Next steps' with no text after it"
+      ]
     }
   ]
 }

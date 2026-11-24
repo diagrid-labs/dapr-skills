@@ -30,8 +30,8 @@ Apply each rule to `component_files`, `subscription_files`, `resiliency_files` a
 
 ## Java notes
 
-- Read the component folder from `resourcesPath` in `dapr.yaml`, and the app ids and ports from `appID`, `appPort`, `daprHTTPPort` and `daprGRPCPort`. Each app is a Maven module in its `appDirPath`; its `server.port` in `application.properties` is the port the app listens on. A streaming-only subscriber has no `appPort`; that is correct and is not a DPS-CFG-013 finding.
-- Programmatic subscriptions are `@Topic` methods. Their dead-letter topics (DPS-CFG-003, DPS-CFG-012) and metadata (DPS-CFG-014) come from the `subscriptions` list, with `${…}` placeholders resolved by detection. The SDK passes the `metadata` JSON to the runtime unchanged (`sdk-springboot/src/main/java/io/dapr/springboot/DaprBeanPostProcessor.java:116`, Java SDK `v1.19.1`), so an `isRawPayload` key there is ignored exactly like one in YAML.
+- Read the component folder from `resourcesPath` in `dapr.yaml`, and the app ids and ports from `appID`, `appPort`, `daprHTTPPort` and `daprGRPCPort`. Each app is a Maven module in its `appDirPath`; its `server.port` (read from its `application.*` files as "Java properties" in `review-detect-target-pubsub.md` describes) is the port the app listens on. A streaming-only subscriber has no `appPort`; that is correct and is not a DPS-CFG-013 finding.
+- Programmatic subscriptions are `@Topic` methods. Their dead-letter topics (DPS-CFG-003, DPS-CFG-012) and metadata (DPS-CFG-014) come from the `subscriptions` list, with `${…}` placeholders resolved by detection (except inside `metadata`, which the starter does not resolve). The SDK passes the `metadata` JSON to the runtime unchanged (`sdk-springboot/src/main/java/io/dapr/springboot/DaprBeanPostProcessor.java:116`, Java SDK `v1.19.1`), so an `isRawPayload` key there is ignored exactly like one in YAML.
 
 ## Confidence notes
 

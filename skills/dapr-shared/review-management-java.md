@@ -2,6 +2,11 @@
 
 Apply each rule below to every file in `management_files` produced by `review-detect-target.md` (typically one `@RestController` class that takes `DaprWorkflowClient`).
 
+When `management_files` holds a controller and the service bean it delegates to (a controller → service split, see detection), review them as one surface: a handler covers an endpoint when it calls a service method that makes the SDK call, and a check (a state check, a `try` / `catch`) counts wherever it sits on that path. Citations:
+
+- **Route-level rules** cite the controller: a missing endpoint (DWF-MGT-001 to 006) cites the controller's class declaration line; DWF-MGT-008, 009, 010, 013 and 014 cite the handler's mapping line, or the offending line when it is in the controller; DWF-MGT-015 cites the controller's class declaration line.
+- **Call-level rules** cite the service line with the `DaprWorkflowClient` call or construction: DWF-MGT-007, 011, 012, 016 and 017.
+
 The reference baseline for the canonical management surface is the controller in [`java-workflow-endpoints.md`](java-workflow-endpoints.md), the `StatusResponse` record in [`java-models.md`](java-models.md) and the request shapes in [`java-local-http.md`](java-local-http.md). SDK paths in the Source column are relative to [dapr/java-sdk](https://github.com/dapr/java-sdk) at tag `v1.19.1`.
 
 ## Rule id map

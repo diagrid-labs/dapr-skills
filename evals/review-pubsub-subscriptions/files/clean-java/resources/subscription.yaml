@@ -6,6 +6,9 @@ spec:
   pubsubname: pubsub
   topic: shipments
   routes:
+    rules:
+      - match: int(event.data.parcelCount) > 10
+        path: /events/pubsub/shipments/bulk
     default: /events/pubsub/shipments
   deadLetterTopic: shipments-deadletter
 scopes:
