@@ -138,7 +138,7 @@ If you install only some skills (`--skill <name>`), also install their dependenc
 Diagrid also publishes the [diagrid](https://github.com/diagridio/diagrid-ai) plugin (formerly `catalyst-ai@diagrid`). Both cover Dapr Workflows and durable agents, and they are designed to be installed together. The split is:
 
 - **This plugin (`dapr-skills`)** — build and audit Dapr applications that run locally with the Dapr CLI (`dapr run`) or .NET Aspire. The review skills perform read-only audits of existing code and emit structured reports with stable rule ids.
-- **`diagrid`** — build, deploy and operate applications on [Diagrid](https://www.diagrid.io/catalyst), including its MCP tools for the running system. Its determinism and idempotency skills give inline guidance while you write workflow code.
+- **`diagrid`** — build, deploy and operate applications on [Diagrid](https://www.diagrid.io/catalyst), including its MCP tools for the running system. Its determinism and idempotency skills guide you while you write workflow code that runs on Diagrid. For local Dapr apps, use this plugin's review skills.
 
 Install `diagrid` with:
 

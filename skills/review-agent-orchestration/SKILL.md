@@ -1,6 +1,6 @@
 ---
 name: review-agent-orchestration
-description: Reviews multi-agent orchestration for pub/sub topic conventions, loop safety and handoff correctness. Use for "review agent orchestration" or "check multi-agent handoffs".
+description: Reviews multi-agent Dapr projects in Python or .NET for pub/sub topic conventions, loop safety and handoff correctness. Use for "review agent orchestration" or "check multi-agent handoffs".
 allowed-tools:
   - Read
   - Grep

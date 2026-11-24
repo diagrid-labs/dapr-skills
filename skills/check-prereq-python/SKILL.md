@@ -1,6 +1,6 @@
 ---
 name: check-prereq-python
-description: Checks prerequisites for building Dapr Workflow apps in Python. Use for "check prerequisites for Python" or "verify Python environment".
+description: Checks prerequisites for building Dapr workflow and pub/sub apps in Python. Use for "check prerequisites for Python" or "verify Python environment".
 allowed-tools:
   - Bash(uname -s)
   - Bash(python --version)
@@ -17,11 +17,11 @@ allowed-tools:
   - Read
 ---
 
-# Check Prerequisites for Dapr Workflow Python
+# Check Prerequisites for Dapr Python
 
 ## Overview
 
-This skill checks whether all prerequisites are installed for building Dapr Workflow applications in Python. Run it only when you ask for it, for example before using the `create-workflow-python` skill. It is never run automatically as a pre-step.
+This skill checks whether all prerequisites are installed for building Dapr Workflow and pub/sub applications in Python. Run it only when you ask for it, for example before using the `create-workflow-python` or `create-pubsub-python` skill. It is never run automatically as a pre-step.
 
 ## Prerequisites
 
@@ -67,4 +67,4 @@ After all checks are complete, report the results:
 
 - List each check and whether it passed or failed.
 - For any failed checks, provide the relevant install link from the Prerequisites section.
-- If all checks passed, inform the user they can proceed with the `create-workflow-python` skill.
+- If all checks passed, inform the user they can proceed with the `create-workflow-python` or `create-pubsub-python` skill.

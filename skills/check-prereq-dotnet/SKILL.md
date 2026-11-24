@@ -1,6 +1,6 @@
 ---
 name: check-prereq-dotnet
-description: Checks prerequisites for building Dapr Workflow apps in .NET. Use for "check prerequisites for .NET" or "verify .NET environment".
+description: Checks prerequisites for building Dapr workflow and pub/sub apps in .NET. Use for "check prerequisites for .NET" or "verify .NET environment".
 allowed-tools:
   - Bash(uname -s)
   - Bash(dotnet --version)
@@ -14,11 +14,11 @@ allowed-tools:
   - Read
 ---
 
-# Check Prerequisites for Dapr Workflow .NET
+# Check Prerequisites for Dapr .NET
 
 ## Overview
 
-This skill checks whether all prerequisites are installed for building Dapr Workflow applications in .NET. Run it only when you ask for it, for example before using the `create-workflow-dotnet` skill. It is never run automatically as a pre-step.
+This skill checks whether all prerequisites are installed for building Dapr Workflow and pub/sub applications in .NET. Run it only when you ask for it, for example before using the `create-workflow-dotnet` or `create-pubsub-dotnet` skill. It is never run automatically as a pre-step.
 
 ## Prerequisites
 
@@ -59,4 +59,4 @@ After all checks are complete, report the results:
 
 - List each check and whether it passed or failed.
 - For any failed checks, provide the relevant install link from the Prerequisites section.
-- If all checks passed, inform the user they can proceed with the `create-workflow-dotnet` skill.
+- If all checks passed, inform the user they can proceed with the `create-workflow-dotnet` or `create-pubsub-dotnet` skill.
