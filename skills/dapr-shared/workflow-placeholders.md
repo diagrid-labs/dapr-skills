@@ -1,7 +1,8 @@
 # Workflow placeholder vocabulary
 
 Every workflow template file (`dotnet-workflow-class.md`, `dotnet-activity-class.md`, `dotnet-models.md`,
-`dotnet-workflow-endpoints.md`) is written against this vocabulary. The create and add skills resolve each
+`dotnet-workflow-endpoints.md`, and their Java counterparts `java-workflow-project.md`, `java-workflow-class.md`,
+`java-activity-class.md`, `java-models.md`, `java-workflow-endpoints.md`) is written against this vocabulary. The create and add skills resolve each
 placeholder from the specification interview before copying a template, so the generated application is
 about the user's process and never about a built-in sample.
 
@@ -38,6 +39,14 @@ Python uses the same concepts with Python casing.
 |---|---|---|
 | `<workflow_name>` | snake_case form of `<WorkflowName>`, used for the module and the registered name | `loan_review_workflow` |
 
+### Java forms
+
+Java uses the PascalCase domain placeholders above for its class and record names, plus one for the package.
+
+| Placeholder | Meaning | Example |
+|---|---|---|
+| `<javaPackage>` | the Java base package: `com.example.` plus `<ProjectRoot>` lowercased with every character that isn't a letter or digit removed | `com.example.loanreview` |
+
 ### Deriving a name
 
 Every derived name follows its rule exactly. A workflow for shipment approval gives `<WorkflowName>`
@@ -51,3 +60,5 @@ Keep these exactly as written; they come from the SDK, not from the domain:
 
 - `WorkflowContext`, `WorkflowActivityContext`, `RunAsync`, `CallActivityAsync`, `CreateReplaySafeLogger`.
 - The `Workflows` and `Activities` folder names, and the `Models` folder name.
+- Java: `Workflow`, `WorkflowStub`, `WorkflowActivity`, `callActivity`, `getLogger`, and the generated
+  `Application` and `StatusResponse` class names.

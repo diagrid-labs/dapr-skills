@@ -1,0 +1,66 @@
+{
+  "skill_name": "create-workflow-java",
+  "evals": [
+    {
+      "id": 1,
+      "name": "shipment-tracking-chaining",
+      "prompt": "Create a Java Spring Boot Dapr workflow app named Ship-Track. A tracking request comes in with a shipment id, a carrier code and the recipient's email. The workflow first validates the tracking number with the carrier, then fetches the latest tracking events for the shipment, then emails the recipient a summary of the current status. Return the shipment id, the current status and whether the email was sent.",
+      "expected_output": "A Ship-Track folder with the Ship-Track-app Maven project (Spring Boot 4.0.8 parent, dapr-spring-bom 1.19.1, package com.example.shiptrack), a workflow chaining three activities, records for every payload, the management controller, consistent ports, a statestore with actorStateStore, a successful mvn -q -DskipTests package, README.md and the exact final message.",
+      "files": [],
+      "expectations": [
+        "Creates Ship-Track/.gitignore, Ship-Track/dapr.yaml, Ship-Track/local.http, Ship-Track/resources/statestore.yaml and Ship-Track/Ship-Track-app/ containing pom.xml, src/main/resources/application.properties and src/main/java/com/example/shiptrack/ with Application.java, the workflow, three activities, the records and the controller",
+        "`pom.xml` has parent `spring-boot-starter-parent` 4.0.8, imports `dapr-spring-bom` 1.19.1 and depends on `dapr-spring-boot-starter` without a version",
+        "`<javaPackage>` for project root `Ship-Track` is `com.example.shiptrack`",
+        "every input and output type is a top-level `record`",
+        "no `@Autowired` field; collaborators arrive through constructors",
+        "`@EnableDaprWorkflows` is on the `@SpringBootApplication` class",
+        "The workflow class is a top-level @Component implementing Workflow whose stub calls ctx.callActivity(<Activity>.class.getName(), input, <Output>.class).await() three times in sequence and ends with ctx.complete(...); each activity is a top-level @Component implementing WorkflowActivity",
+        "Workflow code contains no Instant.now(), UUID.randomUUID(), Thread, CompletableFuture or catch (Exception ...), and logs only through ctx.getLogger()",
+        "The controller maps POST /start, GET /status/{instanceId}, POST /pause/{instanceId}, POST /resume/{instanceId} and POST /terminate/{instanceId}, and /start uses the input's shipment id as the instance id; it does not map raise-event because the workflow waits for no external event",
+        "status endpoint uses `getWorkflowState` and `readOutputAs`",
+        "No getInstanceState, waitForInstanceCompletion, WorkflowInstanceStatus or purgeInstance appears in the generated code",
+        "`dapr.yaml` runs `mvn spring-boot:run` and `server.port` equals its `appPort`",
+        "The port in the @host line of local.http equals server.port, and the start request body matches the workflow input record's components",
+        "The agent runs `mvn -q -DskipTests package` in the Ship-Track-app folder and it exits 0, then creates Ship-Track/README.md with a mermaid diagram, a `dapr run -f .` start instruction and next steps naming review-workflow-determinism, review-workflow-activity and review-workflow-management",
+        "The agent does not invoke the check-prereq-java skill, and its final output starts with exactly: The Ship-Track workflow application is created. Open the README.md file in the Ship-Track folder for a summary and instructions for running locally. followed only by the Diagrid Dapr Dev Dashboard recommendation",
+        "Dev Dashboard: before creating project files the agent runs `diagrid-dev-dashboard --version` once, does not ask about it, install it or stop because of it, and ends the final output with the matching Diagrid Dapr Dev Dashboard recommendation: if the command succeeded, how to start it (`diagrid-dev-dashboard`, http://localhost:9090); if it failed, how to install it (the install.sh and install.ps1 commands) — in both cases with a short reason it is useful and the link https://github.com/diagridio/dev-dashboard. No `--port 8080` and no container image is suggested"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "vendor-onboarding-compliance-approval",
+      "prompt": "I need a Spring Boot workflow app with Dapr called VendorOnboarding. A new vendor registers with a vendor id, company name, country and annual contract value. The workflow runs a sanctions screening activity first. If the contract value is above 100000, it waits for a compliance officer's decision event (approved or rejected, plus the officer's name) for at most 3 days; if no decision arrives in time, notify procurement that the onboarding expired and stop. Approved vendors get created in the ERP via an activity; rejected ones get a rejection notice. The ERP call is flaky, so retry it. I must be able to send the decision over HTTP.",
+      "expected_output": "A VendorOnboarding project using the human-in-the-loop pattern: waitForExternalEvent with a 3-day timeout and a TaskCanceledException branch, a retry policy on the ERP activity, the raise-event endpoint and a matching raise-event request in local.http, built with mvn -q -DskipTests package.",
+      "files": [],
+      "expectations": [
+        "Creates VendorOnboarding/VendorOnboarding-app/pom.xml and Java sources in the package com.example.vendoronboarding",
+        "`pom.xml` has parent `spring-boot-starter-parent` 4.0.8, imports `dapr-spring-bom` 1.19.1 and depends on `dapr-spring-boot-starter` without a version",
+        "The workflow calls ctx.waitForExternalEvent(<constant>, Duration.ofDays(3), <DecisionRecord>.class).await() inside try/catch (TaskCanceledException e), and the catch branch calls a notification activity, completes with an expired result and returns",
+        "The event name is a constant on the workflow class, and the raise-event request in local.http uses the same name with a JSON body that matches the decision record",
+        "The ERP activity is called with a WorkflowTaskOptions holding a WorkflowTaskRetryPolicy (callActivity with four arguments)",
+        "The controller maps POST /raise-event/{instanceId}/{eventName}, binds the body as Object, and answers 404 when getWorkflowState returns a state whose workflow id is empty",
+        "status endpoint uses `getWorkflowState` and `readOutputAs`",
+        "every input and output type is a top-level `record`",
+        "no `@Autowired` field; collaborators arrive through constructors",
+        "Workflow code contains no Instant.now(), UUID.randomUUID(), Thread.sleep, CompletableFuture or catch (Exception ...)",
+        "The agent runs `mvn -q -DskipTests package` in the VendorOnboarding-app folder and it exits 0",
+        "The agent does not invoke the check-prereq-java skill, and its final output starts with exactly: The VendorOnboarding workflow application is created. Open the README.md file in the VendorOnboarding folder for a summary and instructions for running locally. followed only by the Diagrid Dapr Dev Dashboard recommendation"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "underspecified-request-asks-clarifying-questions",
+      "prompt": "set up a dapr workflow project in java for me",
+      "expected_output": "The request contains no purpose, workflow design, input/output or name, so the skill takes the Check specification path and interviews the user one question at a time before creating anything.",
+      "files": [],
+      "expectations": [
+        "The agent asks a clarifying question about the purpose of the workflow application before creating any files or folders",
+        "The agent asks the clarifying questions one at a time (its first question does not bundle all four specification questions into one message)",
+        "No pom.xml, dapr.yaml, statestore.yaml, Java source or README.md is created in the working directory during this turn",
+        "The agent does not run `mvn` in this turn",
+        "The agent does not invoke the check-prereq-java skill or run `java -version` / `mvn -v` as an automatic pre-step",
+        "The agent does not output the final message 'The <ProjectRoot> workflow application is created...' in this turn"
+      ]
+    }
+  ]
+}

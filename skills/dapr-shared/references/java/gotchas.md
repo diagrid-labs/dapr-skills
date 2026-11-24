@@ -144,7 +144,7 @@ the SDK picked up the ports `dapr run` exports (`DAPR_HTTP_PORT`, `DAPR_GRPC_POR
   exists` (observed, a 500 if unhandled). Treat a state as missing when it is `null` or its
   `getWorkflowId()` is empty, and answer 404 from the status and raise-event endpoints.
 - **Reusing an instance id.** `scheduleNewWorkflow` with the id of a COMPLETED instance started a new run
-  under the same id (observed). Match the .NET start endpoint (`skills/dapr-shared/dotnet-workflow-endpoints.md`): use the request's own entity id as the instance id (`scheduleNewWorkflow(Workflow.class, request, request.parcelId())` in the reference app), and do not pre-check existing state.
+  under the same id (observed). Match the .NET start endpoint (`skills/dapr-shared/dotnet-workflow-endpoints.md`): use the request's own entity id as the instance id (`scheduleNewWorkflow(Workflow.class, request, request.parcelId())` in the reference app; in the templates, `scheduleNewWorkflow(<WorkflowName>.class, input, input.id())` with the id component of `<WorkflowInput>`), and do not pre-check existing state.
 - **External event timeout.** `ctx.waitForExternalEvent(name, Duration, Class).await()` throws
   `io.dapr.durabletask.TaskCanceledException` when the timeout expires (verified with a 30s timeout). Wrap the `.await()` in `try`/`catch (TaskCanceledException e)`, log it and `ctx.complete(...)` with a timed-out result such as `PICKUP_TIMED_OUT`, as `ShipmentWorkflow` does; never let the exception fail the workflow.
 - **Retry policy.** `new WorkflowTaskOptions(WorkflowTaskRetryPolicy.newBuilder()...build())` passed to
@@ -163,6 +163,26 @@ the SDK picked up the ports `dapr run` exports (`DAPR_HTTP_PORT`, `DAPR_GRPC_POR
   (verified). Declare subscriber handler parameters as `@RequestBody CloudEvent<T>` with `T` a record.
 - `appLogDestination: fileAndConsole` writes `.dapr/logs/` inside each app folder, so the generated
   `.gitignore` must list `.dapr/`.
+
+## 9. Findings while writing the workflow templates
+
+- **Broad catches.** `Task.await()` on a task with no result yet throws
+  `io.dapr.durabletask.interruption.OrchestratorBlockedException` (a `RuntimeException`) with the message
+  "The orchestrator is blocked and waiting for new inputs. This Throwable should never be caught by user
+  code." (from the `durabletask-client` 1.19.1 bytecode, `TaskOrchestrationExecutor`; not run). **Rule.**
+  In workflow code catch only `TaskFailedException` and `TaskCanceledException`, never `Exception` or
+  `Throwable`.
+- **Where `DaprWorkflowClient` comes from.** The bean is declared by the starter's
+  `DaprClientAutoConfiguration.daprWorkflowClient(...)` (`dapr-spring-boot-autoconfigure` 1.19.1), not by
+  `@EnableDaprWorkflows` (from the jar's class signatures). **Rule.** Take it through the constructor; declare
+  no `DaprWorkflowClient` bean of your own.
+- **Pattern code.** The fan-out (`ctx.allOf`), saga (`catch (TaskFailedException e)`), monitor
+  (`createTimer` plus `continueAsNew`), child workflow (`callChildWorkflow` with an instance id and a retry
+  policy) and external-event examples in [patterns.md](patterns.md) and [error-handling.md](error-handling.md)
+  compiled with `mvn -q -DskipTests package` against the 1.19.1 BOM (compiled, not run).
+- **Unit tests.** Mockito 5 from `spring-boot-starter-test` mocks `WorkflowContext`, the abstract `Task`, and
+  `TaskFailedException` / `FailureDetails` (which have no public constructors). Tests of an activity, a chained
+  workflow and a saga's compensation branch ran green with `mvn test` (see [testing.md](testing.md)).
 
 ## Open
 
