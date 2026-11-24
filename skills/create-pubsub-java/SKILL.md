@@ -12,7 +12,7 @@ allowed-tools:
 
 ## Overview
 
-This skill creates a Dapr pub/sub application in Java with Spring Boot 4 and Maven: a publisher, a subscriber or both, each its own Spring Boot app with its own copy of the message record, sharing one Redis-backed `pubsub` component and one `dapr.yaml`. The subscriber uses a declarative (default), programmatic or streaming subscription, and the apps run with `dapr run -f .`.
+This skill creates a Dapr pub/sub application in Java with Spring Boot 4.0 and Maven: a publisher, a subscriber or both, each its own Spring Boot app with its own copy of the message record, sharing one Redis-backed `pubsub` component and one `dapr.yaml`. The subscriber uses a declarative (default), programmatic or streaming subscription, and the apps run with `dapr run -f .`.
 
 The application is built from the user's own domain. There is no built-in sample scenario: the event, its fields, its topic and what the subscriber does with it all come from the **Check specification** interview, and every template is filled in from the placeholder vocabulary in [`../dapr-shared/pubsub-placeholders.md`](../dapr-shared/pubsub-placeholders.md).
 
@@ -194,7 +194,7 @@ Rules that matter:
 Create a README.md file inside the <ProjectRoot> folder. See `REFERENCE.md` → **README key points**. It contains:
 
 1. Summary of what this folder contains.
-2. Architecture: what the application does in the user's own domain terms, the roles, the subscription type and why, the technology stack (Spring Boot 4, Java 17, Maven, the Dapr Spring Boot starter), and a mermaid sequence diagram showing who opens the connection (sidecar push for declarative and programmatic, app pull for streaming). **DO NOT suggest to run Redis separately; `dapr init` provides it and it is already running in a container.**
+2. Architecture: what the application does in the user's own domain terms, the roles, the subscription type and why, the technology stack (Spring Boot 4.0, Java 17, Maven, the Dapr Spring Boot starter), and a mermaid sequence diagram showing who opens the connection (sidecar push for declarative and programmatic, app pull for streaming). **DO NOT suggest to run Redis separately; `dapr init` provides it and it is already running in a container.**
 3. How to run: `dapr run -f .` from the project root (the first start downloads the Maven dependencies), and how to try it with curl plus a link to `pubsub.http`.
 4. Delivery semantics for the subscription type, as `REFERENCE.md` → **README key points** states them. A dropped message goes to the dead-letter topic. Streaming: the app cannot choose RETRY or DROP, and an exception in the handler must be caught so the stream stays open.
 5. How to see subscriptions: `GET http://localhost:3502/v1.0/metadata` and the Dev Dashboard's subscriptions view.

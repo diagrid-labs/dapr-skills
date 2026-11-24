@@ -12,7 +12,7 @@ allowed-tools:
 
 ## Overview
 
-This skill describes how to create a Dapr Workflow application in Java with Spring Boot 4 and Maven.
+This skill describes how to create a Dapr Workflow application in Java with Spring Boot 4.0 and Maven.
 
 ## Execution Order
 
@@ -160,7 +160,7 @@ Create a README.md file inside the <ProjectRoot> folder.
 
 The README contains the following sections:
 1. Summary of what this folder contains.
-2. Architecture description that explains the technology stack (Spring Boot 4, Java 17, Maven, the Dapr Spring Boot starter) and prerequisites to run it locally. **DO NOT suggest to run Redis separately since it's part of the Dapr installation and is running in a container already.**
+2. Architecture description that explains the technology stack (Spring Boot 4.0, Java 17, Maven, the Dapr Spring Boot starter) and prerequisites to run it locally. **DO NOT suggest to run Redis separately since it's part of the Dapr installation and is running in a container already.**
 3. A mermaid diagram that explains the workflow.
 4. How to start the application using the Dapr CLI (`dapr run -f .` in the project root; the first start downloads the Maven dependencies).
 5. List the available endpoints in the controller and provide examples how to call these using curl. Also include a link to the `local.http` file.

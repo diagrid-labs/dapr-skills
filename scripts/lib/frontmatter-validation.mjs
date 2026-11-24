@@ -34,7 +34,7 @@ const SUPPORT_SKILL_KEYS = ['disable-model-invocation', 'user-invocable'];
  * check. Lower it when descriptions get shorter.
  */
 export const MAX_DESCRIPTION_CHARS = 400;
-export const MAX_TOTAL_DESCRIPTION_CHARS = 7439;
+export const MAX_TOTAL_DESCRIPTION_CHARS = 7451;
 export const TARGET_DESCRIPTION_CHARS = 400;
 export const TARGET_TOTAL_DESCRIPTION_CHARS = 8000;
 

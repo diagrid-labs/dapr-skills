@@ -3,7 +3,9 @@
 Dependency versions come from [dapr-versions.md](../dapr-shared/dapr-versions.md) — change a pin there, not here.
 The publisher, handler and subscriber code comes from the shared Java templates; this file covers what is
 different in an existing project: detection, the plan, the edits and the run doc. The SDK behaviour behind
-every rule is recorded in [gotchas.md](../dapr-shared/references/java/gotchas.md) §1, §2, §3, §6 and §8.
+every rule is recorded in [gotchas.md](../dapr-shared/references/java/gotchas.md) §1, §2, §3, §6 and §8. The rules both Java add
+skills share (multi-module builds, the port, an existing `dapr.yaml` and its components, Spring Security) are in
+[java-existing-project.md](../dapr-shared/java-existing-project.md).
 
 ## Detection
 
@@ -11,24 +13,25 @@ every rule is recorded in [gotchas.md](../dapr-shared/references/java/gotchas.md
 |---|---|
 | Scope | The folder the user named; otherwise the current directory, confirmed in one line. |
 | Build tool (gate) | `Glob` `pom.xml` in the scope folder, then `**/pom.xml` below it. None, but `build.gradle`, `build.gradle.kts` or `settings.gradle*` → stop with the **Gradle** message. Neither → stop with the **No Maven project** message. |
-| Maven project | The `pom.xml` whose `<parent>` is `org.springframework.boot:spring-boot-starter-parent`, or that imports `org.springframework.boot:spring-boot-dependencies` in `dependencyManagement`. In a multi-module build (`<modules>` in the root `pom.xml`) the application module is the one with the `@SpringBootApplication` class; several → ask. |
+| Maven project | The `pom.xml` whose `<parent>` is `org.springframework.boot:spring-boot-starter-parent`, or that imports `org.springframework.boot:spring-boot-dependencies` in `dependencyManagement`. In a multi-module build (`<modules>` in the root `pom.xml`) find the root folder and the application module folder per **The application module folder** in `java-existing-project.md`; several candidates → the plan asks which. The rows below read the application module folder. |
 | Spring Boot version (gate) | The parent's `<version>`, or the imported `spring-boot-dependencies` version; resolve a `${...}` property from `<properties>`. 4.0.x → continue. 3.x → stop with the **Spring Boot 3** message. Anything else (2.x, 4.1 or later), or a company parent that hides the version → stop with the **Other Spring Boot version** message. |
-| Web starter (gate) | A `<dependency>` on `spring-boot-starter-webmvc` or `spring-boot-starter-web` → continue. Only `spring-boot-starter-webflux`, or no web starter → stop with the **No Spring MVC** message. |
+| Web starter (gate) | A `<dependency>` on `spring-boot-starter-webmvc` or `spring-boot-starter-web` in the application module's pom (or a parent it inherits dependencies from) → continue. Only `spring-boot-starter-webflux`, or no web starter → stop with the **No Spring MVC** message. |
 | Application class | `Grep` `@SpringBootApplication` under `src/main/java`; its package is the base package (`<javaPackage>`). Note an existing `@EnableConfigurationProperties(...)` on it and the classes it lists. |
 | Existing Dapr | `<groupId>io.dapr</groupId>` and `<groupId>io.dapr.spring</groupId>` in `pom.xml`: the `dapr-spring-bom` import and its version (a literal or a property such as `${dapr.version}`), `dapr-spring-boot-4-starter` (1.18 only), artifacts with their own `<version>`. Any version below 1.19.1 → **newer version available**. |
 | Existing subscriptions | Programmatic: `@Topic(` methods; read `name` and `pubsubName`, resolving `${...}` from the properties file. Streaming: `subscribeToTopic(` and `subscribeToEvents(` calls; read the pub/sub and topic arguments (constants, `@Value` fields or literals). Declarative: YAML with `kind: Subscription` in the resources folder whose `scopes` include this app's id, or that has no `scopes`. Record every `(pubsub, topic)` pair, its type, and the class or file that declares it. |
 | Existing pub/sub code | `publishEvent(` and `DaprMessagingTemplate` (leave both unchanged; a `DaprMessagingTemplate` is reported in the plan, see **Clashes and mixed types**), a `@Bean` returning `DaprPreviewClient`, and classes named `TopicEventStatus`, `ProcessedEvents`, `InMemoryProcessedEvents` or `UnreadableEventAdvice`. Reuse them; never add a second one. |
 | Existing controller advice | `@RestControllerAdvice` and `@ControllerAdvice` classes: note the ones without `assignableTypes`, `basePackages` or `annotations` (global) that extend `ResponseEntityExceptionHandler` or have an `@ExceptionHandler` for `HttpMessageNotReadableException` (or a supertype such as `Exception`). The plan names them under **Left unchanged** (see **Clashes and mixed types**). |
-| Properties file | `src/main/resources/application.properties`, else `application.yml` / `application.yaml`. Profile files (`application-<profile>.*`) do not count. Record `dapr.pubsub.name` and every key that holds a topic name (`app.topic`, `app.<name>-topic`, or the keys the `@Topic` placeholders read). |
-| App port | `server.port` in the properties file (`server.port=8090`), or `server:` → `port:` in YAML. A placeholder (`${PORT:8090}`) → use its default. None → 8080, Spring Boot's default. |
-| App id | The `appID` of this app's entry in `dapr.yaml`; otherwise `spring.application.name`; otherwise the Maven `artifactId`, in lowercase kebab case. |
+| Properties file | Per **Properties file and app port** in `java-existing-project.md`: `application.properties`, `application.yml` or `application.yaml` (profile files do not count); read all that exist, `.properties` wins for a key both set, and new keys go into `.properties` when it exists. Record `dapr.pubsub.name` and every key that holds a topic name (`app.topic`, `app.<name>-topic`, or the keys the `@Topic` placeholders read). |
+| App port | `server.port` from those files (`server.port=8090`, or `server:` → `port:` in YAML), `.properties` first when both set it. A placeholder (`${PORT:8090}`) → use its default. None → 8080, Spring Boot's default. |
+| App id | The `appID` of this app's entry in `dapr.yaml`; otherwise `spring.application.name`; otherwise the application module's `artifactId`, in lowercase kebab case. |
 | Endpoint style | `@RestController` classes; a class-level `@RequestMapping` prefix or method-level paths. |
 | Trigger endpoint | A `@PostMapping` (or `@RequestMapping(method = POST)`) handler that creates or accepts the event's subject. Remember the class, the handler, its route and the variable that holds the saved result. |
-| Tests calling it | Test classes under `src/test/java` that use `MockMvc`, `@WebMvcTest`, `@AutoConfigureMockMvc`, `TestRestTemplate`, `RestTestClient` or `WebTestClient` and send a request to the trigger route. For a `@WebMvcTest`, whether it already has a `@MockitoBean DaprClient` field. |
-| Dapr files | `dapr.yaml` in the Maven project folder, then in each parent folder up to and including the git repository root (the nearest folder with a `.git` entry); without a git repository, look in at most two parent folders. Use the nearest one found; the folder its `resourcesPath` names; component files with `type: pubsub.` (name, type, `scopes`); `kind: Resiliency` files and their `targets.components`; the `appID`, `appDirPath`, `appPort` and `daprHTTPPort` of every app entry. This app's entry is the one whose `appDirPath` resolves to the Maven project folder. |
+| Tests calling it | Test classes under `src/test/java` that use `MockMvc`, `@WebMvcTest`, `@AutoConfigureMockMvc`, `TestRestTemplate`, `RestTestClient` or `WebTestClient` and send a request to the trigger route. Also every `@WebMvcTest` that names the trigger controller (`@WebMvcTest(ShipmentController.class)`, `@WebMvcTest(controllers = ...)`), whether or not it calls the trigger route: with question 2 yes the controller takes a `DaprClient`, which slices do not create. For a `@WebMvcTest`, whether it already has a `@MockitoBean DaprClient` field (then no Risk line). |
+| Dapr files | Per **An existing dapr.yaml** in `java-existing-project.md`: the nearest `dapr.yaml`; this app's entry, the one whose `appDirPath` resolves to the application module folder; the resources folders this app's sidecar loads (its own `resourcesPath`/`resourcesPaths`, `.dapr/resources`, the `common` ones, else `~/.dapr/components`); component files there with `type: pubsub.` (name, type, `scopes`); `kind: Resiliency` files and their `targets.components`; the `appID`, `appDirPath`, `appPort`, `daprHTTPPort` and `daprGRPCPort` of every app entry. |
 | Port collision | Another app entry in `dapr.yaml` (not this app) has `appPort` equal to the app port. |
 | Tests | Any class under `src/test/java`. |
 | Bare `@WebMvcTest` | A `@WebMvcTest` with no controllers listed (not `@WebMvcTest(ShipmentController.class)` or `@WebMvcTest(controllers = ...)`). It loads every `@Controller` in the app, including the new ones: the publish controller needs a `DaprClient` bean and the declarative or programmatic events controller needs the `<EventName>Handler` bean, and no slice creates either → the plan gets the **bare `@WebMvcTest`** Risk line. |
+| Spring Security | `spring-boot-starter-security` in the application module's pom (or its parent), or a `@Bean` returning `SecurityFilterChain`. Any → the Spring Security **Risk** line and the security question, unless an existing chain already permits `/dapr/subscribe`, `/dapr/config` and `/events/<pubsub>/**` without CSRF. Never edit security configuration without the question answered yes. |
 | Git | `git status` only (read-only). |
 
 ### Stop messages
@@ -36,7 +39,7 @@ every rule is recorded in [gotchas.md](../dapr-shared/references/java/gotchas.md
 Use these, filled in, as the whole answer when a gate fails. Change nothing and show no plan.
 
 - **Gradle**: "`<project-path>` builds with Gradle (`build.gradle.kts`). add-pubsub-java supports Maven projects (`pom.xml`) only. You can move the build to Maven, or create a separate pub/sub service with `create-pubsub-java` and call it from this app."
-- **No Maven project**: "I found no `pom.xml` in `<project-path>`. add-pubsub-java adds Dapr pub/sub to an existing Spring Boot 4 Maven project; for a new one use `create-pubsub-java`."
+- **No Maven project**: "I found no `pom.xml` in `<project-path>`. add-pubsub-java adds Dapr pub/sub to an existing Spring Boot 4.0 Maven project; for a new one use `create-pubsub-java`."
 - **Spring Boot 3**: "`<project-path>` uses Spring Boot <version>. This skill adds Dapr Java SDK 1.19.1, which needs Spring Boot 4.0.x; Spring Boot 3 projects use Dapr Java SDK 1.18.x. You can upgrade the project to Spring Boot 4.0.x first, or create a separate pub/sub service with `create-pubsub-java`."
 - **Other Spring Boot version**: "`<project-path>` uses Spring Boot <version> (or: I could not find the Spring Boot version). This skill supports Spring Boot 4.0.x, the version Dapr Java SDK 1.19.1 is built and tested against. You can create a separate pub/sub service with `create-pubsub-java`."
 - **No Spring MVC**: "`<project-path>` has no Spring MVC web starter (`spring-boot-starter-webmvc`)<, it uses WebFlux>. The subscriber routes and the publish endpoint this skill adds are Spring MVC controllers, and the publisher blocks on `DaprClient` calls. You can create a separate pub/sub service with `create-pubsub-java`."
@@ -60,7 +63,7 @@ defines them (Java forms), with these values that differ in an existing project:
 ```markdown
 ## Add Pub/Sub Plan — <ProjectName>
 
-**Target:** `<project-path>` (Spring Boot <4.0.x>, Maven, Java <java.version>, base package `<javaPackage>`)
+**Target:** `<project-path>` (Spring Boot <4.0.x>, Maven, Java <java.version>, base package `<javaPackage>`)<, application module `<module>` of a multi-module build>
 **Role:** <publisher | subscriber | both>
 **Subscription type:** <declarative | programmatic | streaming> — <default | follows existing @Topic subscriptions | follows existing `<path>/subscription.yaml` | follows existing subscribeToTopic streams | requested>
 **App port:** <port> (`server.port` in `<application.properties | application.yml>` | default 8080, no `server.port` set)
@@ -77,8 +80,8 @@ defines them (Java forms), with these values that differ in an existing project:
 | <pubsub> | <TopicName> | <type> | <`<SubscribeRoute>` | `<TopicResource>StreamingSubscriber`> | <DeadLetterTopicName> |
 
 ### Dependencies (`pom.xml`)
-- Import `io.dapr.spring` `dapr-spring-bom` 1.19.1 in `dependencyManagement`
-- Add `io.dapr.spring` `dapr-spring-boot-starter` (no version)
+- Import `io.dapr.spring` `dapr-spring-bom` 1.19.1 in `dependencyManagement` <of `<module>/pom.xml` | of the root `pom.xml`>
+- Add `io.dapr.spring` `dapr-spring-boot-starter` (no version) <to `<module>/pom.xml`>
 - <`dapr-spring-bom` 1.18.1 → 1.19.1; `dapr-spring-boot-4-starter` → `dapr-spring-boot-starter` (question 1)>
 - <Or: unchanged, the project already has `dapr-spring-boot-starter` with `dapr-spring-bom` 1.19.1.>
 
@@ -93,14 +96,15 @@ defines them (Java forms), with these values that differ in an existing project:
 
 ### Dapr wiring
 - <dapr.yaml: new in `<project-path>` | append app entry to `<path>` | unchanged | add `appPort` to the existing entry>; app id `<app-id>`, appPort <port>, Dapr HTTP <port>
-- Component: <new `<resources folder>/pubsub.yaml` | reuse existing `<component name>` in `<path>`>
+- Component: <new `<resources folder>/pubsub.yaml` | reuse existing `<component name>` in `<path>` | reuse `pubsub` in `~/.dapr/components` (dapr.yaml names no resources folder)><; add `<app-id>` to its `scopes`>
+- <Multi-module: run `mvn install -DskipTests` from `<root folder>` before `dapr run -f .` (the module needs its siblings in the local Maven repository).>
 - Resiliency: <new `<resources folder>/resiliency.yaml` | append to existing `<path>` | unchanged, `<path>` already targets the component>
 - <Resiliency scope: the policy targets the component `<pubsub>`, so it also changes retries for the existing subscriptions on it (<topics>): a failing handler is retried <N times, <interval> apart> before the message is dead-lettered or dropped.>
 - Subscription: <new `<resources folder>/subscription.yaml` scoped to `<app-id>` | none: code subscription>
 
 ### Left unchanged
 - `README.md`, `server.port`, existing controllers (except the trigger endpoint, question 2), existing subscriptions, components and tests
-- <Existing subscriber routes outside the scoped advice: `<EmailEventsController>` (`<topic>`) still answers 400 to an unreadable event, which Dapr retries; the new `UnreadableEventAdvice` covers only the new events controller.>
+- <Existing subscriber routes outside the scoped advice: `<EmailEventsController>` (`<topic>`) still answers 400 to an unreadable event, which Dapr retries; the new `UnreadableEventAdvice` covers only the new events controller. `review-pubsub-subscriptions` reports this as DPS-SUB-008 until the controller is added to the advice's `assignableTypes`.>
 - <Existing global advice `<GlobalExceptionHandler>`: unchanged; the scoped advice is ordered first for the new event routes.>
 
 ### Checks
@@ -108,6 +112,7 @@ defines them (Java forms), with these values that differ in an existing project:
 - Build after every step: `mvn -q -DskipTests package`
 - <Port collision: `<other app>` in `<path to dapr.yaml>` also uses appPort <port>. The two apps cannot run together with `dapr run -f .`; change one port before running. This plan does not change `server.port`.>
 - <Uncommitted changes found: the edits will mix with them.>
+- <**Risk:** the app uses Spring Security (<`spring-boot-starter-security` | `<SecurityConfig>` defines a `SecurityFilterChain`>), so the routes the sidecar calls need a login, and POSTs a CSRF token: `/dapr/subscribe` and `/dapr/config` (read when the sidecar starts; programmatic subscriptions never load with a 401) and `/events/<pubsub>/**` (each delivery gets 401 or 403, which Dapr retries and then dead-letters; the dead-letter route is blocked too). The safer fix is Dapr's app API token (`APP_API_TOKEN` for the sidecar, sent to the app as the `dapr-api-token` header, which the app's security checks); question <n> offers a `SecurityFilterChain` that lets only these routes through.>
 - <Streaming: the streaming API acknowledges every event it hands to the app, so the handler cannot choose RETRY or DROP; a failed handler loses the event, and only a body that cannot be deserialized is dead-lettered.>
 - <**Risk:** `<TestClass>` is a `@WebMvcTest` that names no controllers, so it also loads the new `<PublishResource>PublishController` (needs a `DaprClient` bean) and `<TopicResource>EventsController` (needs `<EventName>Handler`), which slice tests do not create. After this change it fails with `No qualifying bean of type ...` until the test gets `@MockitoBean` fields for `DaprClient` and `<EventName>Handler`, or lists its controllers (`@WebMvcTest(<Controller>.class)`). This skill does not edit tests.>
 
@@ -115,6 +120,9 @@ defines them (Java forms), with these values that differ in an existing project:
 1. A newer Dapr version is available: <`dapr-spring-bom` 1.18.1 → 1.19.1, `dapr-spring-boot-4-starter` → `dapr-spring-boot-starter`>. Update? **Default: yes, update.** (No stops the skill: the pub/sub code needs 1.19.1.)
 2. The event always gets its own publish endpoint, `POST /pubsub/<TopicName>`. Should `<POST /shipments>` also publish `<EventName>` after it saves the <shipment>? **Default: yes.** <Default no when the request does not ask to publish from this action and a test calls the endpoint.>
    <**Risk:** `<TestClass>` calls `<POST /shipments>` through <MockMvc>. If the endpoint also publishes, that test needs a running Dapr sidecar or a `@MockitoBean DaprClient` whose `publishEvent(...)` returns `Mono.empty()`. This skill does not edit tests.>
+   <**Risk:** `<TestClass>` is `@WebMvcTest(<TriggerController>.class)` and does not call `<POST /shipments>`. With yes, `<TriggerController>` takes a `DaprClient` constructor parameter, which slice tests do not create, so `<TestClass>` fails with `No qualifying bean of type 'io.dapr.client.DaprClient'` until it gets a `@MockitoBean DaprClient` field. Answer no to leave the test passing. This skill does not edit tests.>
+3. <Several modules have a `@SpringBootApplication` class and the web starter: `<module>`, `<other module>`. This plan adds pub/sub to `<module>`. Which module? **Default: `<module>`.**>
+4. <Add `DaprSecurityConfiguration`, a `SecurityFilterChain` that lets `/dapr/subscribe`, `/dapr/config` and `/events/<pubsub>/**` through without a login and without CSRF, and leaves every other route as it is? Anyone who can reach the app can then post to the event routes. **Default: no.**>
 
 <Leave out a question that does not apply and renumber the rest, so a plan with only the endpoint question numbers it 1 and the user answers "1: no". Without a trigger endpoint, write instead: No existing endpoint publishes the event; use the new publish endpoint.>
 
@@ -123,6 +131,7 @@ Reply **yes** to apply with the defaults, answer a question differently (for exa
 
 ## pom.xml edits
 
+- Which `pom.xml`: the starter always goes in the application module's pom; the BOM import goes where **The application module folder** in [`../dapr-shared/java-existing-project.md`](../dapr-shared/java-existing-project.md) says (an existing Dapr BOM import stays put; else an existing `<dependencyManagement>`, root first; else the application module's pom). In a single-module project both are the same `pom.xml`.
 - No `<dependencyManagement>` yet: add one after `<properties>` (or after `<name>`/`<description>` when there are no properties) with the BOM import from [`../dapr-shared/java-pubsub-project.md`](../dapr-shared/java-pubsub-project.md):
 
   ```xml
@@ -154,7 +163,7 @@ Reply **yes** to apply with the defaults, answer a question differently (for exa
 
 ## Dapr wiring
 
-- No `dapr.yaml`: create one in the Maven project folder:
+- No `dapr.yaml`: create one in the root folder (the application module folder in a single-module project):
 
   ```yaml
   version: 1
@@ -162,15 +171,17 @@ Reply **yes** to apply with the defaults, answer a question differently (for exa
     resourcesPath: ./resources
   apps:
     - appID: <app-id>
-      appDirPath: .
+      appDirPath: <. | ./<module>>
       appPort: <port>
       daprHTTPPort: <free port, default 3555>
       command: ["mvn", "spring-boot:run"]
   ```
 
-  `<app-id>` is the app id from **Detection** and `<port>` the app port. Keep `appPort` for every subscription type, streaming included: the app still serves its own HTTP API (see [`../dapr-shared/pubsub-dapr-yaml.md`](../dapr-shared/pubsub-dapr-yaml.md) → **Port and appPort rules**). No `dapr.client.*` properties: the SDK reads the ports `dapr run` exports.
+  `<app-id>` is the app id from **Detection** and `<port>` the app port. In a multi-module build `appDirPath` is the module (the Dapr CLI runs `command` there) and the run doc says to run `mvn install -DskipTests` from the root folder first, see **The application module folder** in [`../dapr-shared/java-existing-project.md`](../dapr-shared/java-existing-project.md). Keep `appPort` for every subscription type, streaming included: the app still serves its own HTTP API (see [`../dapr-shared/pubsub-dapr-yaml.md`](../dapr-shared/pubsub-dapr-yaml.md) → **Port and appPort rules**). No `dapr.client.*` properties: the SDK reads the ports `dapr run` exports.
 - `dapr.yaml` exists with this app: leave the entry unchanged. When it has no `appPort` and the new subscription is declarative or programmatic, add `appPort: <port>` to that entry (a plan item): the sidecar cannot deliver to the app without it. When its `appPort` differs from the app port, say so in the plan and in `DAPR-PUBSUB.md`; do not change either.
 - `dapr.yaml` exists without this app: append an entry under `apps:` with `appDirPath` relative to the `dapr.yaml` folder, `appPort` set to the app port, a `daprHTTPPort`, and `command: ["mvn", "spring-boot:run"]`. The `daprHTTPPort` is 3555 when no entry uses it as an `appPort`, `daprHTTPPort` or `daprGRPCPort`; otherwise count up from 3555 (3556, 3557, …) to the first port none of them uses. It must also differ from this app's port. Keep every other entry as it is.
+- Which components this app sees, and where a new one goes, follows the resources-folder order in **An existing dapr.yaml** in [`../dapr-shared/java-existing-project.md`](../dapr-shared/java-existing-project.md): the app's own `resourcesPath`/`resourcesPaths`, then `.dapr/resources` in its `appDirPath`, then the `common` ones, else `~/.dapr/components`. New files (`pubsub.yaml`, `resiliency.yaml`, `subscription.yaml`) go into the first folder of that source. When the source is `~/.dapr/components`, reuse its `pubsub`; when it lacks what is needed, add `resourcesPath: ./resources` to this app's entry and put the new files in `<module>/resources`; never write to `~/.dapr`.
+- Scopes: when the reused pub/sub component has `scopes` without the app id, add the app id to them (a plan item): otherwise this app's sidecar never loads the component, and every publish and subscription on it fails.
 - Pub/sub component: an existing `type: pubsub.*` component is reused, and its `metadata.name` is the `dapr.pubsub.name` value; several → ask which one. None → add `pubsub.yaml` from [`../dapr-shared/dapr-pubsub-redis.md`](../dapr-shared/dapr-pubsub-redis.md) to the `resourcesPath` folder (`resources/` for a new `dapr.yaml`). When another component is already named `pubsub` (a state store, for example), name the new one `messages-pubsub` and say so in the plan.
 - Resiliency: none → add `resiliency.yaml` from [`../dapr-shared/dapr-pubsub-resiliency.md`](../dapr-shared/dapr-pubsub-resiliency.md) to the same folder, with the target named after the component. An existing `kind: Resiliency` file → append the policy and target per **Appending to an existing Resiliency** in that file; a target for the component that already exists stays unchanged. A resiliency target applies to every subscription on the component, not only the new topic: when the reused component already has subscriptions, a new or appended policy changes their retries too, so the plan gets the **Resiliency scope** line and `DAPR-PUBSUB.md` says the same.
 - Declarative only: add `subscription.yaml` from [`../dapr-shared/dapr-pubsub-subscription.md`](../dapr-shared/dapr-pubsub-subscription.md) (both documents, the topic's and its dead-letter topic's) to the same folder, with `pubsubname` set to the component name and `scopes` exactly the app id. When `subscription.yaml` already exists, name the new file `<TopicName>-subscription.yaml`.
@@ -316,8 +327,8 @@ Use [`../dapr-shared/pubsub-local-http.md`](../dapr-shared/pubsub-local-http.md)
 record component names). One app plays both roles, so `@publisherHost` and `@subscriberHost` are both
 `http://localhost:<port>` (the app port) and `@daprHost` is this app's `daprHTTPPort`. The publish request goes
 to `/pubsub/<TopicName>`; add a request for the trigger endpoint when question 2 was answered yes. Keep only the
-requests for the role and type (the variants in that file). Append them to an existing `*.http` file in the Maven
-project folder under a `### Dapr pub/sub` heading, or create `pubsub.http` there.
+requests for the role and type (the variants in that file). Append them to an existing `*.http` file in the
+application module folder under a `### Dapr pub/sub` heading, or create `pubsub.http` there.
 
 ## Add Pub/Sub run doc
 
@@ -325,7 +336,13 @@ Use [`../dapr-shared/pubsub-run-doc.md`](../dapr-shared/pubsub-run-doc.md) with 
 
 - `<StartCommand>`: `dapr run -f .` from the folder that holds `dapr.yaml`; it starts the app with
   `mvn spring-boot:run` on the app port and its sidecar. The first start downloads the Maven dependencies.
-  Add the port-collision line when the plan had one.
+  Add the port-collision line when the plan had one. Multi-module: first run `mvn install -DskipTests` from the root
+  folder, and again after changing a sibling module (`mvn -pl <module> -am spring-boot:run` does not work: it
+  also runs the goal on the aggregator pom).
+- Spring Security (when the plan had its Risk line): name the routes the sidecar calls, say what fails without
+  access (401/403 on deliveries, retried and then dead-lettered; programmatic subscriptions not loaded) and
+  whether `DaprSecurityConfiguration` was added; mention the app API token (`APP_API_TOKEN`, `dapr-api-token`
+  header) as the safer option.
 - Topics table: every existing subscription from the plan and every new one.
 - Try it: curl and PowerShell examples for `POST /pubsub/<TopicName>` on the app port and, when question 2 was
   answered yes, for the trigger endpoint, then the log line the handler writes. Link to the `.http` file.
@@ -347,8 +364,8 @@ Use [`../dapr-shared/pubsub-run-doc.md`](../dapr-shared/pubsub-run-doc.md) with 
 - When the plan had the **Resiliency scope** line: the retry policy targets the component, so it also applies to
   the existing subscriptions on it (name them).
 - When the plan named existing subscriber routes outside the scoped advice: they still answer 400 to an
-  unreadable event, which Dapr retries; add them to `UnreadableEventAdvice`'s `assignableTypes` to drop those
-  too (a Next step).
+  unreadable event, which Dapr retries (`review-pubsub-subscriptions` reports it as DPS-SUB-008); add them to
+  `UnreadableEventAdvice`'s `assignableTypes` to drop those too (a Next step).
 - Tests: tests that call a publishing endpoint need a running sidecar or a `@MockitoBean DaprClient` whose
   `publishEvent(...)` returns `Mono.empty()`; tests that slice the web layer need `@MockitoBean` fields for the
   beans the new controllers take.
@@ -376,6 +393,7 @@ Use [`../dapr-shared/pubsub-run-doc.md`](../dapr-shared/pubsub-run-doc.md) with 
 
 - Dependency updates declined (question 1 answered no): stop without changes. Say that the generated code needs Dapr Java SDK 1.19.1 and that the BOM sets one version for every Dapr artifact, so the project cannot mix 1.18 and 1.19.
 - Trigger endpoint declined (question 2 answered no): leave it unchanged and add a "Publish from `<endpoint>`" next step to `DAPR-PUBSUB.md`, with the test caveat when a test calls the endpoint.
+- A `@WebMvcTest` that names the trigger controller and question 2 yes: the plan carries the named-controller Risk line whatever the default, and the test fails with `No qualifying bean of type 'io.dapr.client.DaprClient'`; report it in Phase 6 as caused by the change, with the fix (a `@MockitoBean DaprClient` field). A `@WebMvcTest` that lists other controllers is unaffected.
 - Trigger endpoint covered by an HTTP test and question 2 yes: the plan carries the Risk line. A `@WebMvcTest` on that controller fails to load (no `DaprClient` bean in the slice); a `@SpringBootTest` that calls it gets a 500 at once, because the publish finds no sidecar (`java.net.ConnectException: Connection refused`, observed; there is no long wait). In Phase 6 report that failure as caused by the change, with the fix (`@MockitoBean DaprClient` whose `publishEvent(...)` returns `Mono.empty()`), not as pre-existing.
 - A bare `@WebMvcTest` (no controllers listed): it loads the new controllers too and fails for the missing `DaprClient` or `<EventName>Handler` bean, because the slice excludes the Dapr autoconfiguration and `@Service` classes. The plan carries the **Risk** line; never edit the test.
 - A `@SpringBootTest` test class: it keeps passing without a sidecar. A streaming subscription logs `Streaming subscription to <TopicName> failed; resubscribing` in the background; that is expected.

@@ -120,7 +120,8 @@ public class <WorkflowName>Controller {
   yet). Without the check the runtime rejects the schedule
   (`ALREADY_EXISTS: an active workflow with ID '<id>' already exists`), which reaches the client as a 500.
   `isActive` calls `exists` first, because `getWorkflowState` reports an unknown id as `RUNNING`. Scheduling
-  with the id of a finished instance (`COMPLETED`, `FAILED`, `TERMINATED`) starts a new run under the same id.
+  with the id of a finished instance (`COMPLETED`, `FAILED`, `TERMINATED` or `CANCELED`, the terminal values)
+  starts a new run under the same id.
   Two concurrent starts with the same new id can still race; the loser gets the runtime's error.
 - `/start` checks only when the input has an id: `getWorkflowState(null, ...)` throws, while
   `scheduleNewWorkflow` with a `null` id generates one.
@@ -213,7 +214,10 @@ public class LoanController {
 - Schedule only after the existing work succeeded, so a rejected request (validation error, exception) never
   starts a workflow.
 - Use the entity's own id as the instance id. The workflow's status is then at
-  `/workflows/<workflow-route>/status/<entity id>`.
+  `/workflows/<workflow-route>/status/<entity id>`. The instance id is a `String`: when the entity id has
+  another type (`long`, `Long`, `UUID`), pass `String.valueOf(created.id())` (and use it in the workflow
+  input when that carries a `String` id). `String.valueOf` turns a `null` reference into the text `"null"`,
+  so convert only after the null check below.
 - Keep the status code and body exactly as they were; clients of the existing endpoint must not notice the
   change apart from the workflow running.
 - When the entity id can repeat (the client sends it, or the handler updates an existing entity), an instance
@@ -221,8 +225,9 @@ public class LoanController {
   (`ALREADY_EXISTS`) after the existing work ran: a 500 the client would notice. Guard the call with the
   `/start` route's check and skip scheduling while the instance is active: copy the `exists` and `isActive`
   helpers into the controller and wrap the call in
-  `if (created.id() != null && !isActive(workflowClient.getWorkflowState(created.id(), false))) { ... }`.
-  `getWorkflowState` throws on a null id, so keep the null check unless the entity id can never be null
-  (a primitive, or set by the handler before this point). A server-generated id needs no guard.
+  `if (created.id() != null && !isActive(workflowClient.getWorkflowState(String.valueOf(created.id()), false))) { ... }`.
+  `getWorkflowState` throws on a null id, so keep the null check for a reference-type id (`String`, `Long`,
+  `UUID`). Drop it for a primitive id (`long`: `created.id() != null` does not compile) or one the handler
+  set before this point. A server-generated id needs no guard.
 - The endpoint now needs the Dapr sidecar. Tests that call it over HTTP need a running sidecar or a mocked
   `DaprWorkflowClient` bean; that is why the default answer to the question is "no" when such tests exist.

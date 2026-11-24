@@ -17,7 +17,7 @@ This repository contains Claude Code skill definitions for building Dapr Workflo
   - `create-workflow-dotnet/REFERENCE.md` — Detailed reference examples for the .NET skill
   - `create-workflow-python/SKILL.md` — Skill for creating Dapr Workflow apps with Python
   - `create-workflow-python/REFERENCE.md` — Detailed reference examples for the Python skill
-  - `create-workflow-java/SKILL.md` — Skill for creating Dapr Workflow apps with Java and Spring Boot 4 (Maven, Dapr Spring Boot starter; alpha in the SDK)
+  - `create-workflow-java/SKILL.md` — Skill for creating Dapr Workflow apps with Java and Spring Boot 4.0 (Maven, Dapr Spring Boot starter; alpha in the SDK)
   - `create-workflow-java/REFERENCE.md` — Detailed reference examples for the Java skill
   - `create-workflow-typescript/SKILL.md` — Skill for creating a Dapr building-blocks app (Workflow, service invocation, pub/sub, bindings, jobs, state, secrets) with TypeScript
   - `create-workflow-typescript/REFERENCE.md` — Detailed reference examples for the TypeScript skill
@@ -25,7 +25,7 @@ This repository contains Claude Code skill definitions for building Dapr Workflo
   - `migrate-workflow-typescript/REFERENCE.md` — Detection heuristics, infra-to-component mapping, and verified before/after code for the migration skill
   - `add-workflow-dotnet/SKILL.md` — Skill for adding Dapr Workflow to an existing ASP.NET Core project (plain or Aspire) after a plan the user approves
   - `add-workflow-dotnet/REFERENCE.md` — Detection heuristics, plan template, edit recipes and run-doc template for the add skill
-  - `add-workflow-java/SKILL.md` — Skill for adding Dapr Workflow to an existing Spring Boot 4 Maven project after a plan the user approves
+  - `add-workflow-java/SKILL.md` — Skill for adding Dapr Workflow to an existing Spring Boot 4.0 Maven project after a plan the user approves
   - `add-workflow-java/REFERENCE.md` — Detection heuristics, plan template, edit recipes and run-doc template for the Java workflow add skill
   - `create-workflow-aspire/SKILL.md` — Skill for creating Dapr Workflow apps with Aspire
   - `create-workflow-aspire/REFERENCE.md` — Detailed reference examples for the Aspire skill
@@ -61,13 +61,13 @@ This repository contains Claude Code skill definitions for building Dapr Workflo
   - `create-pubsub-dotnet/REFERENCE.md` — Detailed reference examples for the .NET pub/sub create skill
   - `create-pubsub-python/SKILL.md` — Skill for creating Dapr pub/sub apps in Python (FastAPI with dapr run; declarative, programmatic or streaming subscriptions)
   - `create-pubsub-python/REFERENCE.md` — Detailed reference examples for the Python pub/sub create skill
-  - `create-pubsub-java/SKILL.md` — Skill for creating Dapr pub/sub apps in Java with Spring Boot 4 (dapr run; declarative, programmatic or streaming subscriptions)
+  - `create-pubsub-java/SKILL.md` — Skill for creating Dapr pub/sub apps in Java with Spring Boot 4.0 (dapr run; declarative, programmatic or streaming subscriptions)
   - `create-pubsub-java/REFERENCE.md` — Detailed reference examples for the Java pub/sub create skill
   - `add-pubsub-dotnet/SKILL.md` — Skill for adding Dapr pub/sub to an existing ASP.NET Core project (plain or Aspire) after a plan the user approves
   - `add-pubsub-dotnet/REFERENCE.md` — Detection heuristics, plan template, edit recipes and run-doc template for the .NET pub/sub add skill
   - `add-pubsub-python/SKILL.md` — Skill for adding Dapr pub/sub to an existing Python FastAPI app after a plan the user approves
   - `add-pubsub-python/REFERENCE.md` — Detection heuristics, plan template, edit recipes and run-doc template for the Python pub/sub add skill
-  - `add-pubsub-java/SKILL.md` — Skill for adding Dapr pub/sub to an existing Spring Boot 4 Maven project after a plan the user approves
+  - `add-pubsub-java/SKILL.md` — Skill for adding Dapr pub/sub to an existing Spring Boot 4.0 Maven project after a plan the user approves
   - `add-pubsub-java/REFERENCE.md` — Detection heuristics, plan template, edit recipes and run-doc template for the Java pub/sub add skill
   - `review-pubsub-publishing/SKILL.md` — Skill for reviewing Dapr pub/sub publishing code in .NET, Python and Java (swallowed publish failures, pub/sub names, content types, client lifetime, bulk publish, payload size)
   - `review-pubsub-publishing/REFERENCE.md` — Detailed reference and worked example for the pub/sub publishing review skill
@@ -94,7 +94,7 @@ Run `migrate-workflow-typescript` on an existing TypeScript/Node.js application 
 
 Run `add-workflow-dotnet` on an existing ASP.NET Core project (net8.0, net9.0 or net10.0, optionally inside an Aspire solution). It inspects the solution, shows an Add Workflow Plan for approval, then adds `Dapr.Workflow`, the Dapr wiring, the workflow and its activities, and the management endpoints with targeted edits, building after each step and running the existing tests at the end. It never changes git state and writes a `DAPR-WORKFLOW.md` instead of editing the README.
 
-Run `add-workflow-java` on an existing Spring Boot 4 project built with Maven (Spring MVC; Gradle and WebFlux are not supported). It works the same way: a plan for approval, then the `dapr-spring-bom` and `dapr-spring-boot-starter`, the Dapr wiring, the workflow and its activities, and the management endpoints with targeted edits, running `mvn -q -DskipTests package` after each step and `mvn -q test` at the end. It also writes a `DAPR-WORKFLOW.md`.
+Run `add-workflow-java` on an existing Spring Boot 4.0 project built with Maven, single-module or multi-module (Spring MVC; Gradle and WebFlux are not supported). It works the same way: a plan for approval, then the `dapr-spring-bom` and `dapr-spring-boot-starter`, the Dapr wiring, the workflow and its activities, and the management endpoints with targeted edits, running `mvn -q -DskipTests package` after each step and `mvn -q test` at the end. It also writes a `DAPR-WORKFLOW.md`.
 
 **Build a new agent application:**
 
@@ -102,11 +102,11 @@ Run `create-agent-python` or `create-agent-dotnet` to scaffold a durable agent a
 
 **Build a new pub/sub application:**
 
-Run `create-pubsub-dotnet`, `create-pubsub-python` or `create-pubsub-java` to scaffold a publisher and subscriber app (`dapr run`, or Aspire for .NET; Python uses FastAPI; Java uses Spring Boot 4). The role (publisher, subscriber or both) and the subscription type are asked once; declarative is the default, followed by programmatic and streaming.
+Run `create-pubsub-dotnet`, `create-pubsub-python` or `create-pubsub-java` to scaffold a publisher and subscriber app (`dapr run`, or Aspire for .NET; Python uses FastAPI; Java uses Spring Boot 4.0). The role (publisher, subscriber or both) and the subscription type are asked once; declarative is the default, followed by programmatic and streaming.
 
 **Add pub/sub to an existing project:**
 
-Run `add-pubsub-dotnet`, `add-pubsub-python` or `add-pubsub-java` on an existing project (.NET: ASP.NET Core, plain or Aspire; Python: FastAPI only; Java: Spring Boot 4 with Maven and Spring MVC). They inspect it, show a plan for approval, and then apply targeted edits, keeping the subscription type the project already uses. They never change git state and write a `DAPR-PUBSUB.md` instead of editing the README.
+Run `add-pubsub-dotnet`, `add-pubsub-python` or `add-pubsub-java` on an existing project (.NET: ASP.NET Core, plain or Aspire; Python: FastAPI only; Java: Spring Boot 4.0 with Maven and Spring MVC, single-module or multi-module). They inspect it, show a plan for approval, and then apply targeted edits, keeping the subscription type the project already uses. They never change git state and write a `DAPR-PUBSUB.md` instead of editing the README.
 
 **Review an existing workflow application** (run any combination, in any order):
 
@@ -161,7 +161,7 @@ All skills require:
 
 - JDK 17+ — [download a JDK](https://adoptium.net/)
 - [Maven 3.9+](https://maven.apache.org/download.cgi)
-- Spring Boot 4 (Dapr Java SDK 1.19); the Spring Boot integration is alpha in the SDK
+- Spring Boot 4.0 (Dapr Java SDK 1.19); the Spring Boot integration is alpha in the SDK
 
 ### TypeScript skills
 
