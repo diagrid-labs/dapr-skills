@@ -36,7 +36,7 @@ export const FAMILIES = new Map([
       // its name contains "workflow" (agent-statestore-workflow.md).
       sharedExclude: /^agent-/,
       // Workflow templates named after the SDK type rather than the family.
-      sharedFiles: new Set(['dotnet-activity-class.md', 'dotnet-models.md']),
+      sharedFiles: new Set(['dotnet-activity-class.md', 'dotnet-models.md', 'java-activity-class.md', 'java-models.md']),
       localPlaceholders: new Set([
         'agent-name',
         'app-id',
@@ -159,6 +159,8 @@ export function checkFamilyVocabulary(skillsDir, family) {
     const text = readFileSync(file, 'utf8');
     text.split(/\r?\n/).forEach((line, index) => {
       for (const m of line.matchAll(UNAMBIGUOUS)) {
+        // An XML element (a pom.xml `<groupId>`) has a closing tag; a placeholder never does.
+        if (text.includes(`</${m[1]}>`)) continue;
         if (where !== config.vocabulary) used.add(m[1]);
         if (config.localPlaceholders.has(m[1])) continue;
         if (where !== config.vocabulary && !defined.has(m[1])) {
