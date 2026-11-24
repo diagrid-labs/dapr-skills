@@ -27,7 +27,10 @@ relative to the root folder (`orders-app`).
   the application module's pom; when neither has one, add a new section to the application module's pom.
 - **Building:** run `mvn -q -DskipTests package` and `mvn -q test` from the **root folder**, so sibling
   modules build first and their tests run too. They match the skill's allowed commands when the session's
-  working directory is the root folder; otherwise use `-f "<root folder>/pom.xml"`. Never use `-pl`, `-am`
+  working directory is the root folder. Otherwise (for example a shell whose working directory resets between
+  calls) run `mvn -q -f "<root folder>/pom.xml" -DskipTests package` and `mvn -q -f "<root folder>/pom.xml"
+  test` with the root folder's absolute path: an `allowed-tools` rule without `*` matches only that exact
+  command, so the `-f` form is not pre-approved and the user approves each run. Never use `-pl`, `-am`
   or `install` in the skill's own commands. A test that fails in a sibling module counts like any other
   (baseline first).
 - **Running a multi-module app:** `mvn -pl <module> -am spring-boot:run` does not work: Maven runs the goal on
@@ -69,12 +72,24 @@ relative to the root folder (`orders-app`).
      `dapr init`.
 
   Read the components in every folder of the source that applies; those are the components this app sees.
-  New component files go into the first folder of that source. When the source is the Dapr default, read
+  New component files go into the first folder of that source. Without a `dapr.yaml`, the skill creates one
+  in the root folder with `common.resourcesPath: ./resources`, so new component files go into
+  `<root folder>/resources/`, next to that `dapr.yaml` (not into the application module folder). When the source is the Dapr default, read
   it (it is outside the project) and reuse what fits; `dapr init` puts a Redis `pubsub` and a `statestore`
   with `actorStateStore: "true"` there. When something the change needs is missing there, add
   `resourcesPath: ./resources` to this app's entry and the new components to `<module>/resources` (a plan
   item), and say in the plan that the app then stops loading `~/.dapr/components`, naming the components
   there that its code uses. Never write to `~/.dapr`.
+- **`.gitignore`.** `dapr run -f .` writes `.dapr/logs/` into each app's `appDirPath`. The plan item that
+  ignores it edits the `.gitignore` in the git repository root (the root folder without a git repository),
+  or the application module folder's own `.gitignore` when only that one exists; never create one. A pattern
+  without a slash before its end, such as `.dapr/`, matches a `.dapr` folder at any depth below its
+  `.gitignore`, so a root `.dapr/` entry already covers `<module>/.dapr/`. Add `.dapr/` when no `.gitignore`
+  from the application module folder up to the git root lists it. When the resources source is
+  `<appDirPath>/.dapr/resources`, `.dapr/` would hide new component files from git: add `**/.dapr/logs/`
+  instead (`.dapr/logs/` with its inner slash would match only next to the `.gitignore`), and when an
+  existing entry already ignores `.dapr/`, say in the plan that the new component files there are not
+  tracked by git; do not change that entry.
 - **Scopes on a reused component.** A component with `scopes` is loaded only by the sidecars of the app ids
   it lists. When a reused pub/sub component or actor state store has `scopes` without this app id, add the
   app id to its `scopes` list (a plan item, listed under **Edited files**); without it the sidecar never
@@ -88,19 +103,30 @@ means every route needs a login and every `POST` needs a CSRF token, unless the 
 permits it. Read the existing `SecurityFilterChain` beans, if any: a route they already `permitAll()` with
 CSRF ignored needs nothing.
 
-**Plan:** a **Risk** line under **Checks** that names the routes that would be blocked:
+**Plan:** a **Risk** line under **Checks** that names the routes that would be blocked. Every request the
+run doc and the `.http` file send gets a 401 without a login, and every `POST` a 403 without a CSRF token,
+even with a login (`curl -u <user>:<password>` alone is not enough; verified with Spring Boot 4.0.8 and
+`httpBasic`).
 
-- pub/sub: `/dapr/subscribe` and `/dapr/config` (the sidecar reads them when it starts; with a 401 on
-  `/dapr/subscribe`, programmatic subscriptions never load) and `/events/<pubsub>/**` (each delivery gets a 401 or 403, which
-  Dapr retries and then dead-letters; the dead-letter route is blocked too);
-- workflow: `/workflows/<workflow-route>/**` for local runs (the curl examples and the `.http` file get a 401
-  or 403; the workflow itself runs, because the app connects to the sidecar over gRPC).
+- pub/sub, subscriber with HTTP delivery (declarative or programmatic): the routes the sidecar calls,
+  `/dapr/subscribe` and `/dapr/config` (the sidecar reads them when it starts; with a 401 on
+  `/dapr/subscribe`, programmatic subscriptions never load) and `/events/<pubsub>/**` (each delivery gets a
+  401 or 403, which Dapr retries and then dead-letters; the dead-letter route is blocked too);
+- pub/sub, publisher only or streaming subscriber only: no sidecar route (a streaming subscription is a gRPC
+  stream the app opens); the Risk line names only the run doc's requests, `POST /pubsub/<TopicName>` and the
+  trigger endpoint when it publishes;
+- workflow: `/workflows/<workflow-route>/**` for local runs (the curl examples and the `.http` file; the
+  workflow itself runs, because the app connects to the sidecar over gRPC, and the sidecar never calls
+  these routes).
 
-The Risk line says that the safer option is Dapr's app API token: set `APP_API_TOKEN` for the sidecar, and
-the sidecar sends it to the app in the `dapr-api-token` header, which the app's security can check instead
-of opening the routes. The run doc repeats the note.
+For the sidecar's routes only (pub/sub with HTTP delivery), the Risk line says that the safer option is
+Dapr's app API token: set `APP_API_TOKEN` for the sidecar, and the sidecar sends it to the app in the
+`dapr-api-token` header, which the app's security can check instead of opening the routes. The run doc
+repeats the note. Never suggest the app API token for routes only people call (`/workflows/**`,
+`POST /pubsub/<TopicName>`): the sidecar never sends it there.
 
-**Optional plan item (default no):** a question in the plan, "Add `DaprSecurityConfiguration`, a
+**Optional plan item (default no):** only when the Risk line names routes that would be opened (the
+sidecar's pub/sub routes, or `/workflows/<workflow-route>/**`), a question in the plan, "Add `DaprSecurityConfiguration`, a
 `SecurityFilterChain` that lets <the routes above> through without a login and without CSRF, and leaves every
 other route as it is? **Default: no.**" Never edit, add or remove security configuration without that item
 approved: not the existing `SecurityFilterChain` beans, not `spring.security.*` properties, not the
@@ -159,8 +185,14 @@ every other route would be open. It is Spring Boot's default chain, written out 
 Key points:
 
 - `securityMatcher` limits the chain to the listed routes, and `@Order(Ordered.HIGHEST_PRECEDENCE)` makes it
-  match before the app's chains; CSRF is off only in this chain. When an existing chain also has
-  `@Order(Ordered.HIGHEST_PRECEDENCE)`, give this one a lower number than that chain.
+  match before the app's chains; CSRF is off only in this chain. No order comes before
+  `HIGHEST_PRECEDENCE`. When an existing chain also has `@Order(Ordered.HIGHEST_PRECEDENCE)` and matches
+  the Dapr routes too (no `securityMatcher` of its own means it matches any request), the app can fail to
+  start (`UnreachableFilterChainException`, seen with Spring Boot 4.0.8 and Spring Security 7) or the Dapr
+  chain is never reached: the optional plan item then also
+  changes that chain to `@Order(Ordered.HIGHEST_PRECEDENCE + 1)`, says so in its question and lists the
+  file under **Edited files**. An existing chain with its own `securityMatcher` that does not cover the
+  Dapr routes needs no change.
 - Verified with Spring Boot 4.0.8 (Spring Security 7) and a MockMvc test, both with and without an app
   `SecurityFilterChain`: `POST /events/pubsub/shipments` without a login or CSRF token → 200, `GET
   /dapr/subscribe` → 200, while `GET /shipments/1` → 401 and `POST /shipments` → 403 as before. Without the

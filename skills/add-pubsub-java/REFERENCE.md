@@ -31,7 +31,7 @@ skills share (multi-module builds, the port, an existing `dapr.yaml` and its com
 | Port collision | Another app entry in `dapr.yaml` (not this app) has `appPort` equal to the app port. |
 | Tests | Any class under `src/test/java`. |
 | Bare `@WebMvcTest` | A `@WebMvcTest` with no controllers listed (not `@WebMvcTest(ShipmentController.class)` or `@WebMvcTest(controllers = ...)`). It loads every `@Controller` in the app, including the new ones: the publish controller needs a `DaprClient` bean and the declarative or programmatic events controller needs the `<EventName>Handler` bean, and no slice creates either → the plan gets the **bare `@WebMvcTest`** Risk line. |
-| Spring Security | `spring-boot-starter-security` in the application module's pom (or its parent), or a `@Bean` returning `SecurityFilterChain`. Any → the Spring Security **Risk** line and the security question, unless an existing chain already permits `/dapr/subscribe`, `/dapr/config` and `/events/<pubsub>/**` without CSRF. Never edit security configuration without the question answered yes. |
+| Spring Security | `spring-boot-starter-security` in the application module's pom (or its parent), or a `@Bean` returning `SecurityFilterChain`. Any → the Spring Security **Risk** line. A subscriber with declarative or programmatic subscriptions also gets the security question and the sidecar routes in that line, unless an existing chain already permits `/dapr/subscribe`, `/dapr/config` and `/events/<pubsub>/**` without CSRF. Publisher only or streaming only: the Risk line names only the run doc's requests, and there is no question. Never edit security configuration without the question answered yes. |
 | Git | `git status` only (read-only). |
 
 ### Stop messages
@@ -111,8 +111,8 @@ defines them (Java forms), with these values that differ in an existing project:
 - Baseline test run before changes: yes (reply "no baseline" to skip)
 - Build after every step: `mvn -q -DskipTests package`
 - <Port collision: `<other app>` in `<path to dapr.yaml>` also uses appPort <port>. The two apps cannot run together with `dapr run -f .`; change one port before running. This plan does not change `server.port`.>
-- <Uncommitted changes found: the edits will mix with them.>
-- <**Risk:** the app uses Spring Security (<`spring-boot-starter-security` | `<SecurityConfig>` defines a `SecurityFilterChain`>), so the routes the sidecar calls need a login, and POSTs a CSRF token: `/dapr/subscribe` and `/dapr/config` (read when the sidecar starts; programmatic subscriptions never load with a 401) and `/events/<pubsub>/**` (each delivery gets 401 or 403, which Dapr retries and then dead-letters; the dead-letter route is blocked too). The safer fix is Dapr's app API token (`APP_API_TOKEN` for the sidecar, sent to the app as the `dapr-api-token` header, which the app's security checks); question <n> offers a `SecurityFilterChain` that lets only these routes through.>
+- <Uncommitted changes found: the edits will mix with them. | Not a git repository: `git status` was skipped, and the edits cannot be reviewed or undone with git.>
+- <**Risk:** the app uses Spring Security (<`spring-boot-starter-security` | `<SecurityConfig>` defines a `SecurityFilterChain`>), so every route needs a login, and POSTs a CSRF token. <Declarative or programmatic subscriber: the routes the sidecar calls are blocked: `/dapr/subscribe` and `/dapr/config` (read when the sidecar starts; programmatic subscriptions never load with a 401) and `/events/<pubsub>/**` (each delivery gets 401 or 403, which Dapr retries and then dead-letters; the dead-letter route is blocked too). The safer fix is Dapr's app API token (`APP_API_TOKEN` for the sidecar, sent to the app as the `dapr-api-token` header, which the app's security checks); question <n> offers a `SecurityFilterChain` that lets only these routes through.> The run doc's requests (`POST /pubsub/<TopicName>`<, `<POST /shipments>`>) get 401 without a login and 403 without a CSRF token, even with a login.>
 - <Streaming: the streaming API acknowledges every event it hands to the app, so the handler cannot choose RETRY or DROP; a failed handler loses the event, and only a body that cannot be deserialized is dead-lettered.>
 - <**Risk:** `<TestClass>` is a `@WebMvcTest` that names no controllers, so it also loads the new `<PublishResource>PublishController` (needs a `DaprClient` bean) and `<TopicResource>EventsController` (needs `<EventName>Handler`), which slice tests do not create. After this change it fails with `No qualifying bean of type ...` until the test gets `@MockitoBean` fields for `DaprClient` and `<EventName>Handler`, or lists its controllers (`@WebMvcTest(<Controller>.class)`). This skill does not edit tests.>
 
@@ -122,7 +122,7 @@ defines them (Java forms), with these values that differ in an existing project:
    <**Risk:** `<TestClass>` calls `<POST /shipments>` through <MockMvc>. If the endpoint also publishes, that test needs a running Dapr sidecar or a `@MockitoBean DaprClient` whose `publishEvent(...)` returns `Mono.empty()`. This skill does not edit tests.>
    <**Risk:** `<TestClass>` is `@WebMvcTest(<TriggerController>.class)` and does not call `<POST /shipments>`. With yes, `<TriggerController>` takes a `DaprClient` constructor parameter, which slice tests do not create, so `<TestClass>` fails with `No qualifying bean of type 'io.dapr.client.DaprClient'` until it gets a `@MockitoBean DaprClient` field. Answer no to leave the test passing. This skill does not edit tests.>
 3. <Several modules have a `@SpringBootApplication` class and the web starter: `<module>`, `<other module>`. This plan adds pub/sub to `<module>`. Which module? **Default: `<module>`.**>
-4. <Add `DaprSecurityConfiguration`, a `SecurityFilterChain` that lets `/dapr/subscribe`, `/dapr/config` and `/events/<pubsub>/**` through without a login and without CSRF, and leaves every other route as it is? Anyone who can reach the app can then post to the event routes. **Default: no.**>
+4. <Declarative or programmatic subscriber with the Risk line only: Add `DaprSecurityConfiguration`, a `SecurityFilterChain` that lets `/dapr/subscribe`, `/dapr/config` and `/events/<pubsub>/**` through without a login and without CSRF, and leaves every other route as it is? Anyone who can reach the app can then post to the event routes. **Default: no.**>
 
 <Leave out a question that does not apply and renumber the rest, so a plan with only the endpoint question numbers it 1 and the user answers "1: no". Without a trigger endpoint, write instead: No existing endpoint publishes the event; use the new publish endpoint.>
 
@@ -177,15 +177,15 @@ Reply **yes** to apply with the defaults, answer a question differently (for exa
       command: ["mvn", "spring-boot:run"]
   ```
 
-  `<app-id>` is the app id from **Detection** and `<port>` the app port. In a multi-module build `appDirPath` is the module (the Dapr CLI runs `command` there) and the run doc says to run `mvn install -DskipTests` from the root folder first, see **The application module folder** in [`../dapr-shared/java-existing-project.md`](../dapr-shared/java-existing-project.md). Keep `appPort` for every subscription type, streaming included: the app still serves its own HTTP API (see [`../dapr-shared/pubsub-dapr-yaml.md`](../dapr-shared/pubsub-dapr-yaml.md) → **Port and appPort rules**). No `dapr.client.*` properties: the SDK reads the ports `dapr run` exports.
+  `<app-id>` is the app id from **Detection** and `<port>` the app port. In a multi-module build `appDirPath` is the module (the Dapr CLI runs `command` there) and the run doc says to run `mvn install -DskipTests` from the root folder first, see **The application module folder** in [`../dapr-shared/java-existing-project.md`](../dapr-shared/java-existing-project.md). Keep `appPort` for every subscription type, streaming included: the app still serves its own HTTP API (see [`../dapr-shared/pubsub-dapr-yaml.md`](../dapr-shared/pubsub-dapr-yaml.md) → **Port and appPort rules**). New component files (`pubsub.yaml`, `resiliency.yaml`, `subscription.yaml`) go into the `resources/` folder next to this new `dapr.yaml` (`<root folder>/resources/`, not the module's: `common.resourcesPath` is relative to the `dapr.yaml` folder). No `dapr.client.*` properties: the SDK reads the ports `dapr run` exports.
 - `dapr.yaml` exists with this app: leave the entry unchanged. When it has no `appPort` and the new subscription is declarative or programmatic, add `appPort: <port>` to that entry (a plan item): the sidecar cannot deliver to the app without it. When its `appPort` differs from the app port, say so in the plan and in `DAPR-PUBSUB.md`; do not change either.
 - `dapr.yaml` exists without this app: append an entry under `apps:` with `appDirPath` relative to the `dapr.yaml` folder, `appPort` set to the app port, a `daprHTTPPort`, and `command: ["mvn", "spring-boot:run"]`. The `daprHTTPPort` is 3555 when no entry uses it as an `appPort`, `daprHTTPPort` or `daprGRPCPort`; otherwise count up from 3555 (3556, 3557, …) to the first port none of them uses. It must also differ from this app's port. Keep every other entry as it is.
 - Which components this app sees, and where a new one goes, follows the resources-folder order in **An existing dapr.yaml** in [`../dapr-shared/java-existing-project.md`](../dapr-shared/java-existing-project.md): the app's own `resourcesPath`/`resourcesPaths`, then `.dapr/resources` in its `appDirPath`, then the `common` ones, else `~/.dapr/components`. New files (`pubsub.yaml`, `resiliency.yaml`, `subscription.yaml`) go into the first folder of that source. When the source is `~/.dapr/components`, reuse its `pubsub`; when it lacks what is needed, add `resourcesPath: ./resources` to this app's entry and put the new files in `<module>/resources`; never write to `~/.dapr`.
 - Scopes: when the reused pub/sub component has `scopes` without the app id, add the app id to them (a plan item): otherwise this app's sidecar never loads the component, and every publish and subscription on it fails.
-- Pub/sub component: an existing `type: pubsub.*` component is reused, and its `metadata.name` is the `dapr.pubsub.name` value; several → ask which one. None → add `pubsub.yaml` from [`../dapr-shared/dapr-pubsub-redis.md`](../dapr-shared/dapr-pubsub-redis.md) to the `resourcesPath` folder (`resources/` for a new `dapr.yaml`). When another component is already named `pubsub` (a state store, for example), name the new one `messages-pubsub` and say so in the plan.
+- Pub/sub component: an existing `type: pubsub.*` component is reused, and its `metadata.name` is the `dapr.pubsub.name` value; several → ask which one. None → add `pubsub.yaml` from [`../dapr-shared/dapr-pubsub-redis.md`](../dapr-shared/dapr-pubsub-redis.md) to the first folder of the resources source (`<root folder>/resources/`, next to a new `dapr.yaml`). When another component is already named `pubsub` (a state store, for example), name the new one `messages-pubsub` and say so in the plan.
 - Resiliency: none → add `resiliency.yaml` from [`../dapr-shared/dapr-pubsub-resiliency.md`](../dapr-shared/dapr-pubsub-resiliency.md) to the same folder, with the target named after the component. An existing `kind: Resiliency` file → append the policy and target per **Appending to an existing Resiliency** in that file; a target for the component that already exists stays unchanged. A resiliency target applies to every subscription on the component, not only the new topic: when the reused component already has subscriptions, a new or appended policy changes their retries too, so the plan gets the **Resiliency scope** line and `DAPR-PUBSUB.md` says the same.
 - Declarative only: add `subscription.yaml` from [`../dapr-shared/dapr-pubsub-subscription.md`](../dapr-shared/dapr-pubsub-subscription.md) (both documents, the topic's and its dead-letter topic's) to the same folder, with `pubsubname` set to the component name and `scopes` exactly the app id. When `subscription.yaml` already exists, name the new file `<TopicName>-subscription.yaml`.
-- `dapr run -f .` writes `.dapr/logs/` into the app folder even without `appLogDestination` or `daprdLogDestination` in `dapr.yaml`: the Dapr CLI's defaults are `fileAndConsole` for the app and `file` for the sidecar, and both write there. When the project has a `.gitignore` that does not list `.dapr/`, append `.dapr/` to it (a plan item). Do not create a `.gitignore`.
+- `dapr run -f .` writes `.dapr/logs/` into the app folder even without `appLogDestination` or `daprdLogDestination` in `dapr.yaml`: the Dapr CLI's defaults are `fileAndConsole` for the app and `file` for the sidecar, and both write there. Ignore it with a plan item per **`.gitignore`** in [`../dapr-shared/java-existing-project.md`](../dapr-shared/java-existing-project.md): append `.dapr/` to the git root's `.gitignore` (or the module's), or `**/.dapr/logs/` when the new files go into `.dapr/resources` in the `appDirPath` folder. Do not create a `.gitignore`.
 
 ## Properties
 
@@ -201,8 +201,14 @@ app.topic=<TopicName>
 app.dead-letter-topic=<DeadLetterTopicName>
 ```
 
-`application.yml` / `application.yaml`: the same keys in YAML. Add them under an existing top-level `dapr:` or
-`app:` block when the file has one; otherwise append the blocks at the end:
+`application.yml` / `application.yaml`: the same keys in YAML. Each key goes under its own top-level block:
+`pubsub.name` under `dapr:`, `topic` and `dead-letter-topic` under `app:`. When the file already has that
+block at column 0, add the keys as its last children, with the block's own indentation (under an existing
+`dapr.pubsub:` add only `name:`). A block the file does not have is appended at the end of the file at
+column 0, after one blank line (add the missing final newline first); never nest it under `spring:`,
+`server:` or another block. In a file with several documents (`---`), use the first document, the one
+without `spring.config.activate.on-profile`, not the end of the file. With neither block, the appended
+text is:
 
 ```yaml
 dapr:
@@ -339,10 +345,12 @@ Use [`../dapr-shared/pubsub-run-doc.md`](../dapr-shared/pubsub-run-doc.md) with 
   Add the port-collision line when the plan had one. Multi-module: first run `mvn install -DskipTests` from the root
   folder, and again after changing a sibling module (`mvn -pl <module> -am spring-boot:run` does not work: it
   also runs the goal on the aggregator pom).
-- Spring Security (when the plan had its Risk line): name the routes the sidecar calls, say what fails without
-  access (401/403 on deliveries, retried and then dead-lettered; programmatic subscriptions not loaded) and
-  whether `DaprSecurityConfiguration` was added; mention the app API token (`APP_API_TOKEN`, `dapr-api-token`
-  header) as the safer option.
+- Spring Security (when the plan had its Risk line): say that the Try it requests (`POST /pubsub/<TopicName>`,
+  and the trigger endpoint when question 2 was yes) get 401 without a login and 403 without a CSRF token,
+  even with a login. Declarative or programmatic subscriber only: also name the routes the sidecar calls,
+  say what fails without access (401/403 on deliveries, retried and then dead-lettered; programmatic
+  subscriptions not loaded) and whether `DaprSecurityConfiguration` was added, and mention the app API
+  token (`APP_API_TOKEN`, `dapr-api-token` header) as the safer option.
 - Topics table: every existing subscription from the plan and every new one.
 - Try it: curl and PowerShell examples for `POST /pubsub/<TopicName>` on the app port and, when question 2 was
   answered yes, for the trigger endpoint, then the log line the handler writes. Link to the `.http` file.
