@@ -1,6 +1,6 @@
 ---
 name: review-workflow-management
-description: Read-only audit of the HTTP management endpoints (start, status, terminate, pause, resume, raise-event, purge) a .NET or Python app exposes for Dapr Workflows, with DWF-MGT-NNN findings. Use for "review workflow management" or "check workflow HTTP endpoints". To operate runs on Diagrid use the diagrid plugin.
+description: Read-only audit of the HTTP management endpoints a .NET or Python Dapr Workflow app exposes, with DWF-MGT-NNN findings. Use for "review workflow management" or "check workflow HTTP endpoints". To operate runs on Diagrid use the diagrid plugin.
 allowed-tools:
   - Read
   - Grep

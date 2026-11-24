@@ -1,6 +1,6 @@
 ---
 name: review-pubsub-subscriptions
-description: Reviews Dapr pub/sub subscriptions and handlers in .NET and Python (declarative, programmatic, streaming) for CloudEvent handling, response statuses, idempotency, dead-letter handling and duplicate subscriptions. Use for "review my Dapr subscribers" or "check pub/sub handlers for idempotency".
+description: Reviews Dapr pub/sub subscriptions and handlers in .NET and Python for CloudEvent handling, response statuses, idempotency, dead-letter handling and duplicates. Use for "review my Dapr subscribers" or "check pub/sub handlers for idempotency".
 allowed-tools:
   - Read
   - Grep

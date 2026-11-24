@@ -1,6 +1,6 @@
 ---
 name: create-workflow-typescript
-description: Creates a TypeScript Dapr app, run locally with dapr run, that demonstrates Workflow, service invocation, pub/sub, bindings, jobs, state and secrets. Use for "create a workflow in TypeScript" or "create a Dapr app in Node.js". For Diagrid use the diagrid plugin.
+description: Creates a TypeScript Dapr app that demonstrates Workflow and other building blocks. Use for "create a workflow in TypeScript" or "create a Dapr app in Node.js". For Diagrid use the diagrid plugin.
 allowed-tools:
   - Write
   - Edit

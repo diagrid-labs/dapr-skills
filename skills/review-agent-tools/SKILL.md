@@ -1,6 +1,6 @@
 ---
 name: review-agent-tools
-description: Reviews tool implementations in Dapr agent projects in Python or .NET for idempotency, input validation, docstring quality and conventions. Use for "review agent tools" or "check tool idempotency".
+description: Reviews tool implementations in Dapr agent projects (Python or .NET) for idempotency, input validation, docstring quality and conventions. Use for "review agent tools" or "check tool idempotency".
 allowed-tools:
   - Read
   - Grep

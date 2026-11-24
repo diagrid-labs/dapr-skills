@@ -1,6 +1,6 @@
 ---
 name: review-workflow-activity
-description: Read-only audit of existing Dapr Workflow activities in .NET and Python for idempotency, retries, error boundaries and conventions, with DWF-ACT-NNN findings. Use for "review workflow activities" or "audit Dapr activities".
+description: Read-only audit of Dapr Workflow activities in .NET and Python for idempotency, retries, error boundaries and conventions, with DWF-ACT-NNN findings. Use for "review workflow activities" or "audit Dapr activities".
 allowed-tools:
   - Read
   - Grep

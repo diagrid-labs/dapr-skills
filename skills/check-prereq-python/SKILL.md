@@ -1,6 +1,6 @@
 ---
 name: check-prereq-python
-description: Checks prerequisites for building Dapr workflow and pub/sub apps in Python. Use for "check prerequisites for Python" or "verify Python environment".
+description: Checks prerequisites for Dapr workflow and pub/sub apps in Python. Use for "check prerequisites for Python" or "verify Python environment".
 allowed-tools:
   - Bash(uname -s)
   - Bash(python --version)

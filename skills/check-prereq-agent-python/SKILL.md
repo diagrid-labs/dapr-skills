@@ -1,6 +1,6 @@
 ---
 name: check-prereq-agent-python
-description: Checks prerequisites for building durable AI agents in Python with the Dapr Agents SDK or the diagrid package's framework wrappers. Use for "check prerequisites for Python agents" or "verify Python agent environment".
+description: Checks prerequisites for durable AI agents in Python with the Dapr Agents SDK or diagrid framework wrappers. Use for "check prerequisites for Python agents" or "verify Python agent environment".
 allowed-tools:
   - Bash(uname -s)
   - Bash(python --version)

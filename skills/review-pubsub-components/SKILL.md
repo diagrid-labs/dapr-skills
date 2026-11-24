@@ -1,6 +1,6 @@
 ---
 name: review-pubsub-components
-description: Reviews Dapr pub/sub configuration (components, Subscription files, resiliency, dapr.yaml and Aspire wiring) for inline secrets, unsecured brokers, dead-letter topics without retry policies, scopes and app-id or port collisions. Use for "review my pub/sub components" or "audit Dapr pubsub YAML".
+description: Reviews Dapr pub/sub components, Subscription files, resiliency, dapr.yaml and Aspire wiring for inline secrets, unsecured brokers, dead-letter topics without retries, scopes and app-id or port collisions. Use for "review my pub/sub components" or "audit Dapr pubsub YAML".
 allowed-tools:
   - Read
   - Grep

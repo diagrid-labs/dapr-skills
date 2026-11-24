@@ -1,6 +1,6 @@
 ---
 name: review-workflow-determinism
-description: Read-only audit of existing Dapr Workflow code in .NET and Python for non-determinism that breaks replay, with DWF-DET-NNN findings. Use for "review workflow for determinism" or "audit Dapr workflow replay safety".
+description: Read-only audit of Dapr Workflow code in .NET and Python for non-determinism that breaks replay, with DWF-DET-NNN findings. Use for "review workflow for determinism" or "audit Dapr workflow replay safety".
 allowed-tools:
   - Read
   - Grep

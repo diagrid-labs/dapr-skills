@@ -1,6 +1,6 @@
 ---
 name: dapr-shared
-description: Shared reference files for the Dapr skills. Not a task skill, never invoke it. Other Dapr skills read its files by path.
+description: Shared reference files for the Dapr skills. Not a task skill, never invoke it.
 disable-model-invocation: true
 user-invocable: false
 ---

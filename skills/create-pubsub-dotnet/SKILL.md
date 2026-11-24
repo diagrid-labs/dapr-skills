@@ -1,6 +1,6 @@
 ---
 name: create-pubsub-dotnet
-description: Creates a Dapr pub/sub app in .NET (publisher, subscriber or both) with declarative, programmatic or streaming subscriptions, run with dapr run or Aspire. Use for "create a pub/sub app in .NET" or "build a Dapr publisher and subscriber in C#". For an existing project use add-pubsub-dotnet.
+description: Creates a Dapr pub/sub app in .NET (publisher, subscriber or both) with declarative, programmatic or streaming subscriptions. Use for "create a pub/sub app in .NET" or "build a Dapr publisher and subscriber in C#". For an existing project use add-pubsub-dotnet.
 allowed-tools:
   - Write
   - Edit
