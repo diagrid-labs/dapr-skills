@@ -1,0 +1,86 @@
+{
+  "skill_name": "add-pubsub-java",
+  "evals": [
+    {
+      "id": 1,
+      "name": "maven-both-declarative",
+      "prompt": "In ./shipments-api, add Dapr pub/sub: publish a ShipmentCreated event (shipmentId, carrier, destination) on a shipments topic when a shipment is created, and handle those events in this app by logging them. Show me the plan first, then go ahead without waiting for my approval.",
+      "expected_output": "An Add Pub/Sub Plan with declarative as the default subscription type, app port 8083 read from server.port, and question 2 (POST /shipments also publishes) defaulting to yes because no test calls it over HTTP; no dependency-update question. Then targeted edits: the dapr-spring-bom 1.19.1 import and dapr-spring-boot-starter in pom.xml, @EnableConfigurationProperties(DaprPubSubProperties.class) on ShipmentsApplication, the pub/sub properties appended to application.properties, the ShipmentCreated record, handler, TopicEventStatus, ProcessedEvents, a scoped UnreadableEventAdvice, a declarative events controller with plain @PostMapping routes, a POST /pubsub/shipments publish endpoint, ShipmentController publishing after it creates the shipment with publishEvent(...).block(), dapr.yaml (appPort 8083), resources/pubsub.yaml, resiliency.yaml and subscription.yaml scoped to shipments-api, pubsub.http, DAPR-PUBSUB.md; `mvn -q -DskipTests package` after each step and a final `mvn -q test` with the three existing tests passing; README untouched.",
+      "files": [
+        "evals/add-pubsub-java/files/shipments-api/"
+      ],
+      "expectations": [
+        "Before the first file change, the response (or transcript) contains an Add Pub/Sub Plan that names the target shipments-api, Spring Boot 4.0.8 with Maven, app port 8083 read from server.port in application.properties, role both, and the line `**Subscription type:** declarative — default`",
+        "The plan's Questions section asks whether `POST /shipments` should also publish ShipmentCreated, with yes as the default, and asks no dependency-update question (the project has no Dapr dependency yet)",
+        "pom.xml imports io.dapr.spring dapr-spring-bom 1.19.1 (type pom, scope import) in dependencyManagement and adds dapr-spring-boot-starter without a <version>; the parent stays spring-boot-starter-parent 4.0.8, java.version stays 17, and the existing dependencies are unchanged",
+        "ShipmentsApplication.java carries @EnableConfigurationProperties(DaprPubSubProperties.class) next to @SpringBootApplication, and no second @SpringBootApplication class exists",
+        "src/main/resources/application.properties still starts with the original `spring.application.name=shipments-api` and `server.port=8083` lines, and now also sets `dapr.pubsub.name=pubsub`, the topic `shipments` and the dead-letter topic `shipments-deadletter`; no application.yml is created",
+        "A new @RestController has `@PostMapping(\"/pubsub/shipments\")` that publishes with `daprClient.publishEvent(pubSubProperties.getName(), topic, ...).block()`, taking DaprClient and DaprPubSubProperties through its constructor into final fields; no file uses DaprMessagingTemplate or field @Autowired",
+        "ShipmentController's POST handler still calls shipments.create(shipment) and returns ResponseEntity.created(...) with the same body, and now also publishes a ShipmentCreated built from the created shipment (its server-generated id as shipmentId) with publishEvent(...).block() after create succeeds; DaprClient is a constructor parameter and final field; the GET handler is unchanged",
+        "The subscriber is declarative: a controller with plain `@PostMapping(\"/events/pubsub/shipments\")` and `@PostMapping(\"/events/pubsub/shipments-deadletter\")` methods taking `@RequestBody CloudEvent<...>` and returning `{\"status\": ...}` through TopicEventStatus, with no @Topic anywhere; a ShipmentCreatedHandler returns DROP for a blank shipmentId and SUCCESS for a duplicate through ProcessedEvents, and only logs the event",
+        "UnreadableEventAdvice exists, maps HttpMessageNotReadableException to 200 with DROP, and is scoped to the new events controller (`@RestControllerAdvice(assignableTypes = ...)`), so a malformed body sent to POST /shipments still answers 400",
+        "dapr.yaml is created in shipments-api with one app entry: appID shipments-api, appDirPath ., appPort 8083 and command [\"mvn\", \"spring-boot:run\"]; resources/pubsub.yaml (component pubsub), resources/resiliency.yaml (inbound retry for pubsub) and resources/subscription.yaml (kind Subscription, topic shipments, deadLetterTopic shipments-deadletter, plus a dead-letter document, scopes [shipments-api]) exist",
+        "README.md is byte-for-byte unchanged, .gitignore keeps its lines and gains `.dapr/`, and DAPR-PUBSUB.md exists in shipments-api with the topics table, how to start (`dapr run -f .`), a curl example on port 8083, the declarative delivery semantics (a dropped message goes to the dead-letter topic) and a Diagrid Dapr Dev Dashboard section",
+        "The transcript shows `mvn -q -DskipTests package` after each apply step and a final `mvn -q test` that passes (ShipmentServiceTest's two tests and ShipmentsApplicationTests.contextLoads, 3 tests, 0 failures) without a running Dapr sidecar; ShipmentService.java, Shipment.java and everything under src/test are unchanged",
+        "No git command other than `git status` was run",
+        "Dev Dashboard: before changing files the agent runs `diagrid-dev-dashboard --version` once without stopping, and the final output ends with exactly `Dapr pub/sub is added to shipments-api. Open DAPR-PUBSUB.md in the shipments-api folder for what changed and how to run it.` followed only by the matching Diagrid Dapr Dev Dashboard recommendation"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "programmatic-existing-topic",
+      "prompt": "In ./notifications-service, also subscribe to the payments topic: for each PaymentReceived event (paymentId, customerEmail, amount) send the customer a receipt e-mail with the existing EmailSender. Show the plan, then proceed without asking me.",
+      "expected_output": "A plan that records the existing (pubsub, emails) programmatic subscription and follows its type, reuses the pubsub component and the existing dapr.yaml entry (appPort 8086 kept), adds a @Topic route pair for payments with a dead-letter topic, a handler that deduplicates on paymentId before calling EmailSender, TopicEventStatus, ProcessedEvents and a scoped UnreadableEventAdvice, the topic properties, and components/resiliency.yaml; the emails subscription stays exactly as it was, no subscription.yaml and no second pubsub component are created, and the build and both existing tests pass.",
+      "files": [
+        "evals/add-pubsub-java/files/notifications-service/"
+      ],
+      "expectations": [
+        "Before the first file change, the plan lists the existing subscription (pubsub `pubsub`, topic `emails`, programmatic, EmailEventsController) and its Subscription type line says `programmatic — follows existing @Topic subscriptions`; role subscriber, so it asks no publish question, and it asks no dependency-update question (the project is on dapr-spring-bom 1.19.1)",
+        "EmailEventsController.java is byte-for-byte unchanged, and `emails` is subscribed exactly once in the project (one @Topic on ${app.emails-topic}, no Subscription YAML or streaming subscription for it)",
+        "A new controller has `@Topic(name = \"${app.<...>}\", pubsubName = \"${dapr.pubsub.name}\", deadLetterTopic = \"${app.<...>}\")` on a POST route for the payments topic and a second @Topic route for the dead-letter topic, both taking `@RequestBody CloudEvent<...>`; the topic names come from properties, not string literals",
+        "application.properties keeps its four original lines unchanged and gains the payments topic (`payments`) and dead-letter topic (`payments-deadletter`) keys, named in the same style as the existing `app.emails-topic` key (for example `app.payments-topic` and `app.payments-dead-letter-topic`)",
+        "A PaymentReceived record and a PaymentReceivedHandler exist; the handler returns DROP for a blank paymentId, checks ProcessedEvents before calling the existing EmailSender.send(...) for the receipt, marks the id processed after the send, and lets an exception from EmailSender propagate so Dapr retries",
+        "UnreadableEventAdvice exists, maps HttpMessageNotReadableException to 200 with DROP, and is scoped to the new payments events controller with `assignableTypes`",
+        "No `kind: Subscription` YAML is created, components/pubsub.yaml is unchanged and is the only `type: pubsub.` component, no resources/ folder is created, and components/resiliency.yaml is added with an inbound retry for the `pubsub` component",
+        "dapr.yaml is byte-for-byte unchanged (the notifications-service entry already has appPort 8086), and the pom.xml is byte-for-byte unchanged (the starter and the 1.19.1 BOM are already there)",
+        "The transcript shows `mvn -q -DskipTests package` succeeding after the code steps and a final `mvn -q test` passing (EmailSenderTest's two tests and NotificationsApplicationTests.contextLoads)",
+        "DAPR-PUBSUB.md exists with both topics in its Topics table (emails, existing; payments, new) and says programmatic subscriptions are read at sidecar start, so the app and sidecar need a restart after a change",
+        "No git command other than `git status` was run"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "maven-streaming",
+      "prompt": "In ./shipments-api, add Dapr pub/sub: publish a ShipmentCreated event (shipmentId, carrier, destination) on a shipments topic when a shipment is created, and consume those events in this app with a streaming subscription that logs them. Show the plan, then proceed.",
+      "expected_output": "An Add Pub/Sub Plan with streaming as the requested type, stating that the streaming API acks every event so the handler cannot choose RETRY or DROP; then a StreamingConfiguration with a DaprPreviewClient bean, a SmartLifecycle streaming subscriber whose consumer catches RuntimeException inside doOnNext and whose streams have retryWhen, no UnreadableEventAdvice, no subscription.yaml and no subscription routes, dapr.yaml keeping appPort 8083 because the app still serves HTTP, ShipmentController publishing after create, and a passing `mvn -q test`.",
+      "files": [
+        "evals/add-pubsub-java/files/shipments-api/"
+      ],
+      "expectations": [
+        "The plan's Subscription type line says `streaming` (requested), and the plan states that the streaming API acknowledges every event it hands to the app, so the handler cannot choose RETRY or DROP",
+        "A @Configuration class declares a DaprPreviewClient @Bean built with `daprClientBuilder.buildPreviewClient()` from the injected DaprClientBuilder, and the streaming subscriber takes it as `@Qualifier(\"daprPreviewClient\") DaprPreviewClient` (the app also injects DaprClient, which implements DaprPreviewClient too)",
+        "A @Component implementing SmartLifecycle calls `previewClient.subscribeToTopic(...)` for the shipments topic with the dead-letter topic and for the dead-letter topic, each stream with `.retryWhen(Retry.backoff(...)...transientErrors(true))` before `.subscribe()`; the topic consumer wraps the handler call in try/catch (RuntimeException e) that logs; the Disposables are kept and disposed in stop()",
+        "No `kind: Subscription` YAML, no @Topic, no `/events/pubsub/shipments` route and no UnreadableEventAdvice are created",
+        "dapr.yaml has the shipments-api entry with appPort 8083 kept (the app still serves its HTTP API), and resources/pubsub.yaml and resources/resiliency.yaml exist",
+        "ShipmentController's POST handler still calls shipments.create(shipment) and returns its original response, and now also publishes ShipmentCreated with publishEvent(...).block() after create succeeds",
+        "The transcript shows a final `mvn -q test` passing 3 tests without a sidecar (the streaming subscription keeps retrying in the background), and every file under src/test is unchanged",
+        "DAPR-PUBSUB.md states the streaming delivery semantics: the app cannot choose RETRY or DROP, a failed handler loses the event, and only a body that cannot be deserialized is dead-lettered",
+        "No git command other than `git status` was run"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "gradle-unsupported",
+      "prompt": "Add Dapr pub/sub to ./gradle-catalog so it publishes a PriceChanged event whenever a product price is set.",
+      "expected_output": "Stops before planning: the project builds with Gradle (build.gradle.kts, no pom.xml) and the skill supports Maven only; no changes.",
+      "files": [
+        "evals/add-pubsub-java/files/gradle-catalog/"
+      ],
+      "expectations": [
+        "The response says the project builds with Gradle (build.gradle.kts) and that add-pubsub-java supports Maven projects (pom.xml) only, and suggests either moving the build to Maven or creating a separate pub/sub service with create-pubsub-java",
+        "No Add Pub/Sub Plan is shown, no file in the gradle-catalog fixture is added, changed or deleted, and no `mvn` or `gradle` command was run",
+        "No git command other than `git status` was run"
+      ]
+    }
+  ]
+}

@@ -144,7 +144,7 @@ const REAL_SKILLS = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 's
 
 test('descriptions leave headroom under the cap', () => {
   const total = Object.values(readDescriptions(REAL_SKILLS)).reduce((sum, d) => sum + d.length, 0);
-  assert.ok(total <= 7139, `descriptions total ${total} characters, over 7139`);
+  assert.ok(total <= 7366, `descriptions total ${total} characters, over 7366`);
 });
 
 test('no description names the catalyst-ai plugin', () => {

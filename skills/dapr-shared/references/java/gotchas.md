@@ -99,6 +99,15 @@ The app cannot choose RETRY or DROP for an event it received.
   the Jackson 3 serializer of the `DaprClient` bean
   (`dapr-spring/dapr-spring-boot-autoconfigure/src/main/java/io/dapr/spring/boot/autoconfigure/client/DaprClientAutoConfiguration.java:53`). Start the subscriptions from
   a `SmartLifecycle` bean and dispose them in `stop()`.
+- **Two `DaprPreviewClient` candidates in an app that also publishes.** The autoconfigured `DaprClient` bean is
+  a `DaprClientImpl`, which implements `DaprPreviewClient` too. Once something has injected `DaprClient`
+  (a publisher created earlier), a constructor that takes `DaprPreviewClient` fails with
+  `NoUniqueBeanDefinitionException: ... expected single matching bean but found 2: daprPreviewClient,daprClient`
+  (observed, Spring Boot 4.0.8, `dapr-spring-bom` 1.19.1, a `@SpringBootTest` in an app with a publish
+  controller and a streaming subscriber). `@Qualifier("daprPreviewClient")` on the subscriber's constructor
+  parameter fixed it, and the subscription then received events under `dapr run` (observed). The
+  create-pubsub-java subscriber app injects no `DaprClient`, so it has one candidate. **Rule.** add-pubsub-java
+  qualifies the `DaprPreviewClient` parameter with the bean's name.
 - The streaming subscriber has no `appPort` in `dapr.yaml`; the sidecar then logs
   `App channel is not initialized`, which is expected.
 

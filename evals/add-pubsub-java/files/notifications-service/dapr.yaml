@@ -1,0 +1,9 @@
+version: 1
+common:
+  resourcesPath: ./components
+apps:
+  - appID: notifications-service
+    appDirPath: .
+    appPort: 8086
+    daprHTTPPort: 3586
+    command: ["mvn", "spring-boot:run"]

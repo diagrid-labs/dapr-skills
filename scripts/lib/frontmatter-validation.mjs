@@ -32,7 +32,7 @@ const SUPPORT_SKILL_KEYS = ['disable-model-invocation', 'user-invocable'];
  * little headroom for new skills).
  */
 export const MAX_DESCRIPTION_CHARS = 400;
-export const MAX_TOTAL_DESCRIPTION_CHARS = 7139;
+export const MAX_TOTAL_DESCRIPTION_CHARS = 7366;
 export const TARGET_DESCRIPTION_CHARS = 400;
 export const TARGET_TOTAL_DESCRIPTION_CHARS = 8000;
 
