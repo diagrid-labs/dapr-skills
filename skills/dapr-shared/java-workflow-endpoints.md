@@ -221,7 +221,8 @@ public class LoanController {
   (`ALREADY_EXISTS`) after the existing work ran: a 500 the client would notice. Guard the call with the
   `/start` route's check and skip scheduling while the instance is active: copy the `exists` and `isActive`
   helpers into the controller and wrap the call in
-  `if (!isActive(workflowClient.getWorkflowState(created.id(), false))) { ... }`. A server-generated id
-  needs no guard.
+  `if (created.id() != null && !isActive(workflowClient.getWorkflowState(created.id(), false))) { ... }`.
+  `getWorkflowState` throws on a null id, so keep the null check unless the entity id can never be null
+  (a primitive, or set by the handler before this point). A server-generated id needs no guard.
 - The endpoint now needs the Dapr sidecar. Tests that call it over HTTP need a running sidecar or a mocked
   `DaprWorkflowClient` bean; that is why the default answer to the question is "no" when such tests exist.

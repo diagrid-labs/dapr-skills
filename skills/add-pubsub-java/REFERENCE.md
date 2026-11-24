@@ -273,7 +273,12 @@ Copy the files from the shared templates with the values from **Resolving the pl
 - A topic handled by an existing class: never add a second subscription for that `(pubsub, topic)` pair.
 - An existing `DaprPreviewClient` bean: reuse it, skip `StreamingConfiguration`, and use that bean's name in
   the `@Qualifier`. When that `@Bean` has no `defaultCandidate = false` and the app injects `DaprClient` under a
-  parameter name other than `daprClient`, add `defaultCandidate = false` to it (a plan item).
+  parameter name other than `daprClient`, add `defaultCandidate = false` to it (a plan item). The same plan
+  item adds `@Qualifier("<bean name>")` to every existing `DaprPreviewClient` injection point that has no
+  qualifier (constructor parameter, field or `@Bean` method parameter): a bean with `defaultCandidate = false`
+  never fills an unqualified injection point, so such a point would fail with `No qualifying bean of type
+  'io.dapr.client.DaprPreviewClient'` or get the autoconfigured `DaprClient` bean, depending on bean creation
+  order (gotchas §3).
 - An existing `<EventName>Handler`-style class that already handles the event's domain: keep it; the new
   handler may call it as its `<HandlerBody>`.
 - Existing `TopicEventStatus` / `ProcessedEvents`: reuse them. When the app's own status record has another

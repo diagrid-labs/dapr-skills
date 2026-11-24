@@ -77,7 +77,7 @@ Emit the **Add Workflow Plan** using the template in `REFERENCE.md`. It lists th
 The plan ends with a **Questions** section. Ask these before any file is created or changed, each with its default. Number only the questions that apply, starting at 1:
 
 1. **Dependency updates** — only when Phase 1 found a newer version available: list each change (`dapr-spring-bom` 1.18.1 → 1.19.1, `dapr-spring-boot-4-starter` → `dapr-spring-boot-starter`, …) and ask whether to make them. Default: **Yes, update.** The workflow code in this skill is written against 1.19.1, and one BOM governs every Dapr artifact, so the project cannot keep the old version and gain the new one.
-2. **Where the workflow starts** — only when Phase 1 found a trigger endpoint: the new `POST /workflows/<workflow-route>/start` route is always added; ask whether the existing endpoint (`POST /loans`) should also start the workflow after its existing work succeeds. Default: **Yes.** Exception: when a test calls that endpoint over HTTP, the default is **No**, and the plan adds the **Risk** line from the template: the test would then need a running Dapr sidecar or a mocked `DaprWorkflowClient`. When no endpoint qualifies, write "No existing endpoint starts the workflow; use the new start route." instead of asking.
+2. **Where the workflow starts** — only when Phase 1 found a trigger endpoint: the new `POST /workflows/<workflow-route>/start` route is always added; ask whether the existing endpoint (`POST /loans`) should also start the workflow after its existing work succeeds. Default: **Yes.** Exception: when a test calls that endpoint over HTTP, the default is **No**, and the plan adds the **Risk** line from the template: the test would then need a running Dapr sidecar or a mocked `DaprWorkflowClient`. When a `@WebMvcTest` names the trigger controller but does not call that endpoint, the default stays **Yes**, and the plan adds the named-controller **Risk** line from the template: the edited controller needs a `DaprWorkflowClient` bean that slice tests do not create. When no endpoint qualifies, write "No existing endpoint starts the workflow; use the new start route." instead of asking.
 
 Write the plan's file lists as if every default is accepted, and mark which items depend on a question.
 
@@ -108,7 +108,7 @@ Rules for every step:
 
 ## Phase 6: Final verification
 
-Run `mvn -q -DskipTests package` and, when test classes exist, `mvn -q test`. Adding the starter does not need a sidecar for the tests: a `@SpringBootTest` context starts, and the workflow worker keeps retrying the connection in the background. Report failures that also failed in the baseline run as pre-existing. A bare `@WebMvcTest` that the plan's **Risk** line named fails as predicted: report it as caused by the change, with the fix from the Risk line. Never edit tests to make them pass. Do not start `dapr run`.
+Run `mvn -q -DskipTests package` and, when test classes exist, `mvn -q test`. Adding the starter does not need a sidecar for the tests: a `@SpringBootTest` context starts, and the workflow worker keeps retrying the connection in the background. Report failures that also failed in the baseline run as pre-existing. A `@WebMvcTest` that a plan **Risk** line named (bare, or naming the trigger controller when question 2 was answered yes) fails as predicted: report it as caused by the change, with the fix from the Risk line. Never edit tests to make them pass. Do not start `dapr run`.
 
 ## Phase 7: Write the run doc
 
