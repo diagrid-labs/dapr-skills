@@ -109,7 +109,7 @@
       "id": 5,
       "name": "java-clean-document-approval-endpoints",
       "prompt": "Check the workflow management endpoints of the Spring Boot app in evals/review-workflow-management/files/clean-java. It was generated with create-workflow-java and only runs locally with dapr run for now.",
-      "expected_output": "A report with 'Language: java' for the controller rendered from java-workflow-endpoints.md: start returns the instance id taken from input.documentId(), status checks existence with the exists(...) helper and returns StatusResponse, pause, resume, terminate and a raise-event handler that checks the instance first. The user said the app is local-only, so DWF-MGT-010 is not reported. No finding above info; the only allowed finding is the DWF-MGT-015 suggestion (no springdoc @Operation) at DocumentApprovalWorkflowController.java:15.",
+      "expected_output": "A report with 'Language: java' for the controller rendered from java-workflow-endpoints.md: start returns the instance id taken from input.documentId() and answers 409 when that instance is still RUNNING, PENDING or SUSPENDED (its isActive(...) helper calls exists(...) first), status checks existence with the exists(...) helper and returns StatusResponse, pause, resume, terminate and a raise-event handler that checks the instance first. The user said the app is local-only, so DWF-MGT-010 is not reported. No finding above info; the only allowed finding is the DWF-MGT-015 suggestion (no springdoc @Operation) at DocumentApprovalWorkflowController.java:16.",
       "files": [
         "evals/review-workflow-management/files/clean-java/pom.xml",
         "evals/review-workflow-management/files/clean-java/src/main/resources/application.properties",
@@ -131,7 +131,7 @@
         "Does not report any of DWF-MGT-001 to DWF-MGT-006 (all endpoints exist, including raise-event for the waitForExternalEvent in DocumentApprovalWorkflow.java:25)",
         "Does not report DWF-MGT-009 (status uses exists(state), which checks null and an empty workflow id), DWF-MGT-013 (raise-event checks the instance before raiseEvent) or DWF-MGT-014 (status returns the StatusResponse record)",
         "Does not report DWF-MGT-007, DWF-MGT-008, DWF-MGT-010, DWF-MGT-011, DWF-MGT-012, DWF-MGT-016 or DWF-MGT-017",
-        "Any finding is a suggestion; the only one allowed is DWF-MGT-015 at src/main/java/com/example/documentapproval/DocumentApprovalWorkflowController.java:15. The report ends with '## Next steps' suggesting review-workflow-determinism and review-workflow-activity, with no text after it",
+        "Any finding is a suggestion; the only one allowed is DWF-MGT-015 at src/main/java/com/example/documentapproval/DocumentApprovalWorkflowController.java:16. The report ends with '## Next steps' suggesting review-workflow-determinism and review-workflow-activity, with no text after it",
         "Uses only Read, Grep and Glob; does not call Bash, Write or Edit (no mvn call), and no file in the fixture is modified"
       ]
     },
@@ -168,7 +168,7 @@
       "id": 7,
       "name": "java-clean-endpoints-deployment-target-unknown",
       "prompt": "Check the workflow management endpoints of the Spring Boot app in evals/review-workflow-management/files/clean-java before we put it in front of other teams.",
-      "expected_output": "The same clean controller as eval 5, but the prompt does not say whether the app is local-only. Following the DWF-MGT-010 confidence note, the skill asks whether the deployment target is local-only before emitting the report. When no answer is available (a non-interactive run), the checklist default applies: DWF-MGT-010 is reported once as a warning at the first mutating handler (src/main/java/com/example/documentapproval/DocumentApprovalWorkflowController.java:23, the /start mapping; :24 acceptable). The only other finding is the DWF-MGT-015 suggestion at src/main/java/com/example/documentapproval/DocumentApprovalWorkflowController.java:15. Found: 0 critical, 1 warnings, 1 suggestions, 0 to verify. If the user answers that it is local-only, DWF-MGT-010 is not reported.",
+      "expected_output": "The same clean controller as eval 5, but the prompt does not say whether the app is local-only. Following the DWF-MGT-010 confidence note, the skill asks whether the deployment target is local-only before emitting the report. When no answer is available (a non-interactive run), the checklist default applies: DWF-MGT-010 is reported once as a warning at the first mutating handler (src/main/java/com/example/documentapproval/DocumentApprovalWorkflowController.java:24, the /start mapping; :25 acceptable). The only other finding is the DWF-MGT-015 suggestion at src/main/java/com/example/documentapproval/DocumentApprovalWorkflowController.java:16. Found: 0 critical, 1 warnings, 1 suggestions, 0 to verify. If the user answers that it is local-only, DWF-MGT-010 is not reported.",
       "files": [
         "evals/review-workflow-management/files/clean-java/pom.xml",
         "evals/review-workflow-management/files/clean-java/src/main/resources/application.properties",
@@ -186,8 +186,8 @@
       ],
       "expectations": [
         "Either asks whether the deployment target is local-only (a clarifying question outside the report) or, when no answer is available, reports DWF-MGT-010; it never silently omits DWF-MGT-010 without asking",
-        "When no answer is given, the Warnings section contains exactly one finding, DWF-MGT-010 at src/main/java/com/example/documentapproval/DocumentApprovalWorkflowController.java:23 (line 24 acceptable), whose Fix names Spring Security (a SecurityFilterChain or @PreAuthorize) or an authenticating gateway; it is not in Critical or Please verify",
-        "The Suggestions section contains only DWF-MGT-015 at src/main/java/com/example/documentapproval/DocumentApprovalWorkflowController.java:15, and the 'Found:' line reads 'Found: 0 critical, 1 warnings, 1 suggestions, 0 to verify' when DWF-MGT-010 is reported",
+        "When no answer is given, the Warnings section contains exactly one finding, DWF-MGT-010 at src/main/java/com/example/documentapproval/DocumentApprovalWorkflowController.java:24 (line 25 acceptable), whose Fix names Spring Security (a SecurityFilterChain or @PreAuthorize) or an authenticating gateway; it is not in Critical or Please verify",
+        "The Suggestions section contains only DWF-MGT-015 at src/main/java/com/example/documentapproval/DocumentApprovalWorkflowController.java:16, and the 'Found:' line reads 'Found: 0 critical, 1 warnings, 1 suggestions, 0 to verify' when DWF-MGT-010 is reported",
         "Does not report any other DWF-MGT rule (DWF-MGT-001 to 009 and 011 to 017)",
         "Uses only Read, Grep and Glob; does not call Bash, Write or Edit, no file in the fixture is modified, and the report ends with '## Next steps' with no text after it"
       ]

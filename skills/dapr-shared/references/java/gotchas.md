@@ -147,7 +147,7 @@ the SDK picked up the ports `dapr run` exports (`DAPR_HTTP_PORT`, `DAPR_GRPC_POR
   exists` (observed, a 500 if unhandled). Treat a state as missing when it is `null` or its
   `getWorkflowId()` is empty, and answer 404 from the status and raise-event endpoints.
 - **Reusing an instance id.** `scheduleNewWorkflow` with the id of a COMPLETED instance started a new run
-  under the same id (observed). Match the .NET start endpoint (`skills/dapr-shared/dotnet-workflow-endpoints.md`): use the request's own entity id as the instance id (`scheduleNewWorkflow(Workflow.class, request, request.parcelId())` in the reference app; in the templates, `scheduleNewWorkflow(<WorkflowName>.class, input, input.id())` with the id component of `<WorkflowInput>`), and do not pre-check existing state.
+  under the same id (observed). Match the .NET start endpoint (`skills/dapr-shared/dotnet-workflow-endpoints.md`): use the request's own entity id as the instance id (`scheduleNewWorkflow(Workflow.class, request, request.parcelId())` in the reference app; in the templates, `scheduleNewWorkflow(<WorkflowName>.class, input, input.id())` with the id component of `<WorkflowInput>`). Before scheduling, read the state of that id and answer 409 Conflict when it is `RUNNING`, `PENDING` or `SUSPENDED`: `scheduleNewWorkflow` on an active id throws `StatusRuntimeException: ALREADY_EXISTS: ... an active workflow with ID '<id>' already exists` (observed for RUNNING and SUSPENDED, a 500 if unhandled). Check the id for `null` first: `getWorkflowState(null, ...)` throws a `NullPointerException` (observed). Verified on 2026-11-24 against runtime 1.19.2: a second start of a running instance answered 409, and a start after the first run COMPLETED answered 200 with a new run.
 - **External event timeout.** `ctx.waitForExternalEvent(name, Duration, Class).await()` throws
   `io.dapr.durabletask.TaskCanceledException` when the timeout expires (verified with a 30s timeout). Wrap the `.await()` in `try`/`catch (TaskCanceledException e)`, log it and `ctx.complete(...)` with a timed-out result such as `PICKUP_TIMED_OUT`, as `ShipmentWorkflow` does; never let the exception fail the workflow.
 - **Retry policy.** `new WorkflowTaskOptions(WorkflowTaskRetryPolicy.newBuilder()...build())` passed to
@@ -183,6 +183,14 @@ the SDK picked up the ports `dapr run` exports (`DAPR_HTTP_PORT`, `DAPR_GRPC_POR
   (`createTimer` plus `continueAsNew`), child workflow (`callChildWorkflow` with an instance id and a retry
   policy) and external-event examples in [patterns.md](patterns.md) and [error-handling.md](error-handling.md)
   compiled with `mvn -q -DskipTests package` against the 1.19.1 BOM (compiled, not run).
+- **Slice tests in an existing project.** With `@EnableDaprWorkflows` on the `@SpringBootApplication` class, a
+  `@WebMvcTest` that passed before failed to load its context: `No qualifying bean of type
+  'io.dapr.workflows.runtime.WorkflowRuntimeBuilder'` (observed, Spring Boot 4.0.5, `dapr-spring-bom` 1.19.1).
+  The slice reads the application class's annotations but excludes the Dapr autoconfiguration. Moving the
+  annotation to its own `@Configuration` class fixed it: the slice skips that class, and the app still
+  registered and ran the workflow under `dapr run`. A full `@SpringBootTest` context loads either way, without
+  a sidecar; the worker logs `The sidecar at address 127.0.0.1:50001 is unavailable. Will continue retrying.`
+  **Rule.** In a project with slice tests, put `@EnableDaprWorkflows` on a separate `@Configuration` class.
 - **Unit tests.** Mockito 5 from `spring-boot-starter-test` mocks `WorkflowContext`, the abstract `Task`, and
   `TaskFailedException` / `FailureDetails` (which have no public constructors). Tests of an activity, a chained
   workflow and a saga's compensation branch ran green with `mvn test` (see [testing.md](testing.md)).
