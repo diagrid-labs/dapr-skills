@@ -20,7 +20,8 @@ permissions:
 
 jobs:
   browser:
-    runs-on: ubuntu-latest
+    # Pinned: Playwright 1.56.1 cannot install Chromium on ubuntu-latest (26.04).
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
@@ -35,7 +36,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-1.56.1-${{ runner.os }}
+          key: playwright-1.56.1-ubuntu-24.04
 
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
