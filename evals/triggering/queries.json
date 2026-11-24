@@ -24,15 +24,15 @@
     "date": "2026-11-24",
     "model": "sonnet (Claude Sonnet 5.5)",
     "dapr_skills_version": "1.33.0",
-    "diagrid_version": "0.10.2 (diagridio/diagrid-ai origin/main 866ddd4)",
-    "result": "20 of 22 matched `expect` (or `accept`) in both runs. Misses: queries 9 and 10. Both came back AMBIGUOUS in both runs (9: diagrid-workflow-determinism or review-workflow-determinism, low in run 1 and medium in run 2; 10: diagrid-activity-idempotency or review-workflow-activity, low in run 1 and medium in run 2); the dapr-skills skill is a candidate each time, but AMBIGUOUS is not their `expect`, so they count as misses. Query 11 matched at medium (diagrid-workflow-scaffold) and query 18 matched at medium (create-workflow-from-diagram). Query 15 is correctly AMBIGUOUS, at low confidence. Query 22 (Kotlin with Quarkus) is correctly NONE at medium. The other 16 answers matched at high confidence, including the Java queries 19 to 21. Two runs, descriptions only; the verdicts were identical apart from confidence on 9 and 10 and an extra -aspire candidate on 15 in run 2.",
-    "known_risk": "Queries 9 and 10: on 2026-11-24 dapr-skills stopped pointing authoring questions at the diagrid plugin, because its determinism and idempotency skills are for code that runs on Diagrid, and the expectations moved to the dapr-skills review skills. The model still reports AMBIGUOUS between the diagrid skills and the dapr-skills review skills because the diagrid descriptions say \"Use when writing, changing or reviewing\" and mention Diagrid only as \"on Diagrid\". Fixing that needs a wording change in diagridio/diagrid-ai; dapr-skills was not changed to chase it. Query 11 (medium) and query 15 (low, correctly AMBIGUOUS) are the other low-confidence answers; 11 regressed after the plugin rename, as recorded on 2026-11-23, because diagrid-workflow-scaffold now reads as create-only.",
+    "diagrid_version": "0.10.3 (diagridio/diagrid-ai origin/main 58b917f)",
+    "result": "22 of 24 matched `expect` (or `accept`) in both runs. Misses: queries 9 and 10. Both resolved to the diagrid skill at medium confidence in both runs (9: diagrid-workflow-determinism; 10: diagrid-activity-idempotency), where `expect` is the dapr-skills review skill. In the previous baseline (diagrid 0.10.2) both came back AMBIGUOUS. The dapr-skills descriptions for those skills did not change between the runs (only \".NET, Python and Java\" was added), so the shift follows the diagrid plugin update. Query 11 matched at medium (diagrid-workflow-scaffold) and query 18 matched at medium (create-workflow-from-diagram). Query 15 is correctly AMBIGUOUS (medium in run 1, high in run 2). Query 22 (Kotlin with Quarkus) is correctly NONE at medium. Queries 23 and 24 (Java review) matched at high confidence in both runs. The other 16 answers matched at high confidence, including the Java queries 19 to 21. Two runs, descriptions only; the verdicts were identical, with confidence differing only on query 15.",
+    "known_risk": "Queries 9 and 10: on 2026-11-24 dapr-skills stopped pointing authoring questions at the diagrid plugin, because its determinism and idempotency skills are for code that runs on Diagrid, and the expectations moved to the dapr-skills review skills. With diagrid 0.10.3 the model now resolves both to the diagrid skills at medium confidence rather than AMBIGUOUS, because the diagrid descriptions say \"Use when writing, changing or reviewing\" and mention Diagrid only as \"on Diagrid\". Fixing that needs a wording change in diagridio/diagrid-ai; dapr-skills was not changed to chase it. Query 11 (medium) is the other low-confidence answer; it regressed after the plugin rename, as recorded on 2026-11-23, because diagrid-workflow-scaffold now reads as create-only. Query 15 is correctly AMBIGUOUS.",
     "notes": [
-      "Generated with `node scripts/triggering-prompt.mjs <diagrid skills dir>` from a read-only `git archive` of diagridio/diagrid-ai origin/main, not the marketplace cache.",
-      "Run after the 2026-11-24 description fixes: the review-workflow-activity and review-workflow-determinism pointers to the diagrid plugin were removed, the review skills now name .NET and Python, and create-workflow-from-diagram no longer sends Mermaid and sketches to the diagrid plugin.",
-      "Run on branch dev-901 after adding the Java skills (create-workflow-java, create-pubsub-java, check-prereq-java): queries 19 to 22 are new in this run and cover them.",
+      "Generated with `node scripts/triggering-prompt.mjs <diagrid skills dir>` from a read-only `git archive` of diagridio/diagrid-ai origin/main at 58b917f, not the marketplace cache.",
+      "Run after the 2026-11-24 description fixes: the review-workflow-activity and review-workflow-determinism pointers to the diagrid plugin were removed, the review skills now name .NET, Python and Java, and create-workflow-from-diagram no longer sends Mermaid and sketches to the diagrid plugin.",
       "Run on branch dev-901 after adding the Java skills (create-workflow-java, create-pubsub-java, check-prereq-java): queries 19 to 22 cover them.",
-      "Re-recorded 2026-11-24 as two runs after a description fix, replacing the earlier single run (18 of 22, with misses at 9, 10, 11 and 18)."
+      "Run on branch dev-901 after adding Java checklists to the six workflow and pub/sub review skills: queries 23 and 24 cover them.",
+      "Re-recorded 2026-11-24 as two runs, replacing the earlier two-run baseline (diagrid 0.10.2, 20 of 22, misses at 9 and 10 as AMBIGUOUS)."
     ]
   },
   "queries": [
@@ -122,9 +122,9 @@
       "expect": "dapr-skills:review-workflow-determinism",
       "rationale": "No Diagrid signal. The diagrid determinism skill is for workflow code that runs on Diagrid, so local Dapr code goes to the review skill, which can check the body being written. Before 2026-11-24 this expected the diagrid skill.",
       "baseline": {
-        "picked": "AMBIGUOUS",
-        "confidence": "low in run 1, medium in run 2",
-        "note": "Miss against the 2026-11-24 expectation in both runs. Candidates (same pair both runs): diagrid:diagrid-workflow-determinism or dapr-skills:review-workflow-determinism."
+        "picked": "diagrid:diagrid-workflow-determinism",
+        "confidence": "medium",
+        "note": "Miss against the 2026-11-24 expectation in both runs. The alternative is dapr-skills:review-workflow-determinism. Was AMBIGUOUS between the two at diagrid 0.10.2."
       }
     },
     {
@@ -133,9 +133,9 @@
       "expect": "dapr-skills:review-workflow-activity",
       "rationale": "No Diagrid signal. The diagrid idempotency skill is for activities that run on Diagrid, so a local activity goes to the review skill. Before 2026-11-24 this expected the diagrid skill.",
       "baseline": {
-        "picked": "AMBIGUOUS",
-        "confidence": "low in run 1, medium in run 2",
-        "note": "Miss against the 2026-11-24 expectation in both runs. Candidates (same pair both runs): diagrid:diagrid-activity-idempotency or dapr-skills:review-workflow-activity."
+        "picked": "diagrid:diagrid-activity-idempotency",
+        "confidence": "medium",
+        "note": "Miss against the 2026-11-24 expectation in both runs. The alternative is dapr-skills:review-workflow-activity. Was AMBIGUOUS between the two at diagrid 0.10.2."
       }
     },
     {
@@ -189,8 +189,8 @@
       "rationale": "No language and no runtime. Picking silently is the failure mode here; the right move is to ask or state the assumption.",
       "baseline": {
         "picked": "AMBIGUOUS",
-        "confidence": "low",
-        "note": "Candidates: dapr-skills create-workflow-python, -dotnet, -java, -typescript in both runs (run 2 also listed -aspire). Correct, since the query names no language or runtime. Was high in the previous run."
+        "confidence": "medium in run 1, high in run 2",
+        "note": "Candidates: dapr-skills create-workflow-python, -dotnet, -java, -typescript in both runs. Correct, since the query names no language or runtime."
       }
     },
     {
@@ -267,13 +267,21 @@
       "id": 23,
       "query": "review my Spring Boot workflow for determinism issues",
       "expect": "dapr-skills:review-workflow-determinism",
-      "rationale": "Added for Java review support. A Spring Boot workflow audited for replay safety; the Java checklist lives in review-workflow-determinism."
+      "rationale": "Added for Java review support. A Spring Boot workflow audited for replay safety; the Java checklist lives in review-workflow-determinism.",
+      "baseline": {
+        "picked": "dapr-skills:review-workflow-determinism",
+        "confidence": "high"
+      }
     },
     {
       "id": 24,
       "query": "check my Java Dapr subscribers for idempotency",
       "expect": "dapr-skills:review-pubsub-subscriptions",
-      "rationale": "Added for Java review support. Java subscribers audited for idempotency; the Java checklist lives in review-pubsub-subscriptions."
+      "rationale": "Added for Java review support. Java subscribers audited for idempotency; the Java checklist lives in review-pubsub-subscriptions.",
+      "baseline": {
+        "picked": "dapr-skills:review-pubsub-subscriptions",
+        "confidence": "high"
+      }
     }
   ]
 }
