@@ -16,6 +16,8 @@ Also: if a `kind: Subscription` YAML exists and the scope has `.py` files contai
 
 If multiple targets exist (for example a .NET solution with a sibling Python app), confirm the scope with the user before continuing, or review once per language as described in `review-scope-prompt.md`.
 
+If a `pom.xml` depends on `io.dapr`, stop the review and tell the user Java review support is not available yet.
+
 If no marker is found, stop the review and tell the user the target is not a recognized Dapr pub/sub project.
 
 ## Step 2: Build the lists

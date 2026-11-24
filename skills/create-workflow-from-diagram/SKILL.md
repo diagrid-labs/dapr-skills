@@ -1,6 +1,6 @@
 ---
 name: create-workflow-from-diagram
-description: Creates a Dapr workflow app from a diagram image or a BPMN 2.0 file, in Go, Python, .NET, Java or JavaScript. Use for "create a workflow from this diagram" or "scaffold a workflow from this BPMN". For Mermaid, export it to BPMN or an image first. For Diagrid use the diagrid plugin.
+description: Creates a Dapr workflow app from a diagram image (PNG, JPG, GIF, WebP) or a BPMN 2.0 file, in Go, Python, .NET, Java or JavaScript. Use for "create a workflow from this diagram" or "scaffold a workflow from this BPMN". For Mermaid, export it to BPMN or an image first. For Diagrid use the diagrid plugin.
 allowed-tools:
   - Read
   - Write

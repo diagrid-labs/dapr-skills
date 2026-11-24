@@ -14,6 +14,8 @@ Probe the project root (or the user-specified scope folder) for the markers belo
 
 If multiple targets exist (e.g., a `.NET` Aspire solution with a sibling Python app), confirm the scope with the user before continuing.
 
+If a `pom.xml` depends on `io.dapr`, stop the review and tell the user Java review support is not available yet.
+
 If no marker is found, stop the review and tell the user the target is not a recognized Dapr Workflow project.
 
 ## Step 2: Locate workflow, activity, and management code

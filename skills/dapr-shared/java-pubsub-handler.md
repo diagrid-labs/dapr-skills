@@ -124,6 +124,8 @@ public class <EventName>Handler {
   identifying field is present, because the idempotency store is keyed by it:
   `<eventVar>.<idField>() == null || <eventVar>.<idField>().isBlank()`, joined with `||` to any other check
   the domain needs (a quantity that must be positive, a status from a known set).
+  The template assumes a `String` id. For a `long` or `UUID` id, convert it with `String.valueOf(...)` for
+  `isProcessed` and `markProcessed`, and check it with `== null` instead of `isBlank()`.
 - `<HandlerBody>` is what the user said the subscriber should do with the event. When they described no
   action beyond receiving it, log the event at information level with its identifying fields and nothing
   else; never invent a side effect. Work that can fail transiently belongs here and must be allowed to

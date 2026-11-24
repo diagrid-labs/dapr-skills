@@ -190,5 +190,5 @@ the SDK picked up the ports `dapr run` exports (`DAPR_HTTP_PORT`, `DAPR_GRPC_POR
 ## Open
 
 - **Windows.** Whether `command: ["mvn", "spring-boot:run"]` starts under `dapr run -f .` on Windows
-  (`mvn` resolving to `mvn.cmd`) is not verified yet. It is pending a run by Marc on a Windows machine.
+  (`mvn` resolving to `mvn.cmd`) is not yet verified on Windows.
   It worked on macOS.

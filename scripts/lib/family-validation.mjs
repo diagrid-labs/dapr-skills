@@ -75,7 +75,8 @@ export const FAMILIES = new Map([
 ]);
 
 // Unambiguous placeholder tokens: they start lowercase, or contain _ or -, so
-// they can never be a C# generic argument or an XML tag.
+// they are never a C# generic argument. An XML element (a pom.xml `<groupId>`)
+// can still match, so the scan skips tags that have a closing tag.
 const UNAMBIGUOUS =
   /<([a-z][A-Za-z0-9]*[_-][A-Za-z0-9_-]*|[a-z][a-z0-9]*(?:[_-][a-z0-9]+)+|[a-z][a-z0-9]*[A-Z][A-Za-z0-9]*)>/g;
 
