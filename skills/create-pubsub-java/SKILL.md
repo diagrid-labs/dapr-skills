@@ -1,6 +1,6 @@
 ---
 name: create-pubsub-java
-description: Creates a local Dapr pub/sub app in Java with Spring Boot (publisher, subscriber or both) and declarative, programmatic or streaming subscriptions. Use for "create a pub/sub app in Java" or "build a Spring Boot publisher/subscriber". New projects only.
+description: Creates a local Dapr pub/sub app in Java with Spring Boot (publisher, subscriber or both) and declarative, programmatic or streaming subscriptions. Use for "create a pub/sub app in Java" or "build a Spring Boot publisher/subscriber". For an existing project use add-pubsub-java.
 allowed-tools:
   - Write
   - Edit

@@ -8,7 +8,7 @@ This repository contains skill definitions that can be used with Claude Code, Gi
 - Building-blocks skill: `create-workflow-typescript` — scaffolds a TypeScript Dapr Workflow whose activities also exercise service invocation, pub/sub, bindings, jobs, state, and secrets, plus a small second service invoked over service invocation.
 - Diagram-input skill: `create-workflow-from-diagram` — provide a workflow diagram (PNG / JPG / JPEG / GIF / WebP) or a BPMN 2.0 XML file; the skill extracts structure and generates code for Go, Python, .NET, Java, or JavaScript.
 - Migration skill: `migrate-workflow-typescript` — analyzes an **existing** TypeScript/Node.js application (not a scaffold), proposes a Dapr building-block mapping for approval, and applies confirmed changes incrementally with verification between each.
-- Add skill: `add-workflow-dotnet` — adds Dapr Workflow to an **existing** ASP.NET Core project (plain or Aspire) after you approve a plan, with targeted edits and a build after each step.
+- Add skills: `add-workflow-dotnet`, `add-workflow-java` — add Dapr Workflow to an **existing** project (ASP.NET Core, plain or Aspire, or a Spring Boot 4 Maven app for Java) after you approve a plan, with targeted edits and a build after each step.
 - Review skills: `review-workflow-determinism`, `review-workflow-activity`, `review-workflow-management` — audit an existing .NET, Python or Java project.
 
 ### Agent skills
@@ -19,7 +19,7 @@ This repository contains skill definitions that can be used with Claude Code, Gi
 ### Pub/sub skills
 
 - Create skills: `create-pubsub-dotnet`, `create-pubsub-python`, `create-pubsub-java` — scaffold a Dapr pub/sub publisher and subscriber app (`dapr run`, or Aspire for .NET; Python uses FastAPI; Java uses Spring Boot 4) from the event you describe. You choose the role and the subscription type (declarative by default, programmatic or streaming); the skills ask what the app publishes — the event, its topic, its fields and what the subscriber does with it — and never scaffold a built-in sample scenario.
-- Add skills: `add-pubsub-dotnet`, `add-pubsub-python` — add Dapr pub/sub to an **existing** project (ASP.NET Core, or a FastAPI app for Python) after you approve a plan, keeping the subscription type the project already uses.
+- Add skills: `add-pubsub-dotnet`, `add-pubsub-python`, `add-pubsub-java` — add Dapr pub/sub to an **existing** project (ASP.NET Core, a FastAPI app for Python, or a Spring Boot 4 Maven app for Java) after you approve a plan, keeping the subscription type the project already uses.
 - Review skills: `review-pubsub-publishing`, `review-pubsub-subscriptions`, `review-pubsub-components` — audit publishing code, subscriptions and handlers, and pub/sub components and wiring on an existing .NET, Python or Java project.
 
 ### Diagram skills
@@ -120,7 +120,7 @@ npx skills update
 To remove the skills, run `npx skills remove` and select the Dapr skills in the interactive list, or remove them by name (add `-g` if you installed them with `-g`):
 
 ```shell
-npx skills remove add-pubsub-dotnet add-pubsub-python add-workflow-dotnet check-prereq-agent-dotnet check-prereq-agent-python check-prereq-aspire check-prereq-dotnet check-prereq-java check-prereq-python create-agent-dotnet create-agent-python create-diagram create-pubsub-dotnet create-pubsub-java create-pubsub-python create-workflow-aspire create-workflow-dotnet create-workflow-from-diagram create-workflow-java create-workflow-python create-workflow-typescript dapr-shared migrate-workflow-typescript review-agent-memory review-agent-observability review-agent-orchestration review-agent-tools review-pubsub-components review-pubsub-publishing review-pubsub-subscriptions review-workflow-activity review-workflow-determinism review-workflow-management -y
+npx skills remove add-pubsub-dotnet add-pubsub-java add-pubsub-python add-workflow-dotnet add-workflow-java check-prereq-agent-dotnet check-prereq-agent-python check-prereq-aspire check-prereq-dotnet check-prereq-java check-prereq-python create-agent-dotnet create-agent-python create-diagram create-pubsub-dotnet create-pubsub-java create-pubsub-python create-workflow-aspire create-workflow-dotnet create-workflow-from-diagram create-workflow-java create-workflow-python create-workflow-typescript dapr-shared migrate-workflow-typescript review-agent-memory review-agent-observability review-agent-orchestration review-agent-tools review-pubsub-components review-pubsub-publishing review-pubsub-subscriptions review-workflow-activity review-workflow-determinism review-workflow-management -y
 ```
 
 Do not use `npx skills remove --skill "*"`: it removes **every** installed skill, including skills from other sources.
@@ -155,7 +155,7 @@ claude plugin install diagrid@diagrid
 
 ## How to use this
 
-1. Start your agent (Claude Code, Copilot CLI, or Codex) in the directory where you want the generated project to be created, or in your existing project for `create-diagram` (the `diagrams/` folder is created there), `add-workflow-dotnet`, `add-pubsub-dotnet`, `add-pubsub-python` and `migrate-workflow-typescript`.
+1. Start your agent (Claude Code, Copilot CLI, or Codex) in the directory where you want the generated project to be created, or in your existing project for `create-diagram` (the `diagrams/` folder is created there), `add-workflow-dotnet`, `add-workflow-java`, `add-pubsub-dotnet`, `add-pubsub-python`, `add-pubsub-java` and `migrate-workflow-typescript`.
 2. Make sure the skills are installed (see [Installation](#installation)).
 3. OPTIONAL: Run a `check-prereq-<language>` skill to verify your environment (e.g., "check prerequisites for .NET", "check prerequisites for Aspire", "check prerequisites for Python", "check prerequisites for Java", or "check prerequisites for Python agents"). Follow the instructions if the prerequisites are not met.
 4. Run a `create-workflow-<language>`, `create-agent-<language>` or `create-pubsub-<language>` skill to scaffold the project (see the prompt examples below).
@@ -214,6 +214,7 @@ This diagram comes from the example scene [`skills/create-diagram/examples/order
 | Skill | Example prompt |
 | --- | --- |
 | `add-workflow-dotnet` | "add a workflow to my .NET project", "add Dapr Workflow to this API" |
+| `add-workflow-java` | "add a workflow to my Spring Boot app", "add Dapr Workflow to my Spring Boot project" (Spring Boot 4, Maven) |
 
 ### Create a pub/sub app
 
@@ -231,8 +232,9 @@ Describe the event, its fields and what the subscriber should do with it. Anythi
 | --- | --- |
 | `add-pubsub-dotnet` | "add pub/sub to my .NET project: publish a ... event when ..." |
 | `add-pubsub-python` | "add pub/sub to my FastAPI app: publish a ... event when ..." |
+| `add-pubsub-java` | "add pub/sub to my Spring Boot app: publish a ... event when ..." (Spring Boot 4, Maven) |
 
-Both reuse a domain type the project already has when one fits, and ask for the event and its fields when none does.
+All three reuse a domain type the project already has when one fits, and ask for the event and its fields when none does.
 
 ### Review pub/sub
 

@@ -23,7 +23,7 @@
   "baseline": {
     "date": "2026-11-24",
     "model": "sonnet (Claude Sonnet 5.5)",
-    "dapr_skills_version": "1.33.0",
+    "dapr_skills_version": "1.34.0",
     "diagrid_version": "0.10.3 (diagridio/diagrid-ai origin/main 58b917f)",
     "result": "22 of 24 matched `expect` (or `accept`) in both runs. Misses: queries 9 and 10. Both resolved to the diagrid skill at medium confidence in both runs (9: diagrid-workflow-determinism; 10: diagrid-activity-idempotency), where `expect` is the dapr-skills review skill. In the previous baseline (diagrid 0.10.2) both came back AMBIGUOUS. The dapr-skills descriptions for those skills also changed between the runs, though only slightly (\".NET, Python and Java\" was added), so the shift most likely follows the diagrid plugin update. Query 11 matched at medium (diagrid-workflow-scaffold) and query 18 matched at medium (create-workflow-from-diagram). Query 15 is correctly AMBIGUOUS (medium in run 1, high in run 2). Query 22 (Kotlin with Quarkus) is correctly NONE at medium. Queries 23 and 24 (Java review) matched at high confidence in both runs. The other 16 answers matched at high confidence, including the Java queries 19 to 21. Two runs, descriptions only; the verdicts were identical, with confidence differing only on query 15.",
     "known_risk": "Queries 9 and 10: on 2026-11-24 dapr-skills stopped pointing authoring questions at the diagrid plugin, because its determinism and idempotency skills are for code that runs on Diagrid, and the expectations moved to the dapr-skills review skills. With diagrid 0.10.3 the model now resolves both to the diagrid skills at medium confidence rather than AMBIGUOUS, because the diagrid descriptions say \"Use when writing, changing or reviewing\" and mention Diagrid only as \"on Diagrid\". Fixing that needs a wording change in diagridio/diagrid-ai; dapr-skills was not changed to chase it. Queries 11, 18 and 22 also matched at medium rather than high confidence. Query 11 regressed after the plugin rename, as recorded on 2026-11-23, because diagrid-workflow-scaffold now reads as create-only. Query 15 is correctly AMBIGUOUS.",
@@ -282,6 +282,18 @@
         "picked": "dapr-skills:review-pubsub-subscriptions",
         "confidence": "high"
       }
+    },
+    {
+      "id": 25,
+      "query": "add Dapr workflow to my Spring Boot project",
+      "expect": "dapr-skills:add-workflow-java",
+      "rationale": "Added for add-workflow-java. An existing Spring Boot project gains a workflow, so this must NOT fire create-workflow-java, whose description points existing projects here, or migrate-workflow-typescript."
+    },
+    {
+      "id": 26,
+      "query": "make this Spring Boot service subscribe to a Dapr topic",
+      "expect": "dapr-skills:add-pubsub-java",
+      "rationale": "Added for add-pubsub-java. \"This\" service already exists, so it is the add skill, not create-pubsub-java, whose description points existing projects here."
     }
   ]
 }

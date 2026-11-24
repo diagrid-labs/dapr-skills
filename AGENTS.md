@@ -25,6 +25,8 @@ This repository contains skill definitions for building Dapr Workflow applicatio
   - `migrate-workflow-typescript/REFERENCE.md` — Detection heuristics, infra-to-component mapping, and verified before/after code for the migration skill
   - `add-workflow-dotnet/SKILL.md` — Skill for adding Dapr Workflow to an existing ASP.NET Core project (plain or Aspire) after a plan the user approves
   - `add-workflow-dotnet/REFERENCE.md` — Detection heuristics, plan template, edit recipes and run-doc template for the add skill
+  - `add-workflow-java/SKILL.md` — Skill for adding Dapr Workflow to an existing Spring Boot 4 Maven project after a plan the user approves
+  - `add-workflow-java/REFERENCE.md` — Detection heuristics, plan template, edit recipes and run-doc template for the Java workflow add skill
   - `create-workflow-aspire/SKILL.md` — Skill for creating Dapr Workflow apps with Aspire
   - `create-workflow-aspire/REFERENCE.md` — Detailed reference examples for the Aspire skill
   - `create-workflow-from-diagram/SKILL.md` — Skill for scaffolding a Dapr Workflow app from a diagram image (PNG/JPG/GIF/WebP) or a BPMN 2.0 XML file, in Go, Python, .NET, Java, or JavaScript
@@ -65,6 +67,8 @@ This repository contains skill definitions for building Dapr Workflow applicatio
   - `add-pubsub-dotnet/REFERENCE.md` — Detection heuristics, plan template, edit recipes and run-doc template for the .NET pub/sub add skill
   - `add-pubsub-python/SKILL.md` — Skill for adding Dapr pub/sub to an existing Python FastAPI app after a plan the user approves
   - `add-pubsub-python/REFERENCE.md` — Detection heuristics, plan template, edit recipes and run-doc template for the Python pub/sub add skill
+  - `add-pubsub-java/SKILL.md` — Skill for adding Dapr pub/sub to an existing Spring Boot 4 Maven project after a plan the user approves
+  - `add-pubsub-java/REFERENCE.md` — Detection heuristics, plan template, edit recipes and run-doc template for the Java pub/sub add skill
   - `review-pubsub-publishing/SKILL.md` — Skill for reviewing Dapr pub/sub publishing code in .NET, Python and Java (swallowed publish failures, pub/sub names, content types, client lifetime, bulk publish, payload size)
   - `review-pubsub-publishing/REFERENCE.md` — Detailed reference and worked example for the pub/sub publishing review skill
   - `review-pubsub-subscriptions/SKILL.md` — Skill for reviewing Dapr pub/sub subscriptions and handlers (declarative, programmatic and streaming: CloudEvent handling, response statuses, idempotency, dead-letter handling, duplicate subscriptions)
@@ -97,9 +101,11 @@ Run the appropriate `create-workflow-xxx` skill to scaffold the project: `create
 
 Run `migrate-workflow-typescript` on an existing TypeScript/Node.js application — it is not a scaffolder. It reads the codebase first (no changes), maps existing service calls, messaging, scheduled jobs, secrets, and state access onto Dapr building blocks, presents a Migration Assessment Report for approval, and only then applies confirmed changes one integration point at a time, verifying after each with the project's own build/test commands. It works on a dedicated git branch and never commits or pushes unless the user opts into per-step commits. This is a fundamentally different kind of skill from the `create-workflow-xxx` family: it never assumes a fixed scenario and never rewrites whole files.
 
-**Add Dapr Workflow to an existing .NET project:**
+**Add Dapr Workflow to an existing project:**
 
 Run `add-workflow-dotnet` on an existing ASP.NET Core project (net8.0, net9.0 or net10.0, optionally inside an Aspire solution). It inspects the solution, shows an Add Workflow Plan for approval, then adds `Dapr.Workflow`, the Dapr wiring, the workflow and its activities, and the management endpoints with targeted edits, building after each step and running the existing tests at the end. It never changes git state and writes a `DAPR-WORKFLOW.md` instead of editing the README.
+
+Run `add-workflow-java` on an existing Spring Boot 4 project built with Maven (Spring MVC; Gradle and WebFlux are not supported). It works the same way: a plan for approval, then the `dapr-spring-bom` and `dapr-spring-boot-starter`, the Dapr wiring, the workflow and its activities, and the management endpoints with targeted edits, running `mvn -q -DskipTests package` after each step and `mvn -q test` at the end. It also writes a `DAPR-WORKFLOW.md`.
 
 **Build a new agent application:**
 
@@ -111,7 +117,7 @@ Run `create-pubsub-dotnet`, `create-pubsub-python` or `create-pubsub-java` to sc
 
 **Add pub/sub to an existing project:**
 
-Run `add-pubsub-dotnet` or `add-pubsub-python` on an existing project (.NET: ASP.NET Core, plain or Aspire; Python: FastAPI only). They inspect it, show a plan for approval, and then apply targeted edits, keeping the subscription type the project already uses. They never change git state and write a `DAPR-PUBSUB.md` instead of editing the README.
+Run `add-pubsub-dotnet`, `add-pubsub-python` or `add-pubsub-java` on an existing project (.NET: ASP.NET Core, plain or Aspire; Python: FastAPI only; Java: Spring Boot 4 with Maven and Spring MVC). They inspect it, show a plan for approval, and then apply targeted edits, keeping the subscription type the project already uses. They never change git state and write a `DAPR-PUBSUB.md` instead of editing the README.
 
 **Draw a diagram:**
 

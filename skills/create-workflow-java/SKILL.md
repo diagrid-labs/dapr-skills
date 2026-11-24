@@ -1,6 +1,6 @@
 ---
 name: create-workflow-java
-description: Creates a local Dapr workflow app in Java with Spring Boot. Use for "create a workflow in Java" or "build a Spring Boot workflow app". For Diagrid use the diagrid plugin.
+description: Creates a local Dapr workflow app in Java with Spring Boot. Use for "create a workflow in Java" or "build a Spring Boot workflow app". For an existing project use add-workflow-java. For Diagrid use the diagrid plugin.
 allowed-tools:
   - Write
   - Edit
