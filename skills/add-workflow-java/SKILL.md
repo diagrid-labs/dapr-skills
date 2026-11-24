@@ -56,15 +56,15 @@ Then determine and remember:
 - Existing workflows: classes implementing `io.dapr.workflows.Workflow` or `WorkflowActivity`. Never add a second `@EnableDaprWorkflows`.
 - The app port: `server.port` in `src/main/resources/application.properties`, `application.yml` or `application.yaml`; 8080 when none sets it.
 - Trigger endpoints: `@PostMapping` handlers that create or accept the thing the workflow is about (for example `POST /loans` for a loan review workflow). Read-only handlers (`@GetMapping`) never qualify, and neither does a handler that only records something related to the workflow's subject. When in doubt, treat the project as having no trigger endpoint. Remember the best match, and whether a test calls it over HTTP (`MockMvc`, `@WebMvcTest`, `@AutoConfigureMockMvc`, `TestRestTemplate`, `RestTestClient`, `WebTestClient`).
-- Existing Dapr files: `dapr.yaml` in the project folder or a parent folder, the resources folder its `resourcesPath` points to (`resources/` or `components/`), any component with `actorStateStore: "true"`, and whether another app in `dapr.yaml` already uses the app port.
-- Test classes under `src/test/java`, and whether any is a slice test (`@WebMvcTest`, `@DataJpaTest`, `@JsonTest`, … — see **Detection** in `REFERENCE.md`).
+- Existing Dapr files: `dapr.yaml` in the project folder or a parent folder (how far up to look is in **Detection** in `REFERENCE.md`), the resources folder its `resourcesPath` points to (`resources/` or `components/`), any component with `actorStateStore: "true"`, and whether another app in `dapr.yaml` already uses the app port.
+- Test classes under `src/test/java`, and whether any is a slice test (`@WebMvcTest`, `@DataJpaTest`, `@JsonTest`, … — see **Detection** in `REFERENCE.md`). For each `@WebMvcTest`, whether it names its controllers or is bare: a bare one also loads the new workflow controller and fails without a `DaprWorkflowClient` bean.
 - `git status` (read-only). Remember whether the tree has uncommitted changes.
 
 Run Maven as exactly `mvn -q -DskipTests package` and `mvn -q test` when the session's working directory is the Maven project folder, so they match the allowed commands (the same on macOS, Linux and Windows). Otherwise use `mvn -q -f "<project-path>/pom.xml" -DskipTests package` (and the same `-f` form for `test`); the user is then asked to approve it. Never prefix a command with `cd`, and never chain commands with `&&`.
 
 ## Phase 2: Check specification
 
-If the request does not say what the workflow should do, ask, one question at a time: its purpose; the steps and pattern (task chaining, fan-out/fan-in, external event / approval, timer, child workflow); the input and output. Then resolve the names as [`../dapr-shared/workflow-placeholders.md`](../dapr-shared/workflow-placeholders.md) defines them (`<WorkflowName>`, `<WorkflowInput>`, `<WorkflowOutput>`, one `<ActivityName>` per step with its `<ActivityInput>` and `<ActivityOutput>`), and `<workflow-route>` as the kebab-case workflow name without the `Workflow` suffix (`LoanReviewWorkflow` gives `loan-review`). `<javaPackage>` is the base package of the existing application, not a derived one. Reuse existing domain records as workflow input or output when they fit.
+If the request does not say what the workflow should do, ask, one question at a time: its purpose; the steps and pattern (task chaining, fan-out/fan-in, external event / approval, timer, child workflow); the input and output. Then resolve the names as [`../dapr-shared/workflow-placeholders.md`](../dapr-shared/workflow-placeholders.md) defines them (`<WorkflowName>`, `<WorkflowInput>`, `<WorkflowOutput>`, one `<ActivityName>` per step with its `<ActivityInput>` and `<ActivityOutput>`), and `<workflow-route>` as the kebab-case workflow name without the `Workflow` suffix (`LoanReviewWorkflow` gives `loan-review`). `<javaPackage>` is the base package of the existing application, not a derived one. Reuse existing domain records as workflow input or output when they fit. A reused record can be `<WorkflowInput>` only when it has an id component the start route can use as the instance id (`input.id()`, or the entity's own id accessor such as `input.invoiceId()`); otherwise add a new `<WorkflowInput>` record that carries the entity id and the fields the workflow needs.
 
 ## Phase 3: Check optional tools
 
@@ -72,7 +72,7 @@ Follow the **Check** section of [`../dapr-shared/dev-dashboard.md`](../dapr-shar
 
 ## Phase 4: Plan and approval
 
-Emit the **Add Workflow Plan** using the template in `REFERENCE.md`. It lists the target, every file to add, every file to edit with a one-line description of the edit, the dependency changes in `pom.xml`, the app port and where it was read, the Dapr ports, what is reused (an existing actor state store, an existing `dapr.yaml`), what is left alone, the baseline test run (default yes), a port-collision warning when another app in `dapr.yaml` already uses the app port, and an uncommitted-changes warning when Phase 1 found one.
+Emit the **Add Workflow Plan** using the template in `REFERENCE.md`. It lists the target, every file to add, every file to edit with a one-line description of the edit, the dependency changes in `pom.xml`, the app port and where it was read, the Dapr ports, what is reused (an existing actor state store, an existing `dapr.yaml`), what is left alone, the baseline test run (default yes), a port-collision warning when another app in `dapr.yaml` already uses the app port, the **Risk** line for each bare `@WebMvcTest` (see the template in `REFERENCE.md`), and an uncommitted-changes warning when Phase 1 found one.
 
 The plan ends with a **Questions** section. Ask these before any file is created or changed, each with its default. Number only the questions that apply, starting at 1:
 
@@ -108,7 +108,7 @@ Rules for every step:
 
 ## Phase 6: Final verification
 
-Run `mvn -q -DskipTests package` and, when test classes exist, `mvn -q test`. Adding the starter does not need a sidecar for the tests: a `@SpringBootTest` context starts, and the workflow worker keeps retrying the connection in the background. Report failures that also failed in the baseline run as pre-existing. Never edit tests to make them pass. Do not start `dapr run`.
+Run `mvn -q -DskipTests package` and, when test classes exist, `mvn -q test`. Adding the starter does not need a sidecar for the tests: a `@SpringBootTest` context starts, and the workflow worker keeps retrying the connection in the background. Report failures that also failed in the baseline run as pre-existing. A bare `@WebMvcTest` that the plan's **Risk** line named fails as predicted: report it as caused by the change, with the fix from the Risk line. Never edit tests to make them pass. Do not start `dapr run`.
 
 ## Phase 7: Write the run doc
 

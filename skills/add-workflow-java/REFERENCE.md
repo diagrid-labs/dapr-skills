@@ -20,10 +20,10 @@ is different in an existing project: detection, the plan, the edits and the run 
 | Endpoint style | `@RestController` classes; a class-level `@RequestMapping` prefix or method-level paths. |
 | Trigger endpoint | A `@PostMapping` (or `@RequestMapping(method = POST)`) handler that creates the workflow's subject. Remember the class, the handler and its route. |
 | Tests calling it | Test classes under `src/test/java` that use `MockMvc`, `@WebMvcTest`, `@AutoConfigureMockMvc`, `TestRestTemplate`, `RestTestClient` or `WebTestClient` and send a request to the trigger route. |
-| Dapr files | `dapr.yaml` in the project folder or a parent folder up to the repository root; the folder its `resourcesPath` names; component files whose metadata `actorStateStore` is `"true"` or `true` (both forms count); the `appPort` and `daprHTTPPort` of every app entry. |
+| Dapr files | `dapr.yaml` in the Maven project folder, then in each parent folder up to and including the git repository root (the nearest folder with a `.git` entry); without a git repository, look in at most two parent folders. Use the nearest one found; the folder its `resourcesPath` names; component files whose metadata `actorStateStore` is `"true"` or `true` (both forms count); the `appPort` and `daprHTTPPort` of every app entry. |
 | Port collision | Another app entry in `dapr.yaml` (not this app) has `appPort` equal to the app port. |
 | Tests | Any class under `src/test/java`. |
-| Slice tests | Test classes annotated with a Spring Boot test slice: `@WebMvcTest`, `@DataJpaTest`, `@DataJdbcTest`, `@JsonTest`, `@RestClientTest`, `@JdbcTest`, or any other `@...Test` imported from a `org.springframework.boot.*.test.autoconfigure` package. Any → `@EnableDaprWorkflows` goes on a new `DaprWorkflowConfiguration` class, not on the application class. `@SpringBootTest` is not a slice. |
+| Slice tests | Test classes annotated with a Spring Boot test slice: `@WebMvcTest`, `@DataJpaTest`, `@DataJdbcTest`, `@JsonTest`, `@RestClientTest`, `@JdbcTest`, or any other `@...Test` imported from an `org.springframework.boot` package whose name contains `test.autoconfigure` (for example `org.springframework.boot.webmvc.test.autoconfigure` or `org.springframework.boot.test.autoconfigure.json`). Any → `@EnableDaprWorkflows` goes on a new `DaprWorkflowConfiguration` class, not on the application class. `@SpringBootTest` is not a slice. For each `@WebMvcTest`, record whether it names its controllers (`@WebMvcTest(InvoiceController.class)`, `@WebMvcTest(controllers = ...)`) or is bare (`@WebMvcTest` with no controllers). A bare one loads every `@Controller` in the app, including the new workflow controller, which needs a `DaprWorkflowClient` bean that no slice creates → the plan gets the **bare `@WebMvcTest`** Risk line. |
 
 ### Stop messages
 
@@ -67,6 +67,7 @@ Use these, filled in, as the whole answer when a gate fails. Change nothing and 
 - Baseline test run before changes: yes (reply "no baseline" to skip)
 - <Port collision: `<other app>` in `<path to dapr.yaml>` also uses appPort <port>. The two apps cannot run together with `dapr run -f .`; change one port before running. This plan does not change `server.port`.>
 - <Uncommitted changes found: the edits will mix with them.>
+- <**Risk:** `<TestClass>` is a `@WebMvcTest` that names no controllers, so it also loads the new `<WorkflowName>Controller`, which needs a `DaprWorkflowClient` bean that slice tests do not create. After this change it fails with `No qualifying bean of type 'io.dapr.workflows.client.DaprWorkflowClient'` until the test gets a `@MockitoBean DaprWorkflowClient` field or lists its controllers (`@WebMvcTest(<Controller>.class)`). This skill does not edit tests.>
 
 ### Questions
 1. A newer Dapr version is available: <`dapr-spring-bom` 1.18.1 → 1.19.1, `dapr-spring-boot-4-starter` → `dapr-spring-boot-starter`>. Update? **Default: yes, update.** (No stops the skill: the workflow code needs 1.19.1.)
@@ -96,8 +97,8 @@ Reply **yes** to apply with the defaults, answer a question differently (for exa
   </dependencyManagement>
   ```
 
-- An existing `<dependencyManagement>`: add the `<dependency>` above inside its `<dependencies>`, after the entries already there.
-- Add the starter as the first entry of `<dependencies>`, with no `<version>`:
+- An existing `<dependencyManagement>`: add the `<dependency>` above inside its `<dependencies>`, after the entries already there. When it already imports `dapr-spring-bom`, add no second import; only its version changes (see the dependency updates below).
+- When the project has no Dapr starter yet (neither `dapr-spring-boot-starter` nor `dapr-spring-boot-4-starter`), add the starter as the first entry of `<dependencies>`, with no `<version>`. When it already has one, add nothing here: an existing `dapr-spring-boot-starter` stays where it is, and a `dapr-spring-boot-4-starter` is replaced in place by the dependency updates below, so the project never has two Dapr starters.
 
   ```xml
   <dependency>
@@ -106,7 +107,7 @@ Reply **yes** to apply with the defaults, answer a question differently (for exa
   </dependency>
   ```
 
-- Dependency updates (question 1, default yes): change the version where it is declared — the BOM import's `<version>`, or the property it reads (`<dapr.version>`). Replace `dapr-spring-boot-4-starter` with `dapr-spring-boot-starter` in place (1.19 has no separate Boot 4 starter), and likewise `dapr-spring-boot-4-starter-test` with `dapr-spring-boot-starter-test`. An `io.dapr` artifact with its own `<version>` gets 1.19.1 in the same line.
+- Dependency updates (question 1, default yes): change the version where it is declared — the BOM import's `<version>`, or the property it reads (`<dapr.version>`). Replace the `<artifactId>` of `dapr-spring-boot-4-starter` with `dapr-spring-boot-starter` in place, keeping the dependency where it is (1.19 has no separate Boot 4 starter), and likewise `dapr-spring-boot-4-starter-test` with `dapr-spring-boot-starter-test`. An `io.dapr` artifact with its own `<version>` gets 1.19.1 in the same line.
 - Never add a version to `dapr-spring-boot-starter`, never change the Spring Boot parent and never run `mvn` goals that edit the `pom.xml` (`versions:*`).
 
 ## Dapr wiring
@@ -127,7 +128,7 @@ Reply **yes** to apply with the defaults, answer a question differently (for exa
 
   `<app-id>` is the `spring.application.name` when set, otherwise the Maven `artifactId`, in lowercase kebab case. `<app-port>` is the app port from Phase 1. Add `resources/statestore.yaml` from [`../dapr-shared/dapr-statestore.md`](../dapr-shared/dapr-statestore.md). No `dapr.client.*` properties: the SDK reads the ports `dapr run` exports.
 - `dapr.yaml` exists with this app: leave it unchanged. If its `appPort` differs from the app port, say so in the plan and in `DAPR-WORKFLOW.md`; do not change either.
-- `dapr.yaml` exists without this app: append an entry under `apps:` with `appDirPath` relative to the `dapr.yaml` folder, `appPort` set to the app port, a `daprHTTPPort` no other entry uses, and `command: ["mvn", "spring-boot:run"]`. Keep every other entry as it is.
+- `dapr.yaml` exists without this app: append an entry under `apps:` with `appDirPath` relative to the `dapr.yaml` folder, `appPort` set to the app port, a `daprHTTPPort`, and `command: ["mvn", "spring-boot:run"]`. The `daprHTTPPort` is 3555 when no entry uses it as an `appPort`, `daprHTTPPort` or `daprGRPCPort`; otherwise count up from 3555 (3556, 3557, …) to the first port none of them uses. It must also differ from this app's port. Keep every other entry as it is.
 - An existing component has `actorStateStore: "true"`: reuse it and do not create another state store. Workflow state goes to that store.
 - Components exist but none has `actorStateStore: "true"`: add `statestore.yaml` from [`../dapr-shared/dapr-statestore.md`](../dapr-shared/dapr-statestore.md) to that existing folder (not a new `resources/` folder). If a component already uses its name, pick another (for example `workflow-store`). Without an actor state store the app builds but every workflow fails at runtime.
 - `dapr run -f .` writes `.dapr/logs/` into the app folder. When the project has a `.gitignore` that does not list `.dapr/`, append `.dapr/` to it (a plan item). Do not create a `.gitignore`.
@@ -135,7 +136,7 @@ Reply **yes** to apply with the defaults, answer a question differently (for exa
 ## Controller placement
 
 - Put the workflow, activities, records and controller in the base package. When the base package already has a class named like one of them (`StatusResponse` is the usual clash), put the workflow code in a sub-package such as `<javaPackage>.workflow` instead.
-- The controller is the one in [`../dapr-shared/java-workflow-endpoints.md`](../dapr-shared/java-workflow-endpoints.md) with `@RequestMapping("/workflows/<workflow-route>")` on the class. Keep its start route as the template has it: it answers 409 Conflict, with the instance id in the body, when an instance with that id is still `RUNNING`, `PENDING` or `SUSPENDED`, so a repeated start never becomes a 500.
+- The controller is the one in [`../dapr-shared/java-workflow-endpoints.md`](../dapr-shared/java-workflow-endpoints.md) with `@RequestMapping("/workflows/<workflow-route>")` on the class. Keep its start route as the template has it: it answers 409 Conflict, with the instance id in the body, when an instance with that id is still `RUNNING`, `PENDING`, `SUSPENDED` or `CONTINUED_AS_NEW`, so a repeated start never becomes a 500.
 - Include the raise-event handler only when the workflow calls `waitForExternalEvent`.
 
 ## Requests file
@@ -174,6 +175,7 @@ Use [`../dapr-shared/java-local-http.md`](../dapr-shared/java-local-http.md) wit
 - The trigger handler already takes the workflow's subject id from the server (a generated id): schedule with the id of the saved entity, never with the request's id.
 - `@EnableDaprWorkflows` already present and workflows exist: add the new workflow next to them and reuse their package; do not add the annotation again.
 - Slice tests (`@WebMvcTest` and the like): `@EnableDaprWorkflows` goes on a new `@Configuration` class, see **Adding to an existing project** in [`../dapr-shared/java-workflow-endpoints.md`](../dapr-shared/java-workflow-endpoints.md). On the application class it fails their context with `No qualifying bean of type 'io.dapr.workflows.runtime.WorkflowRuntimeBuilder'`.
+- A bare `@WebMvcTest` (no controllers listed): it loads the new workflow controller too and fails with `No qualifying bean of type 'io.dapr.workflows.client.DaprWorkflowClient'`, because the bean comes from `DaprClientAutoConfiguration`, which slices exclude. Moving `@EnableDaprWorkflows` does not help. The plan carries the **Risk** line from the template; never edit the test. In Phase 6 report that failure as caused by the change, with the fix (a `@MockitoBean DaprWorkflowClient` field, or `@WebMvcTest(<Controller>.class)`), not as pre-existing. A `@WebMvcTest` that lists its controllers is unaffected unless it lists the trigger controller and question 2 was answered yes.
 - A `@SpringBootTest` test class: it keeps passing without a sidecar. The workflow worker logs `The sidecar at address 127.0.0.1:50001 is unavailable. Will continue retrying.` in the background; that is expected.
 - Windows: run `mvn` as written; `mvn` resolves to `mvn.cmd`. Report path-length errors during the build and suggest a shorter path; never move build output.
 

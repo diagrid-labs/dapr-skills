@@ -14,7 +14,7 @@
         "pom.xml imports io.dapr.spring dapr-spring-bom 1.19.1 (type pom, scope import) in dependencyManagement and adds dapr-spring-boot-starter without a <version>; the parent stays spring-boot-starter-parent 4.0.8, java.version stays 17, and the existing spring-boot-starter-webmvc and spring-boot-starter-test dependencies are unchanged",
         "ClaimsApplication.java carries exactly one @EnableDaprWorkflows next to @SpringBootApplication, and no second @SpringBootApplication class exists",
         "A top-level @Component workflow class implementing io.dapr.workflows.Workflow calls three activities in sequence (verify policy, assess damage, pay out) with ctx.callActivity(<Activity>.class.getName(), ..., <Output>.class).await(); each activity is a top-level @Component implementing WorkflowActivity; every payload is a top-level record; the workflow contains no Instant.now(), UUID.randomUUID(), Thread, CompletableFuture or catch (Exception",
-        "A new @RestController with @RequestMapping(\"/workflows/<route>\") takes DaprWorkflowClient through its constructor into a final field and has start, status, pause, resume and terminate handlers; start answers 409 Conflict when getWorkflowState shows the instance RUNNING, PENDING or SUSPENDED (after the exists check), and status uses getWorkflowState with the exists(...) check; no getInstanceState, waitForInstanceCompletion, purgeInstance or field @Autowired anywhere",
+        "A new @RestController with @RequestMapping(\"/workflows/<route>\") takes DaprWorkflowClient through its constructor into a final field and has start, status, pause, resume and terminate handlers; start answers 409 Conflict when getWorkflowState shows the instance RUNNING, PENDING, SUSPENDED or CONTINUED_AS_NEW (after the exists check), and status uses getWorkflowState with the exists(...) check; no getInstanceState, waitForInstanceCompletion, purgeInstance or field @Autowired anywhere",
         "ClaimController's POST handler still calls claims.submit(claim) and returns ResponseEntity.created(...) with the same body, and (the default yes) now also calls workflowClient.scheduleNewWorkflow for the workflow with the submitted claim's id as instance id after submit succeeds; DaprWorkflowClient is a constructor parameter and final field; the GET handler is unchanged",
         "dapr.yaml is created in the claims-api folder with one app entry whose appPort is 8082 and whose command is [\"mvn\", \"spring-boot:run\"], and resources/statestore.yaml has actorStateStore \"true\"; application.properties is byte-for-byte unchanged (server.port 8082 stays)",
         "README.md is byte-for-byte unchanged and DAPR-WORKFLOW.md exists in claims-api with how to start (`dapr run -f .`), request examples on port 8082 under /workflows/<route>, and a Diagrid Dapr Dev Dashboard section with the macOS/Linux and Windows install commands",
@@ -84,6 +84,23 @@
       "expectations": [
         "The response says the project uses Spring Boot 3.5.7, that the skill adds Dapr Java SDK 1.19.1, which needs Spring Boot 4.0.x, and names Dapr Java SDK 1.18.x as the line for Spring Boot 3 projects; it suggests upgrading to Spring Boot 4 or creating a separate workflow service with create-workflow-java",
         "No Add Workflow Plan is shown, no file in the boot3-tickets fixture is added, changed or deleted, and no `mvn` command was run"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "bare-webmvctest-risk",
+      "prompt": "Add a Dapr workflow to the Spring Boot app in ./invoices-api: when an invoice is issued it should validate the invoice and then send it to the customer, one after the other.",
+      "expected_output": "An Add Workflow Plan and a request for approval; no file in invoices-api is changed. Because InvoiceControllerTest is a bare @WebMvcTest (no controllers listed), the plan puts @EnableDaprWorkflows on a new DaprWorkflowConfiguration class and carries a Risk line: the test also loads the new workflow controller and fails without a DaprWorkflowClient bean, so it needs a @MockitoBean DaprWorkflowClient field or its controllers listed; the skill does not edit tests. The test does not call POST /invoices, so the endpoint question keeps its default yes.",
+      "files": [
+        "evals/add-workflow-java/files/invoices-api/"
+      ],
+      "expectations": [
+        "The response contains an Add Workflow Plan naming the target invoices-api, Spring Boot 4.0.8 with Maven, and app port 8084 read from server.port in application.properties, and ends by asking the user to approve, change or stop",
+        "The plan has a Risk line that names InvoiceControllerTest as a @WebMvcTest without listed controllers, says it will also load the new workflow controller and fail because no DaprWorkflowClient bean exists in the slice, and names the fix (a @MockitoBean DaprWorkflowClient field, or listing the controllers as in @WebMvcTest(InvoiceController.class)) without planning to edit the test",
+        "The plan puts @EnableDaprWorkflows on a new @Configuration class (for example DaprWorkflowConfiguration) because of the slice test, and lists InvoicesApplication.java as unchanged or not edited",
+        "The Questions section asks whether `POST /invoices` should also start the workflow with yes as the default (no test calls that endpoint), and asks no dependency-update question (the project has no Dapr dependency)",
+        "No file in the invoices-api fixture is added, changed or deleted (hash check), and no `mvn` command or file write was run on the fixture",
+        "No git command other than `git status` was run"
       ]
     }
   ]

@@ -86,6 +86,7 @@ public class DocumentApprovalWorkflowController {
     WorkflowRuntimeStatus status = state.getRuntimeStatus();
     return status == WorkflowRuntimeStatus.RUNNING
         || status == WorkflowRuntimeStatus.PENDING
-        || status == WorkflowRuntimeStatus.SUSPENDED;
+        || status == WorkflowRuntimeStatus.SUSPENDED
+        || status == WorkflowRuntimeStatus.CONTINUED_AS_NEW;
   }
 }
