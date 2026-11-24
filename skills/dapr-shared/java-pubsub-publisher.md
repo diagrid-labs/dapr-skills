@@ -63,14 +63,23 @@ With several events, add one `@PostMapping` method per event, each publishing to
 
 ## TTL and raw payload
 
-Pass message metadata as the fourth argument (import `java.util.Map`). Values are strings.
+Pass message metadata as the fourth argument (import `java.util.Map`). Values are strings. Add only the
+metadata the user asked for: a TTL the user did not ask for makes a message expire instead of reaching the
+dead-letter topic (see [references/java/gotchas.md](references/java/gotchas.md) §2).
+
+TTL only:
 
 ```java
 daprClient.publishEvent(pubSubProperties.getName(), topic, <eventVar>, Map.of("ttlInSeconds", "60")).block();
 ```
 
-For a raw payload (no CloudEvent envelope) use `Map.of("ttlInSeconds", "60", "rawPayload", "true")`, and
-configure the subscriber for raw payloads too.
+Raw payload only (no CloudEvent envelope); configure the subscriber for raw payloads too:
+
+```java
+daprClient.publishEvent(pubSubProperties.getName(), topic, <eventVar>, Map.of("rawPayload", "true")).block();
+```
+
+Only when the user asked for both, combine them: `Map.of("ttlInSeconds", "60", "rawPayload", "true")`.
 
 ## Key points
 

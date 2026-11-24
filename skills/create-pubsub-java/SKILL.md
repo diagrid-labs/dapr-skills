@@ -171,7 +171,7 @@ for a stray `<` ... `>` that is not Java generics or XML. Ports: publisher `appP
   - programmatic: [`../dapr-shared/java-pubsub-subscriber-programmatic.md`](../dapr-shared/java-pubsub-subscriber-programmatic.md);
   - streaming: [`../dapr-shared/java-pubsub-subscriber-streaming.md`](../dapr-shared/java-pubsub-subscriber-streaming.md) (`StreamingConfiguration` and `<TopicResource>StreamingSubscriber`, no `UnreadableEventAdvice`).
 - **Optional features**: routing, TTL and raw payload per `REFERENCE.md` → **Routing, TTL and raw payload**.
-- **`pubsub.http`**: [`../dapr-shared/pubsub-local-http.md`](../dapr-shared/pubsub-local-http.md), with camelCase JSON keys (the record component names) and ports 8001, 8002 and 3501. Subscriber only: `@daprHost` is the subscriber's sidecar, port 3502.
+- **`pubsub.http`**: [`../dapr-shared/pubsub-local-http.md`](../dapr-shared/pubsub-local-http.md), with camelCase JSON keys (the record component names) and ports 8001, 8002 and 3501. Subscriber only: `@daprHost` is the subscriber's sidecar, port 3502. Both roles (streaming included): keep `@daprHost` on 3501 for publishing, add `@subscriberDaprHost=http://localhost:3502`, and point the metadata request at `{{subscriberDaprHost}}/v1.0/metadata`, because the subscriptions are registered on the subscriber's sidecar only.
 
 Rules that matter:
 

@@ -91,18 +91,23 @@ public class <TopicResource>StreamingSubscriber implements SmartLifecycle {
     // The SDK acks SUCCESS as soon as the event is emitted, so the handler cannot ask for RETRY or DROP.
     // Never let an exception escape the handler: it ends the gRPC stream and the event loops in the broker.
     // A body that fails to deserialize is acked DROP (dead-lettered) and ends the stream; retryWhen
-    // opens a new stream so later events keep arriving.
+    // opens a new stream so later events keep arriving. transientErrors(true) resets the backoff after
+    // each event that arrives, so a poison message now and then does not push reconnects towards 30s.
     subscriptions.add(previewClient
         .subscribeToTopic(pubsubName, topic, deadLetterTopic, new TypeRef<CloudEvent<<EventName>>>() { })
         .doOnNext(this::handleSafely)
         .doOnError(error -> logger.warn("Streaming subscription to {} failed; resubscribing: {}", topic,
             error.getMessage()))
-        .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofSeconds(30)))
+        .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofSeconds(30))
+            .transientErrors(true))
         .subscribe());
     subscriptions.add(previewClient
         .subscribeToTopic(pubsubName, deadLetterTopic, new TypeRef<CloudEvent<Object>>() { })
         .doOnNext(event -> handler.handleDeadLetter(event.getId(), event.getData()))
-        .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofSeconds(30)))
+        .doOnError(error -> logger.warn("Streaming subscription to {} failed; resubscribing: {}", deadLetterTopic,
+            error.getMessage()))
+        .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofSeconds(30))
+            .transientErrors(true))
         .subscribe());
     logger.info("Streaming subscriptions to {} and {} started", topic, deadLetterTopic);
   }
@@ -136,15 +141,22 @@ With several events, add one `subscribeToTopic` pair per topic in `start()`, eac
 ## Raw payload
 
 Pass `Map.of("rawPayload", "true")` as the last argument of `subscribeToTopic(pubsubName, topic,
-deadLetterTopic, typeRef, metadata)`, and publish with `rawPayload` too.
+deadLetterTopic, typeRef, metadata)` and of the dead-letter `subscribeToTopic(pubsubName, deadLetterTopic,
+typeRef, metadata)`, and publish with `rawPayload` too. A dead-lettered raw message is raw too: without
+`rawPayload` on its subscription the sidecar cannot read it as a CloudEvent (seen with a programmatic
+subscription; not run for streaming).
 
 ## Key points
 
 - The handler runs inside `.doOnNext(...)`, wrapped in `try`/`catch (RuntimeException e)` that logs the
   failure. Never let an exception escape: it closes the stream before the ack, and the message is
   redelivered and fails again without ever being dead-lettered.
-- `.retryWhen(Retry.backoff(...))` before `.subscribe()` opens a new stream after a deserialization failure
-  or a lost connection; without it the subscription ends and later events are not delivered.
+- `.retryWhen(Retry.backoff(...).transientErrors(true))` before `.subscribe()` opens a new stream after a
+  deserialization failure or a lost connection; without it the subscription ends and later events are not
+  delivered. `transientErrors(true)` resets the backoff once an event arrives on the new stream, so
+  reconnects stay near 1s; without it every failure doubles the wait, up to 30s, and messages sit pending
+  while no stream is open.
+- Log `doOnError` on both streams, so every reconnect shows in the log.
 - `DaprPreviewClient` is not autoconfigured: declare it from the autoconfigured `DaprClientBuilder`.
 - The subscriptions start in `SmartLifecycle.start()`, once the application context is ready, and are
   disposed in `stop()`, which closes the streams when the app shuts down.

@@ -59,7 +59,7 @@
       "expectations": [
         "Shipping/pom.xml lists only the subscriber module and no publisher folder exists",
         "A StreamingConfiguration class declares a DaprPreviewClient bean built with daprClientBuilder.buildPreviewClient()",
-        "The streaming subscriber calls previewClient.subscribeToTopic with the dead-letter topic, wraps the handler call in .doOnNext(...) inside try/catch (RuntimeException e), and adds .retryWhen(Retry.backoff(...)) before .subscribe()",
+        "The streaming subscriber calls previewClient.subscribeToTopic with the dead-letter topic, wraps the handler call in .doOnNext(...) inside try/catch (RuntimeException e), and adds .retryWhen(Retry.backoff(...).transientErrors(true)) before .subscribe() on both the topic and dead-letter streams",
         "The subscriptions start in SmartLifecycle.start() and are disposed in stop()",
         "No file contains @Topic, @Rule, a @PostMapping subscription route or DaprMessagingTemplate, and no resources/subscription.yaml is created",
         "The subscriber entry in dapr.yaml has appID shipping-subscriber, daprHTTPPort 3502 and no appPort key",

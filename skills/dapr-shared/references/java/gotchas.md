@@ -85,8 +85,11 @@ The app cannot choose RETRY or DROP for an event it received.
 **Rule.**
 - Run the handler in `.doOnNext(...)` wrapped in `try`/`catch (RuntimeException e)` that logs the
   failure. Never let an exception escape: it turns the event into a poison message.
-- Add `.retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofSeconds(30)))`
-  before `.subscribe()`, so a deserialization failure (or a lost connection) opens a new stream.
+- Add `.retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofSeconds(30)).transientErrors(true))`
+  before `.subscribe()`, on the topic stream and the dead-letter stream, so a deserialization failure (or a
+  lost connection) opens a new stream. `transientErrors(true)` resets the backoff after an event arrives;
+  without it the delay never resets, and with several poison messages reconnects grew to 25-50s while
+  messages sat pending.
   Verified: after an undeserializable event was dead-lettered, the stream reopened about one second later
   and the next event was handled.
 - Say plainly in the skill and the README: the preview API acks every event it hands to the app, a

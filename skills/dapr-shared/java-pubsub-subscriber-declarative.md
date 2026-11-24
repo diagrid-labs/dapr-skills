@@ -60,7 +60,8 @@ Write `<RuleName>` in PascalCase in the method name (`onShipmentDispatchedExpres
 
 ## Raw payload
 
-When the user asked for raw payloads, add `rawPayload: "true"` to the Subscription (see
+When the user asked for raw payloads, add `rawPayload: "true"` to both Subscription documents, the topic's
+and its dead-letter topic's (see
 [dapr-pubsub-subscription.md](dapr-pubsub-subscription.md) → **With raw payload**), publish with
 `rawPayload` too (see [java-pubsub-publisher.md](java-pubsub-publisher.md) → **TTL and raw payload**), and
 change the topic route.
@@ -69,9 +70,33 @@ A raw message has no CloudEvent `data`: the sidecar delivers its bytes as `data_
 `event.getBinaryData()`. Read the record from those bytes with Spring's autoconfigured Jackson 3
 `JsonMapper` (`tools.jackson.databind.json.JsonMapper`), taken through the controller's constructor into a
 `final` field. A body that cannot be read throws `tools.jackson.core.JacksonException`, which
-`UnreadableEventAdvice` does not see, so the route maps it to DROP itself:
+`UnreadableEventAdvice` does not see, so the route maps it to DROP itself. The whole controller for a raw
+topic, replacing the one above:
 
 ```java
+package <javaPackage>.subscriber;
+
+import io.dapr.client.domain.CloudEvent;
+import java.nio.charset.StandardCharsets;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
+
+/** Routes are wired by resources/subscription.yaml; no @Topic here. */
+@RestController
+public class <TopicResource>EventsController {
+
+  private final <EventName>Handler handler;
+  private final JsonMapper jsonMapper;
+
+  public <TopicResource>EventsController(<EventName>Handler handler, JsonMapper jsonMapper) {
+    this.handler = handler;
+    this.jsonMapper = jsonMapper;
+  }
+
   @PostMapping("<SubscribeRoute>")
   public ResponseEntity<TopicEventStatus> on<EventName>(@RequestBody CloudEvent<<EventName>> event) {
     <EventName> <eventVar>;
@@ -82,7 +107,19 @@ A raw message has no CloudEvent `data`: the sidecar delivers its bytes as `data_
     }
     return ResponseEntity.ok(handler.handle(<eventVar>));
   }
+
+  @PostMapping("<DeadLetterRoute>")
+  public ResponseEntity<TopicEventStatus> onDeadLetter(@RequestBody CloudEvent<Object> event) {
+    handler.handleDeadLetter(event.getId(), new String(event.getBinaryData(), StandardCharsets.UTF_8));
+    return ResponseEntity.ok(TopicEventStatus.SUCCESS);
+  }
+}
 ```
+
+A dead-lettered raw message is raw too. The dead-letter subscription needs `rawPayload` as well: without it
+the sidecar fails with `error deserializing cloud event` on the dead-letter topic and the message never
+reaches the app. With it, the dead-letter route gets `data` null and the bytes in `data_base64`, so it logs
+`event.getBinaryData()` as text, as above.
 
 ## Key points
 
