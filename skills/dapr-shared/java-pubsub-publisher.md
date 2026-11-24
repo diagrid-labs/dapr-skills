@@ -2,8 +2,8 @@
 
 A Spring Boot publisher that accepts an `<EventName>` and publishes it to the `<TopicName>` topic through
 the Dapr sidecar. Resolve every placeholder from the specification interview before copying this file; the
-vocabulary is in [pubsub-placeholders.md](pubsub-placeholders.md). All files go in
-`publisher/src/main/java/<javaPackage>/publisher/`.
+vocabulary is in [pubsub-placeholders.md](pubsub-placeholders.md). In a new project (create-pubsub-java) all files go in
+`publisher/src/main/java/<javaPackage>/publisher/`. In an existing app (add-pubsub-java) they go in that app's base package, and `package <javaPackage>.publisher;` becomes `package <javaPackage>;` (see add-pubsub-java's REFERENCE.md → **Resolving the placeholders**).
 
 ## Message record
 

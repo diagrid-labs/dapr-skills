@@ -18,6 +18,7 @@ every rule is recorded in [gotchas.md](../dapr-shared/references/java/gotchas.md
 | Existing Dapr | `<groupId>io.dapr</groupId>` and `<groupId>io.dapr.spring</groupId>` in `pom.xml`: the `dapr-spring-bom` import and its version (a literal or a property such as `${dapr.version}`), `dapr-spring-boot-4-starter` (1.18 only), artifacts with their own `<version>`. Any version below 1.19.1 → **newer version available**. |
 | Existing subscriptions | Programmatic: `@Topic(` methods; read `name` and `pubsubName`, resolving `${...}` from the properties file. Streaming: `subscribeToTopic(` and `subscribeToEvents(` calls; read the pub/sub and topic arguments (constants, `@Value` fields or literals). Declarative: YAML with `kind: Subscription` in the resources folder whose `scopes` include this app's id, or that has no `scopes`. Record every `(pubsub, topic)` pair, its type, and the class or file that declares it. |
 | Existing pub/sub code | `publishEvent(` and `DaprMessagingTemplate` (leave both unchanged; a `DaprMessagingTemplate` is reported in the plan, see **Clashes and mixed types**), a `@Bean` returning `DaprPreviewClient`, and classes named `TopicEventStatus`, `ProcessedEvents`, `InMemoryProcessedEvents` or `UnreadableEventAdvice`. Reuse them; never add a second one. |
+| Existing controller advice | `@RestControllerAdvice` and `@ControllerAdvice` classes: note the ones without `assignableTypes`, `basePackages` or `annotations` (global) that extend `ResponseEntityExceptionHandler` or have an `@ExceptionHandler` for `HttpMessageNotReadableException` (or a supertype such as `Exception`). The plan names them under **Left unchanged** (see **Clashes and mixed types**). |
 | Properties file | `src/main/resources/application.properties`, else `application.yml` / `application.yaml`. Profile files (`application-<profile>.*`) do not count. Record `dapr.pubsub.name` and every key that holds a topic name (`app.topic`, `app.<name>-topic`, or the keys the `@Topic` placeholders read). |
 | App port | `server.port` in the properties file (`server.port=8090`), or `server:` → `port:` in YAML. A placeholder (`${PORT:8090}`) → use its default. None → 8080, Spring Boot's default. |
 | App id | The `appID` of this app's entry in `dapr.yaml`; otherwise `spring.application.name`; otherwise the Maven `artifactId`, in lowercase kebab case. |
@@ -50,7 +51,7 @@ defines them (Java forms), with these values that differ in an existing project:
 | `<javaPackage>` | The base package of the existing application, never a derived one. The templates' `package <javaPackage>.publisher;` and `package <javaPackage>.subscriber;` both become `package <javaPackage>;`: one app, one copy of the `<EventName>` record. When the base package already has a class with the same name as a new one (other than the pub/sub classes the app already has, which are reused), put all new pub/sub classes in `<javaPackage>.pubsub` instead. |
 | `<SubscribeRoute>`, `<DeadLetterRoute>` | `/events/<pubsub>/<TopicName>` and `/events/<pubsub>/<DeadLetterTopicName>`, where `<pubsub>` is the component name. |
 | `<PublishRoute>` | `pubsub/<TopicName>`, so the new endpoint is `POST /pubsub/<TopicName>` and never clashes with the app's own routes. The class is `<PublishResource>PublishController`. |
-| Topic property keys | `app.topic` and `app.dead-letter-topic`, as the templates use them, when the properties file has neither key and the app has no other topic keys. Otherwise `app.<TopicName>-topic` and `app.<TopicName>-dead-letter-topic`; replace `${app.topic}` and `${app.dead-letter-topic}` in the template code with the chosen keys. |
+| Topic property keys | `app.topic` and `app.dead-letter-topic`, as the templates use them, when the properties file has no topic keys at all. When it has topic keys whose names contain the topic (`app.emails-topic`, `app.topics.emails`, `messaging.emails.topic`), copy that pattern with the new topic name in its place, and add `-dead-letter` after the topic name for the dead-letter key (`app.payments-topic` and `app.payments-dead-letter-topic`; `app.topics.payments` and `app.topics.payments-dead-letter`). When the existing keys do not contain the topic name (`app.topic`, `orders.topic-name`), or follow no single pattern, use `app.<TopicName>-topic` and `app.<TopicName>-dead-letter-topic`. Never reuse or rename an existing key. Replace `${app.topic}` and `${app.dead-letter-topic}` in the template code with the chosen keys. |
 | `dapr.pubsub.name` | The existing value when the file sets it; otherwise the name of the reused pub/sub component, or `pubsub` for a new one. |
 | `<EventName>` | A new record, or an existing domain record when it fits and has an identifying component (`<idField>`). |
 
@@ -94,10 +95,13 @@ defines them (Java forms), with these values that differ in an existing project:
 - <dapr.yaml: new in `<project-path>` | append app entry to `<path>` | unchanged | add `appPort` to the existing entry>; app id `<app-id>`, appPort <port>, Dapr HTTP <port>
 - Component: <new `<resources folder>/pubsub.yaml` | reuse existing `<component name>` in `<path>`>
 - Resiliency: <new `<resources folder>/resiliency.yaml` | append to existing `<path>` | unchanged, `<path>` already targets the component>
+- <Resiliency scope: the policy targets the component `<pubsub>`, so it also changes retries for the existing subscriptions on it (<topics>): a failing handler is retried <N times, <interval> apart> before the message is dead-lettered or dropped.>
 - Subscription: <new `<resources folder>/subscription.yaml` scoped to `<app-id>` | none: code subscription>
 
 ### Left unchanged
 - `README.md`, `server.port`, existing controllers (except the trigger endpoint, question 2), existing subscriptions, components and tests
+- <Existing subscriber routes outside the scoped advice: `<EmailEventsController>` (`<topic>`) still answers 400 to an unreadable event, which Dapr retries; the new `UnreadableEventAdvice` covers only the new events controller.>
+- <Existing global advice `<GlobalExceptionHandler>`: unchanged; the scoped advice is ordered first for the new event routes.>
 
 ### Checks
 - Baseline test run before changes: yes (reply "no baseline" to skip)
@@ -168,9 +172,9 @@ Reply **yes** to apply with the defaults, answer a question differently (for exa
 - `dapr.yaml` exists with this app: leave the entry unchanged. When it has no `appPort` and the new subscription is declarative or programmatic, add `appPort: <port>` to that entry (a plan item): the sidecar cannot deliver to the app without it. When its `appPort` differs from the app port, say so in the plan and in `DAPR-PUBSUB.md`; do not change either.
 - `dapr.yaml` exists without this app: append an entry under `apps:` with `appDirPath` relative to the `dapr.yaml` folder, `appPort` set to the app port, a `daprHTTPPort`, and `command: ["mvn", "spring-boot:run"]`. The `daprHTTPPort` is 3555 when no entry uses it as an `appPort`, `daprHTTPPort` or `daprGRPCPort`; otherwise count up from 3555 (3556, 3557, …) to the first port none of them uses. It must also differ from this app's port. Keep every other entry as it is.
 - Pub/sub component: an existing `type: pubsub.*` component is reused, and its `metadata.name` is the `dapr.pubsub.name` value; several → ask which one. None → add `pubsub.yaml` from [`../dapr-shared/dapr-pubsub-redis.md`](../dapr-shared/dapr-pubsub-redis.md) to the `resourcesPath` folder (`resources/` for a new `dapr.yaml`). When another component is already named `pubsub` (a state store, for example), name the new one `messages-pubsub` and say so in the plan.
-- Resiliency: none → add `resiliency.yaml` from [`../dapr-shared/dapr-pubsub-resiliency.md`](../dapr-shared/dapr-pubsub-resiliency.md) to the same folder, with the target named after the component. An existing `kind: Resiliency` file → append the policy and target per **Appending to an existing Resiliency** in that file; a target for the component that already exists stays unchanged.
+- Resiliency: none → add `resiliency.yaml` from [`../dapr-shared/dapr-pubsub-resiliency.md`](../dapr-shared/dapr-pubsub-resiliency.md) to the same folder, with the target named after the component. An existing `kind: Resiliency` file → append the policy and target per **Appending to an existing Resiliency** in that file; a target for the component that already exists stays unchanged. A resiliency target applies to every subscription on the component, not only the new topic: when the reused component already has subscriptions, a new or appended policy changes their retries too, so the plan gets the **Resiliency scope** line and `DAPR-PUBSUB.md` says the same.
 - Declarative only: add `subscription.yaml` from [`../dapr-shared/dapr-pubsub-subscription.md`](../dapr-shared/dapr-pubsub-subscription.md) (both documents, the topic's and its dead-letter topic's) to the same folder, with `pubsubname` set to the component name and `scopes` exactly the app id. When `subscription.yaml` already exists, name the new file `<TopicName>-subscription.yaml`.
-- `dapr run -f .` writes `.dapr/logs/` into the app folder. When the project has a `.gitignore` that does not list `.dapr/`, append `.dapr/` to it (a plan item). Do not create a `.gitignore`.
+- `dapr run -f .` writes `.dapr/logs/` into the app folder even without `appLogDestination` or `daprdLogDestination` in `dapr.yaml`: the Dapr CLI's defaults are `fileAndConsole` for the app and `file` for the sidecar, and both write there. When the project has a `.gitignore` that does not list `.dapr/`, append `.dapr/` to it (a plan item). Do not create a `.gitignore`.
 
 ## Properties
 
@@ -215,15 +219,22 @@ Copy the files from the shared templates with the values from **Resolving the pl
 | Programmatic | The same handler files and scoped advice, and `<TopicResource>EventsController` from [`java-pubsub-subscriber-programmatic.md`](../dapr-shared/java-pubsub-subscriber-programmatic.md), with the `@Topic` placeholders pointing at the chosen property keys |
 | Streaming | The handler files without `UnreadableEventAdvice`, `StreamingConfiguration` and `<TopicResource>StreamingSubscriber` from [`java-pubsub-subscriber-streaming.md`](../dapr-shared/java-pubsub-subscriber-streaming.md), with its `@Value` keys pointing at the chosen property keys |
 
-- **`UnreadableEventAdvice` is scoped to the subscriber controllers.** The template's advice applies to every
-  controller; in an existing app it would turn a malformed request to the app's own endpoints (a 400 today)
-  into 200 `{"status": "DROP"}`. Add `assignableTypes` so it only answers for the event routes:
+- **`UnreadableEventAdvice` is scoped to the subscriber controllers and ordered first.** The template's advice
+  applies to every controller; in an existing app it would turn a malformed request to the app's own endpoints
+  (a 400 today) into 200 `{"status": "DROP"}`. Add `assignableTypes` so it only answers for the event routes.
+  Add `@Order(Ordered.HIGHEST_PRECEDENCE)` too: advice beans without an order all sort last, and Spring MVC uses
+  the first one that handles the exception, so an existing global `@RestControllerAdvice` that extends
+  `ResponseEntityExceptionHandler` or handles `HttpMessageNotReadableException` can win and keep answering 400,
+  which Dapr retries (observed with both kinds of global advice: 400 without the order, 200 DROP with it).
+  `assignableTypes` keeps the high order from touching the app's own controllers:
 
   ```java
   package <javaPackage>;
 
   import org.slf4j.Logger;
   import org.slf4j.LoggerFactory;
+  import org.springframework.core.Ordered;
+  import org.springframework.core.annotation.Order;
   import org.springframework.http.ResponseEntity;
   import org.springframework.http.converter.HttpMessageNotReadableException;
   import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -232,8 +243,9 @@ Copy the files from the shared templates with the values from **Resolving the pl
   /**
    * A CloudEvent whose data cannot be bound to the record makes Spring answer 400, which Dapr retries.
    * Answer DROP instead: retrying a malformed message never helps. Scoped to the subscriber routes, so the
-   * app's own endpoints keep answering 400.
+   * app's own endpoints keep answering 400; ordered first, so a global advice for the same exception does not win.
    */
+  @Order(Ordered.HIGHEST_PRECEDENCE)
   @RestControllerAdvice(assignableTypes = <TopicResource>EventsController.class)
   public class UnreadableEventAdvice {
 
@@ -249,17 +261,19 @@ Copy the files from the shared templates with the values from **Resolving the pl
 
   With several events controllers, list them all (`assignableTypes = {AEventsController.class, BEventsController.class}`).
   When the app already has an `UnreadableEventAdvice`, add the new controller to its `assignableTypes` instead of
-  adding a second advice; an unscoped existing one already covers it.
-- **The streaming subscriber qualifies its `DaprPreviewClient`.** The autoconfigured `DaprClient` bean also
-  implements `DaprPreviewClient`, so in an app that injects `DaprClient` anywhere (a publisher, an existing
-  service) the template's constructor finds two candidates and the context fails to start
-  (`NoUniqueBeanDefinitionException`, gotchas §3). Write the parameter as
-  `@Qualifier("daprPreviewClient") DaprPreviewClient previewClient` and import
-  `org.springframework.beans.factory.annotation.Qualifier`; do this in every existing app, whether or not it
-  publishes today.
+  adding a second advice, and add the `@Order` when it has none (a plan item); an unscoped existing one already
+  covers it. Existing subscriber controllers that are not listed (an existing `@Topic` route, for example) keep
+  their current behaviour: the plan says so under **Left unchanged** (see the template).
+- **Copy the streaming template as it is.** Its `StreamingConfiguration` declares the preview client with
+  `@Bean(defaultCandidate = false)` and the subscriber injects it with `@Qualifier("daprPreviewClient")`. Both
+  matter in an existing app: the preview client and the autoconfigured `DaprClient` are the same class, so
+  without them either an existing `DaprClient client` parameter or the subscriber's `DaprPreviewClient`
+  parameter finds two candidates and the context fails to start (`NoUniqueBeanDefinitionException`,
+  gotchas §3).
 - A topic handled by an existing class: never add a second subscription for that `(pubsub, topic)` pair.
 - An existing `DaprPreviewClient` bean: reuse it, skip `StreamingConfiguration`, and use that bean's name in
-  the `@Qualifier`.
+  the `@Qualifier`. When that `@Bean` has no `defaultCandidate = false` and the app injects `DaprClient` under a
+  parameter name other than `daprClient`, add `defaultCandidate = false` to it (a plan item).
 - An existing `<EventName>Handler`-style class that already handles the event's domain: keep it; the new
   handler may call it as its `<HandlerBody>`.
 - Existing `TopicEventStatus` / `ProcessedEvents`: reuse them. When the app's own status record has another
@@ -313,7 +327,10 @@ Use [`../dapr-shared/pubsub-run-doc.md`](../dapr-shared/pubsub-run-doc.md) with 
 - How the subscription works: declarative and programmatic as the template says. Streaming: the app opens a
   gRPC stream to the sidecar with `DaprPreviewClient.subscribeToTopic(...)`, started and stopped with the app.
 - Delivery semantics, declarative and programmatic (gotchas §1): success → 200 `{"status": "SUCCESS"}`; the
-  handler throws → delivered 6 times, 5s apart, then dead-lettered; an invalid or unreadable message → 200
+  handler throws → delivered per the inbound retry policy that targets the component, then dead-lettered
+  (6 times, 5s apart with the new `resiliency.yaml`, a constant 5s policy with 5 retries; with an existing
+  policy, state its own values: `maxRetries + 1` deliveries, spaced by its `duration`, or by its exponential
+  backoff up to `maxInterval`); an invalid or unreadable message → 200
   `{"status": "DROP"}`, not redelivered, and sent to the dead-letter topic at once; duplicates (an `<idField>`
   already processed) are acknowledged and skipped. Streaming (gotchas §3): the preview API acknowledges every
   event it hands to the app, so the app cannot choose RETRY or DROP; a failed handler loses the event (the
@@ -322,6 +339,11 @@ Use [`../dapr-shared/pubsub-run-doc.md`](../dapr-shared/pubsub-run-doc.md) with 
 - Say that the publisher uses `DaprClient.publishEvent(...).block()` and not `DaprMessagingTemplate`, whose
   fixed 10-second TTL would expire a failing message before it reaches the dead-letter topic.
 - When the trigger endpoint publishes: a failed publish answers 500 after the work was saved.
+- When the plan had the **Resiliency scope** line: the retry policy targets the component, so it also applies to
+  the existing subscriptions on it (name them).
+- When the plan named existing subscriber routes outside the scoped advice: they still answer 400 to an
+  unreadable event, which Dapr retries; add them to `UnreadableEventAdvice`'s `assignableTypes` to drop those
+  too (a Next step).
 - Tests: tests that call a publishing endpoint need a running sidecar or a `@MockitoBean DaprClient` whose
   `publishEvent(...)` returns `Mono.empty()`; tests that slice the web layer need `@MockitoBean` fields for the
   beans the new controllers take.
@@ -343,6 +365,7 @@ Use [`../dapr-shared/pubsub-run-doc.md`](../dapr-shared/pubsub-run-doc.md) with 
 | Existing `dapr.yaml` or resiliency file | Append to it; never replace it. |
 | Role `both` in one app | Allowed. The plan notes that the app receives its own events. |
 | An existing global `@RestControllerAdvice` that maps an exception to 404 or 2xx | It also applies to the new subscriber routes: a 404 makes Dapr drop the message. Report it in the plan; do not change it. |
+| An existing global `@RestControllerAdvice` that extends `ResponseEntityExceptionHandler` or handles `HttpMessageNotReadableException` | Without an order it can answer an unreadable event with 400 before the scoped `UnreadableEventAdvice` runs, and Dapr retries the poison message. The scoped advice carries `@Order(Ordered.HIGHEST_PRECEDENCE)`, so it wins for the event routes only; leave the global advice unchanged and name it in the plan's **Left unchanged**. |
 
 ## Edge cases
 
@@ -367,7 +390,7 @@ For a shipments service (`shipments-api`, Spring Boot 4.0.8, `server.port=8083` 
 - Plan: target `shipments-api`, base package `com.example.shipments`, **Subscription type:** declarative — default, app port 8083 from `application.properties`, no existing subscriptions.
 - `pom.xml`: a new `dependencyManagement` with the `dapr-spring-bom` 1.19.1 import, and `dapr-spring-boot-starter` as the first dependency.
 - `application.properties`: `dapr.pubsub.name=pubsub`, `app.topic=shipments`, `app.dead-letter-topic=shipments-deadletter` appended; `ShipmentsApplication.java` gains `@EnableConfigurationProperties(DaprPubSubProperties.class)`.
-- New files in `src/main/java/com/example/shipments/`: `ShipmentCreated.java`, `TopicEventStatus.java`, `ProcessedEvents.java`, `InMemoryProcessedEvents.java`, `ShipmentCreatedHandler.java`, `ShipmentsEventsController.java` (`POST /events/pubsub/shipments` and `/events/pubsub/shipments-deadletter`), `UnreadableEventAdvice.java` (`assignableTypes = ShipmentsEventsController.class`), `ShipmentsPublishController.java` (`POST /pubsub/shipments`). Also `dapr.yaml` (appID `shipments-api`, appDirPath `.`, appPort 8083, daprHTTPPort 3555), `resources/pubsub.yaml`, `resources/resiliency.yaml`, `resources/subscription.yaml` (`scopes: [shipments-api]`), `pubsub.http`, `DAPR-PUBSUB.md`.
+- New files in `src/main/java/com/example/shipments/`: `ShipmentCreated.java`, `TopicEventStatus.java`, `ProcessedEvents.java`, `InMemoryProcessedEvents.java`, `ShipmentCreatedHandler.java`, `ShipmentsEventsController.java` (`POST /events/pubsub/shipments` and `/events/pubsub/shipments-deadletter`), `UnreadableEventAdvice.java` (`@Order(Ordered.HIGHEST_PRECEDENCE)`, `assignableTypes = ShipmentsEventsController.class`), `ShipmentsPublishController.java` (`POST /pubsub/shipments`). Also `dapr.yaml` (appID `shipments-api`, appDirPath `.`, appPort 8083, daprHTTPPort 3555), `resources/pubsub.yaml`, `resources/resiliency.yaml`, `resources/subscription.yaml` (`scopes: [shipments-api]`), `pubsub.http`, `DAPR-PUBSUB.md`.
 - Edited: `pom.xml`, `application.properties`, `ShipmentsApplication.java`, `.gitignore` (`.dapr/`), and `ShipmentController.java` (question 2, yes by default because no test calls `POST /shipments` over HTTP): `DaprClient`, `DaprPubSubProperties` and the topic become constructor parameters and `final` fields, and `create` calls `daprClient.publishEvent(pubSubProperties.getName(), topic, new ShipmentCreated(created.id(), created.carrier(), created.destination())).block()` after `shipments.create(shipment)`; its `ResponseEntity.created(...)` response is unchanged.
 - Questions: no newer Dapr version (the project has no Dapr dependency), so only the endpoint question, numbered 1.
 - Builds: `mvn -q -DskipTests package` after each step, then `mvn -q test` at the end (3 tests pass without a sidecar).

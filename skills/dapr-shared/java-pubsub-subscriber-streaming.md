@@ -5,8 +5,8 @@ pushes messages over it. No subscription route, no `appPort`, no Subscription YA
 `TopicEventStatus`, `ProcessedEvents`, `InMemoryProcessedEvents` and `<EventName>Handler` from
 [java-pubsub-handler.md](java-pubsub-handler.md), but not `UnreadableEventAdvice`. Resolve every
 placeholder from the specification interview before copying this file; the vocabulary is in
-[pubsub-placeholders.md](pubsub-placeholders.md). All files go in
-`subscriber/src/main/java/<javaPackage>/subscriber/`.
+[pubsub-placeholders.md](pubsub-placeholders.md). In a new project (create-pubsub-java) all files go in
+`subscriber/src/main/java/<javaPackage>/subscriber/`. In an existing app (add-pubsub-java) the files go in that app's base package instead, and `package <javaPackage>.subscriber;` becomes `package <javaPackage>;` (see add-pubsub-java's REFERENCE.md → **Resolving the placeholders**).
 
 > **Preview API.** The streaming subscription API is a preview, and its delivery differs from the
 > declarative and programmatic types (see [references/java/gotchas.md](references/java/gotchas.md) §3):
@@ -32,8 +32,10 @@ import org.springframework.context.annotation.Configuration;
 public class StreamingConfiguration {
 
   // DaprPreviewClient is not autoconfigured; build it from the autoconfigured DaprClientBuilder so it
-  // uses the same connection settings and serializer as the DaprClient bean.
-  @Bean
+  // uses the same connection settings and serializer as the DaprClient bean. The object is a DaprClientImpl,
+  // which is a DaprClient too: defaultCandidate = false keeps it out of unqualified DaprClient injection
+  // points, and the subscriber asks for it by name with @Qualifier.
+  @Bean(defaultCandidate = false)
   public DaprPreviewClient daprPreviewClient(DaprClientBuilder daprClientBuilder) {
     return daprClientBuilder.buildPreviewClient();
   }
@@ -55,6 +57,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.stereotype.Component;
@@ -74,7 +77,7 @@ public class <TopicResource>StreamingSubscriber implements SmartLifecycle {
   private final List<Disposable> subscriptions = new ArrayList<>();
 
   public <TopicResource>StreamingSubscriber(
-      DaprPreviewClient previewClient,
+      @Qualifier("daprPreviewClient") DaprPreviewClient previewClient,
       <EventName>Handler handler,
       @Value("${dapr.pubsub.name}") String pubsubName,
       @Value("${app.topic}") String topic,
@@ -103,7 +106,7 @@ public class <TopicResource>StreamingSubscriber implements SmartLifecycle {
         .subscribe());
     subscriptions.add(previewClient
         .subscribeToTopic(pubsubName, deadLetterTopic, new TypeRef<CloudEvent<Object>>() { })
-        .doOnNext(event -> handler.handleDeadLetter(event.getId(), event.getData()))
+        .doOnNext(this::handleDeadLetterSafely)
         .doOnError(error -> logger.warn("Streaming subscription to {} failed; resubscribing: {}", deadLetterTopic,
             error.getMessage()))
         .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofSeconds(30))
@@ -122,6 +125,14 @@ public class <TopicResource>StreamingSubscriber implements SmartLifecycle {
     }
   }
 
+  private void handleDeadLetterSafely(CloudEvent<Object> event) {
+    try {
+      handler.handleDeadLetter(event.getId(), event.getData());
+    } catch (RuntimeException e) {
+      logger.error("Handling dead-lettered event {} failed; it is acked and will not be redelivered", event.getId(), e);
+    }
+  }
+
   @Override
   public void stop() {
     subscriptions.forEach(Disposable::dispose);
@@ -136,7 +147,7 @@ public class <TopicResource>StreamingSubscriber implements SmartLifecycle {
 ```
 
 With several events, add one `subscribeToTopic` pair per topic in `start()`, each with its own
-`handleSafely` method.
+`handleSafely` and `handleDeadLetterSafely` methods.
 
 ## Raw payload
 
@@ -150,14 +161,20 @@ subscription; not run for streaming).
 
 - The handler runs inside `.doOnNext(...)`, wrapped in `try`/`catch (RuntimeException e)` that logs the
   failure. Never let an exception escape: it closes the stream before the ack, and the message is
-  redelivered and fails again without ever being dead-lettered.
+  redelivered and fails again without ever being dead-lettered. The dead-letter consumer is wrapped the
+  same way: `handleDeadLetter` only logs today, but it is where an app adds alerting or parking, and an
+  exception there would loop the dead-lettered message.
 - `.retryWhen(Retry.backoff(...).transientErrors(true))` before `.subscribe()` opens a new stream after a
   deserialization failure or a lost connection; without it the subscription ends and later events are not
   delivered. `transientErrors(true)` resets the backoff once an event arrives on the new stream, so
   reconnects stay near 1s; without it every failure doubles the wait, up to 30s, and messages sit pending
   while no stream is open.
 - Log `doOnError` on both streams, so every reconnect shows in the log.
-- `DaprPreviewClient` is not autoconfigured: declare it from the autoconfigured `DaprClientBuilder`.
+- `DaprPreviewClient` is not autoconfigured: declare it from the autoconfigured `DaprClientBuilder`, with
+  `@Bean(defaultCandidate = false)`, and inject it with `@Qualifier("daprPreviewClient")`. The object is a
+  `DaprClientImpl`, which implements both `DaprClient` and `DaprPreviewClient`, as does the autoconfigured
+  `DaprClient` bean; without both settings an app that also injects `DaprClient` fails to start with
+  `NoUniqueBeanDefinitionException` (gotchas §3).
 - The subscriptions start in `SmartLifecycle.start()`, once the application context is ready, and are
   disposed in `stop()`, which closes the streams when the app shuts down.
 - No routing: a streaming subscription cannot route by content.

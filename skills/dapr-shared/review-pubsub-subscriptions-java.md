@@ -76,8 +76,8 @@ DPS-SUB-001 and DPS-SUB-003 are .NET-only and DPS-SUB-011 is Python-only; they a
 - DPS-SUB-014 — Requires the app-id resolution from detection (`dapr.yaml` `appID` and `appDirPath`), so the Subscription `scopes` can be matched to the Maven module. A class gated by `@Profile` counts only when that profile is active: take the active profiles as "Java properties" in detection describes (`SPRING_PROFILES_ACTIVE` in the app's `env` in `dapr.yaml`, else `spring.profiles.active` in the base `application.*` files). When the duplicate exists only under a profile the run files do not activate, report it under Please verify. A declarative Subscription is not profile-gated: it loads whatever profile is active.
 - DPS-SUB-015 — When the handler files are outside the review scope, report it under Please verify.
 - DPS-SUB-016 — `subscriptions.add(previewClient.subscribeToTopic(...)....subscribe())` keeps the `Disposable`; it is satisfied when `stop()` or a `@PreDestroy` method disposes the list.
-- DPS-SUB-017 — The template's topic consumer `this::handleSafely` has the `try`/`catch`, and its dead-letter consumer only logs: neither matches.
-- DPS-SUB-019 — The template's `handleSafely` logs the status the shared handler returns ("the SDK acks SUCCESS regardless"); it is exempt.
+- DPS-SUB-017 — The template's topic consumer `this::handleSafely` and dead-letter consumer `this::handleDeadLetterSafely` both have the `try`/`catch`: neither matches. An older dead-letter consumer `event -> handler.handleDeadLetter(...)` whose method only logs is exempt too.
+- DPS-SUB-019 — The template's `handleSafely` logs the status the shared handler returns ("the SDK acks SUCCESS regardless"); it is exempt. The `catch` blocks of `handleSafely` and `handleDeadLetterSafely` are the shape DPS-SUB-017 requires, not a drop branch; they are exempt too.
 
 ## Baseline
 

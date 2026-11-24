@@ -84,7 +84,8 @@ The app cannot choose RETRY or DROP for an event it received.
 
 **Rule.**
 - Run the handler in `.doOnNext(...)` wrapped in `try`/`catch (RuntimeException e)` that logs the
-  failure. Never let an exception escape: it turns the event into a poison message.
+  failure, on the topic stream and on the dead-letter stream. Never let an exception escape: it turns the
+  event into a poison message.
 - Add `.retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofSeconds(30)).transientErrors(true))`
   before `.subscribe()`, on the topic stream and the dead-letter stream, so a deserialization failure (or a
   lost connection) opens a new stream. `transientErrors(true)` resets the backoff after an event arrives;
@@ -99,15 +100,27 @@ The app cannot choose RETRY or DROP for an event it received.
   the Jackson 3 serializer of the `DaprClient` bean
   (`dapr-spring/dapr-spring-boot-autoconfigure/src/main/java/io/dapr/spring/boot/autoconfigure/client/DaprClientAutoConfiguration.java:53`). Start the subscriptions from
   a `SmartLifecycle` bean and dispose them in `stop()`.
-- **Two `DaprPreviewClient` candidates in an app that also publishes.** The autoconfigured `DaprClient` bean is
-  a `DaprClientImpl`, which implements `DaprPreviewClient` too. Once something has injected `DaprClient`
-  (a publisher created earlier), a constructor that takes `DaprPreviewClient` fails with
-  `NoUniqueBeanDefinitionException: ... expected single matching bean but found 2: daprPreviewClient,daprClient`
-  (observed, Spring Boot 4.0.8, `dapr-spring-bom` 1.19.1, a `@SpringBootTest` in an app with a publish
-  controller and a streaming subscriber). `@Qualifier("daprPreviewClient")` on the subscriber's constructor
-  parameter fixed it, and the subscription then received events under `dapr run` (observed). The
-  create-pubsub-java subscriber app injects no `DaprClient`, so it has one candidate. **Rule.** add-pubsub-java
-  qualifies the `DaprPreviewClient` parameter with the bean's name.
+- **`DaprClient` and `DaprPreviewClient` are the same class, in both directions.** `buildPreviewClient()`
+  returns a `DaprClientImpl`, and the autoconfigured `DaprClient` bean is a `DaprClientImpl` too, which
+  implements both interfaces. Once both beans exist and have been created, each is a candidate for the other's
+  injection points, so the outcome depends on bean creation order:
+  - A constructor that takes `DaprPreviewClient` fails once something has created the `DaprClient` bean (a
+    publisher created earlier): `NoUniqueBeanDefinitionException: ... expected single matching bean but found 2:
+    daprPreviewClient,daprClient` (observed, Spring Boot 4.0.8, `dapr-spring-bom` 1.19.1, a `@SpringBootTest` in
+    an app with a publish controller and a streaming subscriber).
+  - A constructor that takes `DaprClient` under any parameter name other than `daprClient` (for example an
+    existing `ReportService(DaprClient client)`) fails once the `daprPreviewClient` bean has been created (the
+    streaming subscriber created earlier): `No qualifying bean of type 'io.dapr.client.DaprClient' available:
+    expected single matching bean but found 2: daprPreviewClient,daprClient` (observed, same versions, a
+    `@SpringBootTest` with a streaming subscriber and that service; a `@Qualifier` on the subscriber alone did not
+    help).
+
+  **Rule.** Declare the preview client with `@Bean(defaultCandidate = false)` (Spring Framework 6.2+, present in
+  the Spring Framework 7 that Boot 4.0.8 resolves), so it never fills an unqualified `DaprClient` or
+  `DaprPreviewClient` injection point, and inject it with `@Qualifier("daprPreviewClient") DaprPreviewClient`. With
+  both, the context starts, the `DaprClient client` parameter gets the autoconfigured `daprClient` bean, and the
+  subscription received events under `dapr run` (observed for the `@Qualifier`). The shared streaming template
+  does both, so create-pubsub-java and add-pubsub-java generate the same code.
 - The streaming subscriber has no `appPort` in `dapr.yaml`; the sidecar then logs
   `App channel is not initialized`, which is expected.
 
