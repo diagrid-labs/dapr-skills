@@ -21,7 +21,7 @@ const mid = (vals) => (Math.min(...vals) + Math.max(...vals)) / 2;
 // One of each builder with default-ish arguments.
 const samples = () => ({
   group: S.group([S.panel({ x: 0, y: 0, w: 10, h: 10 })]),
-  label: S.label({ x: 50, y: 50, text: 'a\nb', halo: true }),
+  label: S.label({ x: 50, y: 50, text: 'a\nb' }),
   hex: S.hex({ x: 100, y: 100 }),
   badge: S.badge({ x: 10, y: 10 }),
   daprApp: S.daprApp({ x: 100, y: 100 }),
@@ -221,14 +221,14 @@ test('label splits on \\n into two tspans', () => {
   assert.equal(find(S.label({ x: 0, y: 0, text: 'solo' }), (x) => x.tag === 'tspan').length, 0);
 });
 
-test('label with halo:true emits a stroked copy beneath the fill', () => {
+test('label draws one text with no outline, even when halo is passed', () => {
+  // The halo option is gone: a stroked copy in the page colour showed as a
+  // white outline round dark text on the light PNG.
   const g = S.label({ x: 0, y: 0, text: 'Resiliency', halo: true });
-  const [under, over] = find(g, (x) => x.tag === 'text');
-  assert.equal(under.attrs.stroke, C.bg);
-  assert.equal(under.attrs['aria-hidden'], 'true');
-  assert.equal(over.attrs.stroke, undefined);
-  assert.equal(over.attrs.fill, C.body);
-  assert.equal(find(S.label({ x: 0, y: 0, text: 'x' }), (x) => x.attrs.stroke).length, 0);
+  const texts = find(g, (x) => x.tag === 'text');
+  assert.equal(texts.length, 1);
+  assert.equal(texts[0].attrs.fill, C.body);
+  assert.equal(find(g, (x) => x.attrs.stroke).length, 0);
 });
 
 test('label defaults to 11px / 600 / body, refuses under 11px and teal or mint text', () => {

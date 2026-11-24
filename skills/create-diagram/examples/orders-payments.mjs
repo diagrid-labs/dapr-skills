@@ -106,9 +106,9 @@ export default {
       arrow({ from: ORDERS_SIDE, to: PIPE }),
       arrow({ from: PIPE, to: PAYMENTS_SIDE }),
       elbowArrow({ points: SAVE_RUN, r: ELBOW_R }),
-      label({ x: PUB_X, y: SIDE_Y - WORD_DY, text: 'Publish', size: TEXT, halo: true }),
-      label({ x: SUB_X, y: SIDE_Y - WORD_DY, text: 'Subscribe', size: TEXT, halo: true }),
-      label({ x: SAVE_X, y: SAVE_Y, text: 'Save state', size: TEXT, anchor: 'start', halo: true }),
+      label({ x: PUB_X, y: SIDE_Y - WORD_DY, text: 'Publish', size: TEXT }),
+      label({ x: SUB_X, y: SIDE_Y - WORD_DY, text: 'Subscribe', size: TEXT }),
+      label({ x: SAVE_X, y: SAVE_Y, text: 'Save state', size: TEXT, anchor: 'start' }),
 
       appSidecar(ORDERS),
       appSidecar(PAYMENTS),

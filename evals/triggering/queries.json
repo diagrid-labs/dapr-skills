@@ -23,7 +23,7 @@
   "baseline": {
     "date": "2026-11-24",
     "model": "sonnet (Claude Sonnet 5.5)",
-    "dapr_skills_version": "1.32.0",
+    "dapr_skills_version": "1.32.1",
     "diagrid_version": "0.10.2 (diagridio/diagrid-ai origin/main 866ddd4)",
     "result": "15 of 18 matched `expect`. Queries 9 and 10 went to the diagrid determinism and idempotency skills at medium confidence (run 1 called 9 AMBIGUOUS at low), against the new dapr-skills expectations. Query 11 came back AMBIGUOUS (diagrid-workflow-scaffold or diagrid-deploy) at medium in both runs. Query 15 is correctly AMBIGUOUS. Every other answer matched, mostly at high confidence. The set was run twice with the same verdicts apart from confidence.",
     "known_risk": "Queries 9 and 10: on 2026-11-24 dapr-skills stopped pointing authoring questions at the diagrid plugin, because its determinism and idempotency skills are for code that runs on Diagrid, and the expectations moved to the dapr-skills review skills. The model still picks the diagrid skills because their descriptions say \"Use when writing, changing or reviewing\" and mention Diagrid only as \"on Diagrid\". Fixing that needs a wording change in diagridio/diagrid-ai; dapr-skills was not changed to chase it. Query 11 regressed after the plugin rename, as recorded on 2026-11-23: diagrid-workflow-scaffold now reads as create-only, so the model splits create and deploy.",

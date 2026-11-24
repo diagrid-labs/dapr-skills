@@ -137,11 +137,6 @@ export const flowLane = ({ x, y, w, h, caption, captionW, captionX }) =>
   region({ x, y, w, h, caption, captionW, captionX, captionSize: FLOW.CAPTION_SIZE });
 
 // A remark on the flow rather than a name for a shape: what a leg carries, or
-// which way out of a gate this one is.
-//
-// `halo` paints a copy of the text underneath in the page colour, so a line
-// passes behind the words. It is what the rendered suite accepts as ground for
-// a label sitting on a connector, and it is cheaper than bending the layout
-// around the type.
-export const note = ({ x, y, text, anchor = 'middle', halo = false }) =>
-  label({ x, y, text, size: FLOW.NOTE_SIZE, weight: 500, color: C.caption, anchor, halo });
+// which way out of a gate this one is. It sits beside its line, never on it.
+export const note = ({ x, y, text, anchor = 'middle' }) =>
+  label({ x, y, text, size: FLOW.NOTE_SIZE, weight: 500, color: C.caption, anchor });

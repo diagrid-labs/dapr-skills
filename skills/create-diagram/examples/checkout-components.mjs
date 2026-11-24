@@ -64,8 +64,8 @@ export default {
       // Runs first, so the shapes paint over their ends.
       elbowArrow({ points: run(STORE_Y) }),
       elbowArrow({ points: run(PIPE_Y) }),
-      label({ x: SPAN_X, y: STORE_Y - WORD_DY, text: 'Save state', size: TEXT, halo: true }),
-      label({ x: SPAN_X, y: PIPE_Y - WORD_DY, text: 'Publish', size: TEXT, halo: true }),
+      label({ x: SPAN_X, y: STORE_Y - WORD_DY, text: 'Save state', size: TEXT }),
+      label({ x: SPAN_X, y: PIPE_Y - WORD_DY, text: 'Publish', size: TEXT }),
 
       appSidecar({ x: APP_X, y: APP_Y, r: APP_R, label: 'Checkout', size: NAME, ...APP[0] }),
 

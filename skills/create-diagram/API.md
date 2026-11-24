@@ -25,7 +25,7 @@ Coordinates are in the scene's canvas.
 | --- | --- | --- |
 | `group(children)` | an array, or `{ children, ...attrs }` | A `<g>` |
 | `slots(x0, x1, n)` | | `n` evenly spaced centres across the span (numbers) |
-| `label(o)` | `x, y, text, size` (11), `weight` (600), `color` (`C.body`), `halo`, `anchor` (`'middle'`), `mono` | Text; `\n` starts a line; `y` is the block's vertical centre |
+| `label(o)` | `x, y, text, size` (11), `weight` (600), `color` (`C.body`), `anchor` (`'middle'`), `mono` | Text; `\n` starts a line; `y` is the block's vertical centre |
 | `richLabel(o)` | `x, y, parts, size` (13), `weight` (400), `color`, `anchor` (`'start'`), `mono` | One line whose `parts` (`{ text, color, weight, mono }`) differ in colour or weight |
 | `hex(o)` | `x, y, r` (42.5), `stroke, fill, ink, solid, label` (`'App'`), `size` (r/3), `labelDx, labelDy, sub, subSize` | A pointy-top app hexagon with its name; `sub` is a code line under the name |
 | `hexPoints(x, y, r)` | | The six points as a `points` string |
@@ -129,4 +129,4 @@ Keys: `workflows`, `pubsub`, `service-invocation`, `state`, `actors`, `jobs`,
 | --- | --- |
 | `FLOW` | `W` 172, `H` 46, `SIZE` 13, `CAPTION_SIZE` 13, `NOTE_SIZE` 12, `PAD`, `LANE_TERMINAL_H`, `LANE_ACTIVITY_H`, `GAP_X` 58, `GAP_Y` 28, `NODE_R` 30, and the styles `start`, `end`, `step`, `wait` to spread into `node()` or `box()` |
 | `flowLane(o)` | `x, y, w, h, caption, captionW, captionX`: a lane, a `region()` with the flow caption size |
-| `note(o)` | `x, y, text, anchor, halo`: a remark on the flow |
+| `note(o)` | `x, y, text, anchor`: a remark on the flow |

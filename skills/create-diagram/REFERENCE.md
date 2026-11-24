@@ -202,10 +202,9 @@ the colour scheme.
 - **Never below `MIN_LABEL`, 10 units.** `label()` throws below it, and
   `cardSizes()`, `serviceLabel()` and `cylinder()` refuse a shape too small for
   a legible name rather than shrinking the name. The fix is a bigger shape.
-- **Text over any line gets `halo: true`**: an arrow, a bus or a dashed region
-  border. The halo paints the page's ground behind the glyphs so the line
-  stops at the word. It is invisible where nothing crosses, so it costs
-  nothing.
+- **Text never sits on a line**: an arrow, a bus or a dashed region border.
+  Place a line's label beside the line with clearance, the same way a name
+  sits under its shape. Labels have no outline.
 - **A label sits under the thing it names, centred on it.** A line's label
   may sit above the line instead. Either way it is centred on the span: pass
   the midpoint of the run, not one end plus a guess.
@@ -227,7 +226,7 @@ the colour scheme.
   yours. Measure its width and derive its x from the run it rides on.
 - **A word above a shape clears the arrowhead, not the shape.** A head is
   drawn back from its tip along the line, so a word placed above the end of a
-  vertical run sits on the head and its halo hides the direction. Where a word
+  vertical run sits on the head and hides the direction. Where a word
   sits over the end of a run, give it its own constant (about 24 units above)
   and say why in a comment.
 - **A label beside a vertical run is anchored `start` on the right** (`end` on
@@ -635,7 +634,7 @@ Kafka, with Orders also saving state to Redis.
   fork on a bus.
 - **One app, so the broker is sky, not green.** The Redis mark takes `C.appInk`
   on the solid gold store; the 140 by 60 pipe is inside `pipe()`'s 2 to 3.
-- **Names sit outside their shapes; labels on runs have halos.** The canvas is
+- **Names sit outside their shapes; labels sit beside their runs.** The canvas is
   16:9 and centred by construction, so it looks the same without Chromium.
 
 ### Key points: orders-payments.mjs
