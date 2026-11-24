@@ -1,6 +1,6 @@
 ---
 name: review-pubsub-publishing
-description: Reviews Dapr pub/sub publishing code in .NET and Python for swallowed publish failures, wrong pub/sub names, content types, client lifetime and bulk-publish partial failures. Use for "review my pub/sub publishing code" or "audit Dapr publish calls".
+description: Reviews Dapr pub/sub publishing code in .NET and Python for swallowed publish failures, content types, client lifetime and bulk-publish partial failures. Use for "review my pub/sub publishing code" or "audit Dapr publish calls".
 allowed-tools:
   - Read
   - Grep
