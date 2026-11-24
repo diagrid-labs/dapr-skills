@@ -154,15 +154,11 @@ test('a note is set below the names of the shapes it annotates, in the caption c
   assert.equal(text.attrs.fill, C.caption);
 });
 
-test('a note can be anchored and haloed, which is why the scenes kept their own', () => {
-  // The two variants that made five copies look like five different helpers:
-  // one sits beside a line and needs a halo under it, one hangs off a point
-  // and needs to start there rather than be centred on it.
-  const plain = note({ x: 0, y: 0, text: 'No' });
-  const haloed = note({ x: 0, y: 0, text: 'denied', halo: true, anchor: 'start' });
+test('a note can be anchored, and draws one text with no outline', () => {
+  // A note that hangs off a point starts there rather than being centred on it.
+  const anchored = note({ x: 0, y: 0, text: 'denied', anchor: 'start' });
   const text = (g) => find(g, (n) => n.tag === 'text');
-  assert.equal(text(haloed)[0].attrs['text-anchor'], 'start');
-  // A halo paints a copy of the text underneath in the page colour, so the
-  // line passes behind the words: two texts where there was one.
-  assert.ok(text(haloed).length > text(plain).length, `${text(haloed).length} against ${text(plain).length}`);
+  assert.equal(text(anchored)[0].attrs['text-anchor'], 'start');
+  assert.equal(text(anchored).length, 1);
+  assert.equal(text(anchored)[0].attrs.stroke, undefined);
 });

@@ -86,7 +86,7 @@ export const MONO = 'var(--font-mono)';
 export const NO_LIGATURES = 'font-variant-ligatures: none';
 
 export function label({
-  x, y, text: content, size = 11, weight = 600, color = C.body, halo = false, anchor = 'middle',
+  x, y, text: content, size = 11, weight = 600, color = C.body, anchor = 'middle',
   mono = false,
 }) {
   if (size < MIN_LABEL) throw new RangeError(`label(): size ${size} is below ${MIN_LABEL}px`);
@@ -98,27 +98,20 @@ export function label({
     lines.length === 1
       ? [text(lines[0])]
       : lines.map((l, i) => el('tspan', i === 0 ? { x: n(x) } : { x: n(x), dy: n(lh) }, [text(l)]));
-  const mk = (attrs) =>
-    el('text', {
-      x: n(x),
-      y: n(y0),
-      'text-anchor': anchor,
-      'font-size': size,
-      'font-weight': weight,
-      // LIGATURES OFF WHEREVER CODE IS SET. Geist Mono ligates, and a
-      // diagram quoting a payload is the one place that must not happen:
-      // `data=...` came out as one wide glyph and a stray full stop on the
-      // actor event stream, and `!=` would come out as a character the API
-      // does not accept. A label is a quotation, so it is set literally.
-      ...(mono ? { 'font-family': MONO, style: NO_LIGATURES } : {}),
-      ...attrs,
-    }, kids);
-  const fill = mk({ fill: color });
-  if (!halo) return fill;
-  const under = mk({
-    fill: C.bg, stroke: C.bg, 'stroke-width': 4, 'stroke-linejoin': 'round', 'aria-hidden': 'true',
-  });
-  return el('g', {}, [under, fill]);
+  return el('text', {
+    x: n(x),
+    y: n(y0),
+    'text-anchor': anchor,
+    'font-size': size,
+    'font-weight': weight,
+    // LIGATURES OFF WHEREVER CODE IS SET. Geist Mono ligates, and a
+    // diagram quoting a payload is the one place that must not happen:
+    // `data=...` came out as one wide glyph and a stray full stop on the
+    // actor event stream, and `!=` would come out as a character the API
+    // does not accept. A label is a quotation, so it is set literally.
+    ...(mono ? { 'font-family': MONO, style: NO_LIGATURES } : {}),
+    fill: color,
+  }, kids);
 }
 
 // One line of text whose parts differ in colour or weight, for a URL or a
@@ -957,9 +950,8 @@ export function httpCard({
           ...outline(stroke, { 'stroke-dasharray': '2 4' }),
         }),
         // The chip is FILLED with the page's own ground, which is what stops
-        // the divider striking through the status - the same thing a label's
-        // halo does, and what `paints ground behind any label a line crosses`
-        // checks for.
+        // the divider striking through the status, and what `paints ground
+        // behind any label a line crosses` checks for.
         pill({ x, y: lineY, w: chipW, h: chipH, text: status, color: stroke, size }),
       ])
       : null,
