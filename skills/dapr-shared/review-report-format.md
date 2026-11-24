@@ -59,7 +59,7 @@ The skill MUST emit exactly this structure (omit empty sections — do not print
 # Dapr review — <skill-name>
 
 Target: <files or folders scanned>
-Language: <dotnet|aspire|python> (agent reviews report only dotnet or python)
+Language: <dotnet|aspire|python|java> (java only for the workflow and pub/sub reviews; agent reviews report only dotnet or python)
 Found: <n> critical, <n> warnings, <n> suggestions, <n> to verify
 
 ## Critical
