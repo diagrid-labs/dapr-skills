@@ -26,7 +26,7 @@ and each row is the latest stable of that package, not a shared number.
 | `dapr-spring-bom` | 1.19.1 | maven |
 | `spring-boot-starter-parent` | 4.0.8 | maven |
 
-## Verified by building, 2026-11-11 (TypeScript 2026-11-13)
+## Verified by building, 2026-11-11 (TypeScript 2026-11-13, Java 2026-11-24)
 
 These pins were not read off a registry and trusted — a project was generated from each skill and built.
 
@@ -50,6 +50,20 @@ These pins were not read off a registry and trusted — a project was generated 
   client and server wrapper (`client.jobs.*`, `server.jobs.listen`), a `timeoutInSeconds` option on
   `waitForExternalEvent`, and `WorkflowContext.isPatched`. Those were corrected rather than left
   as a version bump that quietly contradicted its own documentation.
+- **Java** (added 2026-11-24) — two Spring Boot projects were written by hand against
+  `spring-boot-starter-parent` 4.0.8 and `dapr-spring-bom` 1.19.1 (`dapr-spring-boot-starter`, webmvc,
+  actuator, `java.version` 17), built with `mvn -q -DskipTests package` on Maven 3.9.9 running JDK 23.0.2
+  (class files are version 61, Java 17), and run with `dapr run -f .` (`command: ["mvn", "spring-boot:run"]`)
+  on Dapr CLI 1.19.1 with runtime 1.19.2 on macOS. **Both builds exit 0.** The BOM resolves every
+  `io.dapr` and `io.dapr.spring` artifact to 1.19.1 and brings in
+  Jackson 2.21.7 and Jackson 3.1.5. The workflow app
+  (two chained activities, an external event with a timeout, a `WorkflowTaskRetryPolicy`, and the start,
+  status, pause, resume, terminate and raise-event endpoints) ran to `COMPLETED`, with its record output
+  read through `readOutputAs`. The pub/sub app (publisher plus a declarative, a programmatic and a
+  streaming subscriber, run one at a time) was sent a valid event, one to retry and one to drop. What
+  happened, including two surprises (`DaprMessagingTemplate` sets a 10-second TTL, and a dropped message
+  is dead-lettered), is in [references/java/gotchas.md](references/java/gotchas.md). Not yet run on
+  Windows.
 
 A pin is matched per ecosystem, so the same name in another ecosystem is left alone: `dapr --version`
 prints the Dapr CLI version and is not a PyPI pin, and `dapr-agents>=1.0.9` is not pinned here at all.
