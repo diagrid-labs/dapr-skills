@@ -1,4 +1,4 @@
-# Pub/sub Components Checklist (.NET, Aspire and Python)
+# Pub/sub Components Checklist (.NET, Aspire, Python and Java)
 
 Apply each rule to `component_files`, `subscription_files`, `resiliency_files` and `run_files` from `review-detect-target-pubsub.md`, with `subscriptions` as context. The checklist is language-neutral: every rule inspects YAML, `dapr.yaml` or the Aspire AppHost.
 
@@ -17,7 +17,7 @@ Apply each rule to `component_files`, `subscription_files`, `resiliency_files` a
 | DPS-CFG-011 | critical | A Subscription whose `pubsubname` matches no component, or whose `scopes` contains no app id from `run_files` (`appID`, Aspire `AppId`, or the resource name when no AppId is set) | The subscription loads for no app, so nothing is delivered | Fix the name or the scope | `subscription-schema.md`; `subscription-methods.md` |
 | DPS-CFG-012 | warning | A Resiliency retry policy targeted at a pubsub `inbound` with `maxRetries: -1` (or no `maxRetries` and no `maxInterval`), and no dead-letter topic on that component's subscriptions | A failing message is retried forever | Bound it and add a dead-letter topic | `operations/resiliency/policies/retries/retries-overview.md`; `operations/resiliency/targets.md` |
 | DPS-CFG-013 | warning | Duplicate `appID`, `appPort`, `daprHTTPPort` or `daprGRPCPort` across `dapr.yaml` apps | A port or app-id collision stops one app or merges two | Use unique values | `dapr.yaml` (cf. `DAG-ORCH-007`) |
-| DPS-CFG-014 | warning | `isRawPayload` as a key in a Subscription `spec.metadata`, or in programmatic subscription metadata | The runtime reads `rawPayload` only; the key is ignored and the subscriber gets a CloudEvent | Rename it to `rawPayload` | `components-contrib/metadata/utils.go` (`RawPayloadKey`); `pubsub-raw.md` (wrong example) |
+| DPS-CFG-014 | warning | `isRawPayload` as a key in a Subscription `spec.metadata`, or in programmatic subscription metadata, including a Java `@Topic(metadata = "{\"isRawPayload\": \"true\"}")` (cite the line with `isRawPayload`) | The runtime reads `rawPayload` only; the key is ignored and the subscriber gets a CloudEvent | Rename it to `rawPayload` | `components-contrib/metadata/utils.go` (`RawPayloadKey`); `pubsub-raw.md` (wrong example) |
 
 ## .NET / Aspire notes
 
@@ -28,11 +28,16 @@ Apply each rule to `component_files`, `subscription_files`, `resiliency_files` a
 
 - Read the component folder from `resourcesPath` (or `resourcesPaths`) in each app of `dapr.yaml`, and the app ids and ports from `appID`, `appPort`, `daprHTTPPort` and `daprGRPCPort`. A streaming-only subscriber has no `appPort`; that is correct and is not a DPS-CFG-013 finding.
 
+## Java notes
+
+- Read the component folder from `resourcesPath` in `dapr.yaml`, and the app ids and ports from `appID`, `appPort`, `daprHTTPPort` and `daprGRPCPort`. Each app is a Maven module in its `appDirPath`; its `server.port` (read from its `application.*` files as "Java properties" in `review-detect-target-pubsub.md` describes) is the port the app listens on. A streaming-only subscriber has no `appPort`; that is correct and is not a DPS-CFG-013 finding.
+- Programmatic subscriptions are `@Topic` methods. Their dead-letter topics (DPS-CFG-003, DPS-CFG-012) and metadata (DPS-CFG-014) come from the `subscriptions` list, with `${…}` placeholders resolved by detection (except inside `metadata`, which the starter does not resolve). The SDK passes the `metadata` JSON to the runtime unchanged (`sdk-springboot/src/main/java/io/dapr/springboot/DaprBeanPostProcessor.java:116`, Java SDK `v1.19.1`), so an `isRawPayload` key there is ignored exactly like one in YAML.
+
 ## Confidence notes
 
 - DPS-CFG-005 is an inference from the Redis consumer-group behaviour (the docs do not state it for `consumerID`); the rule stays a warning and the `Why:` line must say so.
 - DPS-CFG-006 is Please verify: the finding only asks the user to confirm the namespace scoping.
-- DPS-CFG-003 and DPS-CFG-012 read `subscriptions` for dead-letter topics of any type: YAML `deadLetterTopic`, `DeadLetterTopic`, `dead_letter_topic`.
+- DPS-CFG-003 and DPS-CFG-012 read `subscriptions` for dead-letter topics of any type: YAML `deadLetterTopic`, `DeadLetterTopic`, `dead_letter_topic`, Java `@Topic(deadLetterTopic = …)` and the dead-letter argument of `subscribeToTopic(`.
 
 ## Baseline
 

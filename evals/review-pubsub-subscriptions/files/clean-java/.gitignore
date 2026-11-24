@@ -1,0 +1,10 @@
+# Maven build output
+target/
+
+# Dapr logs (appLogDestination: fileAndConsole writes .dapr/logs/ in each app folder)
+.dapr/
+
+# IDE files
+.idea/
+*.iml
+.vscode/

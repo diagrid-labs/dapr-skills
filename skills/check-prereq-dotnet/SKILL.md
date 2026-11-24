@@ -1,6 +1,6 @@
 ---
 name: check-prereq-dotnet
-description: Checks prerequisites for building Dapr workflow and pub/sub apps in .NET. Use for "check prerequisites for .NET" or "verify .NET environment".
+description: Checks prerequisites for Dapr workflow and pub/sub apps in .NET. Use for "check prerequisites for .NET" or "verify .NET environment".
 allowed-tools:
   - Bash(uname -s)
   - Bash(dotnet --version)

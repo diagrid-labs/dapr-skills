@@ -153,3 +153,8 @@ test('no description names the catalyst-ai plugin', () => {
     .map(([name]) => name);
   assert.deepEqual(offenders, []);
 });
+
+test('java skills are language twins of their python and dotnet siblings', () => {
+  assert.equal(isLanguageTwin('create-workflow-java', 'create-workflow-python'), true);
+  assert.equal(isLanguageTwin('add-pubsub-java', 'add-pubsub-dotnet'), true);
+});

@@ -1,6 +1,6 @@
 ---
 name: review-workflow-determinism
-description: Read-only audit of existing Dapr Workflow code in .NET and Python for non-determinism that breaks replay, with DWF-DET-NNN findings. Use for "review workflow for determinism" or "audit Dapr workflow replay safety".
+description: Read-only audit of Dapr Workflow code in .NET, Python and Java for non-determinism that breaks replay, with DWF-DET-NNN findings. Use for "review workflow for determinism" or "audit Dapr workflow replay safety".
 allowed-tools:
   - Read
   - Grep
@@ -22,6 +22,7 @@ You MUST follow these phases in strict order. Do not load files outside the agre
 3. **Load checklist** — Based on `language`, read exactly one of:
    - `dotnet` or `aspire` → [`../dapr-shared/review-determinism-dotnet.md`](../dapr-shared/review-determinism-dotnet.md)
    - `python` → [`../dapr-shared/review-determinism-python.md`](../dapr-shared/review-determinism-python.md)
+   - `java` → [`../dapr-shared/review-determinism-java.md`](../dapr-shared/review-determinism-java.md)
 4. **Scan** — For each workflow file in scope, apply every rule from the loaded checklist using `Grep` and `Read`. For each match, capture `file:line`, the rule id, and a short evidence snippet. Confirm the match is inside workflow scope (see "Cross-reference" in each checklist) before promoting it from "Please verify" to a graded severity.
 5. **Report** — Format every finding using the canonical template from [`../dapr-shared/review-report-format.md`](../dapr-shared/review-report-format.md). Group by severity, then rule id, then file path.
 6. **Show final message** — Your last output is the report. Do not append a summary or next-action prompt other than the `## Next steps` block defined by the report format. Clarifying questions are always allowed during the review (see the report format); once answered, the report is still your last output.
@@ -41,6 +42,7 @@ The full rule list, including detection patterns, severities, and suggested fixe
 
 - [.NET / Aspire rules](../dapr-shared/review-determinism-dotnet.md) — `DWF-DET-001` … `DWF-DET-015`
 - [Python rules](../dapr-shared/review-determinism-python.md) — `DWF-DET-001` … `DWF-DET-015`
+- [Java rules](../dapr-shared/review-determinism-java.md) — `DWF-DET-001` … `DWF-DET-017` (`DWF-DET-014` does not apply)
 
 Rule ids are stable across releases. New rules append; deprecated rule ids are reserved.
 

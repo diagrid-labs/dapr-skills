@@ -78,6 +78,141 @@
         "The '## Next steps' section suggests review-workflow-activity and review-workflow-management, and there is no text after it",
         "Uses only Read, Grep and Glob; does not call Bash, Write or Edit, and no file in the fixture is modified"
       ]
+    },
+    {
+      "id": 4,
+      "name": "java-warehouse-restock-seeded-violations",
+      "prompt": "Our Spring Boot warehouse restock workflows in evals/review-workflow-determinism/files/warehouse-restock-java sometimes report RESERVATION_FAILED even though the stock was reserved, and the stock monitor history keeps growing. Can you check the workflow code for determinism problems? Just the list please, no changes.",
+      "expected_output": "A read-only determinism report with 'Language: java' that applies the Java checklist to RestockWorkflow.java and StockMonitorWorkflow.java only. Critical: DWF-DET-001 (Instant.now(), RestockWorkflow.java:32), DWF-DET-002 (UUID.randomUUID(), :33), DWF-DET-004 (Thread.sleep, :55), DWF-DET-009 (System.getenv, :34), DWF-DET-013 (while (true) scheduling an activity and a timer, StockMonitorWorkflow.java:16) and DWF-DET-016 (catch (Exception e) around .await(), RestockWorkflow.java:47). Warnings: DWF-DET-011 (instance field restocksStarted written in the body, :37) and DWF-DET-012 (SLF4J logger field used in the body, :36). Please verify: DWF-DET-017 (the injected InventoryService called in the body, :39). ctx.getCurrentInstant() (:31), ctx.getLogger(), the bounded 3-attempt loop with catch (TaskFailedException) (:61-71), the InterruptedException catch and the static final logger declaration are not reported; nothing in the activities, InventoryService or RestockController is reported.",
+      "files": [
+        "evals/review-workflow-determinism/files/warehouse-restock-java/pom.xml",
+        "evals/review-workflow-determinism/files/warehouse-restock-java/src/main/resources/application.properties",
+        "evals/review-workflow-determinism/files/warehouse-restock-java/src/main/java/com/example/warehouserestock/Application.java",
+        "evals/review-workflow-determinism/files/warehouse-restock-java/src/main/java/com/example/warehouserestock/CheckStockLevelActivity.java",
+        "evals/review-workflow-determinism/files/warehouse-restock-java/src/main/java/com/example/warehouserestock/InventoryService.java",
+        "evals/review-workflow-determinism/files/warehouse-restock-java/src/main/java/com/example/warehouserestock/PlaceSupplierOrderActivity.java",
+        "evals/review-workflow-determinism/files/warehouse-restock-java/src/main/java/com/example/warehouserestock/ReservationRequest.java",
+        "evals/review-workflow-determinism/files/warehouse-restock-java/src/main/java/com/example/warehouserestock/ReserveStockActivity.java",
+        "evals/review-workflow-determinism/files/warehouse-restock-java/src/main/java/com/example/warehouserestock/RestockController.java",
+        "evals/review-workflow-determinism/files/warehouse-restock-java/src/main/java/com/example/warehouserestock/RestockRequest.java",
+        "evals/review-workflow-determinism/files/warehouse-restock-java/src/main/java/com/example/warehouserestock/RestockResult.java",
+        "evals/review-workflow-determinism/files/warehouse-restock-java/src/main/java/com/example/warehouserestock/RestockWorkflow.java",
+        "evals/review-workflow-determinism/files/warehouse-restock-java/src/main/java/com/example/warehouserestock/StockLevel.java",
+        "evals/review-workflow-determinism/files/warehouse-restock-java/src/main/java/com/example/warehouserestock/StockMonitorInput.java",
+        "evals/review-workflow-determinism/files/warehouse-restock-java/src/main/java/com/example/warehouserestock/StockMonitorWorkflow.java",
+        "evals/review-workflow-determinism/files/warehouse-restock-java/src/main/java/com/example/warehouserestock/StockReservation.java",
+        "evals/review-workflow-determinism/files/warehouse-restock-java/src/main/java/com/example/warehouserestock/SupplierOrder.java",
+        "evals/review-workflow-determinism/files/warehouse-restock-java/src/main/java/com/example/warehouserestock/SupplierOrderRequest.java"
+      ],
+      "expectations": [
+        "Does not ask a scope clarifying question (the folder was named in the prompt) and echoes the resolved scope in one line naming warehouse-restock-java before the report",
+        "The report header contains 'Language: java' and its 'Target:' line names RestockWorkflow.java and StockMonitorWorkflow.java",
+        "The Critical section contains DWF-DET-001 at src/main/java/com/example/warehouserestock/RestockWorkflow.java:32, DWF-DET-002 at :33, DWF-DET-004 at :55, DWF-DET-009 at :34 and DWF-DET-016 at :47, listed in rule-id ascending order with DWF-DET-013 between DWF-DET-009 and DWF-DET-016",
+        "The Critical section contains DWF-DET-013 at src/main/java/com/example/warehouserestock/StockMonitorWorkflow.java:16 (while (true)) and its Fix mentions ctx.continueAsNew",
+        "The DWF-DET-016 finding names OrchestratorBlockedException (or says the catch swallows the SDK's control-flow exception) and its Fix recommends catching TaskFailedException; the DWF-DET-001 Fix recommends ctx.getCurrentInstant(), the DWF-DET-002 Fix ctx.newUuid() and the DWF-DET-004 Fix ctx.createTimer",
+        "The Warnings section contains DWF-DET-011 at src/main/java/com/example/warehouserestock/RestockWorkflow.java:37 (restocksStarted++) and DWF-DET-012 at src/main/java/com/example/warehouserestock/RestockWorkflow.java:36 (logger.info on the SLF4J field)",
+        "The Please verify section contains DWF-DET-017 at src/main/java/com/example/warehouserestock/RestockWorkflow.java:39 (inventoryService.currentLevel) with a Verify line; DWF-DET-017 is not in Critical or Warnings",
+        "Does not report ctx.getCurrentInstant() (RestockWorkflow.java:31), any ctx.getLogger() call, the bounded for loop at RestockWorkflow.java:61, the catch (TaskFailedException) at :67, the catch (InterruptedException) at :56 or the static final logger field at :16",
+        "No finding references ReserveStockActivity.java (UUID.randomUUID, Instant.now), PlaceSupplierOrderActivity.java (System.getenv, RestClient), CheckStockLevelActivity.java, InventoryService.java or RestockController.java (UUID.randomUUID at :22)",
+        "Uses only Read, Grep and Glob; does not call Bash, Write or Edit (no mvn call), and no file in the fixture is modified",
+        "The 'Found:' line reads '6 critical, 2 warnings, 0 suggestions, 1 to verify'"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "java-clean-document-approval-no-false-positives",
+      "prompt": "I generated the Spring Boot document approval app in evals/review-workflow-determinism/files/clean-java with the create-workflow-java skill and added the human-in-the-loop step. Determinism check before I push?",
+      "expected_output": "A report with 'Language: java' for a project rendered from the create-workflow-java templates, with no finding above info. The waitForExternalEvent call wrapped in catch (TaskCanceledException), ctx.getLogger(), the static final APPROVAL_EVENT constant and the early returns after ctx.complete are not flagged; nothing in the activities (static final SLF4J loggers) or the controller is reported. The body is 'No issues found.' followed by Next steps.",
+      "files": [
+        "evals/review-workflow-determinism/files/clean-java/pom.xml",
+        "evals/review-workflow-determinism/files/clean-java/src/main/resources/application.properties",
+        "evals/review-workflow-determinism/files/clean-java/src/main/java/com/example/documentapproval/Application.java",
+        "evals/review-workflow-determinism/files/clean-java/src/main/java/com/example/documentapproval/ApprovalDecision.java",
+        "evals/review-workflow-determinism/files/clean-java/src/main/java/com/example/documentapproval/ApprovalRequest.java",
+        "evals/review-workflow-determinism/files/clean-java/src/main/java/com/example/documentapproval/ApprovalRequested.java",
+        "evals/review-workflow-determinism/files/clean-java/src/main/java/com/example/documentapproval/ApprovalResult.java",
+        "evals/review-workflow-determinism/files/clean-java/src/main/java/com/example/documentapproval/DocumentApprovalWorkflow.java",
+        "evals/review-workflow-determinism/files/clean-java/src/main/java/com/example/documentapproval/DocumentApprovalWorkflowController.java",
+        "evals/review-workflow-determinism/files/clean-java/src/main/java/com/example/documentapproval/DocumentPublished.java",
+        "evals/review-workflow-determinism/files/clean-java/src/main/java/com/example/documentapproval/PublishDocumentActivity.java",
+        "evals/review-workflow-determinism/files/clean-java/src/main/java/com/example/documentapproval/RequestApprovalActivity.java",
+        "evals/review-workflow-determinism/files/clean-java/src/main/java/com/example/documentapproval/StatusResponse.java"
+      ],
+      "expectations": [
+        "The report header contains 'Language: java' and the 'Target:' line names DocumentApprovalWorkflow.java",
+        "The report's 'Found:' line reports 0 critical and 0 warnings, and the report contains no '## Critical' and no '## Warnings' section",
+        "The report body is exactly 'No issues found.' followed by the '## Next steps' section (no finding bullets)",
+        "Does not report DWF-DET-016 for the catch (TaskCanceledException e) at src/main/java/com/example/documentapproval/DocumentApprovalWorkflow.java:27, DWF-DET-011 for the static final APPROVAL_EVENT at :12, or DWF-DET-012 for the ctx.getLogger() calls at :18 and :28",
+        "No finding references RequestApprovalActivity.java, PublishDocumentActivity.java, DocumentApprovalWorkflowController.java or any record file",
+        "The '## Next steps' section suggests review-workflow-activity and review-workflow-management, and there is no text after it",
+        "Uses only Read, Grep and Glob; does not call Bash, Write or Edit (no mvn call), and no file in the fixture is modified"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "java-gradle-project-stops",
+      "prompt": "review the workflow in evals/review-workflow-determinism/files/gradle-java for replay safety",
+      "expected_output": "Target detection finds a build.gradle that references io.dapr and no Maven pom.xml, so the review stops without applying any rule and emits the \"Nothing to review\" report defined for unsupported Java builds: '# Dapr review — review-workflow-determinism', 'Target: <scope_root>', 'Language: java', 'Found: 0 critical, 0 warnings, 0 suggestions, 0 to verify', 'Nothing to review: Gradle projects are not supported by the Java review checklists; the checklists assume Maven and Spring Boot.', then '## Next steps' with the single bullet 'The Java review checklists cover Maven projects that use Spring Boot and the Dapr Spring Boot starter; create-workflow-java and create-pubsub-java show that layout.'. No rule is applied: no DWF-DET finding is reported (not even for the Instant.now() in MeterReadingWorkflow.java).",
+      "files": [
+        "evals/review-workflow-determinism/files/gradle-java/build.gradle",
+        "evals/review-workflow-determinism/files/gradle-java/settings.gradle",
+        "evals/review-workflow-determinism/files/gradle-java/src/main/java/com/example/meterreadings/MeterReading.java",
+        "evals/review-workflow-determinism/files/gradle-java/src/main/java/com/example/meterreadings/MeterReadingResult.java",
+        "evals/review-workflow-determinism/files/gradle-java/src/main/java/com/example/meterreadings/MeterReadingWorkflow.java"
+      ],
+      "expectations": [
+        "Stops after target detection and emits the \"Nothing to review\" report in this shape: the '# Dapr review — review-workflow-determinism' heading, 'Target:' naming the scope, 'Language: java', 'Found: 0 critical, 0 warnings, 0 suggestions, 0 to verify', the line 'Nothing to review: Gradle projects are not supported by the Java review checklists; the checklists assume Maven and Spring Boot.', and '## Next steps' with one bullet saying the Java review checklists cover Maven projects that use Spring Boot and the Dapr Spring Boot starter (create-workflow-java and create-pubsub-java show that layout); there is no text after it",
+        "Does not report any DWF-DET-* finding, including DWF-DET-001 for Instant.now() at src/main/java/com/example/meterreadings/MeterReadingWorkflow.java:15",
+        "Does not say that Java review support is not available, and does not claim the project is not a Dapr Workflow project",
+        "Uses only Read, Grep and Glob; does not call Bash, Write or Edit (no mvn call), and no file in the fixture is modified"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "java-plain-without-spring-stops",
+      "prompt": "check the workflow in evals/review-workflow-determinism/files/plain-java for replay problems",
+      "expected_output": "Target detection finds a pom.xml that depends on io.dapr:dapr-sdk-workflows with no Spring Boot (no io.dapr.spring starter or BOM, no spring-boot-starter-parent, no org.springframework.boot dependency), and no other marker, so the review stops without applying any rule and emits the \"Nothing to review\" report defined for unsupported Java builds: '# Dapr review — review-workflow-determinism', 'Target: <scope_root>', 'Language: java', 'Found: 0 critical, 0 warnings, 0 suggestions, 0 to verify', 'Nothing to review: Plain Java projects without Spring Boot are not supported by the Java review checklists; the checklists assume Maven and Spring Boot.', then '## Next steps' with the single bullet 'The Java review checklists cover Maven projects that use Spring Boot and the Dapr Spring Boot starter; create-workflow-java and create-pubsub-java show that layout.'. No rule is applied: no DWF-DET finding is reported (not even for the Instant.now() in ParcelRoutingWorkflow.java).",
+      "files": [
+        "evals/review-workflow-determinism/files/plain-java/pom.xml",
+        "evals/review-workflow-determinism/files/plain-java/src/main/java/com/example/parcelrouting/AssignDepotActivity.java",
+        "evals/review-workflow-determinism/files/plain-java/src/main/java/com/example/parcelrouting/Parcel.java",
+        "evals/review-workflow-determinism/files/plain-java/src/main/java/com/example/parcelrouting/ParcelRoutingApp.java",
+        "evals/review-workflow-determinism/files/plain-java/src/main/java/com/example/parcelrouting/ParcelRoutingWorkflow.java",
+        "evals/review-workflow-determinism/files/plain-java/src/main/java/com/example/parcelrouting/RoutingResult.java"
+      ],
+      "expectations": [
+        "Stops after target detection and emits the \"Nothing to review\" report in this shape: the '# Dapr review — review-workflow-determinism' heading, 'Target:' naming the scope, 'Language: java', 'Found: 0 critical, 0 warnings, 0 suggestions, 0 to verify', the line 'Nothing to review: Plain Java projects without Spring Boot are not supported by the Java review checklists; the checklists assume Maven and Spring Boot.', and '## Next steps' with one bullet saying the Java review checklists cover Maven projects that use Spring Boot and the Dapr Spring Boot starter (create-workflow-java and create-pubsub-java show that layout); there is no text after it",
+        "Does not report any DWF-DET-* finding, including DWF-DET-001 for Instant.now() at src/main/java/com/example/parcelrouting/ParcelRoutingWorkflow.java:13",
+        "Does not say that Java review support is not available, does not mention Gradle, and does not claim the project is not a Dapr Workflow project",
+        "Uses only Read, Grep and Glob; does not call Bash, Write or Edit (no mvn call), and no file in the fixture is modified"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "java-mixed-maven-and-gradle-skips-gradle",
+      "prompt": "Replay-safety review of the workflows in evals/review-workflow-determinism/files/mixed-java please.",
+      "expected_output": "Target detection finds a Maven Spring Boot module (returns/pom.xml with dapr-spring-boot-starter) and a Gradle module that references io.dapr (legacy-meter/build.gradle). Because a supported Java target is present, the review does not stop: legacy-meter is treated as out of scope and named as skipped in one Next steps bullet (Gradle projects are not supported by the Java review checklists). The report has 'Language: java' and reviews ReturnWorkflow.java only. Critical: DWF-DET-002 (returns/src/main/java/com/example/returns/ReturnWorkflow.java:15, UUID.randomUUID()). Nothing is reported for legacy-meter (not the Instant.now() in MeterReadingWorkflow.java:15).",
+      "files": [
+        "evals/review-workflow-determinism/files/mixed-java/legacy-meter/build.gradle",
+        "evals/review-workflow-determinism/files/mixed-java/legacy-meter/settings.gradle",
+        "evals/review-workflow-determinism/files/mixed-java/legacy-meter/src/main/java/com/example/meterreadings/MeterReading.java",
+        "evals/review-workflow-determinism/files/mixed-java/legacy-meter/src/main/java/com/example/meterreadings/MeterReadingResult.java",
+        "evals/review-workflow-determinism/files/mixed-java/legacy-meter/src/main/java/com/example/meterreadings/MeterReadingWorkflow.java",
+        "evals/review-workflow-determinism/files/mixed-java/returns/pom.xml",
+        "evals/review-workflow-determinism/files/mixed-java/returns/src/main/resources/application.properties",
+        "evals/review-workflow-determinism/files/mixed-java/returns/src/main/java/com/example/returns/Application.java",
+        "evals/review-workflow-determinism/files/mixed-java/returns/src/main/java/com/example/returns/CreateReturnLabelActivity.java",
+        "evals/review-workflow-determinism/files/mixed-java/returns/src/main/java/com/example/returns/ReturnLabel.java",
+        "evals/review-workflow-determinism/files/mixed-java/returns/src/main/java/com/example/returns/ReturnRequest.java",
+        "evals/review-workflow-determinism/files/mixed-java/returns/src/main/java/com/example/returns/ReturnWorkflow.java"
+      ],
+      "expectations": [
+        "Does not stop with the Gradle message: emits a review report whose header contains 'Language: java' and whose 'Target:' line names ReturnWorkflow.java (or the returns module) and not legacy-meter",
+        "The Critical section contains DWF-DET-002 at returns/src/main/java/com/example/returns/ReturnWorkflow.java:15 (UUID.randomUUID()) with a Fix that uses ctx.newUuid(); the Found: line reads 'Found: 1 critical, 0 warnings, 0 suggestions, 0 to verify'",
+        "No finding cites a file under legacy-meter/, including DWF-DET-001 for Instant.now() at legacy-meter/src/main/java/com/example/meterreadings/MeterReadingWorkflow.java:15",
+        "One '## Next steps' bullet names legacy-meter as skipped because Gradle projects are not supported by the Java review checklists; there is no text after the Next steps section",
+        "Uses only Read, Grep and Glob; does not call Bash, Write or Edit (no mvn call), and no file in the fixture is modified"
+      ]
     }
   ]
 }

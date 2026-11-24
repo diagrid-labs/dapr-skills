@@ -1,6 +1,6 @@
 ---
 name: create-workflow-aspire
-description: Creates a Dapr workflow app with .NET Aspire, run locally through the Aspire AppHost. Use for "create a workflow with Aspire" or "build a workflow app with .NET Aspire". For Diagrid use the diagrid plugin.
+description: Creates a Dapr workflow app with .NET Aspire, run through the AppHost. Use for "create a workflow with Aspire" or "build a workflow app with .NET Aspire". For Diagrid use the diagrid plugin.
 allowed-tools:
   - Write
   - Edit

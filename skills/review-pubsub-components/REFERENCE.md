@@ -88,6 +88,26 @@ Key points:
 - `DPS-CFG-011` resolves `scopes` against the AppHost `AppId`, not the resource name, because `AppId` is set.
 - `DPS-CFG-003` reads dead-letter topics from the `subscriptions` list, regardless of subscription type.
 
+## Java example
+
+In a Spring Boot subscriber, raw delivery for a `@Topic` subscription is asked for in its `metadata` JSON:
+
+```java
+  @Topic(name = "${app.topic}", pubsubName = "${dapr.pubsub.name}",
+      deadLetterTopic = "${app.dead-letter-topic}", metadata = "{\"isRawPayload\": \"true\"}")
+  @PostMapping("/events/pubsub/alerts")
+  public ResponseEntity<TopicEventStatus> onAlertRaised(@RequestBody CloudEvent<AlertRaised> event) {
+```
+
+The SDK passes that JSON to the runtime unchanged, and the runtime reads only `rawPayload`, so the subscriber still receives CloudEvents. The expected finding cites the line with the key:
+
+```text
+## Warnings
+- [DPS-CFG-014] `AlertEventsController.java:2` — `isRawPayload` in the `@Topic` metadata is ignored
+  Why: the runtime reads `rawPayload` only, so the subscriber gets a CloudEvent instead of the raw payload.
+  Fix: rename the key: `metadata = "{\"rawPayload\": \"true\"}"`.
+```
+
 ## Local-development baseline
 
 The output of the `create-pubsub-*` skills is a local-development setup, so reviewing it yields only info findings:
@@ -100,6 +120,6 @@ The `dapr init` Redis has an empty password and a `localhost` host, so it yields
 
 ## Out of scope
 
-- Publisher code (`PublishEventAsync`, `publish_event`) — covered by `review-pubsub-publishing`.
+- Publisher code (`PublishEventAsync`, `publish_event`, `publishEvent`) — covered by `review-pubsub-publishing`.
 - Subscriber handlers and subscription-type choices in code — covered by `review-pubsub-subscriptions`.
 - The `agent-pubsub` component — covered by `review-agent-orchestration`.

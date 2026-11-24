@@ -1,6 +1,6 @@
 ---
 name: create-workflow-dotnet
-description: Creates a Dapr workflow app in .NET, run locally with dapr run. Use for "create a workflow in .NET" or "build a workflow app in C#". For Diagrid use the diagrid plugin.
+description: Creates a local Dapr workflow app in .NET. Use for "create a workflow in .NET" or "build a workflow app in C#". For Diagrid use the diagrid plugin.
 allowed-tools:
   - Write
   - Edit

@@ -12,10 +12,13 @@ This repository contains skill definitions for building Dapr Workflow applicatio
   - `check-prereq-dotnet/SKILL.md` — Skill for checking .NET prerequisites
   - `check-prereq-aspire/SKILL.md` — Skill for checking .NET Aspire prerequisites
   - `check-prereq-python/SKILL.md` — Skill for checking Python prerequisites
+  - `check-prereq-java/SKILL.md` — Skill for checking Java (JDK 17+, Maven) prerequisites
   - `create-workflow-dotnet/SKILL.md` — Skill for creating Dapr Workflow apps with .NET
   - `create-workflow-dotnet/REFERENCE.md` — Detailed reference examples for the .NET skill
   - `create-workflow-python/SKILL.md` — Skill for creating Dapr Workflow apps with Python
   - `create-workflow-python/REFERENCE.md` — Detailed reference examples for the Python skill
+  - `create-workflow-java/SKILL.md` — Skill for creating Dapr Workflow apps with Java and Spring Boot 4 (Maven, Dapr Spring Boot starter; alpha in the SDK)
+  - `create-workflow-java/REFERENCE.md` — Detailed reference examples for the Java skill
   - `create-workflow-typescript/SKILL.md` — Skill for creating a Dapr building-blocks app (Workflow, service invocation, pub/sub, bindings, jobs, state, secrets) with TypeScript
   - `create-workflow-typescript/REFERENCE.md` — Detailed reference examples for the TypeScript skill
   - `migrate-workflow-typescript/SKILL.md` — Skill for migrating an existing TypeScript/Node.js application to Dapr incrementally
@@ -56,11 +59,13 @@ This repository contains skill definitions for building Dapr Workflow applicatio
   - `create-pubsub-dotnet/REFERENCE.md` — Detailed reference examples for the .NET pub/sub create skill
   - `create-pubsub-python/SKILL.md` — Skill for creating Dapr pub/sub apps in Python (FastAPI with dapr run; declarative, programmatic or streaming subscriptions)
   - `create-pubsub-python/REFERENCE.md` — Detailed reference examples for the Python pub/sub create skill
+  - `create-pubsub-java/SKILL.md` — Skill for creating Dapr pub/sub apps in Java with Spring Boot 4 (dapr run; declarative, programmatic or streaming subscriptions)
+  - `create-pubsub-java/REFERENCE.md` — Detailed reference examples for the Java pub/sub create skill
   - `add-pubsub-dotnet/SKILL.md` — Skill for adding Dapr pub/sub to an existing ASP.NET Core project (plain or Aspire) after a plan the user approves
   - `add-pubsub-dotnet/REFERENCE.md` — Detection heuristics, plan template, edit recipes and run-doc template for the .NET pub/sub add skill
   - `add-pubsub-python/SKILL.md` — Skill for adding Dapr pub/sub to an existing Python FastAPI app after a plan the user approves
   - `add-pubsub-python/REFERENCE.md` — Detection heuristics, plan template, edit recipes and run-doc template for the Python pub/sub add skill
-  - `review-pubsub-publishing/SKILL.md` — Skill for reviewing Dapr pub/sub publishing code in .NET and Python (swallowed publish failures, pub/sub names, content types, client lifetime, bulk publish, payload size)
+  - `review-pubsub-publishing/SKILL.md` — Skill for reviewing Dapr pub/sub publishing code in .NET, Python and Java (swallowed publish failures, pub/sub names, content types, client lifetime, bulk publish, payload size)
   - `review-pubsub-publishing/REFERENCE.md` — Detailed reference and worked example for the pub/sub publishing review skill
   - `review-pubsub-subscriptions/SKILL.md` — Skill for reviewing Dapr pub/sub subscriptions and handlers (declarative, programmatic and streaming: CloudEvent handling, response statuses, idempotency, dead-letter handling, duplicate subscriptions)
   - `review-pubsub-subscriptions/REFERENCE.md` — Detailed reference and worked example for the pub/sub subscriptions review skill
@@ -82,11 +87,11 @@ This repository contains skill definitions for building Dapr Workflow applicatio
 
 **Verify your environment (user-invoked only):**
 
-The `check-prereq-xxx` skills (`check-prereq-dotnet`, `check-prereq-aspire`, `check-prereq-python`, `check-prereq-agent-python`, `check-prereq-agent-dotnet`) are opt-in and must **only** be run when the user explicitly asks for them (e.g., "check prerequisites for .NET", "verify Aspire environment"). Do **NOT** run them automatically as part of, or before, a `create-workflow-xxx`, `create-agent-xxx` or `create-pubsub-xxx` invocation — they are separate, user-invoked skills, not an implicit pre-step.
+The `check-prereq-xxx` skills (`check-prereq-dotnet`, `check-prereq-aspire`, `check-prereq-python`, `check-prereq-java`, `check-prereq-agent-python`, `check-prereq-agent-dotnet`) are opt-in and must **only** be run when the user explicitly asks for them (e.g., "check prerequisites for .NET", "verify Aspire environment", "check my Java setup for Dapr"). Do **NOT** run them automatically as part of, or before, a `create-workflow-xxx`, `create-agent-xxx` or `create-pubsub-xxx` invocation — they are separate, user-invoked skills, not an implicit pre-step.
 
 **Build a new workflow application:**
 
-Run the appropriate `create-workflow-xxx` skill to scaffold the project: `create-workflow-dotnet`, `create-workflow-aspire`, `create-workflow-python`, or `create-workflow-typescript` from a text spec, or `create-workflow-from-diagram` from an image or BPMN file (output language: Go, Python, .NET, Java, or JavaScript). `create-workflow-typescript` differs from the other three: it scaffolds a Workflow whose activities also exercise service invocation, pub/sub, bindings, jobs, state, and secrets, rather than a workflow-only app. Each skill lists the prerequisites it expects to be installed and assumes they are already in place.
+Run the appropriate `create-workflow-xxx` skill to scaffold the project: `create-workflow-dotnet`, `create-workflow-aspire`, `create-workflow-python`, `create-workflow-java` or `create-workflow-typescript` from a text spec, or `create-workflow-from-diagram` from an image or BPMN file (output language: Go, Python, .NET, Java, or JavaScript). `create-workflow-typescript` differs from the others: it scaffolds a Workflow whose activities also exercise service invocation, pub/sub, bindings, jobs, state, and secrets, rather than a workflow-only app. Each skill lists the prerequisites it expects to be installed and assumes they are already in place.
 
 **Migrate an existing application to Dapr:**
 
@@ -102,7 +107,7 @@ Run `create-agent-python` or `create-agent-dotnet` to scaffold a durable agent a
 
 **Build a new pub/sub application:**
 
-Run `create-pubsub-dotnet` or `create-pubsub-python` to scaffold a publisher and subscriber app (`dapr run`, or Aspire for .NET; Python uses FastAPI). The role (publisher, subscriber or both) and the subscription type are asked once; declarative is the default, followed by programmatic and streaming.
+Run `create-pubsub-dotnet`, `create-pubsub-python` or `create-pubsub-java` to scaffold a publisher and subscriber app (`dapr run`, or Aspire for .NET; Python uses FastAPI; Java uses Spring Boot 4). The role (publisher, subscriber or both) and the subscription type are asked once; declarative is the default, followed by programmatic and streaming.
 
 **Add pub/sub to an existing project:**
 
@@ -160,6 +165,12 @@ All skills require:
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
 - Python language server support (for code diagnostics)
 - `add-pubsub-python` accepts Python 3.10+ in existing projects
+
+### Java skills
+
+- JDK 17+ — [download a JDK](https://adoptium.net/)
+- [Maven 3.9+](https://maven.apache.org/download.cgi)
+- Spring Boot 4 (Dapr Java SDK 1.19); the Spring Boot integration is alpha in the SDK
 
 ### TypeScript skills
 

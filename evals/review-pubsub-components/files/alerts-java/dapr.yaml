@@ -1,0 +1,16 @@
+version: 1
+common:
+  resourcesPath: ./resources
+  appLogDestination: fileAndConsole
+  daprdLogDestination: fileAndConsole
+apps:
+  - appID: alert-hub-publisher
+    appDirPath: publisher
+    appPort: 8001
+    daprHTTPPort: 3501
+    command: ["mvn", "spring-boot:run"]
+  - appID: alert-hub-subscriber
+    appDirPath: subscriber
+    appPort: 8002
+    daprHTTPPort: 3501
+    command: ["mvn", "spring-boot:run"]

@@ -1,6 +1,6 @@
 ---
 name: review-agent-observability
-description: Reviews Dapr agent projects in Python or .NET for tracing, metrics, structured logging and trace propagation. Use for "review agent observability" or "audit agent tracing".
+description: Reviews Dapr agent projects (Python or .NET) for tracing, metrics, structured logging and trace propagation. Use for "review agent observability" or "audit agent tracing".
 allowed-tools:
   - Read
   - Grep

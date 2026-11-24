@@ -10,6 +10,7 @@ Target detection, including how `scopes` in a Subscription file are resolved to 
 
 - [`../dapr-shared/review-pubsub-subscriptions-dotnet.md`](../dapr-shared/review-pubsub-subscriptions-dotnet.md)
 - [`../dapr-shared/review-pubsub-subscriptions-python.md`](../dapr-shared/review-pubsub-subscriptions-python.md)
+- [`../dapr-shared/review-pubsub-subscriptions-java.md`](../dapr-shared/review-pubsub-subscriptions-java.md)
 
 The checklists match structural patterns, not identifiers: reviewed code uses the names of its own domain, so never report a finding because a type, topic or route is named differently from an authoring template. The worked examples below use one concrete domain for readability only.
 
@@ -121,16 +122,47 @@ Found: 1 critical, 1 warnings, 0 suggestions, 0 to verify
 - Run `review-pubsub-publishing` to check the code that publishes to `orders`.
 ```
 
+## Worked example (Java streaming)
+
+Given this trimmed `start()` of a `SmartLifecycle` streaming subscriber:
+
+```java
+  @Override
+  public void start() {
+    subscriptions.add(previewClient
+        .subscribeToTopic(pubsubName, ordersTopic, ordersDeadLetterTopic, new TypeRef<CloudEvent<OrderPlaced>>() { })
+        .doOnNext(event -> fulfilment.reserveStock(event.getData()))
+        .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofSeconds(30))
+            .transientErrors(true))
+        .subscribe());
+  }
+```
+
+`reserveStock` can throw, and nothing catches it. The exception cancels the `Flux`, which closes the gRPC stream before the SDK sends its ack, so the message stays pending in the broker and is redelivered, throws again and is never dead-lettered (`DPS-SUB-017`, `references/java/gotchas.md` §3). `retryWhen` only reopens the stream; it does not stop the loop. The `Disposable` is kept in `subscriptions`, so `DPS-SUB-016` is satisfied if `stop()` disposes the list.
+
+The expected finding:
+
+```text
+## Critical
+- [DPS-SUB-017] `OrderStreamingSubscriber.java:5` — the `doOnNext` consumer has no try/catch around `reserveStock`
+  Why: an exception closes the stream before the ack; the message is redelivered and fails again in a loop, never dead-lettered.
+  Fix: call a method that wraps the work in `try`/`catch (RuntimeException e)` and logs, as the template's `handleSafely` does.
+```
+
+Do not suggest returning `RETRY` or `DROP` from the consumer: the SDK acks every event it emits.
+
 ## Cross-type false positives to avoid
 
 - A declarative-only .NET app without `MapSubscribeHandler()` — do not report `DPS-SUB-001`. The rule needs `[Topic]` or `.WithTopic`.
 - A streaming handler — do not report `DPS-SUB-002`, `DPS-SUB-003` or `DPS-SUB-004`. Those rules apply to the HTTP types only (declarative and programmatic).
 - `{"status":"DROP"}` (or `TopicResponseAction.Drop`) inside `catch (JsonException)` — do not report `DPS-SUB-005`. A catch of a deserialization or validation exception that returns DROP is exempt.
 - A streaming-only subscriber with no `appPort` — correct, never a finding.
+- A Java route whose path is split between a class-level `@RequestMapping("/events/pubsub")` and a method `@PostMapping("/orders")` — it serves `/events/pubsub/orders`; do not report `DPS-SUB-015` for it.
+- A Java streaming dead-letter consumer that only logs (the template's `handler.handleDeadLetter(...)`) — do not report `DPS-SUB-017`.
 - A Subscription whose `scopes` name a different app than the one being reviewed — do not apply the cross-type pass to this app (`DPS-SUB-014`) or look for its endpoints here (`DPS-SUB-015`).
 
 ## Out of scope
 
-- Publishing code (`PublishEventAsync`, `publish_event`) — covered by `review-pubsub-publishing`. Publishers are read only to cross-check raw payloads (`DPS-SUB-010`).
+- Publishing code (`PublishEventAsync`, `publish_event`, `publishEvent`) — covered by `review-pubsub-publishing`. Publishers are read only to cross-check raw payloads (`DPS-SUB-010`).
 - Component, resiliency and run configuration — covered by `review-pubsub-components`.
 - Agent pub/sub conventions (components named `agent-pubsub`) — covered by `review-agent-orchestration`.

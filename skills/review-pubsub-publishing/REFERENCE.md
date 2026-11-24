@@ -8,6 +8,7 @@ The baseline for correct publishing comes from the pub/sub authoring templates:
 
 - .NET publisher: [`../dapr-shared/dotnet-pubsub-publisher.md`](../dapr-shared/dotnet-pubsub-publisher.md)
 - Python publisher: [`../dapr-shared/python-pubsub-publisher.md`](../dapr-shared/python-pubsub-publisher.md)
+- Java publisher: [`../dapr-shared/java-pubsub-publisher.md`](../dapr-shared/java-pubsub-publisher.md)
 
 Those templates are written with placeholders ([`../dapr-shared/pubsub-placeholders.md`](../dapr-shared/pubsub-placeholders.md)), so the baseline is their *shape* — awaited publish, shared topic constants, 503 on a Dapr failure, string metadata values — never the identifiers in them. Reviewed code uses the names of its own domain; never report a finding because a type, topic or method is named differently from a template. The worked examples below use one concrete domain for readability only.
 
@@ -15,6 +16,7 @@ The per-language checklist shards translate those expectations into greppable pa
 
 - [`../dapr-shared/review-pubsub-publishing-dotnet.md`](../dapr-shared/review-pubsub-publishing-dotnet.md)
 - [`../dapr-shared/review-pubsub-publishing-python.md`](../dapr-shared/review-pubsub-publishing-python.md)
+- [`../dapr-shared/review-pubsub-publishing-java.md`](../dapr-shared/review-pubsub-publishing-java.md)
 
 ## Worked example
 
@@ -97,6 +99,46 @@ async def place_order(order: OrderPlaced):
 ```
 
 The sync client (`with DaprClient() as client:` then `client.publish_event(`) inside `async def` is also the `DPS-PUB-011` shape (info, a sync `DaprClient` publish inside `async def`); a full report lists it under `## Suggestions`.
+
+## Java worked example
+
+Given this Spring configuration and the service that uses it:
+
+```java
+@Configuration
+public class MessagingConfiguration {
+
+  @Bean
+  public DaprMessagingTemplate<OrderPlaced> orderTemplate(DaprClient daprClient, DaprPubSubProperties properties) {
+    return new DaprMessagingTemplate<>(daprClient, properties.getName(), false);
+  }
+}
+```
+
+```java
+@Service
+public class OrderPublisher {
+
+  private final DaprMessagingTemplate<OrderPlaced> orderTemplate;
+
+  public OrderPublisher(DaprMessagingTemplate<OrderPlaced> orderTemplate) {
+    this.orderTemplate = orderTemplate;
+  }
+
+  public void publish(OrderPlaced order) {
+    orderTemplate.send(ordersTopic, order);
+  }
+}
+```
+
+`send(...)` blocks until the sidecar accepts the message, so `DPS-PUB-001` does not fire. But every message the template publishes carries a fixed 10-second TTL (`references/java/gotchas.md` §2). The expected finding cites the construction:
+
+```text
+## Warnings
+- [DPS-PUB-013] `MessagingConfiguration.java:6` — `DaprMessagingTemplate` publishes every message with a fixed 10s TTL (used by `OrderPublisher.java`)
+  Why: a message whose handler keeps failing expires during the retries and never reaches the dead-letter topic.
+  Fix: publish with the injected `DaprClient`: `daprClient.publishEvent(pubsubName, ordersTopic, order).block()`.
+```
 
 ## Out of scope
 

@@ -66,6 +66,25 @@
         "The report ends with a `## Next steps` section and it is the last section (nothing follows its bullets)",
         "Read-only: The project files under review are unchanged (identical to the fixture) and the report contains no instruction or claim that the review modified files"
       ]
+    },
+    {
+      "id": 4,
+      "name": "java-port-collision-and-israwpayload-topic-metadata",
+      "prompt": "Review the Dapr pub/sub configuration of our Spring Boot alert hub in alerts-java. One of the two apps won't start under dapr run -f ., and the subscriber gets CloudEvents although we publish raw payloads.",
+      "expected_output": "A review-pubsub-components report with Language: java. Warnings: DPS-CFG-013 (dapr.yaml:15, daprHTTPPort 3501 used by both apps) and DPS-CFG-014 (subscriber/src/main/java/com/example/alerthub/subscriber/AlertEventsController.java:24, isRawPayload in @Topic metadata; use rawPayload). Suggestions: DPS-CFG-004 (two apps, no scopes on the pubsub component) and DPS-CFG-007 (no maxLenApprox or streamTTL). No critical findings, nothing to verify. DPS-CFG-003 is not reported because resources/resiliency.yaml has an inbound retry for pubsub.",
+      "files": [
+        "evals/review-pubsub-components/files/alerts-java/"
+      ],
+      "expectations": [
+        "The report section (after the optional one-line `Reviewing <path>` scope echo) starts with `# Dapr review — review-pubsub-components` and contains `Language: java`",
+        "Under `## Warnings` the report contains [DPS-CFG-013] citing dapr.yaml at line 15 (or 10) for the duplicate `daprHTTPPort: 3501` on alert-hub-publisher and alert-hub-subscriber, with a Fix to give each app its own port (for example 3502 for the subscriber)",
+        "Under `## Warnings` the report contains [DPS-CFG-014] citing subscriber/src/main/java/com/example/alerthub/subscriber/AlertEventsController.java:24 for `isRawPayload` in the `@Topic` metadata, with a Fix that renames the key to `rawPayload`",
+        "Under `## Suggestions` the report contains [DPS-CFG-004] (two apps in dapr.yaml, the pubsub component has no scopes) and [DPS-CFG-007] (resources/pubsub.yaml has no maxLenApprox or streamTTL)",
+        "The report does NOT contain DPS-CFG-001 or DPS-CFG-002 (localhost Redis with an empty password), DPS-CFG-003 (resources/resiliency.yaml targets pubsub inbound), DPS-CFG-011 (there is no Subscription YAML) or DPS-CFG-013 for appPort (8001 and 8002 differ)",
+        "The report has no `## Critical` section and its `Found:` line reads 'Found: 0 critical, 2 warnings, 2 suggestions, 0 to verify'",
+        "The report ends with a `## Next steps` section and it is the last section (nothing follows its bullets)",
+        "Read-only: uses only Read, Grep and Glob, the project files under review are unchanged and the report contains no instruction or claim that the review modified files"
+      ]
     }
   ]
 }

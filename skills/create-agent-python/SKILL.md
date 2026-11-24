@@ -1,6 +1,6 @@
 ---
 name: create-agent-python
-description: Creates a durable AI agent app in Python with the Dapr Agents SDK, or with the diagrid package's wrappers for LangGraph, CrewAI and others, run locally with dapr run. Use for "create an agent in Python", "scaffold a Dapr Agents project" or "create a multi-agent orchestrator". For Diagrid use the diagrid plugin.
+description: Creates a local durable AI agent app in Python with the Dapr Agents SDK or diagrid package wrappers for LangGraph, CrewAI and others. Use for "create an agent in Python", "scaffold a Dapr Agents project" or "create a multi-agent orchestrator". For Diagrid use the diagrid plugin.
 allowed-tools:
   - Write
   - Edit

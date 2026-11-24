@@ -1,6 +1,6 @@
 ---
 name: add-pubsub-dotnet
-description: Adds Dapr pub/sub to an existing .NET (ASP.NET Core, plain or Aspire) project. Keeps its subscription type, shows a plan for approval, then makes targeted edits and builds after each. Use for "add pub/sub to my .NET project" or "subscribe this ASP.NET app to a topic". For a new project use create-pubsub-dotnet.
+description: Adds Dapr pub/sub to an existing .NET (ASP.NET Core, plain or Aspire) project. Edits only after you approve a plan. Use for "add pub/sub to my .NET project" or "subscribe this ASP.NET app to a topic". For a new project use create-pubsub-dotnet.
 allowed-tools:
   - Read
   - Grep

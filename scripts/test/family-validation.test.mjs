@@ -107,3 +107,19 @@ test('checkFamilyVocabularyLinks requires a shared template to link its vocabula
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   assert.match(checkFamilyVocabularyLinks(dir, 'workflow')[0], /does not link workflow-placeholders\.md/);
 });
+
+test('checkFamilyVocabulary does not read an XML element such as a pom.xml <groupId> as a placeholder', (t) => {
+  const pom =
+    'workflow-placeholders.md\n\n```xml\n<dependencyManagement>\n  <dependency>\n' +
+    '    <groupId>io.dapr.spring</groupId>\n    <artifactId><app-id></artifactId>\n  </dependency>\n' +
+    '</dependencyManagement>\n```\nPackage <javaPackage> and <mystery_name>.\n';
+  const dir = fixture({
+    'dapr-shared/workflow-placeholders.md': vocabulary('javaPackage'),
+    'dapr-shared/java-workflow-project.md': pom,
+  });
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const failures = checkFamilyVocabulary(dir, 'workflow');
+  assert.deepEqual(failures.map((f) => f.replace(/^.*-> /, '')), [
+    '<mystery_name> is not defined in dapr-shared/workflow-placeholders.md',
+  ]);
+});

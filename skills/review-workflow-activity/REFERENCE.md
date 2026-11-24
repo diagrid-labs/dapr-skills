@@ -8,11 +8,13 @@ The canonical rule sources for this skill are the activity sections of the exist
 
 - [`../dapr-shared/dotnet-activity-class.md`](../dapr-shared/dotnet-activity-class.md).
 - [`../create-workflow-python/REFERENCE.md`](../create-workflow-python/REFERENCE.md) — section "Activity definition".
+- [`../dapr-shared/java-activity-class.md`](../dapr-shared/java-activity-class.md) and [`../dapr-shared/java-models.md`](../dapr-shared/java-models.md).
 
 The per-language checklist shards translate those rules into greppable patterns and stable rule ids:
 
 - [`../dapr-shared/review-activity-dotnet.md`](../dapr-shared/review-activity-dotnet.md)
 - [`../dapr-shared/review-activity-python.md`](../dapr-shared/review-activity-python.md)
+- [`../dapr-shared/review-activity-java.md`](../dapr-shared/review-activity-java.md)
 
 ## Worked example
 
@@ -54,9 +56,37 @@ The expected report excerpt:
   Fix: rethrow, or return a typed `ChargeResult` that distinguishes transient vs. terminal failures.
 ```
 
+## Java worked example
+
+Given this Java activity, declared inside a holder class:
+
+```java
+public class ShippingActivities {
+
+  @Component
+  public static class BookCourierActivity implements WorkflowActivity {    // DWF-ACT-013
+
+    @Override
+    public Object run(WorkflowActivityContext ctx) {
+      CourierRequest input = ctx.getInput(CourierRequest.class);
+      return new CourierBooking(input.parcelId(), "booked");
+    }
+  }
+}
+```
+
+and the workflow calling it with `ctx.callActivity(ShippingActivities.BookCourierActivity.class.getName(), ...)`, the expected report excerpt:
+
+```text
+## Critical
+- [DWF-ACT-013] `ShippingActivities.java:4` — activity `BookCourierActivity` is a nested class
+  Why: it is registered as `ShippingActivities.BookCourierActivity`, but getName() gives `ShippingActivities$BookCourierActivity`.
+  Fix: move it to its own top-level `@Component` class and call it with `BookCourierActivity.class.getName()`.
+```
+
 ## Out of scope
 
-- Workflow body code (`Workflow<>` `RunAsync`, `@wfr.workflow` functions) — covered by `review-workflow-determinism`.
+- Workflow body code (`Workflow<>` `RunAsync`, `@wfr.workflow` functions, the Java `WorkflowStub`) — covered by `review-workflow-determinism`.
 - Management endpoints / `Program.cs` / `main.py` — covered by `review-workflow-management`.
 - Workflow versioning (`IsPatched` / `is_patched` and named workflow versions), error-handling policy, operations, and pattern-level design reviews — not covered by the review skills.
 
@@ -66,5 +96,7 @@ The expected report excerpt:
 - [`../dapr-shared/references/core/error-reference.md`](../dapr-shared/references/core/error-reference.md) — the error taxonomy a finding should cite.
 - [`../dapr-shared/references/dotnet/error-handling.md`](../dapr-shared/references/dotnet/error-handling.md) — the .NET rules.
 - [`../dapr-shared/references/python/error-handling.md`](../dapr-shared/references/python/error-handling.md) — the Python rules.
+- [`../dapr-shared/references/java/error-handling.md`](../dapr-shared/references/java/error-handling.md) — the Java rules.
 - [`../dapr-shared/references/dotnet/data-handling.md`](../dapr-shared/references/dotnet/data-handling.md) — payload and serialization limits (.NET).
 - [`../dapr-shared/references/python/data-handling.md`](../dapr-shared/references/python/data-handling.md) — payload and serialization limits (Python).
+- [`../dapr-shared/references/java/data-handling.md`](../dapr-shared/references/java/data-handling.md) — payload and serialization limits (Java).

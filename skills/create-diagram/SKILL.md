@@ -1,6 +1,6 @@
 ---
 name: create-diagram
-description: Draws Dapr architecture diagrams in the docs.dapr.io style as SVG, with optional PNGs for slides. Use for "draw a diagram of my Dapr app". For diagram to workflow code use create-workflow-from-diagram.
+description: Draws Dapr architecture diagrams in the docs.dapr.io style as SVG, with optional PNGs. Use for "draw a diagram of my Dapr app". For diagram to workflow code use create-workflow-from-diagram.
 ---
 
 # Create a Dapr Diagram

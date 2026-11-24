@@ -1,6 +1,6 @@
 ---
 name: review-workflow-management
-description: Read-only audit of the HTTP management endpoints (start, status, terminate, pause, resume, raise-event, purge) a .NET or Python app exposes for Dapr Workflows, with DWF-MGT-NNN findings. Use for "review workflow management" or "check workflow HTTP endpoints". To operate runs on Diagrid use the diagrid plugin.
+description: Read-only audit of the HTTP management endpoints a .NET, Python or Java Dapr Workflow app exposes, with DWF-MGT-NNN findings. Use for "review workflow management" or "check workflow HTTP endpoints". To operate runs on Diagrid use the diagrid plugin.
 allowed-tools:
   - Read
   - Grep
@@ -22,7 +22,8 @@ You MUST follow these phases in strict order. Do not load files outside the agre
 3. **Load checklist** — Based on `language`, read exactly one of:
    - `dotnet` or `aspire` → [`../dapr-shared/review-management-dotnet.md`](../dapr-shared/review-management-dotnet.md)
    - `python` → [`../dapr-shared/review-management-python.md`](../dapr-shared/review-management-python.md)
-4. **Required-coverage pass** — Determine which of the canonical endpoints are present by grepping `management_files` for the SDK calls listed in the checklist's "Required endpoint coverage" table. Emit a finding for each missing endpoint using the rule id from that table. If `workflow_files` references `WaitForExternalEventAsync` / `wait_for_external_event`, also enforce the raise-event endpoint (`DWF-MGT-006`).
+   - `java` → [`../dapr-shared/review-management-java.md`](../dapr-shared/review-management-java.md)
+4. **Required-coverage pass** — Determine which of the canonical endpoints are present by grepping `management_files` for the SDK calls listed in the checklist's "Required endpoint coverage" table. Emit a finding for each missing endpoint using the rule id from that table. If `workflow_files` references `WaitForExternalEventAsync` / `wait_for_external_event` / `waitForExternalEvent`, also enforce the raise-event endpoint (`DWF-MGT-006`).
 5. **Per-endpoint pass** — For every endpoint that is present, walk the per-rule heuristics (`DWF-MGT-007` and onward) and emit findings for each match.
 6. **Report** — Format every finding using the canonical template from [`../dapr-shared/review-report-format.md`](../dapr-shared/review-report-format.md). Group by severity, then rule id, then file path.
 7. **Show final message** — Your last output is the report. Do not append a summary or next-action prompt other than the `## Next steps` block defined by the report format. Clarifying questions are always allowed during the review (see the report format); once answered, the report is still your last output.
@@ -42,6 +43,7 @@ The full rule list, including detection patterns, severities, and suggested fixe
 
 - [.NET / Aspire rules](../dapr-shared/review-management-dotnet.md) — `DWF-MGT-001` … `DWF-MGT-015`
 - [Python rules](../dapr-shared/review-management-python.md) — `DWF-MGT-001` … `DWF-MGT-015`
+- [Java rules](../dapr-shared/review-management-java.md) — `DWF-MGT-001` … `DWF-MGT-017`
 
 Rule ids are stable across releases. New rules append; deprecated rule ids are reserved.
 

@@ -1,6 +1,6 @@
 ---
 name: check-prereq-agent-dotnet
-description: Checks prerequisites for building durable AI agents in .NET with Microsoft Agent Framework on Dapr Workflow. Use for "check prerequisites for .NET agents" or "verify .NET agent environment".
+description: Checks prerequisites for durable AI agents in .NET with Microsoft Agent Framework on Dapr Workflow. Use for "check prerequisites for .NET agents" or "verify .NET agent environment".
 allowed-tools:
   - Bash(uname -s)
   - Bash(dotnet --version)

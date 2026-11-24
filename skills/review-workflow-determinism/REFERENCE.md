@@ -9,16 +9,19 @@ The canonical rule sources for this skill are the dedicated determinism referenc
 - [`../dapr-shared/references/core/determinism.md`](../dapr-shared/references/core/determinism.md) — the replay mechanism and why each hazard breaks it.
 - [`../dapr-shared/references/dotnet/determinism.md`](../dapr-shared/references/dotnet/determinism.md) — the .NET rules.
 - [`../dapr-shared/references/python/determinism.md`](../dapr-shared/references/python/determinism.md) — the Python rules.
+- [`../dapr-shared/references/java/determinism.md`](../dapr-shared/references/java/determinism.md) — the Java rules.
 - [`../dapr-shared/references/core/gotchas.md`](../dapr-shared/references/core/gotchas.md) — symptoms a finding should name.
 - [`../dapr-shared/references/core/troubleshooting.md`](../dapr-shared/references/core/troubleshooting.md) — how a stuck run presents.
 
 - [`../dapr-shared/dotnet-workflow-class.md`](../dapr-shared/dotnet-workflow-class.md) — section "Workflow determinism".
 - [`../create-workflow-python/REFERENCE.md`](../create-workflow-python/REFERENCE.md) — section "Workflow determinism".
+- [`../dapr-shared/java-workflow-class.md`](../dapr-shared/java-workflow-class.md) — section "Workflow determinism".
 
 The per-language checklist shards translate those rules into greppable patterns and stable rule ids:
 
 - [`../dapr-shared/review-determinism-dotnet.md`](../dapr-shared/review-determinism-dotnet.md)
 - [`../dapr-shared/review-determinism-python.md`](../dapr-shared/review-determinism-python.md)
+- [`../dapr-shared/review-determinism-java.md`](../dapr-shared/review-determinism-java.md)
 
 ## Worked example
 
@@ -54,8 +57,41 @@ The expected report excerpt:
   Fix: move the call into an activity invoked via `context.CallActivityAsync`.
 ```
 
+## Java worked example
+
+Given this Java workflow, where a broad `catch` wraps an `.await()`:
+
+```java
+@Component
+public class PaymentWorkflow implements Workflow {
+
+  @Override
+  public WorkflowStub create() {
+    return ctx -> {
+      PaymentRequest payment = ctx.getInput(PaymentRequest.class);
+      try {
+        ChargeResult charge = ctx.callActivity(
+            ChargeCardActivity.class.getName(), payment, ChargeResult.class).await();
+        ctx.complete(new PaymentOutcome(payment.paymentId(), "CHARGED"));
+      } catch (Exception e) {                                   // DWF-DET-016
+        ctx.complete(new PaymentOutcome(payment.paymentId(), "FAILED"));
+      }
+    };
+  }
+}
+```
+
+The expected report excerpt:
+
+```text
+## Critical
+- [DWF-DET-016] `PaymentWorkflow.java:12` — `catch (Exception e)` around `.await()` in the workflow body
+  Why: it swallows the SDK's OrchestratorBlockedException, so the run completes FAILED before the charge returns.
+  Fix: catch `TaskFailedException` (and `TaskCanceledException` for event timeouts) instead.
+```
+
 ## Out of scope
 
 - Activity bodies — covered by `review-workflow-activity`.
-- Management endpoints / `Program.cs` / `main.py` — covered by `review-workflow-management`.
+- Management endpoints / `Program.cs` / `main.py` / the `@RestController` — covered by `review-workflow-management`.
 - Workflow versioning (`IsPatched` / `is_patched` and named workflow versions), error-handling policy, operations, and pattern-level design reviews — not covered by the review skills.
