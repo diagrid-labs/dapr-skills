@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
-import { parseVersionTable, checkVersionPins } from '../lib/version-validation.mjs';
+import { parseVersionTable, checkVersionPins, mavenPins } from '../lib/version-validation.mjs';
 
 // The same shape as skills/dapr-shared/dapr-versions.md: one version table, then a
 // retired-distribution table that carries replacements rather than versions.
@@ -230,4 +230,52 @@ test('checkVersionPins skips build output under obj/ and bin/', () => {
     }),
     [],
   );
+});
+
+const MAVEN_VERSIONS = `${VERSIONS}
+| \`dapr-spring-bom\` | 1.19.1 | maven |
+`;
+
+test('mavenPins reads artifactId then version across lines', () => {
+  const text = '<dependency>\n  <groupId>io.dapr.spring</groupId>\n  <artifactId>dapr-spring-bom</artifactId>\n  <version>1.19.0</version>\n</dependency>';
+  assert.deepEqual(mavenPins(text), [{ name: 'dapr-spring-bom', version: '1.19.0', line: 4 }]);
+});
+
+test('mavenPins reads groupId:artifactId:version coordinates', () => {
+  assert.deepEqual(mavenPins('use io.dapr.spring:dapr-spring-bom:1.19.1 here'), [
+    { name: 'dapr-spring-bom', version: '1.19.1', line: 1 },
+  ]);
+});
+
+test('mavenPins ignores a version with no artifactId before it, and ${property} versions', () => {
+  assert.deepEqual(mavenPins('<version>1.0.0</version>'), []);
+  assert.deepEqual(mavenPins('<artifactId>x</artifactId>\n<version>${dapr.version}</version>'), []);
+});
+
+test('checkVersionPins fails a stale maven pin in a skill', () => {
+  const dir = fixture({
+    'skills/dapr-shared/dapr-versions.md': MAVEN_VERSIONS,
+    'skills/create-workflow-java/SKILL.md':
+      '# Skill\n\n<dependency>\n  <artifactId>dapr-spring-bom</artifactId>\n  <version>1.19.0</version>\n</dependency>\n',
+  });
+  const failures = checkVersionPins(join(dir, 'skills'), join(dir, 'evals'));
+  assert.equal(failures.length, 1);
+  assert.match(failures[0], /create-workflow-java\/SKILL\.md:5/);
+  assert.match(failures[0], /dapr-spring-bom/);
+  assert.match(failures[0], /1\.19\.0/);
+  assert.match(failures[0], /expected 1\.19\.1/);
+});
+
+test('checkVersionPins passes a matching maven pin', () => {
+  const dir = fixture({
+    'skills/dapr-shared/dapr-versions.md': MAVEN_VERSIONS,
+    'skills/create-workflow-java/SKILL.md': '<artifactId>dapr-spring-bom</artifactId>\n<version>1.19.1</version>\n',
+  });
+  assert.deepEqual(checkVersionPins(join(dir, 'skills'), join(dir, 'evals')), []);
+});
+
+test('parseVersionTable accepts the maven ecosystem', () => {
+  const table = parseVersionTable(MAVEN_VERSIONS);
+  assert.equal(table.has('dapr-spring-bom'), true);
+  assert.equal(table.get('dapr-spring-bom'), '1.19.1');
 });

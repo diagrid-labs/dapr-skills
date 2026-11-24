@@ -8,7 +8,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, relative, sep, dirname } from 'node:path';
 
 const VERSIONS_FILE = 'dapr-shared/dapr-versions.md';
-const ECOSYSTEMS = new Set(['nuget', 'npm', 'pypi']);
+const ECOSYSTEMS = new Set(['nuget', 'npm', 'pypi', 'maven']);
 
 // A concrete release, and nothing else. The trailing look-ahead is what makes `dapr==1.18.x` not a
 // pin: skills say that about whatever version an existing project already carries, and a wildcard
@@ -39,6 +39,27 @@ function versionRows(text) {
 /** The version table as package coordinate -> version. */
 export function parseVersionTable(text) {
   return new Map(versionRows(text).map((r) => [r.name, r.version]));
+}
+
+/**
+ * Maven pins in a whole text, as `{name, version, line}`.
+ *
+ * Unlike the other ecosystems this cannot work per line: in a `pom.xml` the `<artifactId>` and its
+ * `<version>` sit on different lines. `line` is the line of the version. A `${property}` version is
+ * not a pin, and neither is a `<version>` with no artifactId before it (the project's own version).
+ */
+export function mavenPins(text) {
+  const lineAt = (index) => text.slice(0, index).split('\n').length;
+  const found = [];
+  const xml = new RegExp(`<artifactId>\\s*([^<\\s]+)\\s*</artifactId>\\s*<version>\\s*${VERSION}\\s*</version>`, 'g');
+  for (const m of text.matchAll(xml)) {
+    found.push({ name: m[1], version: m[2], line: lineAt(m.index + m[0].lastIndexOf('<version>')), at: m.index });
+  }
+  const gav = new RegExp(`[A-Za-z0-9_.\\-]+:([A-Za-z0-9_.\\-]+):${VERSION}`, 'g');
+  for (const m of text.matchAll(gav)) {
+    found.push({ name: m[1], version: m[2], line: lineAt(m.index), at: m.index });
+  }
+  return found.sort((a, b) => a.at - b.at).map(({ name, version, line }) => ({ name, version, line }));
 }
 
 /** Retired distributions as retired name -> the coordinate to pin instead. */
@@ -134,7 +155,16 @@ export function checkVersionPins(skillsDir, evalsDir) {
     // The table declares the rule, so it has to be able to show what the rule forbids. Same reason
     // the placeholder vocabularies are excluded from their own undefined-placeholder check.
     if (file === tablePath) continue;
-    readFileSync(file, 'utf8')
+    const content = readFileSync(file, 'utf8');
+    if (file.endsWith('.md')) {
+      for (const pin of mavenPins(content)) {
+        const want = expected.get(`maven|${pin.name}`);
+        if (want && want !== pin.version) {
+          failures.push(`${where}:${pin.line} -> ${pin.name} pinned at ${pin.version}, expected ${want} (${VERSIONS_FILE})`);
+        }
+      }
+    }
+    content
       .split(/\r?\n/)
       .forEach((line, index) => {
         for (const pin of pinsOnLine(line)) {

@@ -212,7 +212,7 @@ export function descriptionSimilarity(a, b) {
   return { similarity: union === 0 ? 0 : shared.length / union, shared };
 }
 
-const LANGUAGE_SUFFIX = /-(dotnet|python|aspire|typescript)$/;
+const LANGUAGE_SUFFIX = /-(dotnet|python|aspire|typescript|java)$/;
 
 /** Skills that differ only by a language suffix (create-workflow-dotnet / -python) read alike on purpose. */
 export function isLanguageTwin(a, b) {

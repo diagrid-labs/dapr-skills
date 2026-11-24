@@ -4,7 +4,7 @@ The single source of truth for every Dapr package version the skills pin. `scrip
 fails when a skill or an eval fixture pins a version this table does not give (`versions: Dapr package
 pins match dapr-versions.md`), so a pin and this table cannot drift apart unnoticed.
 
-Verified against NuGet, npm and PyPI on 2026-11-11. Dapr runtime latest stable: 1.19.1, released
+Verified against NuGet, npm and PyPI on 2026-11-11. The Maven pins were verified against Maven Central on the build date, 2026-11-24. Dapr runtime latest stable: 1.19.1, released
 2026-10-31; docs.dapr.io serves v1.19 as "latest".
 
 The .NET packages are at **1.19.1**, published 2026-11-10. npm `@dapr/dapr` and PyPI `dapr` have no
@@ -23,6 +23,8 @@ and each row is the latest stable of that package, not a shared number.
 | `dapr` | 1.19.0 | pypi |
 | `dapr[workflow]` | 1.19.0 | pypi |
 | `dapr[fastapi]` | 1.19.0 | pypi |
+| `dapr-spring-bom` | 1.19.1 | maven |
+| `spring-boot-starter-parent` | 4.0.8 | maven |
 
 ## Verified by building, 2026-11-11 (TypeScript 2026-11-13)
 
