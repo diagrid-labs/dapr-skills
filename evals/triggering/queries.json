@@ -25,13 +25,14 @@
     "model": "sonnet (Claude Sonnet 5.5)",
     "dapr_skills_version": "1.33.0",
     "diagrid_version": "0.10.2 (diagridio/diagrid-ai origin/main 866ddd4)",
-    "result": "18 of 22 matched `expect`. Queries 9 and 10 missed against the dapr-skills expectations: 9 came back AMBIGUOUS (diagrid-workflow-determinism or review-workflow-determinism) at low confidence, and 10 went to diagrid:diagrid-activity-idempotency at medium. Query 11 came back AMBIGUOUS (diagrid-workflow-scaffold or diagrid-deploy) at medium. Query 18 came back AMBIGUOUS (create-workflow-from-diagram or diagrid-workflow-from-diagram) at medium; AMBIGUOUS is not in its `accept`, so it counts as a miss, although the dapr-skills skill is a candidate. Query 15 is correctly AMBIGUOUS. The other 17 answers matched: 16 at high confidence (including the new Java queries 19 to 21) and query 22 (Kotlin with Quarkus), correctly NONE, at medium. Single run, descriptions only.",
-    "known_risk": "Queries 9 and 10: on 2026-11-24 dapr-skills stopped pointing authoring questions at the diagrid plugin, because its determinism and idempotency skills are for code that runs on Diagrid, and the expectations moved to the dapr-skills review skills. The model still picks the diagrid skills because their descriptions say \"Use when writing, changing or reviewing\" and mention Diagrid only as \"on Diagrid\". Fixing that needs a wording change in diagridio/diagrid-ai; dapr-skills was not changed to chase it. Query 11 regressed after the plugin rename, as recorded on 2026-11-23: diagrid-workflow-scaffold now reads as create-only, so the model splits create and deploy.",
+    "result": "20 of 22 matched `expect` (or `accept`) in both runs. Misses: queries 9 and 10. Both came back AMBIGUOUS in both runs (9: diagrid-workflow-determinism or review-workflow-determinism, low in run 1 and medium in run 2; 10: diagrid-activity-idempotency or review-workflow-activity, low in run 1 and medium in run 2); the dapr-skills skill is a candidate each time, but AMBIGUOUS is not their `expect`, so they count as misses. Query 11 matched at medium (diagrid-workflow-scaffold) and query 18 matched at medium (create-workflow-from-diagram). Query 15 is correctly AMBIGUOUS, at low confidence. Query 22 (Kotlin with Quarkus) is correctly NONE at medium. The other 16 answers matched at high confidence, including the Java queries 19 to 21. Two runs, descriptions only; the verdicts were identical apart from confidence on 9 and 10 and an extra -aspire candidate on 15 in run 2.",
+    "known_risk": "Queries 9 and 10: on 2026-11-24 dapr-skills stopped pointing authoring questions at the diagrid plugin, because its determinism and idempotency skills are for code that runs on Diagrid, and the expectations moved to the dapr-skills review skills. The model still reports AMBIGUOUS between the diagrid skills and the dapr-skills review skills because the diagrid descriptions say \"Use when writing, changing or reviewing\" and mention Diagrid only as \"on Diagrid\". Fixing that needs a wording change in diagridio/diagrid-ai; dapr-skills was not changed to chase it. Query 11 (medium) and query 15 (low, correctly AMBIGUOUS) are the other low-confidence answers; 11 regressed after the plugin rename, as recorded on 2026-11-23, because diagrid-workflow-scaffold now reads as create-only.",
     "notes": [
       "Generated with `node scripts/triggering-prompt.mjs <diagrid skills dir>` from a read-only `git archive` of diagridio/diagrid-ai origin/main, not the marketplace cache.",
       "Run after the 2026-11-24 description fixes: the review-workflow-activity and review-workflow-determinism pointers to the diagrid plugin were removed, the review skills now name .NET and Python, and create-workflow-from-diagram no longer sends Mermaid and sketches to the diagrid plugin.",
       "Run on branch dev-901 after adding the Java skills (create-workflow-java, create-pubsub-java, check-prereq-java): queries 19 to 22 are new in this run and cover them.",
-      "Previous baseline (2026-11-24, 18 queries, before the Java skills): 15 of 18, with queries 9, 10 and 11 as misses."
+      "Run on branch dev-901 after adding the Java skills (create-workflow-java, create-pubsub-java, check-prereq-java): queries 19 to 22 cover them.",
+      "Re-recorded 2026-11-24 as two runs after a description fix, replacing the earlier single run (18 of 22, with misses at 9, 10, 11 and 18)."
     ]
   },
   "queries": [
@@ -122,8 +123,8 @@
       "rationale": "No Diagrid signal. The diagrid determinism skill is for workflow code that runs on Diagrid, so local Dapr code goes to the review skill, which can check the body being written. Before 2026-11-24 this expected the diagrid skill.",
       "baseline": {
         "picked": "AMBIGUOUS",
-        "confidence": "low",
-        "note": "Miss against the 2026-11-24 expectation. Candidates: diagrid:diagrid-workflow-determinism or dapr-skills:review-workflow-determinism."
+        "confidence": "low in run 1, medium in run 2",
+        "note": "Miss against the 2026-11-24 expectation in both runs. Candidates (same pair both runs): diagrid:diagrid-workflow-determinism or dapr-skills:review-workflow-determinism."
       }
     },
     {
@@ -132,9 +133,9 @@
       "expect": "dapr-skills:review-workflow-activity",
       "rationale": "No Diagrid signal. The diagrid idempotency skill is for activities that run on Diagrid, so a local activity goes to the review skill. Before 2026-11-24 this expected the diagrid skill.",
       "baseline": {
-        "picked": "diagrid:diagrid-activity-idempotency",
-        "confidence": "medium",
-        "note": "Miss against the 2026-11-24 expectation. dapr-skills:review-workflow-activity is the runner-up."
+        "picked": "AMBIGUOUS",
+        "confidence": "low in run 1, medium in run 2",
+        "note": "Miss against the 2026-11-24 expectation in both runs. Candidates (same pair both runs): diagrid:diagrid-activity-idempotency or dapr-skills:review-workflow-activity."
       }
     },
     {
@@ -143,9 +144,9 @@
       "expect": "diagrid:diagrid-workflow-scaffold",
       "rationale": "Explicit Diagrid target.",
       "baseline": {
-        "picked": "AMBIGUOUS",
+        "picked": "diagrid:diagrid-workflow-scaffold",
         "confidence": "medium",
-        "note": "Split the request into a create skill plus a Diagrid skill: diagrid:diagrid-workflow-scaffold or diagrid:diagrid-deploy. Regressed from high at catalyst-ai 0.8.1; diagrid 0.10.2 calls the product \"Diagrid (formerly Catalyst)\" and the query says Catalyst."
+        "note": "Matches `expect` in both runs, at medium confidence. Earlier runs split the request into a create skill plus a Diagrid skill. Regressed from high at catalyst-ai 0.8.1; diagrid 0.10.2 calls the product \"Diagrid (formerly Catalyst)\" and the query says Catalyst."
       }
     },
     {
@@ -188,8 +189,8 @@
       "rationale": "No language and no runtime. Picking silently is the failure mode here; the right move is to ask or state the assumption.",
       "baseline": {
         "picked": "AMBIGUOUS",
-        "confidence": "high",
-        "note": "Candidates: dapr-skills create-workflow-python, -dotnet, -java, -typescript and diagrid:diagrid-workflow-scaffold. Correct, since the query names no language or runtime."
+        "confidence": "low",
+        "note": "Candidates: dapr-skills create-workflow-python, -dotnet, -java, -typescript in both runs (run 2 also listed -aspire). Correct, since the query names no language or runtime. Was high in the previous run."
       }
     },
     {
@@ -218,9 +219,8 @@
       "expect": "dapr-skills:create-workflow-from-diagram",
       "rationale": "Added for create-diagram. The diagram is an input and workflow code is the output, so this must NOT fire create-diagram, whose description points here for diagram to workflow code. Mirrors query 17.",
       "baseline": {
-        "picked": "AMBIGUOUS",
-        "confidence": "medium",
-        "note": "Miss against `expect`. Candidates: dapr-skills:create-workflow-from-diagram or diagrid:diagrid-workflow-from-diagram; the query names no diagram format."
+        "picked": "dapr-skills:create-workflow-from-diagram",
+        "confidence": "medium"
       }
     },
     {
