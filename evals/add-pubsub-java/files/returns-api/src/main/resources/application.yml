@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: returns-api
+  security:
+    user:
+      name: returns-admin
+      password: change-me
+
+server:
+  port: 8089

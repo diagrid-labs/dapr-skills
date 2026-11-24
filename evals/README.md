@@ -54,7 +54,7 @@ Notes:
 - Review skills may ask the user a clarifying question during a review (scope, deployment target). Evals run non-interactively, so a question counts as unanswered and the checklist's default applies. Do not grade an eval on whether a question was asked.
 - `migrate-workflow-typescript` needs a git repository: after copying `files/order-service/`, run `git init` and make one commit in the copy, because the skill checks for a clean working tree and creates a migration branch.
 - `review-agent-memory/files/helpdesk-dotnet` intentionally fails `dotnet build`/`restore` with `NU1605` (package downgrade). That is the seeded `DAG-MEM-006` violation; the other .NET fixtures build.
-- `create-pubsub-*` and `add-pubsub-*` have four evals each (one per subscription type plus an edge case).
+- `create-pubsub-*` and `add-pubsub-*` have four evals each (one per subscription type plus an edge case); `add-pubsub-java` adds two more (Spring Security, Spring Boot 3 stop).
 - The `review-pubsub-*` fixtures contain deliberate violations marked `SEED <rule id>`; the `clean-*` fixtures must produce no critical or warning findings.
 - The .NET `add-pubsub-dotnet` fixtures build; `inventory-service` is used for a hash check.
 - Scaffolding and prerequisite evals need the prerequisites from the main [README](../README.md) (.NET 10, Python/uv, Node.js, Dapr CLI, Docker). Agent evals that run the generated app also need an LLM provider key.

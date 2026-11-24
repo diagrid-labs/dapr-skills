@@ -84,6 +84,37 @@
         "No Add Pub/Sub Plan is shown, no file in the gradle-catalog fixture is added, changed or deleted, and no `mvn` or `gradle` command was run",
         "No git command other than `git status` was run"
       ]
+    },
+    {
+      "id": 5,
+      "name": "spring-security-risk",
+      "prompt": "In ./returns-api, add Dapr pub/sub: publish a ReturnRequested event (returnId, orderId, reason) on a returns topic when a return is requested, and handle those events in this app by logging them.",
+      "expected_output": "An Add Pub/Sub Plan and a request for approval; no file in returns-api is changed. The plan reads app port 8089 from server.port in application.yml, picks declarative (default), and because the app uses Spring Security (spring-boot-starter-security and the SecurityFilterChain in SecurityConfiguration) carries a Risk line naming /dapr/subscribe, /dapr/config and /events/pubsub/** as routes the sidecar calls that need a login and a CSRF token, with Dapr's APP_API_TOKEN (dapr-api-token header) as the safer option, plus a question offering DaprSecurityConfiguration with no as the default. SecurityConfiguration stays unchanged.",
+      "files": [
+        "evals/add-pubsub-java/files/returns-api/"
+      ],
+      "expectations": [
+        "The response contains an Add Pub/Sub Plan naming the target returns-api, Spring Boot 4.0.8 with Maven, app port 8089 read from server.port in src/main/resources/application.yml, role both and `**Subscription type:** declarative — default`, and ends by asking the user to approve, change or stop",
+        "The plan has a Risk line saying the app uses Spring Security (spring-boot-starter-security and/or the SecurityFilterChain in SecurityConfiguration), that the routes the Dapr sidecar calls (/dapr/subscribe, /dapr/config and /events/pubsub/** or the new event routes) need a login and POSTs a CSRF token, that deliveries would then get 401 or 403 and be retried and dead-lettered, and that Dapr's app API token (APP_API_TOKEN, sent as the dapr-api-token header) is the safer option",
+        "The Questions section offers adding a SecurityFilterChain (for example DaprSecurityConfiguration) that lets only the sidecar's routes through without a login or CSRF, with no as the default; it also asks whether `POST /returns` should publish ReturnRequested (default yes) and asks no dependency-update question",
+        "The plan does not list SecurityConfiguration.java, application.yml or the spring-boot-starter-security dependency among the edited files; application.yml is the properties file it will append the pub/sub keys to (no application.properties is planned)",
+        "No file in the returns-api fixture is added, changed or deleted (hash check), and no `mvn` command or file write was run on the fixture",
+        "No git command other than `git status` was run"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "unsupported-boot3",
+      "prompt": "Add Dapr pub/sub to the Spring Boot service in ./boot3-orders so it publishes an OrderPlaced event when an order is placed.",
+      "expected_output": "Stops before planning: the project is on Spring Boot 3.5.7, the skill's Dapr Java SDK 1.19.1 needs Spring Boot 4.0.x, and Spring Boot 3 projects use Dapr Java SDK 1.18.x; no changes.",
+      "files": [
+        "evals/add-pubsub-java/files/boot3-orders/pom.xml"
+      ],
+      "expectations": [
+        "The response says the project uses Spring Boot 3.5.7, that the skill adds Dapr Java SDK 1.19.1, which needs Spring Boot 4.0.x, and names Dapr Java SDK 1.18.x as the line for Spring Boot 3 projects; it suggests upgrading to Spring Boot 4.0 or creating a separate pub/sub service with create-pubsub-java",
+        "No Add Pub/Sub Plan is shown, no file in the boot3-orders fixture is added, changed or deleted, and no `mvn` command was run",
+        "No git command other than `git status` was run"
+      ]
     }
   ]
 }
