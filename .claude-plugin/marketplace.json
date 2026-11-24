@@ -20,6 +20,8 @@
         "diagrid",
         "dotnet",
         "python",
+        "java",
+        "spring-boot",
         "typescript",
         "aspire"
       ],
@@ -32,6 +34,8 @@
         "diagrid",
         "dotnet",
         "python",
+        "java",
+        "spring-boot",
         "typescript",
         "aspire"
       ],

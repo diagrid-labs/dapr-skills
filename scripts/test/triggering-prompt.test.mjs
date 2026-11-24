@@ -12,7 +12,7 @@ const other = { 'diagrid-debug': 'Debugs a Catalyst project.' };
 
 test('prompt has every query and no expectations', () => {
   const prompt = buildPrompt(data, own, other);
-  assert.equal(data.queries.length, 18);
+  assert.equal(data.queries.length, 22);
   for (const q of data.queries) assert.ok(prompt.includes(q.query), q.query);
   for (const bad of ['expect', 'baseline', 'AMBIGUOUS"']) assert.ok(!prompt.includes(bad), bad);
   // Skill names legitimately appear in the skill list, so check the query section and rationales.
