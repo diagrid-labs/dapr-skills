@@ -1,0 +1,20 @@
+version: 1
+common:
+  resourcesPath: ./resources
+  appLogDestination: fileAndConsole
+  daprdLogDestination: fileAndConsole
+apps:
+  - appID: shiptrack-declarative-subscriber
+    appDirPath: declarative-subscriber
+    appPort: 8002
+    daprHTTPPort: 3502
+    command: ["mvn", "spring-boot:run"]
+  - appID: shiptrack-programmatic-subscriber
+    appDirPath: programmatic-subscriber
+    appPort: 8012
+    daprHTTPPort: 3512
+    command: ["mvn", "spring-boot:run"]
+  - appID: shiptrack-streaming-subscriber
+    appDirPath: streaming-subscriber
+    daprHTTPPort: 3522
+    command: ["mvn", "spring-boot:run"]

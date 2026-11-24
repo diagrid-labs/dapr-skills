@@ -1,0 +1,15 @@
+version: 1
+common:
+  resourcesPath: ./resources
+  appLogDestination: fileAndConsole
+  daprdLogDestination: fileAndConsole
+apps:
+  - appID: fulfilment-api
+    appDirPath: api
+    appPort: 8002
+    daprHTTPPort: 3502
+    command: ["mvn", "spring-boot:run"]
+  - appID: fulfilment-worker
+    appDirPath: worker
+    daprHTTPPort: 3503
+    command: ["mvn", "spring-boot:run"]

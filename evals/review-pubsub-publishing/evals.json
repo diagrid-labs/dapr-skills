@@ -77,6 +77,63 @@
         "The report ends with '## Next steps' with no text after it",
         "The project files under review are unchanged (identical to the fixture) and the report contains no instruction or claim that the review modified files"
       ]
+    },
+    {
+      "id": 4,
+      "name": "java-checkout-seeded",
+      "prompt": "Review the publishing code in evals/review-pubsub-publishing/files/checkout-java, a Spring Boot checkout service. Some orders never seem to reach the subscribers.",
+      "expected_output": "A read-only publishing report with 'Language: java'. Critical: DPS-PUB-001 (src/main/java/com/example/checkout/CheckoutController.java:46, publishEvent Mono never subscribed), DPS-PUB-002 (:54, empty catch (DaprException) then 202), DPS-PUB-003 (:72, 'order-bus' matches no component; the component is 'pubsub'). Warnings: DPS-PUB-006 (:106, new DaprClientBuilder().build() in a method, never closed), DPS-PUB-007 (:85, publishEvents response never read for getFailedEntries), DPS-PUB-008 (:94, cloudevent.traceparent metadata), DPS-PUB-013 (src/main/java/com/example/checkout/MessagingConfiguration.java:16, new DaprMessagingTemplate; LegacyOrderPublisher.java calls send). Suggestions: DPS-PUB-009 (the 'orders' literal at CheckoutController.java:72 and LegacyOrderPublisher.java:16), DPS-PUB-014 (src/main/java/com/example/checkout/BulkOrderPublisher.java:32, publishEvents on DaprPreviewClient). Please verify: DPS-PUB-010 (:78, a List<OrderPlaced> as one event), DPS-PUB-012 (:100, rawPayload). Not reported: the blocked publish at :40, the catch at :63 that returns 503, BulkOrderPublisher's failed-entries check, the buildPreviewClient() @Bean, ttl-free publishes. DPS-PUB-004, DPS-PUB-005 and DPS-PUB-011 do not appear.",
+      "files": [
+        "evals/review-pubsub-publishing/files/checkout-java/components/pubsub.yaml",
+        "evals/review-pubsub-publishing/files/checkout-java/pom.xml",
+        "evals/review-pubsub-publishing/files/checkout-java/src/main/java/com/example/checkout/Application.java",
+        "evals/review-pubsub-publishing/files/checkout-java/src/main/java/com/example/checkout/BulkOrderPublisher.java",
+        "evals/review-pubsub-publishing/files/checkout-java/src/main/java/com/example/checkout/CheckoutController.java",
+        "evals/review-pubsub-publishing/files/checkout-java/src/main/java/com/example/checkout/LegacyOrderPublisher.java",
+        "evals/review-pubsub-publishing/files/checkout-java/src/main/java/com/example/checkout/MessagingConfiguration.java",
+        "evals/review-pubsub-publishing/files/checkout-java/src/main/java/com/example/checkout/OrderPlaced.java",
+        "evals/review-pubsub-publishing/files/checkout-java/src/main/resources/application.properties"
+      ],
+      "expectations": [
+        "The report starts with the heading '# Dapr review — review-pubsub-publishing' and its header contains 'Language: java'",
+        "The Critical section contains [DPS-PUB-001] at src/main/java/com/example/checkout/CheckoutController.java:46 (publishEvent result neither blocked, returned nor subscribed, so nothing is published); the Why or Fix says the Mono is lazy / must be .block()ed or returned",
+        "The Critical section contains [DPS-PUB-002] at src/main/java/com/example/checkout/CheckoutController.java:54 (lines 52-56 acceptable): an empty catch (DaprException) followed by a 202 Accepted",
+        "The Critical section contains [DPS-PUB-003] at src/main/java/com/example/checkout/CheckoutController.java:72 stating that the pub/sub name 'order-bus' differs from the component name 'pubsub'",
+        "The Warnings section contains [DPS-PUB-006] at src/main/java/com/example/checkout/CheckoutController.java:106 (new DaprClientBuilder().build() inside a request method, never closed), with a Fix to inject the autoconfigured DaprClient",
+        "The Warnings section contains [DPS-PUB-007] at src/main/java/com/example/checkout/CheckoutController.java:85 (lines 84-86 acceptable): the BulkPublishResponse is assigned but getFailedEntries() is never read. The List passed to publishEvents is not reported as DPS-PUB-010",
+        "The Warnings section contains [DPS-PUB-008] at src/main/java/com/example/checkout/CheckoutController.java:94 (lines 93-94 acceptable) for the cloudevent.traceparent metadata key",
+        "The Warnings section contains [DPS-PUB-013] at src/main/java/com/example/checkout/MessagingConfiguration.java:16 (new DaprMessagingTemplate), explaining the fixed 10-second TTL that makes a failing message expire instead of reaching the dead-letter topic; the Fix is DaprClient.publishEvent(...).block(). A second DPS-PUB-013 location at LegacyOrderPublisher.java:16 is tolerated (it raises the warning count by 1)",
+        "The Suggestions section contains [DPS-PUB-009] citing src/main/java/com/example/checkout/CheckoutController.java:72 and naming LegacyOrderPublisher.java:16 (the repeated \"orders\" topic literal), and [DPS-PUB-014] at src/main/java/com/example/checkout/BulkOrderPublisher.java:32 (lines 31-33 acceptable; publishEvents on the deprecated DaprPreviewClient)",
+        "The Please verify section (not Critical or Warnings) contains [DPS-PUB-010] at src/main/java/com/example/checkout/CheckoutController.java:78 (a List<OrderPlaced> published as one event) and [DPS-PUB-012] at src/main/java/com/example/checkout/CheckoutController.java:100 (rawPayload \"true\")",
+        "The report does NOT report the blocked publish at CheckoutController.java:40, the catch at :63 that returns 503, BulkOrderPublisher's publishEvents for DPS-PUB-007 (it reads getFailedEntries), or the buildPreviewClient() @Bean for DPS-PUB-006. DPS-PUB-004, DPS-PUB-005 and DPS-PUB-011 do not appear",
+        "The Found: line reads 'Found: 3 critical, 4 warnings, 2 suggestions, 2 to verify' (5 warnings if the tolerated second DPS-PUB-013 location is reported as its own finding). Critical findings come before Warnings, and the report ends with '## Next steps' with no text after it",
+        "Uses only Read, Grep and Glob (no mvn call); the project files under review are unchanged and the report contains no instruction or claim that the review modified files"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "java-clean-publisher",
+      "prompt": "This Spring Boot publisher came straight out of create-pubsub-java: evals/review-pubsub-publishing/files/clean-java. Anything wrong with how it publishes?",
+      "expected_output": "The publisher is java-pubsub-project.md and java-pubsub-publisher.md rendered literally (ShipmentsController publishes with daprClient.publishEvent(pubSubProperties.getName(), topic, shipmentDispatched).block(), names from dapr.pubsub.name and app.topic). The report has 'Language: java' and no finding: the body is 'No issues found.' followed by Next steps.",
+      "files": [
+        "evals/review-pubsub-publishing/files/clean-java/.gitignore",
+        "evals/review-pubsub-publishing/files/clean-java/dapr.yaml",
+        "evals/review-pubsub-publishing/files/clean-java/pom.xml",
+        "evals/review-pubsub-publishing/files/clean-java/publisher/pom.xml",
+        "evals/review-pubsub-publishing/files/clean-java/publisher/src/main/java/com/example/shiptrack/publisher/Application.java",
+        "evals/review-pubsub-publishing/files/clean-java/publisher/src/main/java/com/example/shiptrack/publisher/ShipmentDispatched.java",
+        "evals/review-pubsub-publishing/files/clean-java/publisher/src/main/java/com/example/shiptrack/publisher/ShipmentsController.java",
+        "evals/review-pubsub-publishing/files/clean-java/publisher/src/main/resources/application.properties",
+        "evals/review-pubsub-publishing/files/clean-java/resources/pubsub.yaml",
+        "evals/review-pubsub-publishing/files/clean-java/resources/resiliency.yaml"
+      ],
+      "expectations": [
+        "The report header contains 'Language: java'; the 'Found:' line reads 'Found: 0 critical, 0 warnings, 0 suggestions, 0 to verify'",
+        "Does not report DPS-PUB-001 (the publish is .block()ed), DPS-PUB-003 (pubSubProperties.getName() resolves to dapr.pubsub.name=pubsub, the component name in resources/pubsub.yaml), DPS-PUB-006 (the DaprClient is constructor-injected) or DPS-PUB-009 (no string literal names a pub/sub or topic)",
+        "Does not report DPS-PUB-013 (no DaprMessagingTemplate) or DPS-PUB-014",
+        "The report body is exactly 'No issues found.' followed by '## Next steps'; the Next steps suggest review-pubsub-components, and there is no text after them",
+        "Uses only Read, Grep and Glob; no file in the fixture is modified"
+      ]
     }
   ]
 }

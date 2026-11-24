@@ -1,6 +1,6 @@
 ---
 name: review-pubsub-publishing
-description: Reviews Dapr pub/sub publishing code in .NET and Python for swallowed publish failures, content types, client lifetime and bulk-publish partial failures. Use for "review my pub/sub publishing code" or "audit Dapr publish calls".
+description: Reviews Dapr pub/sub publishing code in .NET, Python and Java for swallowed publish failures, content types, client lifetime and bulk-publish partial failures. Use for "review my pub/sub publishing code" or "audit Dapr publish calls".
 allowed-tools:
   - Read
   - Grep
@@ -11,7 +11,7 @@ allowed-tools:
 
 ## Overview
 
-Reviews the code that publishes events through Dapr pub/sub (`PublishEventAsync`, `BulkPublishEventAsync`, `publish_event`, `publish_events`, raw `/v1.0/publish/` calls). Checks for unawaited or swallowed publish failures, a pub/sub name that matches no component, missing content types, client lifetime problems, ignored bulk-publish failures, tracing overrides and large payloads. Read-only: this skill never modifies source files. Subscribers, handlers and component YAML are out of scope and are covered by `review-pubsub-subscriptions` and `review-pubsub-components`.
+Reviews the code that publishes events through Dapr pub/sub (`PublishEventAsync`, `BulkPublishEventAsync`, `publish_event`, `publish_events`, Java `publishEvent` / `publishEvents` and `DaprMessagingTemplate`, raw `/v1.0/publish/` calls). Checks for unawaited or swallowed publish failures, a pub/sub name that matches no component, missing content types, client lifetime problems, ignored bulk-publish failures, tracing overrides and large payloads. Read-only: this skill never modifies source files. Subscribers, handlers and component YAML are out of scope and are covered by `review-pubsub-subscriptions` and `review-pubsub-components`.
 
 ## Execution Order
 
@@ -22,7 +22,8 @@ You MUST follow these phases in strict order. Do not load files outside the agre
 3. **Load checklist** — Based on `language`, read exactly one of:
    - `dotnet` or `aspire` → [`../dapr-shared/review-pubsub-publishing-dotnet.md`](../dapr-shared/review-pubsub-publishing-dotnet.md)
    - `python` → [`../dapr-shared/review-pubsub-publishing-python.md`](../dapr-shared/review-pubsub-publishing-python.md)
-4. **Apply rules** — Walk every file in `publisher_files` against `DPS-PUB-001` … `DPS-PUB-012` as the checklist defines them. Resolve constants (`PubSubNames.PubSubName`, `PUBSUB_NAME`) before comparing names with `component_files`. Rules marked "reserved" for the loaded language do not apply. Honour the checklist's confidence notes: low-confidence matches go under `## Please verify`, never under `## Critical`.
+   - `java` → [`../dapr-shared/review-pubsub-publishing-java.md`](../dapr-shared/review-pubsub-publishing-java.md)
+4. **Apply rules** — Walk every file in `publisher_files` against `DPS-PUB-001` … `DPS-PUB-012` (`DPS-PUB-014` for `java`) as the checklist defines them. Resolve constants (`PubSubNames.PubSubName`, `PUBSUB_NAME`) and, for `java`, `${…}` properties and `DaprPubSubProperties.getName()` before comparing names with `component_files`. Rules marked "reserved" for the loaded language do not apply. Honour the checklist's confidence notes: low-confidence matches go under `## Please verify`, never under `## Critical`.
 5. **Report** — Format every finding using the canonical template from [`../dapr-shared/review-report-format.md`](../dapr-shared/review-report-format.md). Group by severity, then rule id, then file path. If the scope holds more than one language, produce one report per language.
 6. **Show final message** — Your last output is the report. Do not append a summary or next-action prompt other than the `## Next steps` block defined by the report format. Clarifying questions are always allowed during the review (see the report format); once answered, the report is still your last output.
 
@@ -41,6 +42,7 @@ The full rule list, including detection patterns, severities, and suggested fixe
 
 - [.NET / Aspire rules](../dapr-shared/review-pubsub-publishing-dotnet.md) — `DPS-PUB-001` … `DPS-PUB-012` (`004` and `011` reserved)
 - [Python rules](../dapr-shared/review-pubsub-publishing-python.md) — `DPS-PUB-001` … `DPS-PUB-012`
+- [Java rules](../dapr-shared/review-pubsub-publishing-java.md) — `DPS-PUB-001` … `DPS-PUB-014` (`004` and `011` reserved)
 
 Rule ids are stable across releases. New rules append; deprecated rule ids are reserved.
 
