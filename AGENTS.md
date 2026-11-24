@@ -65,7 +65,7 @@ This repository contains skill definitions for building Dapr Workflow applicatio
   - `add-pubsub-dotnet/REFERENCE.md` — Detection heuristics, plan template, edit recipes and run-doc template for the .NET pub/sub add skill
   - `add-pubsub-python/SKILL.md` — Skill for adding Dapr pub/sub to an existing Python FastAPI app after a plan the user approves
   - `add-pubsub-python/REFERENCE.md` — Detection heuristics, plan template, edit recipes and run-doc template for the Python pub/sub add skill
-  - `review-pubsub-publishing/SKILL.md` — Skill for reviewing Dapr pub/sub publishing code in .NET and Python (swallowed publish failures, pub/sub names, content types, client lifetime, bulk publish, payload size)
+  - `review-pubsub-publishing/SKILL.md` — Skill for reviewing Dapr pub/sub publishing code in .NET, Python and Java (swallowed publish failures, pub/sub names, content types, client lifetime, bulk publish, payload size)
   - `review-pubsub-publishing/REFERENCE.md` — Detailed reference and worked example for the pub/sub publishing review skill
   - `review-pubsub-subscriptions/SKILL.md` — Skill for reviewing Dapr pub/sub subscriptions and handlers (declarative, programmatic and streaming: CloudEvent handling, response statuses, idempotency, dead-letter handling, duplicate subscriptions)
   - `review-pubsub-subscriptions/REFERENCE.md` — Detailed reference and worked example for the pub/sub subscriptions review skill

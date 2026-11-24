@@ -262,6 +262,18 @@
         "picked": "NONE",
         "confidence": "medium"
       }
+    },
+    {
+      "id": 23,
+      "query": "review my Spring Boot workflow for determinism issues",
+      "expect": "dapr-skills:review-workflow-determinism",
+      "rationale": "Added for Java review support. A Spring Boot workflow audited for replay safety; the Java checklist lives in review-workflow-determinism."
+    },
+    {
+      "id": 24,
+      "query": "check my Java Dapr subscribers for idempotency",
+      "expect": "dapr-skills:review-pubsub-subscriptions",
+      "rationale": "Added for Java review support. Java subscribers audited for idempotency; the Java checklist lives in review-pubsub-subscriptions."
     }
   ]
 }

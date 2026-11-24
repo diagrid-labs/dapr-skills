@@ -9,7 +9,7 @@ This repository contains skill definitions that can be used with Claude Code, Gi
 - Diagram-input skill: `create-workflow-from-diagram` — provide a workflow diagram (PNG / JPG / JPEG / GIF / WebP) or a BPMN 2.0 XML file; the skill extracts structure and generates code for Go, Python, .NET, Java, or JavaScript.
 - Migration skill: `migrate-workflow-typescript` — analyzes an **existing** TypeScript/Node.js application (not a scaffold), proposes a Dapr building-block mapping for approval, and applies confirmed changes incrementally with verification between each.
 - Add skill: `add-workflow-dotnet` — adds Dapr Workflow to an **existing** ASP.NET Core project (plain or Aspire) after you approve a plan, with targeted edits and a build after each step.
-- Review skills: `review-workflow-determinism`, `review-workflow-activity`, `review-workflow-management` — audit an existing project.
+- Review skills: `review-workflow-determinism`, `review-workflow-activity`, `review-workflow-management` — audit an existing .NET, Python or Java project.
 
 ### Agent skills
 
@@ -20,7 +20,7 @@ This repository contains skill definitions that can be used with Claude Code, Gi
 
 - Create skills: `create-pubsub-dotnet`, `create-pubsub-python`, `create-pubsub-java` — scaffold a Dapr pub/sub publisher and subscriber app (`dapr run`, or Aspire for .NET; Python uses FastAPI; Java uses Spring Boot 4) from the event you describe. You choose the role and the subscription type (declarative by default, programmatic or streaming); the skills ask what the app publishes — the event, its topic, its fields and what the subscriber does with it — and never scaffold a built-in sample scenario.
 - Add skills: `add-pubsub-dotnet`, `add-pubsub-python` — add Dapr pub/sub to an **existing** project (ASP.NET Core, or a FastAPI app for Python) after you approve a plan, keeping the subscription type the project already uses.
-- Review skills: `review-pubsub-publishing`, `review-pubsub-subscriptions`, `review-pubsub-components` — audit publishing code, subscriptions and handlers, and pub/sub components and wiring on an existing .NET or Python project.
+- Review skills: `review-pubsub-publishing`, `review-pubsub-subscriptions`, `review-pubsub-components` — audit publishing code, subscriptions and handlers, and pub/sub components and wiring on an existing .NET, Python or Java project.
 
 ### Diagram skills
 
