@@ -11,10 +11,11 @@ Probe the project root (or the user-specified scope folder) for the markers belo
 | `*.csproj` containing `Sdk="Microsoft.NET.Sdk.Web"` and `PackageReference Include="Dapr.Workflow"` | `dotnet`        |
 | `*.csproj` referencing `CommunityToolkit.Aspire.Hosting.Dapr` or an `*.AppHost` project | `aspire` (treat as `dotnet` plus Aspire-specific notes) |
 | `pyproject.toml` with `dapr[workflow]` (1.19 and later), `dapr-ext-workflow` (pre-1.19), or plain `dapr` in a scope whose `.py` files import `dapr.ext.workflow` | `python`        |
+| `pom.xml` that depends on `io.dapr.spring` (the `dapr-spring-boot-starter` or the `dapr-spring-bom`) or on `io.dapr:dapr-sdk-workflows`, in a scope with `.java` files | `java`          |
 
 If multiple targets exist (e.g., a `.NET` Aspire solution with a sibling Python app), confirm the scope with the user before continuing.
 
-If a `pom.xml` depends on `io.dapr`, stop the review and tell the user Java review support is not available yet.
+If a `build.gradle` or `build.gradle.kts` references `io.dapr`, stop the review and tell the user: "Gradle projects are not supported by the Java review checklists; the checklists assume Maven and Spring Boot".
 
 If no marker is found, stop the review and tell the user the target is not a recognized Dapr Workflow project.
 
@@ -34,12 +35,20 @@ Build three file lists. Globbing must be limited to the scope folder agreed in `
 - **Activity files** — files containing `@wfr.activity` or equivalent decorators (use `Grep` for `@.*\.activity\(` in `**/*.py`). Conventional file: `activities.py`.
 - **Management endpoints** — files declaring HTTP routes that call `DaprWorkflowClient` methods (use `Grep` for `DaprWorkflowClient`, `schedule_new_workflow`, `get_workflow_state`, `terminate_workflow`, `pause_workflow`, `resume_workflow`, `raise_workflow_event` in `**/*.py`). Conventional file: `main.py`.
 
+### Java targets
+
+- **Workflow files** — files containing a class that implements `io.dapr.workflows.Workflow` (use `Grep` for `implements .*\bWorkflow\b` in `**/*.java`, and drop matches that only implement `WorkflowActivity`). There is no conventional folder; the create skill puts every class in the application package.
+- **Activity files** — files containing a class that implements `io.dapr.workflows.WorkflowActivity` (use `Grep` for `implements .*\bWorkflowActivity\b` in `**/*.java`). A nested activity class counts: the file that declares it is an activity file.
+- **Management endpoints** — files that use `DaprWorkflowClient` together with Spring MVC mappings (use `Grep` for `DaprWorkflowClient` and `@(Get|Post|Put|Delete|Request)Mapping` in `**/*.java`, and keep the files that match both), typically one `@RestController`.
+
+Ignore everything under `target/` (Maven build output).
+
 ## Step 3: Record the target
 
 Pass the following structured result back to the calling skill:
 
 ```
-language: dotnet | aspire | python
+language: dotnet | aspire | python | java
 workflow_files: [ ... ]
 activity_files: [ ... ]
 management_files: [ ... ]

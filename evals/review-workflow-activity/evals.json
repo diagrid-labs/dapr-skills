@@ -73,6 +73,74 @@
         "Does not flag DateTime.UtcNow or Guid.NewGuid() inside the activities and emits no DWF-DET-* rule ids",
         "If there are no findings, the report body is exactly 'No issues found.' followed by '## Next steps'; the Next steps suggest review-workflow-determinism and review-workflow-management, and there is no text after them"
       ]
+    },
+    {
+      "id": 4,
+      "name": "java-customer-refunds-seeded-violations",
+      "prompt": "Customers of our Spring Boot refunds service (evals/review-workflow-activity/files/customer-refunds-java) sometimes get refunded twice, and the audit and notify steps never seem to run. Can you review the activities? Read-only, I'll fix things myself.",
+      "expected_output": "A read-only activity report with 'Language: java'. Critical: DWF-ACT-001 (DaprWorkflowClient injected into EscalateRefundActivity, :13; the scheduleNewWorkflow call at :20 is acceptable), DWF-ACT-002 (IssueRefundActivity POSTs the refund with no idempotency key, :25), DWF-ACT-013 twice (AuditRefundActivity has no @Component, AuditRefundActivity.java:8; NotifyCustomerActivity is a nested class, RefundActivities.java:10). Warnings: DWF-ACT-003 (empty catch (Exception e), SendReceiptActivity.java:27), DWF-ACT-007 (static int notificationsSent, RefundActivities.java:12, written at :17), DWF-ACT-010 (System.out.println, RefundActivities.java:18), DWF-ACT-014 (@Autowired field, IssueRefundActivity.java:16), DWF-ACT-015 (tools.jackson @JsonNaming on the RefundReceipt payload, RefundReceipt.java:7). RecordRefundActivity (Idempotency-Key from input.refundId(), log-and-rethrow catch) and SendReceiptActivity's idempotency key are not flagged; the static final loggers are not flagged; nothing in RefundWorkflow.java is reported.",
+      "files": [
+        "evals/review-workflow-activity/files/customer-refunds-java/pom.xml",
+        "evals/review-workflow-activity/files/customer-refunds-java/src/main/resources/application.properties",
+        "evals/review-workflow-activity/files/customer-refunds-java/src/main/java/com/example/customerrefunds/Application.java",
+        "evals/review-workflow-activity/files/customer-refunds-java/src/main/java/com/example/customerrefunds/AuditRefundActivity.java",
+        "evals/review-workflow-activity/files/customer-refunds-java/src/main/java/com/example/customerrefunds/EscalateRefundActivity.java",
+        "evals/review-workflow-activity/files/customer-refunds-java/src/main/java/com/example/customerrefunds/GatewayRefund.java",
+        "evals/review-workflow-activity/files/customer-refunds-java/src/main/java/com/example/customerrefunds/IssueRefundActivity.java",
+        "evals/review-workflow-activity/files/customer-refunds-java/src/main/java/com/example/customerrefunds/LedgerEntry.java",
+        "evals/review-workflow-activity/files/customer-refunds-java/src/main/java/com/example/customerrefunds/LedgerReceipt.java",
+        "evals/review-workflow-activity/files/customer-refunds-java/src/main/java/com/example/customerrefunds/NotificationResult.java",
+        "evals/review-workflow-activity/files/customer-refunds-java/src/main/java/com/example/customerrefunds/PaymentGatewayProperties.java",
+        "evals/review-workflow-activity/files/customer-refunds-java/src/main/java/com/example/customerrefunds/RecordRefundActivity.java",
+        "evals/review-workflow-activity/files/customer-refunds-java/src/main/java/com/example/customerrefunds/RefundActivities.java",
+        "evals/review-workflow-activity/files/customer-refunds-java/src/main/java/com/example/customerrefunds/RefundOutcome.java",
+        "evals/review-workflow-activity/files/customer-refunds-java/src/main/java/com/example/customerrefunds/RefundReceipt.java",
+        "evals/review-workflow-activity/files/customer-refunds-java/src/main/java/com/example/customerrefunds/RefundRequest.java",
+        "evals/review-workflow-activity/files/customer-refunds-java/src/main/java/com/example/customerrefunds/RefundResult.java",
+        "evals/review-workflow-activity/files/customer-refunds-java/src/main/java/com/example/customerrefunds/RefundWorkflow.java",
+        "evals/review-workflow-activity/files/customer-refunds-java/src/main/java/com/example/customerrefunds/SendReceiptActivity.java"
+      ],
+      "expectations": [
+        "The report header contains 'Language: java'",
+        "The Critical section contains DWF-ACT-001 for src/main/java/com/example/customerrefunds/EscalateRefundActivity.java (line 13 constructor parameter, or line 11 field, or line 20 scheduleNewWorkflow call), with a Fix that points to ctx.callChildWorkflow from the parent workflow",
+        "The Critical section contains DWF-ACT-002 at src/main/java/com/example/customerrefunds/IssueRefundActivity.java:25 (lines 25-29 acceptable), and its Fix recommends a stable key carried in the input (input.refundId() or an id generated in the workflow) or ctx.getTaskExecutionId(); it does not claim getTaskExecutionId() changes on each retry",
+        "The Critical section contains two DWF-ACT-013 findings: src/main/java/com/example/customerrefunds/AuditRefundActivity.java:8 (no @Component, so never registered) and src/main/java/com/example/customerrefunds/RefundActivities.java:10 (nested class, registered as RefundActivities.NotifyCustomerActivity while getName() returns RefundActivities$NotifyCustomerActivity)",
+        "The Warnings section contains DWF-ACT-003 at src/main/java/com/example/customerrefunds/SendReceiptActivity.java:27 and DWF-ACT-014 at src/main/java/com/example/customerrefunds/IssueRefundActivity.java:16 (@Autowired field)",
+        "The Warnings section contains DWF-ACT-007 for notificationsSent (src/main/java/com/example/customerrefunds/RefundActivities.java:12 or :17) and DWF-ACT-010 at src/main/java/com/example/customerrefunds/RefundActivities.java:18 (System.out.println)",
+        "The Warnings section contains DWF-ACT-015 at src/main/java/com/example/customerrefunds/RefundReceipt.java:7 (tools.jackson @JsonNaming), explaining that the workflow SDK serializes payloads with its own Jackson 2 mapper",
+        "Does not report DWF-ACT-002 or DWF-ACT-003 for RecordRefundActivity.java (Idempotency-Key header and log-and-rethrow catch at :32-34), does not report DWF-ACT-002 for SendReceiptActivity.java (Idempotency-Key header at :23), and does not report DWF-ACT-007 for any static final Logger or final field",
+        "No finding uses a DWF-DET-* rule id, and no finding is located in RefundWorkflow.java or Application.java",
+        "Uses only Read, Grep and Glob; does not call Bash, Write or Edit (no mvn call), and no file in the fixture is modified",
+        "The 'Found:' line reads '4 critical, 5 warnings, 0 suggestions, 0 to verify'"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "java-clean-document-approval-activities",
+      "prompt": "Please review the activities of the Spring Boot app in evals/review-workflow-activity/files/clean-java (generated with create-workflow-java) and fix whatever you find.",
+      "expected_output": "The skill stays read-only despite the request to fix. The activities are rendered from java-activity-class.md: top-level @Component classes, records for input and output, a static final SLF4J logger and no side effects. The report has no finding above info: the body is 'No issues found.' followed by Next steps.",
+      "files": [
+        "evals/review-workflow-activity/files/clean-java/pom.xml",
+        "evals/review-workflow-activity/files/clean-java/src/main/resources/application.properties",
+        "evals/review-workflow-activity/files/clean-java/src/main/java/com/example/documentapproval/Application.java",
+        "evals/review-workflow-activity/files/clean-java/src/main/java/com/example/documentapproval/ApprovalDecision.java",
+        "evals/review-workflow-activity/files/clean-java/src/main/java/com/example/documentapproval/ApprovalRequest.java",
+        "evals/review-workflow-activity/files/clean-java/src/main/java/com/example/documentapproval/ApprovalRequested.java",
+        "evals/review-workflow-activity/files/clean-java/src/main/java/com/example/documentapproval/ApprovalResult.java",
+        "evals/review-workflow-activity/files/clean-java/src/main/java/com/example/documentapproval/DocumentApprovalWorkflow.java",
+        "evals/review-workflow-activity/files/clean-java/src/main/java/com/example/documentapproval/DocumentApprovalWorkflowController.java",
+        "evals/review-workflow-activity/files/clean-java/src/main/java/com/example/documentapproval/DocumentPublished.java",
+        "evals/review-workflow-activity/files/clean-java/src/main/java/com/example/documentapproval/PublishDocumentActivity.java",
+        "evals/review-workflow-activity/files/clean-java/src/main/java/com/example/documentapproval/RequestApprovalActivity.java",
+        "evals/review-workflow-activity/files/clean-java/src/main/java/com/example/documentapproval/StatusResponse.java"
+      ],
+      "expectations": [
+        "Does not call Write, Edit or Bash and does not modify any file in the fixture, even though the prompt asks for fixes",
+        "The report header contains 'Language: java'; the 'Found:' line reports 0 critical and 0 warnings, and there is no '## Critical' or '## Warnings' section",
+        "Does not report DWF-ACT-013 (both activities are top-level @Component classes), DWF-ACT-007 (the loggers are static final), DWF-ACT-009 (run returns records although it is declared to return Object) or DWF-ACT-010",
+        "Does not report DWF-ACT-014 or DWF-ACT-015 for DocumentApprovalWorkflow.java or the records",
+        "If there are no findings, the report body is exactly 'No issues found.' followed by '## Next steps'; the Next steps suggest review-workflow-determinism and review-workflow-management, and there is no text after them"
+      ]
     }
   ]
 }

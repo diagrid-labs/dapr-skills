@@ -69,6 +69,71 @@
         "If there are no findings, the report body is exactly 'No issues found.' followed by '## Next steps'; the Next steps suggest review-workflow-determinism and review-workflow-activity, and there is no text after them",
         "Uses only Read, Grep and Glob; does not call Bash, Write or Edit, and no file in the fixture is modified"
       ]
+    },
+    {
+      "id": 4,
+      "name": "java-insurance-claims-management-gaps",
+      "prompt": "We're about to deploy the Spring Boot insurance claims service in evals/review-workflow-management/files/insurance-claims-java to our shared staging cluster. Can you review its workflow HTTP endpoints?",
+      "expected_output": "A read-only management report with 'Language: java' for ClaimController.java. Critical: DWF-MGT-006 (ClaimWorkflow waits for AdjusterDecision via waitForExternalEvent, ClaimWorkflow.java:29, but no handler calls raiseEvent). Warnings: DWF-MGT-005 (no resumeWorkflow), DWF-MGT-007 (hard-coded instance id 'insurance-claim', :24), DWF-MGT-008 (/start returns 202 with no instance id, :25), DWF-MGT-009 (status only checks state == null, :39), DWF-MGT-010 (mutating handlers without Spring Security; staging deployment), DWF-MGT-011 (waitForWorkflowCompletion with a 60s timeout on the request thread, :31), DWF-MGT-012 (purge with no state check, :63), DWF-MGT-016 (deprecated purgeInstance, :63), DWF-MGT-017 (new DaprWorkflowClient(), :20). Suggestions: DWF-MGT-015 (no springdoc @Operation, ClaimController.java:18). Start, status, pause and terminate exist, so DWF-MGT-001..004 are not reported; the status response uses StatusResponse, so DWF-MGT-014 is not reported.",
+      "files": [
+        "evals/review-workflow-management/files/insurance-claims-java/pom.xml",
+        "evals/review-workflow-management/files/insurance-claims-java/src/main/resources/application.properties",
+        "evals/review-workflow-management/files/insurance-claims-java/src/main/java/com/example/insuranceclaims/AdjusterDecision.java",
+        "evals/review-workflow-management/files/insurance-claims-java/src/main/java/com/example/insuranceclaims/Application.java",
+        "evals/review-workflow-management/files/insurance-claims-java/src/main/java/com/example/insuranceclaims/AssessClaimActivity.java",
+        "evals/review-workflow-management/files/insurance-claims-java/src/main/java/com/example/insuranceclaims/ClaimAssessment.java",
+        "evals/review-workflow-management/files/insurance-claims-java/src/main/java/com/example/insuranceclaims/ClaimController.java",
+        "evals/review-workflow-management/files/insurance-claims-java/src/main/java/com/example/insuranceclaims/ClaimPayment.java",
+        "evals/review-workflow-management/files/insurance-claims-java/src/main/java/com/example/insuranceclaims/ClaimRequest.java",
+        "evals/review-workflow-management/files/insurance-claims-java/src/main/java/com/example/insuranceclaims/ClaimResult.java",
+        "evals/review-workflow-management/files/insurance-claims-java/src/main/java/com/example/insuranceclaims/ClaimWorkflow.java",
+        "evals/review-workflow-management/files/insurance-claims-java/src/main/java/com/example/insuranceclaims/PayClaimActivity.java",
+        "evals/review-workflow-management/files/insurance-claims-java/src/main/java/com/example/insuranceclaims/StatusResponse.java"
+      ],
+      "expectations": [
+        "The report header contains 'Language: java'",
+        "The Critical section contains DWF-MGT-006, justified by the waitForExternalEvent call in src/main/java/com/example/insuranceclaims/ClaimWorkflow.java:29; the finding may be located at ClaimController.java (where the handler belongs) or at ClaimWorkflow.java:29",
+        "The Warnings section contains DWF-MGT-005 referencing src/main/java/com/example/insuranceclaims/ClaimController.java (no handler calls resumeWorkflow)",
+        "The Warnings section contains DWF-MGT-007 at src/main/java/com/example/insuranceclaims/ClaimController.java:24 and DWF-MGT-008 for the /start handler at :25 (lines 22-26 acceptable)",
+        "The Warnings section contains DWF-MGT-009 at src/main/java/com/example/insuranceclaims/ClaimController.java:39 and states that getWorkflowState returns a non-null state for an unknown id, so an empty getWorkflowId() must also be checked",
+        "The Warnings section (not Critical) contains DWF-MGT-011 at src/main/java/com/example/insuranceclaims/ClaimController.java:31 (waitForWorkflowCompletion with Duration.ofSeconds(60))",
+        "The Warnings section contains both DWF-MGT-012 and DWF-MGT-016 at src/main/java/com/example/insuranceclaims/ClaimController.java:63 (purgeInstance with no state check; purgeInstance is deprecated, use purgeWorkflow)",
+        "The Warnings section contains DWF-MGT-017 at src/main/java/com/example/insuranceclaims/ClaimController.java:20 (new DaprWorkflowClient()) with a Fix that takes the autoconfigured bean through the constructor, and DWF-MGT-010 for the mutating handlers (ClaimController.java:18 or :22)",
+        "The Suggestions section contains DWF-MGT-015 at src/main/java/com/example/insuranceclaims/ClaimController.java:18",
+        "Does not report DWF-MGT-001, DWF-MGT-002, DWF-MGT-003, DWF-MGT-004, DWF-MGT-013 or DWF-MGT-014",
+        "The report follows review-report-format.md (Critical before Warnings before Suggestions, rule ids ascending within each section, ends with '## Next steps' suggesting review-workflow-determinism and review-workflow-activity); only Read, Grep and Glob are used and no file is modified",
+        "The 'Found:' line reads '1 critical, 9 warnings, 1 suggestion, 0 to verify' (or '1 suggestions')"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "java-clean-document-approval-endpoints",
+      "prompt": "Check the workflow management endpoints of the Spring Boot app in evals/review-workflow-management/files/clean-java. It was generated with create-workflow-java and only runs locally with dapr run for now.",
+      "expected_output": "A report with 'Language: java' for the controller rendered from java-workflow-endpoints.md: start returns the instance id taken from input.documentId(), status checks existence with the exists(...) helper and returns StatusResponse, pause, resume, terminate and a raise-event handler that checks the instance first. The user said the app is local-only, so DWF-MGT-010 is not reported. No finding above info; the only allowed finding is the DWF-MGT-015 suggestion (no springdoc @Operation) at DocumentApprovalWorkflowController.java:15.",
+      "files": [
+        "evals/review-workflow-management/files/clean-java/pom.xml",
+        "evals/review-workflow-management/files/clean-java/src/main/resources/application.properties",
+        "evals/review-workflow-management/files/clean-java/src/main/java/com/example/documentapproval/Application.java",
+        "evals/review-workflow-management/files/clean-java/src/main/java/com/example/documentapproval/ApprovalDecision.java",
+        "evals/review-workflow-management/files/clean-java/src/main/java/com/example/documentapproval/ApprovalRequest.java",
+        "evals/review-workflow-management/files/clean-java/src/main/java/com/example/documentapproval/ApprovalRequested.java",
+        "evals/review-workflow-management/files/clean-java/src/main/java/com/example/documentapproval/ApprovalResult.java",
+        "evals/review-workflow-management/files/clean-java/src/main/java/com/example/documentapproval/DocumentApprovalWorkflow.java",
+        "evals/review-workflow-management/files/clean-java/src/main/java/com/example/documentapproval/DocumentApprovalWorkflowController.java",
+        "evals/review-workflow-management/files/clean-java/src/main/java/com/example/documentapproval/DocumentPublished.java",
+        "evals/review-workflow-management/files/clean-java/src/main/java/com/example/documentapproval/PublishDocumentActivity.java",
+        "evals/review-workflow-management/files/clean-java/src/main/java/com/example/documentapproval/RequestApprovalActivity.java",
+        "evals/review-workflow-management/files/clean-java/src/main/java/com/example/documentapproval/StatusResponse.java"
+      ],
+      "expectations": [
+        "Echoes the resolved scope in one line naming clean-java without asking a clarifying scope question, and does not ask whether the deployment is local-only (the prompt says so)",
+        "The report's 'Found:' line reports 0 critical and 0 warnings, and there is no '## Critical' or '## Warnings' section",
+        "Does not report any of DWF-MGT-001 to DWF-MGT-006 (all endpoints exist, including raise-event for the waitForExternalEvent in DocumentApprovalWorkflow.java:25)",
+        "Does not report DWF-MGT-009 (status uses exists(state), which checks null and an empty workflow id), DWF-MGT-013 (raise-event checks the instance before raiseEvent) or DWF-MGT-014 (status returns the StatusResponse record)",
+        "Does not report DWF-MGT-007, DWF-MGT-008, DWF-MGT-010, DWF-MGT-011, DWF-MGT-012, DWF-MGT-016 or DWF-MGT-017",
+        "Any finding is a suggestion; the only one allowed is DWF-MGT-015 at src/main/java/com/example/documentapproval/DocumentApprovalWorkflowController.java:15. The report ends with '## Next steps' suggesting review-workflow-determinism and review-workflow-activity, with no text after it",
+        "Uses only Read, Grep and Glob; does not call Bash, Write or Edit (no mvn call), and no file in the fixture is modified"
+      ]
     }
   ]
 }

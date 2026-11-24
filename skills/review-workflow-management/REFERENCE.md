@@ -8,12 +8,14 @@ The canonical baseline for the management surface comes from the existing author
 
 - `Program.cs` example in [the canonical endpoints in `dotnet-workflow-endpoints.md`](../dapr-shared/dotnet-workflow-endpoints.md).
 - `main.py` example in [`../create-workflow-python/REFERENCE.md`](../create-workflow-python/REFERENCE.md).
-- Request shapes in [`../dapr-shared/dotnet-local-http.md`](../dapr-shared/dotnet-local-http.md) and [`../dapr-shared/python-local-http.md`](../dapr-shared/python-local-http.md).
+- The controller in [`../dapr-shared/java-workflow-endpoints.md`](../dapr-shared/java-workflow-endpoints.md).
+- Request shapes in [`../dapr-shared/dotnet-local-http.md`](../dapr-shared/dotnet-local-http.md), [`../dapr-shared/python-local-http.md`](../dapr-shared/python-local-http.md) and [`../dapr-shared/java-local-http.md`](../dapr-shared/java-local-http.md).
 
 The per-language checklist shards translate those expectations into greppable patterns and stable rule ids:
 
 - [`../dapr-shared/review-management-dotnet.md`](../dapr-shared/review-management-dotnet.md)
 - [`../dapr-shared/review-management-python.md`](../dapr-shared/review-management-python.md)
+- [`../dapr-shared/review-management-java.md`](../dapr-shared/review-management-java.md)
 
 ## Worked example
 
@@ -62,8 +64,31 @@ The expected report excerpt:
   Fix: return `Results.Ok(new { instanceId = id })`.
 ```
 
+## Java worked example
+
+Given this status handler in a Spring `@RestController`:
+
+```java
+@GetMapping("/status/{instanceId}")
+public ResponseEntity<?> status(@PathVariable String instanceId) {
+  WorkflowInstanceStatus status = workflowClient.getInstanceState(instanceId, true);   // DWF-MGT-016
+  return ResponseEntity.ok(status);
+}
+```
+
+The expected report excerpt:
+
+```text
+## Warnings
+- [DWF-MGT-016] `ShipmentController.java:3` — `getInstanceState` is deprecated for removal in SDK 1.19
+  Why: it and `WorkflowInstanceStatus` are slated for removal; the handler breaks on the next SDK upgrade.
+  Fix: call `getWorkflowState(instanceId, true)` and return 404 when the state is null or its workflow id is empty.
+```
+
+The same handler is also reported under DWF-MGT-009 (no existence check) and DWF-MGT-014 (raw SDK type as the response).
+
 ## Out of scope
 
-- Workflow body code (`Workflow<>` `RunAsync`, `@wfr.workflow` functions) — covered by `review-workflow-determinism`.
+- Workflow body code (`Workflow<>` `RunAsync`, `@wfr.workflow` functions, the Java `WorkflowStub`) — covered by `review-workflow-determinism`.
 - Activity code — covered by `review-workflow-activity`.
 - Workflow versioning (`IsPatched` / `is_patched` and named workflow versions), error-handling policy, operations, and pattern-level design reviews — not covered by the review skills.
