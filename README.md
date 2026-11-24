@@ -188,6 +188,13 @@ Invoke a skill by asking your agent in natural language — the example phrases 
 
 The skill asks once whether you want PNGs next to the SVG. To turn an existing diagram into workflow code, use `create-workflow-from-diagram` instead.
 
+This diagram comes from the example scene [`skills/create-diagram/examples/orders-payments.mjs`](skills/create-diagram/examples/orders-payments.mjs): two apps with their sidecars, a Kafka pub/sub broker and a Redis state store. GitHub shows the light or dark PNG to match your theme.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="skills/create-diagram/examples/orders-payments-dark.png">
+  <img alt="Orders and Payments apps with Dapr sidecars. The Orders sidecar publishes to Kafka pub/sub, which delivers to the Payments sidecar, and saves state to a Redis state store." src="skills/create-diagram/examples/orders-payments-light.png" width="632">
+</picture>
+
 ### Migrate an existing application
 
 | Skill | Example prompt |
