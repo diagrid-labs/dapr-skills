@@ -23,7 +23,7 @@
   "baseline": {
     "date": "2026-11-23",
     "model": "sonnet (Claude Sonnet 5.5)",
-    "dapr_skills_version": "1.31.0",
+    "dapr_skills_version": "1.32.0",
     "diagrid_version": "0.10.2 (diagridio/diagrid-ai origin/main 866ddd4)",
     "result": "17 of 18 matched `expect`. Query 11 (\"create a Dapr workflow and deploy it to Catalyst\") came back AMBIGUOUS at low confidence in both runs, down from high at catalyst-ai 0.8.1. Queries 9, 10 and 18 were medium; every other answer was high, including the new queries 17 (create-diagram) and 18 (create-workflow-from-diagram). Query 15 is correctly AMBIGUOUS. No query was routed to the wrong plugin. The set was run twice with the same verdicts, so the result is reproducible.",
     "known_risk": "Query 11 regressed after the plugin rename. diagrid-workflow-scaffold now says \"runs on Diagrid (formerly Catalyst), not a local sidecar\" and no longer reads as covering a deploy, so the model splits create and deploy. Either the diagrid description or the query wording needs a look; dapr-skills was not changed to chase it. Queries 9 and 10 stay medium for the reason recorded at 0.8.1: the diagrid determinism and idempotency descriptions still claim the reviewing case.",

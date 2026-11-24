@@ -14,6 +14,12 @@ const run = (...args) => spawnSync(process.execPath, [SETUP, ...args], { encodin
 const tmpRoot = () => mkdtempSync(join(tmpdir(), 'diagram-setup-'));
 const read = (p) => readFileSync(p, 'utf8');
 const setVersion = (dir, v) => writeFileSync(join(dir, '_engine', 'VERSION'), JSON.stringify(v));
+const SKILL_VERSION = JSON.parse(readFileSync(join(ENGINE, 'VERSION'), 'utf8')).skill;
+const PLUGIN_JSON = join(HERE, '..', '..', '.claude-plugin', 'plugin.json');
+
+test('engine VERSION skill matches the plugin version', () => {
+  assert.equal(SKILL_VERSION, JSON.parse(readFileSync(PLUGIN_JSON, 'utf8')).version);
+});
 
 test('creates the layout in an empty dir', () => {
   const tmp = tmpRoot();
@@ -94,7 +100,7 @@ test('older version exits 2 without --refresh and names both versions', () => {
     const r = run(dir);
     assert.equal(r.status, 2);
     assert.match(r.stdout + r.stderr, /0\.9\.0/);
-    assert.match(r.stdout + r.stderr, /1\.31\.0/);
+    assert.ok((r.stdout + r.stderr).includes(SKILL_VERSION), r.stdout + r.stderr);
     assert.equal(JSON.parse(read(join(dir, '_engine', 'VERSION'))).skill, '0.9.0');
   } finally {
     rmSync(tmp, { recursive: true, force: true });
