@@ -1,6 +1,6 @@
 # Pub/sub placeholder vocabulary
 
-Every pub/sub template file (`dotnet-pubsub-*.md`, `python-pubsub-*.md`, `dapr-pubsub-subscription.md`,
+Every pub/sub template file (`dotnet-pubsub-*.md`, `python-pubsub-*.md`, `java-pubsub-*.md`, `dapr-pubsub-subscription.md`,
 `pubsub-dapr-yaml.md`, `pubsub-local-http.md`) is written against this vocabulary. The create and add
 skills resolve each placeholder from the specification interview before copying a template, so the
 generated application is about the user's domain and never about a built-in sample scenario.
@@ -73,12 +73,34 @@ Python uses the same concepts with Python casing.
 | `<subscribe_route>` | the subscriber's route path | `/events/pubsub/shipments` |
 | `<dead_letter_route>` | the dead-letter route path | `/events/pubsub/shipments-deadletter` |
 
+### Java forms
+
+Java (Spring Boot) uses the PascalCase domain placeholders above for its class and record names, and the
+forms below. Where Java casing differs from .NET, the Java template says so.
+
+| Placeholder | Meaning | Example |
+|---|---|---|
+| `<javaPackage>` | the Java base package: `com.example.` plus `<ProjectRoot>` lowercased with every non-alphanumeric character removed; if the result starts with a digit or is a Java reserved keyword (for example `new`, `switch`, `class`), prefix it with `app` | `Ship-Track` gives `com.example.shiptrack`, `2048` gives `com.example.app2048`, `New` gives `com.example.appnew` |
+
+- Each app has its own package under it: `<javaPackage>.publisher` and `<javaPackage>.subscriber`.
+- `<EventFields>` are record components: `String shipmentId, String carrier, Instant dispatchedAt`.
+- The identifying field is read through its record accessor, `<eventVar>.<idField>()`, with `<idField>`
+  the camelCase component name (`shipmentId`). The idempotency store is keyed by it, as by `<IdProperty>`
+  in .NET.
+- `<ValidationCondition>` is a Java boolean expression:
+  `shipment.shipmentId() == null || shipment.shipmentId().isBlank()`.
+- `<HandlerBody>` is Java, logging with SLF4J placeholders:
+  `logger.info("Shipment {} dispatched via {}", shipment.shipmentId(), shipment.carrier());`.
+- Java has no `<TopicConstant>` or `<DeadLetterTopicConstant>`: the topic names live in
+  `application.properties` (`app.topic`, `app.dead-letter-topic`) and the code reads them with `${...}`
+  placeholders.
+
 ### Request-file and add-skill forms
 
 | Placeholder | Meaning | Example |
 |---|---|---|
 | `<publish-route>` | kebab form of `<PublishRoute>`, used in `dapr.yaml` and `pubsub.http` | `shipments` |
-| `<idField>` | `<IdProperty>` as a JSON key: camelCase for .NET, snake_case for Python | `shipmentId` / `shipment_id` |
+| `<idField>` | `<IdProperty>` as a JSON key: camelCase for .NET and Java, snake_case for Python | `shipmentId` / `shipment_id` |
 | `<eventFieldsJson>` | the rest of `<EventFields>` as JSON key/value pairs | `"carrier": "DHL", "dispatchedAt": "2026-10-15T10:00:00Z"` |
 | `<existing_endpoint>` | the endpoint an add skill edits to also publish | `create_shipment` |
 
@@ -101,8 +123,12 @@ Keep these exactly as written; they are infrastructure, not domain.
   makes the README's "switching the message broker" paragraph true. An add skill reusing an existing
   component with another name puts that name in `PubSubName` and changes nothing else.
 - `PubSubNames` (.NET), the class holding the component and topic constants.
-- `IProcessedEvents` / `InMemoryProcessedEvents` (.NET) and `ProcessedEvents` (Python), the idempotency
-  store. It is keyed by `<IdProperty>` but is not itself domain-specific.
+- `IProcessedEvents` / `InMemoryProcessedEvents` (.NET), `ProcessedEvents` / `InMemoryProcessedEvents`
+  (Java) and `ProcessedEvents` (Python), the idempotency store. It is keyed by `<IdProperty>` but is not
+  itself domain-specific.
+- Java only: `TopicEventStatus` (the `{"status": ...}` response record), `UnreadableEventAdvice`,
+  `StreamingConfiguration`, `Application`, and the property keys `dapr.pubsub.name`, `app.topic` and
+  `app.dead-letter-topic`.
 - `PublishFeatures` (.NET), the TTL and raw-payload options record.
 
 ## More than one event

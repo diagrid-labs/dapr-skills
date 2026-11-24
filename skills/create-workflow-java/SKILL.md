@@ -40,8 +40,10 @@ so a wrong reading is caught before it is scaffolded. Resolve them exactly as
 [`../dapr-shared/workflow-placeholders.md`](../dapr-shared/workflow-placeholders.md) defines them:
 `<WorkflowName>` from the purpose, `<WorkflowInput>` and `<WorkflowOutput>` from its stem, one
 `<ActivityName>` per step with its `<ActivityInput>` and `<ActivityOutput>`, and `<javaPackage>` from
-`<ProjectRoot>` (`Ship-Track` gives `com.example.shiptrack`). If the lowercased name starts with a digit,
-put `app` in front of it (`com.example.app2048`), because a package segment cannot start with a digit.
+`<ProjectRoot>`: `com.example.` plus `<ProjectRoot>` lowercased with every non-alphanumeric character
+removed; if the result starts with a digit or is a Java reserved keyword (for example `new`, `switch`,
+`class`), prefix it with `app` (`Ship-Track` gives `com.example.shiptrack`, `2048` gives
+`com.example.app2048`).
 
 ## Prerequisites
 

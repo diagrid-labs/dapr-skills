@@ -45,7 +45,7 @@ Java uses the PascalCase domain placeholders above for its class and record name
 
 | Placeholder | Meaning | Example |
 |---|---|---|
-| `<javaPackage>` | the Java base package: `com.example.` plus `<ProjectRoot>` lowercased with every character that isn't a letter or digit removed | `com.example.loanreview` |
+| `<javaPackage>` | the Java base package: `com.example.` plus `<ProjectRoot>` lowercased with every non-alphanumeric character removed; if the result starts with a digit or is a Java reserved keyword (for example `new`, `switch`, `class`), prefix it with `app` | `Ship-Track` gives `com.example.shiptrack`, `2048` gives `com.example.app2048`, `New` gives `com.example.appnew` |
 
 ### Deriving a name
 

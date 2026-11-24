@@ -1,0 +1,104 @@
+{
+  "skill_name": "create-pubsub-java",
+  "evals": [
+    {
+      "id": 1,
+      "name": "both-declarative",
+      "prompt": "Create a Java pub/sub app named OrderFlow. One service publishes an OrderPlaced event on the orders topic - order id, customer id, amount and the time it was placed, identified by the order id - and another service logs each order it receives.",
+      "expected_output": "An OrderFlow folder with an aggregator pom.xml and Spring Boot 4 publisher and subscriber apps built from the domain in the prompt, a declarative subscription (default), resiliency with dead-letter, a dapr.yaml with ports 8001/3501 and 8002/3502, a successful mvn build, a README.md and the exact final message plus the Dev Dashboard recommendation.",
+      "files": [],
+      "expectations": [
+        "OrderFlow/pom.xml has packaging pom and lists the modules publisher and subscriber",
+        "publisher/pom.xml and subscriber/pom.xml use the parent org.springframework.boot:spring-boot-starter-parent 4.0.8, set java.version 17, import io.dapr.spring:dapr-spring-bom 1.19.1 in dependencyManagement, and depend on dapr-spring-boot-starter without a version",
+        "`dapr.yaml` has appID `<root-kebab>-publisher` with appPort 8001 and daprHTTPPort 3501, and `<root-kebab>-subscriber` with appPort 8002 and daprHTTPPort 3502",
+        "dapr.yaml uses the app ids orderflow-publisher and orderflow-subscriber, and each app's command is [\"mvn\", \"spring-boot:run\"]",
+        "each app's `application.properties` sets `server.port` to its appPort",
+        "Both application.properties files set dapr.pubsub.name=pubsub, no application.yml exists, and no file contains a dapr.client. property",
+        "the publisher calls `daprClient.publishEvent(...)` and blocks on it; there is no `DaprMessagingTemplate`",
+        "The publisher takes DaprClient and DaprPubSubProperties through its constructor into final fields, and the publisher Application class carries @EnableConfigurationProperties(DaprPubSubProperties.class)",
+        "resources/subscription.yaml has apiVersion dapr.io/v2alpha1, routes.default equal to /events/pubsub/orders, and scopes containing orderflow-subscriber, plus a second Subscription for the dead-letter topic",
+        "the dead-letter topic is `<TopicName>-deadletter`",
+        "The subscriber controller has @PostMapping routes /events/pubsub/orders and /events/pubsub/orders-deadletter, takes @RequestBody CloudEvent<OrderPlaced>, and contains no @Topic",
+        "The subscriber has ProcessedEvents and InMemoryProcessedEvents keyed by the order id, a TopicEventStatus record, and a @RestControllerAdvice that maps HttpMessageNotReadableException to 200 with status DROP",
+        "OrderPlaced is a record in both the publisher and the subscriber; no payload class has getters and setters and no file uses field @Autowired",
+        "resources/resiliency.yaml defines a policy that targets the component pubsub with direction inbound",
+        "The agent restated the resolved event, topic, fields and identifying field before creating any file, and no generated file contains an unresolved placeholder such as <EventName>, <TopicName>, <javaPackage> or <idField>",
+        "The agent ran mvn -q -DskipTests package in OrderFlow and it exited with code 0",
+        "the README says a dropped message goes to the dead-letter topic",
+        "OrderFlow/README.md has sections for running and trying the app, the Diagrid Dapr Dev Dashboard (link https://github.com/diagridio/dev-dashboard) and running with Diagrid, a Switching the message broker paragraph that links https://docs.dapr.io/reference/components-reference/supported-pubsub/ and keeps metadata.name pubsub, and names review-pubsub-publishing, review-pubsub-subscriptions and review-pubsub-components as next steps",
+        "The transcript shows the `diagrid-dev-dashboard --version` check was run and the final message carries the matching installed/not-installed Dev Dashboard tip; the agent did not ask about it, did not install it, and did not invoke any check-prereq skill",
+        "The final output starts with exactly: The OrderFlow pub/sub application is created. Open the README.md file in the OrderFlow folder for a summary and instructions for running locally. followed only by the matching Diagrid Dapr Dev Dashboard recommendation"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "both-programmatic-routing",
+      "prompt": "Create a Java Spring Boot pub/sub app named Billing with programmatic @Topic subscriptions. The publisher publishes OrderPlaced events on the orders topic - order id, customer id and amount, identified by the order id - and the subscriber logs each one; orders with an amount over 1000 go to a separate handler called `large`.",
+      "expected_output": "A Billing folder with a publisher and a programmatic subscriber whose @Topic annotations use ${...} property placeholders, a @Rule routing large orders to /events/pubsub/orders/large, a default route and a dead-letter topic, no subscription.yaml, and a successful build.",
+      "files": [],
+      "expectations": [
+        "No resources/subscription.yaml exists",
+        "The subscriber controller has a @Topic with name \"${app.topic}\", pubsubName \"${dapr.pubsub.name}\", deadLetterTopic \"${app.dead-letter-topic}\" and rule = @Rule(match = \"int(event.data.amount) > 1000\", priority = 1) on a method mapped to /events/pubsub/orders/large",
+        "The same controller has a default @Topic for the orders topic, without a rule, on a method mapped to /events/pubsub/orders, and a @Topic for the dead-letter topic on /events/pubsub/orders-deadletter",
+        "subscriber application.properties sets app.topic=orders and app.dead-letter-topic=orders-deadletter",
+        "the dead-letter topic is `<TopicName>-deadletter`",
+        "`dapr.yaml` has appID `<root-kebab>-publisher` with appPort 8001 and daprHTTPPort 3501, and `<root-kebab>-subscriber` with appPort 8002 and daprHTTPPort 3502",
+        "the publisher calls `daprClient.publishEvent(...)` and blocks on it; there is no `DaprMessagingTemplate`",
+        "pubsub.http contains a GET request to the subscriber's /dapr/subscribe",
+        "The agent asked no question about role, subscription type or routing, because the prompt already specified them, and asked no question about Aspire or minimal APIs versus controllers",
+        "The agent ran mvn -q -DskipTests package in Billing and it exited with code 0",
+        "The final output starts with exactly: The Billing pub/sub application is created. Open the README.md file in the Billing folder for a summary and instructions for running locally. followed only by the Diagrid Dapr Dev Dashboard recommendation"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "streaming-subscriber-only",
+      "prompt": "Create a Java streaming subscriber named Shipping for OrderPlaced events on the orders topic - order id, customer id and amount, identified by the order id - logging each order it receives.",
+      "expected_output": "A Shipping folder with an aggregator pom listing only the subscriber module, a streaming subscriber built on DaprPreviewClient.subscribeToTopic with a dead-letter topic, a handler that catches exceptions inside doOnNext plus retryWhen, a dapr.yaml entry without appPort, a README that states the preview delivery semantics, and a successful build.",
+      "files": [],
+      "expectations": [
+        "Shipping/pom.xml lists only the subscriber module and no publisher folder exists",
+        "A StreamingConfiguration class declares a DaprPreviewClient bean built with daprClientBuilder.buildPreviewClient()",
+        "The streaming subscriber calls previewClient.subscribeToTopic with the dead-letter topic, wraps the handler call in .doOnNext(...) inside try/catch (RuntimeException e), and adds .retryWhen(Retry.backoff(...)) before .subscribe()",
+        "The subscriptions start in SmartLifecycle.start() and are disposed in stop()",
+        "No file contains @Topic, @Rule, a @PostMapping subscription route or DaprMessagingTemplate, and no resources/subscription.yaml is created",
+        "The subscriber entry in dapr.yaml has appID shipping-subscriber, daprHTTPPort 3502 and no appPort key",
+        "the streaming subscriber has no appPort and its README states that the app cannot choose RETRY or DROP and that an exception in the handler must be caught so the stream stays open",
+        "the dead-letter topic is `<TopicName>-deadletter`",
+        "The transcript shows no question about Aspire or minimal APIs versus controllers",
+        "The agent ran mvn -q -DskipTests package in Shipping and it exited with code 0",
+        "The final output starts with exactly: The Shipping pub/sub application is created. Open the README.md file in the Shipping folder for a summary and instructions for running locally. followed only by the Diagrid Dapr Dev Dashboard recommendation"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "edge-streaming-with-routing",
+      "prompt": "Create a Java streaming subscriber named Fulfilment for OrderPlaced events on the orders topic - order id, customer id and amount, identified by the order id - that routes orders with an amount over 1000 to a separate handler called `large`, using Kafka.",
+      "expected_output": "The agent explains that streaming subscriptions cannot route by content and asks whether to use a declarative subscription instead (default yes). With the default it creates a declarative subscription with a CEL rule and a default route, keeps the Redis pubsub component, and the README explains how to switch to Kafka by replacing the component.",
+      "files": [],
+      "expectations": [
+        "transcript.md or final_message.md contains the question text \"Streaming subscriptions cannot route by content. Use a declarative subscription for this topic instead?\" (key phrase: cannot route by content ... declarative subscription), with the default answer logged as yes, and this appears in the transcript before the first project file or folder is created",
+        "After the default answer, resources/subscription.yaml has a rules entry whose match contains int(event.data.amount) and a path under /events/pubsub/orders/, plus a routes.default of /events/pubsub/orders",
+        "The subscriber controller has @PostMapping routes for /events/pubsub/orders and the rule path, and no file uses DaprPreviewClient or subscribeToTopic",
+        "resources/pubsub.yaml is a component of type pubsub.redis (Kafka is not configured as the local component)",
+        "The README states how to switch to Kafka by replacing the pubsub component file with a pubsub.kafka component, and says: You asked for Kafka; this scaffold runs on Redis locally so it works without extra infrastructure.",
+        "the README says a dropped message goes to the dead-letter topic"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "no-domain-must-ask",
+      "prompt": "Create a Java pub/sub app named Signals.",
+      "expected_output": "The agent asks what the application publishes before it creates anything: the event and its topic, the message fields and which one identifies a message, and what the subscriber should do with it. It does not invent a domain and does not fall back to an order-processing example.",
+      "files": [],
+      "expectations": [
+        "Before any file or folder is created, the agent asks which event the application publishes and on which topic",
+        "Before any file or folder is created, the agent asks which fields the message carries and which single field uniquely identifies it",
+        "Before any file or folder is created, the agent asks what the subscriber should do when it receives the event",
+        "The transcript shows no mkdir, no mvn and no file write before those domain questions are answered",
+        "The transcript contains none of OrderPlaced, OrderPublisher, OrderPlacedHandler, OrdersTopic, orders-deadletter or a topic named orders: the prompt names no domain and the skill must not invent one",
+        "The wiring questions (role, subscription type) may still be asked; the project name is not asked again, because the prompt already gives it as Signals, and there is no question about Aspire or minimal APIs versus controllers"
+      ]
+    }
+  ]
+}
