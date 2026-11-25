@@ -224,8 +224,44 @@ the SDK picked up the ports `dapr run` exports (`DAPR_HTTP_PORT`, `DAPR_GRPC_POR
   `TaskFailedException` / `FailureDetails` (which have no public constructors). Tests of an activity, a chained
   workflow and a saga's compensation branch ran green with `mvn test` (see [testing.md](testing.md)).
 
+## 10. Windows
+
+Verified on 2026-11-24, Windows 11, Java 21.0.8, Maven 3.9.16, Dapr CLI 1.19.1 with runtime 1.19.0, against
+copies of the eval fixtures wired by hand from these templates.
+
+- **`mvn` under `dapr run -f .` works.** `command: ["mvn", "spring-boot:run"]` starts the app on Windows:
+  the Dapr CLI resolves `mvn` to `mvn.cmd` on the PATH, the sidecar reports the app command as
+  `mvn spring-boot:run` and reaches it on its `appPort` (observed with a single-module project, and with a
+  multi-module one where `appDirPath` is the application module). No `.cmd` suffix or shell wrapper is
+  needed in `dapr.yaml`; the file is the same on every platform.
+- **Multi-module.** `mvn install -DskipTests` from the root folder, then `dapr run -f .`, works as the run
+  doc describes: `mvn spring-boot:run` in the module folder resolved the sibling module from the local
+  Maven repository and the workflow completed (observed with a three-activity chained workflow whose
+  activity used a class from the sibling module).
+- **`dapr stop -f .` leaves the JVMs running.** It prints "Dapr and app processes stopped successfully" and
+  stops `daprd`, but the Maven launcher JVM and the Spring Boot JVM it started both survive and keep the
+  app port bound. The app then answers 500, because its sidecar is gone, and the next `dapr run -f .` fails
+  with `Web server failed to start. Port <app-port> was already in use.` Observed on every run (single-module
+  workflow, multi-module workflow, declarative pub/sub, streaming pub/sub). **Rule.** On Windows, the run doc
+  cannot promise that `dapr stop -f .` frees the port. After stopping, check the port and end the leftover
+  JVM, for example:
+
+  ```powershell
+  Get-NetTCPConnection -LocalPort <app-port> -State Listen |
+    ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }
+  ```
+
+  Not seen on macOS.
+- **The rest behaves as documented.** A chained workflow completed through `POST /start` and
+  `GET /status/{id}` (404 for an unknown id, 202 from pause, resume and terminate); declarative pub/sub
+  delivered a valid event, answered SUCCESS for a duplicate, DROP through `UnreadableEventAdvice` for a body
+  that cannot bind and DROP from the handler for a blank id, with both DROPs reaching the dead-letter route;
+  the streaming subscriber handled events, dead-lettered a body that fails to deserialize and kept receiving
+  later events through the `retryWhen` reconnect. The bare `@WebMvcTest` failure of §9 reproduces unchanged
+  (`No qualifying bean of type 'io.dapr.workflows.client.DaprWorkflowClient'`), and the 1.18.1 → 1.19.1 BOM
+  update with the `dapr-spring-boot-4-starter` → `dapr-spring-boot-starter` swap built and tested green.
+
 ## Open
 
-- **Windows.** Whether `command: ["mvn", "spring-boot:run"]` starts under `dapr run -f .` on Windows
-  (`mvn` resolving to `mvn.cmd`) is not yet verified on Windows.
-  It worked on macOS.
+- **Windows, Gradle and Podman.** Only Maven with Docker was run on Windows. A `mvn` installed through a
+  shim (Scoop, Chocolatey) was not tried either; the verified setup had Maven's own `bin` folder on the PATH.
