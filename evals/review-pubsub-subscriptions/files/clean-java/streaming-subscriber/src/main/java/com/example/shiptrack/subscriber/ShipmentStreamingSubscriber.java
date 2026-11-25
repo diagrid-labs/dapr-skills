@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.stereotype.Component;
@@ -27,7 +28,7 @@ public class ShipmentStreamingSubscriber implements SmartLifecycle {
   private final List<Disposable> subscriptions = new ArrayList<>();
 
   public ShipmentStreamingSubscriber(
-      DaprPreviewClient previewClient,
+      @Qualifier("daprPreviewClient") DaprPreviewClient previewClient,
       ShipmentDispatchedHandler handler,
       @Value("${dapr.pubsub.name}") String pubsubName,
       @Value("${app.topic}") String topic,
@@ -56,7 +57,7 @@ public class ShipmentStreamingSubscriber implements SmartLifecycle {
         .subscribe());
     subscriptions.add(previewClient
         .subscribeToTopic(pubsubName, deadLetterTopic, new TypeRef<CloudEvent<Object>>() { })
-        .doOnNext(event -> handler.handleDeadLetter(event.getId(), event.getData()))
+        .doOnNext(this::handleDeadLetterSafely)
         .doOnError(error -> logger.warn("Streaming subscription to {} failed; resubscribing: {}", deadLetterTopic,
             error.getMessage()))
         .retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofSeconds(30))
@@ -72,6 +73,14 @@ public class ShipmentStreamingSubscriber implements SmartLifecycle {
           status.status(), event.getId());
     } catch (RuntimeException e) {
       logger.error("Handling streamed event {} failed; it is acked and will not be redelivered", event.getId(), e);
+    }
+  }
+
+  private void handleDeadLetterSafely(CloudEvent<Object> event) {
+    try {
+      handler.handleDeadLetter(event.getId(), event.getData());
+    } catch (RuntimeException e) {
+      logger.error("Handling dead-lettered event {} failed; it is acked and will not be redelivered", event.getId(), e);
     }
   }
 

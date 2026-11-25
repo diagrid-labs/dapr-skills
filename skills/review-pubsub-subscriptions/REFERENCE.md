@@ -158,7 +158,7 @@ Do not suggest returning `RETRY` or `DROP` from the consumer: the SDK acks every
 - `{"status":"DROP"}` (or `TopicResponseAction.Drop`) inside `catch (JsonException)` — do not report `DPS-SUB-005`. A catch of a deserialization or validation exception that returns DROP is exempt.
 - A streaming-only subscriber with no `appPort` — correct, never a finding.
 - A Java route whose path is split between a class-level `@RequestMapping("/events/pubsub")` and a method `@PostMapping("/orders")` — it serves `/events/pubsub/orders`; do not report `DPS-SUB-015` for it.
-- A Java streaming dead-letter consumer that only logs (the template's `handler.handleDeadLetter(...)`) — do not report `DPS-SUB-017`.
+- A Java streaming dead-letter consumer wrapped in `try`/`catch` (the template's `handleDeadLetterSafely`), or one that only logs (`event -> handler.handleDeadLetter(...)` whose method only logs) — do not report `DPS-SUB-017`.
 - A Subscription whose `scopes` name a different app than the one being reviewed — do not apply the cross-type pass to this app (`DPS-SUB-014`) or look for its endpoints here (`DPS-SUB-015`).
 
 ## Out of scope

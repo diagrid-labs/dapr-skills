@@ -20,6 +20,7 @@ import io.dapr.workflows.client.DaprWorkflowClient;
 import io.dapr.workflows.client.WorkflowRuntimeStatus;
 import io.dapr.workflows.client.WorkflowState;
 import java.util.Map;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,9 +38,12 @@ public class <WorkflowName>Controller {
   }
 
   @PostMapping("/start")
-  public Map<String, String> start(@RequestBody <WorkflowInput> input) {
+  public ResponseEntity<Map<String, String>> start(@RequestBody <WorkflowInput> input) {
+    if (input.id() != null && isActive(workflowClient.getWorkflowState(input.id(), false))) {
+      return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("instanceId", input.id()));
+    }
     String instanceId = workflowClient.scheduleNewWorkflow(<WorkflowName>.class, input, input.id());
-    return Map.of("instanceId", instanceId);
+    return ResponseEntity.ok(Map.of("instanceId", instanceId));
   }
 
   @GetMapping("/status/{instanceId}")
@@ -90,6 +94,18 @@ public class <WorkflowName>Controller {
   private static boolean exists(WorkflowState state) {
     return state != null && state.getWorkflowId() != null && !state.getWorkflowId().isEmpty();
   }
+
+  // An instance that has not finished cannot be scheduled again under the same id.
+  private static boolean isActive(WorkflowState state) {
+    if (!exists(state)) {
+      return false;
+    }
+    WorkflowRuntimeStatus status = state.getRuntimeStatus();
+    return status == WorkflowRuntimeStatus.RUNNING
+        || status == WorkflowRuntimeStatus.PENDING
+        || status == WorkflowRuntimeStatus.SUSPENDED
+        || status == WorkflowRuntimeStatus.CONTINUED_AS_NEW;
+  }
 }
 ```
 
@@ -97,8 +113,18 @@ public class <WorkflowName>Controller {
 
 - Constructor injection with a `final` field; never field `@Autowired`.
 - `/start` binds the body to `<WorkflowInput>` and uses its id component (`input.id()`, or the entity id the
-  input names, such as `input.shipmentId()`) as the instance id, so the status of a run is at `/status/<id>`. Scheduling with the id of a completed instance starts a new run under the same id;
-  the endpoint does not check for an existing instance first.
+  input names, such as `input.shipmentId()`) as the instance id, so the status of a run is at `/status/<id>`.
+- `/start` answers 409 Conflict, with the instance id in the body, when an instance with that id is still
+  `RUNNING`, `PENDING`, `SUSPENDED` or `CONTINUED_AS_NEW`, the non-terminal values of the SDK's
+  `WorkflowRuntimeStatus` (`CONTINUED_AS_NEW` marks a run that called `continueAsNew` and has not restarted
+  yet). Without the check the runtime rejects the schedule
+  (`ALREADY_EXISTS: an active workflow with ID '<id>' already exists`), which reaches the client as a 500.
+  `isActive` calls `exists` first, because `getWorkflowState` reports an unknown id as `RUNNING`. Scheduling
+  with the id of a finished instance (`COMPLETED`, `FAILED`, `TERMINATED` or `CANCELED`, the terminal values)
+  starts a new run under the same id.
+  Two concurrent starts with the same new id can still race; the loser gets the runtime's error.
+- `/start` checks only when the input has an id: `getWorkflowState(null, ...)` throws, while
+  `scheduleNewWorkflow` with a `null` id generates one.
 - `scheduleNewWorkflow(<WorkflowName>.class, ...)` schedules by the workflow's canonical class name, the name
   `@EnableDaprWorkflows` registered it under.
 - `/status` uses `getWorkflowState(instanceId, true)` and reads the output with
@@ -117,7 +143,30 @@ public class <WorkflowName>Controller {
   `io.dapr.spring:dapr-spring-boot-starter` without a version, as in
   [java-workflow-project.md](java-workflow-project.md). Keep the project's own dependencies.
 - Add `@EnableDaprWorkflows` to the existing `@SpringBootApplication` class, once. Never add a second
-  application class.
+  application class. Exception: when the project has slice tests (`@WebMvcTest`, `@DataJpaTest`, `@JsonTest`
+  or another `@...Test` imported from an `org.springframework.boot` package whose name contains
+  `test.autoconfigure`), put it on a new `@Configuration`
+  class in the application's package instead. A slice test loads the application class but none of the Dapr
+  autoconfiguration, so `@EnableDaprWorkflows` there fails the test context with `No qualifying bean of type
+  'io.dapr.workflows.runtime.WorkflowRuntimeBuilder'`; slice tests skip a separate `@Configuration` class
+  (`references/java/gotchas.md` §9):
+
+  ```java
+  package <javaPackage>;
+
+  import io.dapr.spring.workflows.config.EnableDaprWorkflows;
+  import org.springframework.context.annotation.Configuration;
+
+  @Configuration
+  @EnableDaprWorkflows
+  public class DaprWorkflowConfiguration {
+  }
+  ```
+- A `@WebMvcTest` that names no controllers loads every `@Controller`, including the new workflow controller,
+  and then fails with `No qualifying bean of type 'io.dapr.workflows.client.DaprWorkflowClient'`: the bean
+  comes from the starter's autoconfiguration, which slices exclude, wherever `@EnableDaprWorkflows` sits. Such
+  a test needs a `@MockitoBean DaprWorkflowClient` field or its controllers listed
+  (`@WebMvcTest(<Controller>.class)`); add-workflow-java flags it in the plan instead of editing the test.
 - Put the workflow, activities, records and controller in the application's package or a sub-package of it,
   so component scanning finds them. When that package already has a `StatusResponse` class, use a new
   sub-package for the workflow code.
@@ -165,8 +214,20 @@ public class LoanController {
 - Schedule only after the existing work succeeded, so a rejected request (validation error, exception) never
   starts a workflow.
 - Use the entity's own id as the instance id. The workflow's status is then at
-  `/workflows/<workflow-route>/status/<entity id>`.
+  `/workflows/<workflow-route>/status/<entity id>`. The instance id is a `String`: when the entity id has
+  another type (`long`, `Long`, `UUID`), pass `String.valueOf(created.id())` (and use it in the workflow
+  input when that carries a `String` id). `String.valueOf` turns a `null` reference into the text `"null"`,
+  so convert only after the null check below.
 - Keep the status code and body exactly as they were; clients of the existing endpoint must not notice the
   change apart from the workflow running.
+- When the entity id can repeat (the client sends it, or the handler updates an existing entity), an instance
+  with that id may still be active, and `scheduleNewWorkflow` then throws `StatusRuntimeException`
+  (`ALREADY_EXISTS`) after the existing work ran: a 500 the client would notice. Guard the call with the
+  `/start` route's check and skip scheduling while the instance is active: copy the `exists` and `isActive`
+  helpers into the controller and wrap the call in
+  `if (created.id() != null && !isActive(workflowClient.getWorkflowState(String.valueOf(created.id()), false))) { ... }`.
+  `getWorkflowState` throws on a null id, so keep the null check for a reference-type id (`String`, `Long`,
+  `UUID`). Drop it for a primitive id (`long`: `created.id() != null` does not compile) or one the handler
+  set before this point. A server-generated id needs no guard.
 - The endpoint now needs the Dapr sidecar. Tests that call it over HTTP need a running sidecar or a mocked
   `DaprWorkflowClient` bean; that is why the default answer to the question is "no" when such tests exist.

@@ -1,0 +1,142 @@
+{
+  "skill_name": "add-workflow-java",
+  "evals": [
+    {
+      "id": 1,
+      "name": "boot4-maven-with-tests",
+      "prompt": "Add a Dapr workflow to the Spring Boot app in ./claims-api. When a claim is submitted it should verify the policy, assess the damage and then pay out the claim, one after the other. Show me your plan first, then go ahead without waiting for my approval.",
+      "expected_output": "A plan, then targeted edits to claims-api: the dapr-spring-bom 1.19.1 import and dapr-spring-boot-starter in pom.xml, @EnableDaprWorkflows on ClaimsApplication, a chained workflow with three top-level @Component activities and records, a controller under /workflows/<route> whose start answers 409 for an active instance, POST /claims also starting the workflow (default yes), dapr.yaml with appPort 8082 (read from server.port) and resources/statestore.yaml, a workflow.http file, DAPR-WORKFLOW.md; `mvn -q -DskipTests package` succeeds and `mvn -q test` passes all three existing tests; README untouched.",
+      "files": [
+        "evals/add-workflow-java/files/claims-api/"
+      ],
+      "expectations": [
+        "Before the first file change, the response (or transcript) contains an Add Workflow Plan that names the target claims-api, Spring Boot 4.0.8 with Maven, server.port 8082 as the app port, and lists every file it will add or edit; its Questions section asks whether `POST /claims` should also start the workflow, with yes as the default, and asks no dependency-update question (the project has no Dapr dependency yet)",
+        "pom.xml imports io.dapr.spring dapr-spring-bom 1.19.1 (type pom, scope import) in dependencyManagement and adds dapr-spring-boot-starter without a <version>; the parent stays spring-boot-starter-parent 4.0.8, java.version stays 17, and the existing spring-boot-starter-webmvc and spring-boot-starter-test dependencies are unchanged",
+        "ClaimsApplication.java carries exactly one @EnableDaprWorkflows next to @SpringBootApplication, and no second @SpringBootApplication class exists",
+        "A top-level @Component workflow class implementing io.dapr.workflows.Workflow calls three activities in sequence (verify policy, assess damage, pay out) with ctx.callActivity(<Activity>.class.getName(), ..., <Output>.class).await(); each activity is a top-level @Component implementing WorkflowActivity; every payload is a top-level record; the workflow contains no Instant.now(), UUID.randomUUID(), Thread, CompletableFuture or catch (Exception",
+        "A new @RestController with @RequestMapping(\"/workflows/<route>\") takes DaprWorkflowClient through its constructor into a final field and has start, status, pause, resume and terminate handlers; start answers 409 Conflict when getWorkflowState shows the instance RUNNING, PENDING, SUSPENDED or CONTINUED_AS_NEW (after the exists check), and status uses getWorkflowState with the exists(...) check; no getInstanceState, waitForInstanceCompletion, purgeInstance or field @Autowired anywhere",
+        "ClaimController's POST handler still calls claims.submit(claim) and returns ResponseEntity.created(...) with the same body, and (the default yes) now also calls workflowClient.scheduleNewWorkflow for the workflow with the submitted claim's id as instance id after submit succeeds; DaprWorkflowClient is a constructor parameter and final field; the GET handler is unchanged",
+        "dapr.yaml is created in the claims-api folder with one app entry whose appPort is 8082 and whose command is [\"mvn\", \"spring-boot:run\"], and resources/statestore.yaml has actorStateStore \"true\"; application.properties is byte-for-byte unchanged (server.port 8082 stays)",
+        "README.md is byte-for-byte unchanged and DAPR-WORKFLOW.md exists in claims-api with how to start (`dapr run -f .`), request examples on port 8082 under /workflows/<route>, and a Diagrid Dapr Dev Dashboard section with the macOS/Linux and Windows install commands",
+        "The transcript shows `mvn -q -DskipTests package` after the code steps and a final `mvn -q test` that passes (ClaimServiceTest's two tests and ClaimsApplicationTests.contextLoads, 3 tests, 0 failures) without a running Dapr sidecar",
+        "No files outside the plan were changed: ClaimService.java, Claim.java and everything under src/test are unchanged",
+        "No git command other than `git status` was run",
+        "Dev Dashboard: before changing files the agent runs `diagrid-dev-dashboard --version` once without stopping, and the final output ends with exactly `Dapr Workflow is added to claims-api. Open DAPR-WORKFLOW.md in the claims-api folder for what changed and how to run it.` followed only by the matching Diagrid Dapr Dev Dashboard recommendation"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "existing-dapr-older-pin",
+      "prompt": "In ./returns-platform/returns-service, add a Dapr workflow for product returns: when started for a return it waits up to 14 days for a ParcelReceived event, then inspects the parcel and refunds the customer; if the parcel never arrives it closes the return. Show the plan, then proceed without asking me.",
+      "expected_output": "The plan offers the dependency update (dapr-spring-bom 1.18.1 → 1.19.1, dapr-spring-boot-4-starter → dapr-spring-boot-starter, default yes), asks about POST /returns with default no and a Risk line because ReturnControllerTest calls it through MockMvc, reads server.port 8090 from application.yml and flags the collision with label-printer in dapr.yaml, reuses returns-store, appends an app entry to the parent dapr.yaml, puts @EnableDaprWorkflows on a separate @Configuration class because of the @WebMvcTest slice test, and adds an external-event workflow with a raise-event endpoint. Build and both existing tests pass.",
+      "files": [
+        "evals/add-workflow-java/files/returns-platform/"
+      ],
+      "expectations": [
+        "Before the first file change the plan says a newer Dapr version is available (dapr-spring-bom 1.18.1 → 1.19.1, with dapr-spring-boot-4-starter replaced by dapr-spring-boot-starter because 1.19 has no separate Boot 4 starter) and asks whether to update, with yes as the default; with that default, pom.xml imports dapr-spring-bom 1.19.1 and depends on dapr-spring-boot-starter without a <version>, no dapr-spring-boot-4-starter remains, and the parent stays at 4.0.5",
+        "Before the first file change the plan asks whether `POST /returns` should also start the workflow with **no** as the default, and has a Risk line saying ReturnControllerTest calls that endpoint through MockMvc and would need a running sidecar or a mocked DaprWorkflowClient; with that default ReturnController.java is byte-for-byte unchanged",
+        "The plan names app port 8090, read from server.port in src/main/resources/application.yml, and flags that label-printer already uses appPort 8090 in ../dapr.yaml; application.yml is byte-for-byte unchanged",
+        "No new component with actorStateStore \"true\" is created: components/statestore.yaml is unchanged, no resources/ folder is created, and the plan says the existing returns-store is reused",
+        "returns-platform/dapr.yaml keeps resourcesPath ./components and the label-printer entry unchanged, and gains one returns-service entry with appDirPath returns-service, appPort 8090, a daprHTTPPort other than 3510 and command [\"mvn\", \"spring-boot:run\"]; no dapr.yaml is created inside returns-service",
+        "The workflow waits with ctx.waitForExternalEvent(..., Duration.ofDays(14), <record>.class).await() inside try/catch (TaskCanceledException e) and completes with a closed or timed-out result in the catch; it catches no Exception or Throwable",
+        "The new workflow controller under /workflows/<route> has a raise-event handler that binds the body as Object and checks the instance with getWorkflowState and exists(...) before raiseEvent, and its start handler answers 409 for an active instance",
+        "Because ReturnControllerTest is a @WebMvcTest slice test, ReturnsApplication.java is byte-for-byte unchanged and @EnableDaprWorkflows sits once on a new @Configuration class in com.example.returns (for example DaprWorkflowConfiguration); the plan says why",
+        "The transcript shows a successful `mvn -q -DskipTests package` and a final `mvn -q test` with ReturnControllerTest's 2 tests passing",
+        "No git command other than `git status` was run"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "approval-gate",
+      "prompt": "Add a Dapr workflow to the Spring Boot app in ./claims-api that verifies the policy, assesses the damage and pays out when a claim is submitted.",
+      "expected_output": "An Add Workflow Plan and a request for approval; no file in claims-api is changed.",
+      "files": [
+        "evals/add-workflow-java/files/claims-api/"
+      ],
+      "expectations": [
+        "The response contains an Add Workflow Plan listing the files to add and edit, with app port 8082 read from application.properties, and ends by asking the user to approve, change or stop",
+        "The plan has a Questions section asking whether `POST /claims` should also start the workflow (default yes) and no dependency-update question, because the project has no Dapr dependency",
+        "No file in the claims-api fixture is added, changed or deleted (hash check), and no `mvn` command or file write was run on the fixture",
+        "No git command other than `git status` was run"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "unsupported-gradle",
+      "prompt": "Add a Dapr workflow to ./gradle-inventory that reorders stock when it runs low.",
+      "expected_output": "Stops before planning: the project builds with Gradle (build.gradle.kts, no pom.xml) and the skill supports Maven only; no changes.",
+      "files": [
+        "evals/add-workflow-java/files/gradle-inventory/"
+      ],
+      "expectations": [
+        "The response says the project builds with Gradle (build.gradle.kts) and that add-workflow-java supports Maven projects (pom.xml) only, and suggests either moving the build to Maven or creating a separate workflow service with create-workflow-java",
+        "No Add Workflow Plan is shown, no file in the gradle-inventory fixture is added, changed or deleted, and no `mvn` or `gradle` command was run"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "unsupported-boot3",
+      "prompt": "Add a Dapr workflow to the Spring Boot service in ./boot3-tickets that escalates a ticket when nobody replies within 24 hours.",
+      "expected_output": "Stops before planning: the project is on Spring Boot 3.5.7, the skill's Dapr Java SDK 1.19.1 needs Spring Boot 4.0.x, and Spring Boot 3 projects use Dapr Java SDK 1.18.x; no changes.",
+      "files": [
+        "evals/add-workflow-java/files/boot3-tickets/pom.xml"
+      ],
+      "expectations": [
+        "The response says the project uses Spring Boot 3.5.7, that the skill adds Dapr Java SDK 1.19.1, which needs Spring Boot 4.0.x, and names Dapr Java SDK 1.18.x as the line for Spring Boot 3 projects; it suggests upgrading to Spring Boot 4 or creating a separate workflow service with create-workflow-java",
+        "No Add Workflow Plan is shown, no file in the boot3-tickets fixture is added, changed or deleted, and no `mvn` command was run"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "bare-webmvctest-risk",
+      "prompt": "Add a Dapr workflow to the Spring Boot app in ./invoices-api: when an invoice is issued it should validate the invoice and then send it to the customer, one after the other.",
+      "expected_output": "An Add Workflow Plan and a request for approval; no file in invoices-api is changed. Because InvoiceControllerTest is a bare @WebMvcTest (no controllers listed), the plan puts @EnableDaprWorkflows on a new DaprWorkflowConfiguration class and carries a Risk line: the test also loads the new workflow controller and fails without a DaprWorkflowClient bean, so it needs a @MockitoBean DaprWorkflowClient field or its controllers listed; the skill does not edit tests. The test does not call POST /invoices, so the endpoint question keeps its default yes.",
+      "files": [
+        "evals/add-workflow-java/files/invoices-api/"
+      ],
+      "expectations": [
+        "The response contains an Add Workflow Plan naming the target invoices-api, Spring Boot 4.0.8 with Maven, and app port 8084 read from server.port in application.properties, and ends by asking the user to approve, change or stop",
+        "The plan has a Risk line that names InvoiceControllerTest as a @WebMvcTest without listed controllers, says it will also load the new workflow controller and fail because no DaprWorkflowClient bean exists in the slice, and names the fix (a @MockitoBean DaprWorkflowClient field, or listing the controllers as in @WebMvcTest(InvoiceController.class)) without planning to edit the test",
+        "The plan puts @EnableDaprWorkflows on a new @Configuration class (for example DaprWorkflowConfiguration) because of the slice test, and lists InvoicesApplication.java as unchanged or not edited",
+        "The Questions section asks whether `POST /invoices` should also start the workflow with yes as the default (no test calls that endpoint), and asks no dependency-update question (the project has no Dapr dependency)",
+        "No file in the invoices-api fixture is added, changed or deleted (hash check), and no `mvn` command or file write was run on the fixture",
+        "No git command other than `git status` was run"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "multi-module-maven",
+      "prompt": "Add a Dapr workflow to the Spring Boot project in ./orders-platform: when an order is placed it should reserve the stock, charge the customer and then confirm the order, one after the other. Show me your plan first, then go ahead without waiting for my approval.",
+      "expected_output": "A plan for the multi-module build: orders-app is the application module (orders-domain is a plain library), app port 8087 read from orders-app/src/main/resources/application.yml, the dapr-spring-bom 1.19.1 import added to the root pom's existing dependencyManagement and dapr-spring-boot-starter to orders-app/pom.xml only, POST /orders also starting the workflow (default yes). Then targeted edits in orders-app (@EnableDaprWorkflows on OrdersApplication, a chained workflow with three activities, a controller under /workflows/<route>, workflow.http), dapr.yaml in orders-platform with appDirPath ./orders-app, appPort 8087 and command [\"mvn\", \"spring-boot:run\"], resources/statestore.yaml, DAPR-WORKFLOW.md in orders-app saying to run `mvn install -DskipTests` from orders-platform before `dapr run -f .`; `mvn -q -DskipTests package` and `mvn -q test` run from orders-platform and pass all five tests; orders-domain and README.md untouched.",
+      "files": [
+        "evals/add-workflow-java/files/orders-platform/"
+      ],
+      "expectations": [
+        "Before the first file change, the plan names orders-platform as a multi-module Maven build on Spring Boot 4.0.8 with orders-app as the application module (the module with the @SpringBootApplication class and spring-boot-starter-webmvc), and app port 8087 read from server.port in orders-app/src/main/resources/application.yml; it asks no module question (only one module qualifies) and no dependency-update question, and asks whether `POST /orders` should also start the workflow with yes as the default",
+        "The root pom.xml keeps <packaging>pom</packaging>, its modules and its orders-domain entry, and its existing <dependencyManagement> gains the io.dapr.spring dapr-spring-bom 1.19.1 import (type pom, scope import); the root pom has no dapr-spring-boot-starter dependency",
+        "orders-app/pom.xml gains dapr-spring-boot-starter without a <version>; its other dependencies are unchanged; orders-domain (pom.xml and every source and test file) is byte-for-byte unchanged",
+        "OrdersApplication.java carries exactly one @EnableDaprWorkflows, and the new workflow, its three top-level @Component activities, their records and a @RestController with @RequestMapping(\"/workflows/<route>\") are under orders-app/src/main/java/com/example/orders; the workflow calls the activities in sequence with ctx.callActivity(<Activity>.class.getName(), ..., <Output>.class).await() and contains no Instant.now(), UUID.randomUUID(), Thread, CompletableFuture or catch (Exception",
+        "OrderController's POST handler still calls orders.place(order) and returns ResponseEntity.created(...) with the same body, and now also schedules the workflow with the placed order's id as instance id after place succeeds; DaprWorkflowClient is a constructor parameter and final field",
+        "dapr.yaml is created in orders-platform (not in orders-app) with common resourcesPath ./resources and one app entry: appID orders-app, appDirPath ./orders-app, appPort 8087 and command [\"mvn\", \"spring-boot:run\"]; orders-platform/resources/statestore.yaml has actorStateStore \"true\"; application.yml is byte-for-byte unchanged",
+        "DAPR-WORKFLOW.md exists in orders-app (not in orders-platform) and says to run `mvn install -DskipTests` from orders-platform first (and again after changing orders-domain) before `dapr run -f .`, and does not suggest `mvn -pl orders-app -am spring-boot:run`; workflow.http is in orders-app; orders-platform/README.md is byte-for-byte unchanged",
+        "The transcript shows `mvn -q -DskipTests package` after each apply step and a final `mvn -q test`, all run from orders-platform (the root folder) with no `-pl`, `-am` or `install`; the final test run passes OrderRulesTest's two tests, OrderServiceTest's two tests and OrdersApplicationTests.contextLoads (5 tests, 0 failures) without a running Dapr sidecar",
+        "No git command other than `git status` was run",
+        "The final output ends with exactly `Dapr Workflow is added to orders-app. Open DAPR-WORKFLOW.md in the orders-app folder for what changed and how to run it.` followed only by the matching Diagrid Dapr Dev Dashboard recommendation"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "unsupported-webflux",
+      "prompt": "Add a Dapr workflow to ./reactive-catalog that re-prices a product and notifies the shops when its price is changed.",
+      "expected_output": "Stops before planning: the project is on Spring Boot 4.0.8 but depends only on spring-boot-starter-webflux, no Spring MVC web starter; the skill adds Spring MVC controllers that block on DaprWorkflowClient calls and suggests a separate workflow service with create-workflow-java; no changes.",
+      "files": [
+        "evals/add-workflow-java/files/reactive-catalog/"
+      ],
+      "expectations": [
+        "The response says reactive-catalog has no Spring MVC web starter (spring-boot-starter-webmvc) because it uses WebFlux (spring-boot-starter-webflux), that the workflow management endpoints this skill adds are Spring MVC controllers that block on DaprWorkflowClient calls, and suggests creating a separate workflow service with create-workflow-java",
+        "No Add Workflow Plan is shown, no file in the reactive-catalog fixture is added, changed or deleted, and no `mvn` command was run",
+        "No git command other than `git status` was run"
+      ]
+    }
+  ]
+}

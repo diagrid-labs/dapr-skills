@@ -4,6 +4,7 @@ import io.dapr.workflows.client.DaprWorkflowClient;
 import io.dapr.workflows.client.WorkflowRuntimeStatus;
 import io.dapr.workflows.client.WorkflowState;
 import java.util.Map;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,9 +22,12 @@ public class DocumentApprovalWorkflowController {
   }
 
   @PostMapping("/start")
-  public Map<String, String> start(@RequestBody ApprovalRequest input) {
+  public ResponseEntity<Map<String, String>> start(@RequestBody ApprovalRequest input) {
+    if (input.documentId() != null && isActive(workflowClient.getWorkflowState(input.documentId(), false))) {
+      return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("instanceId", input.documentId()));
+    }
     String instanceId = workflowClient.scheduleNewWorkflow(DocumentApprovalWorkflow.class, input, input.documentId());
-    return Map.of("instanceId", instanceId);
+    return ResponseEntity.ok(Map.of("instanceId", instanceId));
   }
 
   @GetMapping("/status/{instanceId}")
@@ -72,5 +76,17 @@ public class DocumentApprovalWorkflowController {
   // its workflow id and name are empty and its runtime status reads RUNNING.
   private static boolean exists(WorkflowState state) {
     return state != null && state.getWorkflowId() != null && !state.getWorkflowId().isEmpty();
+  }
+
+  // An instance that has not finished cannot be scheduled again under the same id.
+  private static boolean isActive(WorkflowState state) {
+    if (!exists(state)) {
+      return false;
+    }
+    WorkflowRuntimeStatus status = state.getRuntimeStatus();
+    return status == WorkflowRuntimeStatus.RUNNING
+        || status == WorkflowRuntimeStatus.PENDING
+        || status == WorkflowRuntimeStatus.SUSPENDED
+        || status == WorkflowRuntimeStatus.CONTINUED_AS_NEW;
   }
 }

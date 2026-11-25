@@ -84,7 +84,8 @@ The app cannot choose RETRY or DROP for an event it received.
 
 **Rule.**
 - Run the handler in `.doOnNext(...)` wrapped in `try`/`catch (RuntimeException e)` that logs the
-  failure. Never let an exception escape: it turns the event into a poison message.
+  failure, on the topic stream and on the dead-letter stream. Never let an exception escape: it turns the
+  event into a poison message.
 - Add `.retryWhen(Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(1)).maxBackoff(Duration.ofSeconds(30)).transientErrors(true))`
   before `.subscribe()`, on the topic stream and the dead-letter stream, so a deserialization failure (or a
   lost connection) opens a new stream. `transientErrors(true)` resets the backoff after an event arrives;
@@ -99,6 +100,27 @@ The app cannot choose RETRY or DROP for an event it received.
   the Jackson 3 serializer of the `DaprClient` bean
   (`dapr-spring/dapr-spring-boot-autoconfigure/src/main/java/io/dapr/spring/boot/autoconfigure/client/DaprClientAutoConfiguration.java:53`). Start the subscriptions from
   a `SmartLifecycle` bean and dispose them in `stop()`.
+- **`DaprClient` and `DaprPreviewClient` are the same class, in both directions.** `buildPreviewClient()`
+  returns a `DaprClientImpl`, and the autoconfigured `DaprClient` bean is a `DaprClientImpl` too, which
+  implements both interfaces. Once both beans exist and have been created, each is a candidate for the other's
+  injection points, so the outcome depends on bean creation order:
+  - A constructor that takes `DaprPreviewClient` fails once something has created the `DaprClient` bean (a
+    publisher created earlier): `NoUniqueBeanDefinitionException: ... expected single matching bean but found 2:
+    daprPreviewClient,daprClient` (observed, Spring Boot 4.0.8, `dapr-spring-bom` 1.19.1, a `@SpringBootTest` in
+    an app with a publish controller and a streaming subscriber).
+  - A constructor that takes `DaprClient` under any parameter name other than `daprClient` (for example an
+    existing `ReportService(DaprClient client)`) fails once the `daprPreviewClient` bean has been created (the
+    streaming subscriber created earlier): `No qualifying bean of type 'io.dapr.client.DaprClient' available:
+    expected single matching bean but found 2: daprPreviewClient,daprClient` (observed, same versions, a
+    `@SpringBootTest` with a streaming subscriber and that service; a `@Qualifier` on the subscriber alone did not
+    help).
+
+  **Rule.** Declare the preview client with `@Bean(defaultCandidate = false)` (Spring Framework 6.2+, present in
+  the Spring Framework 7 that Boot 4.0.8 resolves), so it never fills an unqualified `DaprClient` or
+  `DaprPreviewClient` injection point, and inject it with `@Qualifier("daprPreviewClient") DaprPreviewClient`. With
+  both, the context starts, the `DaprClient client` parameter gets the autoconfigured `daprClient` bean, and the
+  subscription received events under `dapr run` (observed for the `@Qualifier`). The shared streaming template
+  does both, so create-pubsub-java and add-pubsub-java generate the same code.
 - The streaming subscriber has no `appPort` in `dapr.yaml`; the sidecar then logs
   `App channel is not initialized`, which is expected.
 
@@ -147,7 +169,7 @@ the SDK picked up the ports `dapr run` exports (`DAPR_HTTP_PORT`, `DAPR_GRPC_POR
   exists` (observed, a 500 if unhandled). Treat a state as missing when it is `null` or its
   `getWorkflowId()` is empty, and answer 404 from the status and raise-event endpoints.
 - **Reusing an instance id.** `scheduleNewWorkflow` with the id of a COMPLETED instance started a new run
-  under the same id (observed). Match the .NET start endpoint (`skills/dapr-shared/dotnet-workflow-endpoints.md`): use the request's own entity id as the instance id (`scheduleNewWorkflow(Workflow.class, request, request.parcelId())` in the reference app; in the templates, `scheduleNewWorkflow(<WorkflowName>.class, input, input.id())` with the id component of `<WorkflowInput>`), and do not pre-check existing state.
+  under the same id (observed). Match the .NET start endpoint (`skills/dapr-shared/dotnet-workflow-endpoints.md`): use the request's own entity id as the instance id (`scheduleNewWorkflow(Workflow.class, request, request.parcelId())` in the reference app; in the templates, `scheduleNewWorkflow(<WorkflowName>.class, input, input.id())` with the id component of `<WorkflowInput>`). Before scheduling, read the state of that id and answer 409 Conflict when it is `RUNNING`, `PENDING` or `SUSPENDED` (the templates also include `CONTINUED_AS_NEW`, the remaining non-terminal value of `WorkflowRuntimeStatus` in 1.19.1; not observed): `scheduleNewWorkflow` on an active id throws `StatusRuntimeException: ALREADY_EXISTS: ... an active workflow with ID '<id>' already exists` (observed for RUNNING and SUSPENDED, a 500 if unhandled). Check the id for `null` first: `getWorkflowState(null, ...)` throws a `NullPointerException` (observed). Verified on 2026-11-24 against runtime 1.19.2: a second start of a running instance answered 409, and a start after the first run COMPLETED answered 200 with a new run.
 - **External event timeout.** `ctx.waitForExternalEvent(name, Duration, Class).await()` throws
   `io.dapr.durabletask.TaskCanceledException` when the timeout expires (verified with a 30s timeout). Wrap the `.await()` in `try`/`catch (TaskCanceledException e)`, log it and `ctx.complete(...)` with a timed-out result such as `PICKUP_TIMED_OUT`, as `ShipmentWorkflow` does; never let the exception fail the workflow.
 - **Retry policy.** `new WorkflowTaskOptions(WorkflowTaskRetryPolicy.newBuilder()...build())` passed to
@@ -183,12 +205,63 @@ the SDK picked up the ports `dapr run` exports (`DAPR_HTTP_PORT`, `DAPR_GRPC_POR
   (`createTimer` plus `continueAsNew`), child workflow (`callChildWorkflow` with an instance id and a retry
   policy) and external-event examples in [patterns.md](patterns.md) and [error-handling.md](error-handling.md)
   compiled with `mvn -q -DskipTests package` against the 1.19.1 BOM (compiled, not run).
+- **Slice tests in an existing project.** With `@EnableDaprWorkflows` on the `@SpringBootApplication` class, a
+  `@WebMvcTest` that passed before failed to load its context: `No qualifying bean of type
+  'io.dapr.workflows.runtime.WorkflowRuntimeBuilder'` (observed, Spring Boot 4.0.5, `dapr-spring-bom` 1.19.1).
+  The slice reads the application class's annotations but excludes the Dapr autoconfiguration. Moving the
+  annotation to its own `@Configuration` class fixed it: the slice skips that class, and the app still
+  registered and ran the workflow under `dapr run`. A full `@SpringBootTest` context loads either way, without
+  a sidecar; the worker logs `The sidecar at address 127.0.0.1:50001 is unavailable. Will continue retrying.`
+  **Rule.** In a project with slice tests, put `@EnableDaprWorkflows` on a separate `@Configuration` class.
+  That does not cover a `@WebMvcTest` that names no controllers: it loads every `@Controller`, including the
+  new workflow controller, and failed with `No qualifying bean of type
+  'io.dapr.workflows.client.DaprWorkflowClient'` (observed, Spring Boot 4.0.8, `dapr-spring-bom` 1.19.1, with
+  `@EnableDaprWorkflows` on a separate `@Configuration` class). The bean comes only from
+  `DaprClientAutoConfiguration`, which the slice excludes. Adding a `@MockitoBean DaprWorkflowClient` field, or
+  listing the controllers (`@WebMvcTest(InvoiceController.class)`), made the test pass again (observed). **Rule.**
+  add-workflow-java does not edit tests; its plan names each bare `@WebMvcTest` with this fix as a Risk.
 - **Unit tests.** Mockito 5 from `spring-boot-starter-test` mocks `WorkflowContext`, the abstract `Task`, and
   `TaskFailedException` / `FailureDetails` (which have no public constructors). Tests of an activity, a chained
   workflow and a saga's compensation branch ran green with `mvn test` (see [testing.md](testing.md)).
 
+## 10. Windows
+
+Verified on 2026-11-24, Windows 11, Java 21.0.8, Maven 3.9.16, Dapr CLI 1.19.1 with runtime 1.19.0, against
+copies of the eval fixtures wired by hand from these templates.
+
+- **`mvn` under `dapr run -f .` works.** `command: ["mvn", "spring-boot:run"]` starts the app on Windows:
+  the Dapr CLI resolves `mvn` to `mvn.cmd` on the PATH, the sidecar reports the app command as
+  `mvn spring-boot:run` and reaches it on its `appPort` (observed with a single-module project, and with a
+  multi-module one where `appDirPath` is the application module). No `.cmd` suffix or shell wrapper is
+  needed in `dapr.yaml`; the file is the same on every platform.
+- **Multi-module.** `mvn install -DskipTests` from the root folder, then `dapr run -f .`, works as the run
+  doc describes: `mvn spring-boot:run` in the module folder resolved the sibling module from the local
+  Maven repository and the workflow completed (observed with a three-activity chained workflow whose
+  activity used a class from the sibling module).
+- **`dapr stop -f .` leaves the JVMs running.** It prints "Dapr and app processes stopped successfully" and
+  stops `daprd`, but the Maven launcher JVM and the Spring Boot JVM it started both survive and keep the
+  app port bound. The app then answers 500, because its sidecar is gone, and the next `dapr run -f .` fails
+  with `Web server failed to start. Port <app-port> was already in use.` Observed on every run (single-module
+  workflow, multi-module workflow, declarative pub/sub, streaming pub/sub). **Rule.** On Windows, the run doc
+  cannot promise that `dapr stop -f .` frees the port. After stopping, check the port and end the leftover
+  JVM, for example:
+
+  ```powershell
+  Get-NetTCPConnection -LocalPort <app-port> -State Listen |
+    ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }
+  ```
+
+  Not seen on macOS.
+- **The rest behaves as documented.** A chained workflow completed through `POST /start` and
+  `GET /status/{id}` (404 for an unknown id, 202 from pause, resume and terminate); declarative pub/sub
+  delivered a valid event, answered SUCCESS for a duplicate, DROP through `UnreadableEventAdvice` for a body
+  that cannot bind and DROP from the handler for a blank id, with both DROPs reaching the dead-letter route;
+  the streaming subscriber handled events, dead-lettered a body that fails to deserialize and kept receiving
+  later events through the `retryWhen` reconnect. The bare `@WebMvcTest` failure of §9 reproduces unchanged
+  (`No qualifying bean of type 'io.dapr.workflows.client.DaprWorkflowClient'`), and the 1.18.1 → 1.19.1 BOM
+  update with the `dapr-spring-boot-4-starter` → `dapr-spring-boot-starter` swap built and tested green.
+
 ## Open
 
-- **Windows.** Whether `command: ["mvn", "spring-boot:run"]` starts under `dapr run -f .` on Windows
-  (`mvn` resolving to `mvn.cmd`) is not yet verified on Windows.
-  It worked on macOS.
+- **Windows, Gradle and Podman.** Only Maven with Docker was run on Windows. A `mvn` installed through a
+  shim (Scoop, Chocolatey) was not tried either; the verified setup had Maven's own `bin` folder on the PATH.

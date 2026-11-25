@@ -23,16 +23,17 @@
   "baseline": {
     "date": "2026-11-24",
     "model": "sonnet (Claude Sonnet 5.5)",
-    "dapr_skills_version": "1.33.0",
+    "dapr_skills_version": "1.34.0",
     "diagrid_version": "0.10.3 (diagridio/diagrid-ai origin/main 58b917f)",
-    "result": "22 of 24 matched `expect` (or `accept`) in both runs. Misses: queries 9 and 10. Both resolved to the diagrid skill at medium confidence in both runs (9: diagrid-workflow-determinism; 10: diagrid-activity-idempotency), where `expect` is the dapr-skills review skill. In the previous baseline (diagrid 0.10.2) both came back AMBIGUOUS. The dapr-skills descriptions for those skills also changed between the runs, though only slightly (\".NET, Python and Java\" was added), so the shift most likely follows the diagrid plugin update. Query 11 matched at medium (diagrid-workflow-scaffold) and query 18 matched at medium (create-workflow-from-diagram). Query 15 is correctly AMBIGUOUS (medium in run 1, high in run 2). Query 22 (Kotlin with Quarkus) is correctly NONE at medium. Queries 23 and 24 (Java review) matched at high confidence in both runs. The other 16 answers matched at high confidence, including the Java queries 19 to 21. Two runs, descriptions only; the verdicts were identical, with confidence differing only on query 15.",
-    "known_risk": "Queries 9 and 10: on 2026-11-24 dapr-skills stopped pointing authoring questions at the diagrid plugin, because its determinism and idempotency skills are for code that runs on Diagrid, and the expectations moved to the dapr-skills review skills. With diagrid 0.10.3 the model now resolves both to the diagrid skills at medium confidence rather than AMBIGUOUS, because the diagrid descriptions say \"Use when writing, changing or reviewing\" and mention Diagrid only as \"on Diagrid\". Fixing that needs a wording change in diagridio/diagrid-ai; dapr-skills was not changed to chase it. Queries 11, 18 and 22 also matched at medium rather than high confidence. Query 11 regressed after the plugin rename, as recorded on 2026-11-23, because diagrid-workflow-scaffold now reads as create-only. Query 15 is correctly AMBIGUOUS.",
+    "result": "23 of 26 matched `expect` (or `accept`) in both runs. Misses: queries 9, 10 and 11. Queries 9 and 10 resolved to the diagrid skill at medium confidence in both runs (9: diagrid-workflow-determinism; 10: diagrid-activity-idempotency), where `expect` is the dapr-skills review skill, as in the previous baseline. Query 11 came back AMBIGUOUS between diagrid:diagrid-workflow-scaffold and diagrid:diagrid-deploy (low in run 1, medium in run 2); in the previous baseline it matched diagrid-workflow-scaffold at medium. Both candidates are diagrid skills and the diagrid plugin did not change between the baselines, so this is variance between two diagrid skills, not a dapr-skills routing change. Queries 25 (add-workflow-java) and 26 (add-pubsub-java) matched at high confidence in both runs. Query 15 is correctly AMBIGUOUS (low in run 1, high in run 2). Query 22 (Kotlin with Quarkus) is correctly NONE (medium in run 1, high in run 2). Queries 2, 14 and 18 matched at medium in one run and high in the other. The other 16 answers matched at high confidence in both runs. Two runs, descriptions only; the verdicts were identical, and the confidence differed on queries 2, 11, 14, 15, 18 and 22.",
+    "known_risk": "Queries 9 and 10: on 2026-11-24 dapr-skills stopped pointing authoring questions at the diagrid plugin, because its determinism and idempotency skills are for code that runs on Diagrid, and the expectations moved to the dapr-skills review skills. With diagrid 0.10.3 the model resolves both to the diagrid skills at medium confidence rather than AMBIGUOUS, because the diagrid descriptions say \"Use when writing, changing or reviewing\" and mention Diagrid only as \"on Diagrid\". Fixing that needs a wording change in diagridio/diagrid-ai; dapr-skills was not changed to chase it. Query 11 regressed after the plugin rename, as recorded on 2026-11-23, because diagrid-workflow-scaffold now reads as create-only; it matched at medium in the previous baseline and now splits between diagrid-workflow-scaffold and diagrid-deploy (AMBIGUOUS, low and medium). Both are diagrid skills, so the request still goes to the diagrid plugin; a fix belongs in diagridio/diagrid-ai. Query 15 is correctly AMBIGUOUS.",
     "notes": [
       "Generated with `node scripts/triggering-prompt.mjs <diagrid skills dir>` from a read-only `git archive` of diagridio/diagrid-ai origin/main at 58b917f, not the marketplace cache.",
       "Run after the 2026-11-24 description fixes: the review-workflow-activity and review-workflow-determinism pointers to the diagrid plugin were removed, the review skills now name .NET, Python and Java, and create-workflow-from-diagram no longer sends Mermaid and sketches to the diagrid plugin.",
       "Run on branch dev-901 after adding the Java skills (create-workflow-java, create-pubsub-java, check-prereq-java): queries 19 to 22 cover them.",
       "Run on branch dev-901 after adding Java checklists to the six workflow and pub/sub review skills: queries 23 and 24 cover them.",
-      "Re-recorded 2026-11-24 as two runs, replacing the earlier two-run baseline (diagrid 0.10.2, 20 of 22, misses at 9 and 10 as AMBIGUOUS)."
+      "Run on branch dev-902 after adding add-workflow-java and add-pubsub-java (and existing-project pointers in the create-*-java descriptions): queries 25 and 26 cover them.",
+      "Re-recorded 2026-11-24 as two runs for 1.34.0 (diagrid unchanged at 0.10.3), replacing the 1.33.0 baseline (22 of 24, misses at 9 and 10; 11 matched at medium). That baseline in turn replaced a two-run baseline at diagrid 0.10.2 (20 of 22, misses at 9 and 10 as AMBIGUOUS)."
     ]
   },
   "queries": [
@@ -53,7 +54,7 @@
       "rationale": "\"audit\" and \"this repo\" both point at a pass over an existing codebase.",
       "baseline": {
         "picked": "dapr-skills:review-workflow-activity",
-        "confidence": "high"
+        "confidence": "medium in run 1, high in run 2"
       }
     },
     {
@@ -144,9 +145,9 @@
       "expect": "diagrid:diagrid-workflow-scaffold",
       "rationale": "Explicit Diagrid target.",
       "baseline": {
-        "picked": "diagrid:diagrid-workflow-scaffold",
-        "confidence": "medium",
-        "note": "Matches `expect` in both runs, at medium confidence. Earlier runs split the request into a create skill plus a Diagrid skill. Regressed from high at catalyst-ai 0.8.1; diagrid 0.10.2 calls the product \"Diagrid (formerly Catalyst)\" and the query says Catalyst."
+        "picked": "AMBIGUOUS",
+        "confidence": "low in run 1, medium in run 2",
+        "note": "Miss in both runs. Candidates: diagrid:diagrid-workflow-scaffold and diagrid:diagrid-deploy. Matched diagrid-workflow-scaffold at medium in the 1.33.0 baseline; the diagrid plugin is unchanged (0.10.3), so this is variance between two diagrid skills, not a dapr-skills routing change. Earlier runs split the request into a create skill plus a Diagrid skill. Regressed from high at catalyst-ai 0.8.1; diagrid 0.10.2 calls the product \"Diagrid (formerly Catalyst)\" and the query says Catalyst."
       }
     },
     {
@@ -179,7 +180,7 @@
       "rationale": "Genuinely shared ground: both plugins accept BPMN. With no Diagrid signal the local skill is the safer default, since it needs no cloud auth. A Diagrid user has to say Diagrid. Either answer is defensible, so AMBIGUOUS also passes.",
       "baseline": {
         "picked": "dapr-skills:create-workflow-from-diagram",
-        "confidence": "high"
+        "confidence": "high in run 1, medium in run 2"
       }
     },
     {
@@ -189,7 +190,7 @@
       "rationale": "No language and no runtime. Picking silently is the failure mode here; the right move is to ask or state the assumption.",
       "baseline": {
         "picked": "AMBIGUOUS",
-        "confidence": "medium in run 1, high in run 2",
+        "confidence": "low in run 1, high in run 2",
         "note": "Candidates: dapr-skills create-workflow-python, -dotnet, -java, -typescript in both runs. Correct, since the query names no language or runtime."
       }
     },
@@ -220,7 +221,7 @@
       "rationale": "Added for create-diagram. The diagram is an input and workflow code is the output, so this must NOT fire create-diagram, whose description points here for diagram to workflow code. Mirrors query 17.",
       "baseline": {
         "picked": "dapr-skills:create-workflow-from-diagram",
-        "confidence": "medium"
+        "confidence": "medium in run 1, high in run 2"
       }
     },
     {
@@ -260,7 +261,7 @@
       "rationale": "Added for the Java skills. Kotlin and Quarkus are outside create-workflow-java, which covers Java with Spring Boot, so no -java skill should fire. A -java pick here is a mis-route.",
       "baseline": {
         "picked": "NONE",
-        "confidence": "medium"
+        "confidence": "medium in run 1, high in run 2"
       }
     },
     {
@@ -280,6 +281,26 @@
       "rationale": "Added for Java review support. Java subscribers audited for idempotency; the Java checklist lives in review-pubsub-subscriptions.",
       "baseline": {
         "picked": "dapr-skills:review-pubsub-subscriptions",
+        "confidence": "high"
+      }
+    },
+    {
+      "id": 25,
+      "query": "add Dapr workflow to my Spring Boot project",
+      "expect": "dapr-skills:add-workflow-java",
+      "rationale": "Added for add-workflow-java. An existing Spring Boot project gains a workflow, so this must NOT fire create-workflow-java, whose description points existing projects here, or migrate-workflow-typescript.",
+      "baseline": {
+        "picked": "dapr-skills:add-workflow-java",
+        "confidence": "high"
+      }
+    },
+    {
+      "id": 26,
+      "query": "make this Spring Boot service subscribe to a Dapr topic",
+      "expect": "dapr-skills:add-pubsub-java",
+      "rationale": "Added for add-pubsub-java. \"This\" service already exists, so it is the add skill, not create-pubsub-java, whose description points existing projects here.",
+      "baseline": {
+        "picked": "dapr-skills:add-pubsub-java",
         "confidence": "high"
       }
     }

@@ -17,6 +17,8 @@ import {
   checkDescriptionYaml,
   isLanguageTwin,
   readDescriptions,
+  MAX_TOTAL_DESCRIPTION_CHARS,
+  TARGET_TOTAL_DESCRIPTION_CHARS,
 } from '../lib/frontmatter-validation.mjs';
 
 function fixture(files) {
@@ -144,7 +146,9 @@ const REAL_SKILLS = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 's
 
 test('descriptions leave headroom under the cap', () => {
   const total = Object.values(readDescriptions(REAL_SKILLS)).reduce((sum, d) => sum + d.length, 0);
-  assert.ok(total <= 6850, `descriptions total ${total} characters, over 6850`);
+  const limit = MAX_TOTAL_DESCRIPTION_CHARS - 100;
+  assert.ok(total <= limit, `descriptions total ${total} characters, over ${limit} (cap minus 100)`);
+  assert.ok(MAX_TOTAL_DESCRIPTION_CHARS < TARGET_TOTAL_DESCRIPTION_CHARS);
 });
 
 test('no description names the catalyst-ai plugin', () => {

@@ -105,6 +105,8 @@ public class Application {
 
 - `@EnableDaprWorkflows` goes on the `@SpringBootApplication` class, once. It finds every `Workflow` and
   `WorkflowActivity` bean, registers each under its canonical class name and starts the workflow runtime.
+  In an existing project with slice tests it goes on a separate `@Configuration` class instead; see
+  **Adding to an existing project** in [java-workflow-endpoints.md](java-workflow-endpoints.md).
   The `DaprWorkflowClient` bean the controller takes comes from the `dapr-spring-boot-starter`
   autoconfiguration.
 - Every other class of the app lives in the same package, `<javaPackage>`, so component scanning finds the

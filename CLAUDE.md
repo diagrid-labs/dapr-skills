@@ -17,7 +17,7 @@ This repository contains Claude Code skill definitions for building Dapr Workflo
   - `create-workflow-dotnet/REFERENCE.md` — Detailed reference examples for the .NET skill
   - `create-workflow-python/SKILL.md` — Skill for creating Dapr Workflow apps with Python
   - `create-workflow-python/REFERENCE.md` — Detailed reference examples for the Python skill
-  - `create-workflow-java/SKILL.md` — Skill for creating Dapr Workflow apps with Java and Spring Boot 4 (Maven, Dapr Spring Boot starter; alpha in the SDK)
+  - `create-workflow-java/SKILL.md` — Skill for creating Dapr Workflow apps with Java and Spring Boot 4.0 (Maven, Dapr Spring Boot starter; alpha in the SDK)
   - `create-workflow-java/REFERENCE.md` — Detailed reference examples for the Java skill
   - `create-workflow-typescript/SKILL.md` — Skill for creating a Dapr building-blocks app (Workflow, service invocation, pub/sub, bindings, jobs, state, secrets) with TypeScript
   - `create-workflow-typescript/REFERENCE.md` — Detailed reference examples for the TypeScript skill
@@ -25,6 +25,8 @@ This repository contains Claude Code skill definitions for building Dapr Workflo
   - `migrate-workflow-typescript/REFERENCE.md` — Detection heuristics, infra-to-component mapping, and verified before/after code for the migration skill
   - `add-workflow-dotnet/SKILL.md` — Skill for adding Dapr Workflow to an existing ASP.NET Core project (plain or Aspire) after a plan the user approves
   - `add-workflow-dotnet/REFERENCE.md` — Detection heuristics, plan template, edit recipes and run-doc template for the add skill
+  - `add-workflow-java/SKILL.md` — Skill for adding Dapr Workflow to an existing Spring Boot 4.0 Maven project after a plan the user approves
+  - `add-workflow-java/REFERENCE.md` — Detection heuristics, plan template, edit recipes and run-doc template for the Java workflow add skill
   - `create-workflow-aspire/SKILL.md` — Skill for creating Dapr Workflow apps with Aspire
   - `create-workflow-aspire/REFERENCE.md` — Detailed reference examples for the Aspire skill
   - `create-workflow-from-diagram/SKILL.md` — Skill for scaffolding a Dapr Workflow app from a diagram image (PNG/JPG/GIF/WebP) or a BPMN 2.0 XML file, in Go, Python, .NET, Java, or JavaScript
@@ -59,12 +61,14 @@ This repository contains Claude Code skill definitions for building Dapr Workflo
   - `create-pubsub-dotnet/REFERENCE.md` — Detailed reference examples for the .NET pub/sub create skill
   - `create-pubsub-python/SKILL.md` — Skill for creating Dapr pub/sub apps in Python (FastAPI with dapr run; declarative, programmatic or streaming subscriptions)
   - `create-pubsub-python/REFERENCE.md` — Detailed reference examples for the Python pub/sub create skill
-  - `create-pubsub-java/SKILL.md` — Skill for creating Dapr pub/sub apps in Java with Spring Boot 4 (dapr run; declarative, programmatic or streaming subscriptions)
+  - `create-pubsub-java/SKILL.md` — Skill for creating Dapr pub/sub apps in Java with Spring Boot 4.0 (dapr run; declarative, programmatic or streaming subscriptions)
   - `create-pubsub-java/REFERENCE.md` — Detailed reference examples for the Java pub/sub create skill
   - `add-pubsub-dotnet/SKILL.md` — Skill for adding Dapr pub/sub to an existing ASP.NET Core project (plain or Aspire) after a plan the user approves
   - `add-pubsub-dotnet/REFERENCE.md` — Detection heuristics, plan template, edit recipes and run-doc template for the .NET pub/sub add skill
   - `add-pubsub-python/SKILL.md` — Skill for adding Dapr pub/sub to an existing Python FastAPI app after a plan the user approves
   - `add-pubsub-python/REFERENCE.md` — Detection heuristics, plan template, edit recipes and run-doc template for the Python pub/sub add skill
+  - `add-pubsub-java/SKILL.md` — Skill for adding Dapr pub/sub to an existing Spring Boot 4.0 Maven project after a plan the user approves
+  - `add-pubsub-java/REFERENCE.md` — Detection heuristics, plan template, edit recipes and run-doc template for the Java pub/sub add skill
   - `review-pubsub-publishing/SKILL.md` — Skill for reviewing Dapr pub/sub publishing code in .NET, Python and Java (swallowed publish failures, pub/sub names, content types, client lifetime, bulk publish, payload size)
   - `review-pubsub-publishing/REFERENCE.md` — Detailed reference and worked example for the pub/sub publishing review skill
   - `review-pubsub-subscriptions/SKILL.md` — Skill for reviewing Dapr pub/sub subscriptions and handlers (declarative, programmatic and streaming: CloudEvent handling, response statuses, idempotency, dead-letter handling, duplicate subscriptions)
@@ -86,9 +90,11 @@ Run the appropriate `create-workflow-xxx` skill to scaffold the project: `create
 
 Run `migrate-workflow-typescript` on an existing TypeScript/Node.js application — it is not a scaffolder. It reads the codebase first (no changes), maps existing service calls, messaging, scheduled jobs, secrets, and state access onto Dapr building blocks, presents a Migration Assessment Report for approval, and only then applies confirmed changes one integration point at a time, verifying after each with the project's own build/test commands. It works on a dedicated git branch and never commits or pushes unless the user opts into per-step commits. This is a fundamentally different kind of skill from the `create-workflow-xxx` family: it never assumes a fixed scenario and never rewrites whole files.
 
-**Add Dapr Workflow to an existing .NET project:**
+**Add Dapr Workflow to an existing project:**
 
 Run `add-workflow-dotnet` on an existing ASP.NET Core project (net8.0, net9.0 or net10.0, optionally inside an Aspire solution). It inspects the solution, shows an Add Workflow Plan for approval, then adds `Dapr.Workflow`, the Dapr wiring, the workflow and its activities, and the management endpoints with targeted edits, building after each step and running the existing tests at the end. It never changes git state and writes a `DAPR-WORKFLOW.md` instead of editing the README.
+
+Run `add-workflow-java` on an existing Spring Boot 4.0 project built with Maven, single-module or multi-module (Spring MVC; Gradle and WebFlux are not supported). It works the same way: a plan for approval, then the `dapr-spring-bom` and `dapr-spring-boot-starter`, the Dapr wiring, the workflow and its activities, and the management endpoints with targeted edits, running `mvn -q -DskipTests package` after each step and `mvn -q test` at the end. It also writes a `DAPR-WORKFLOW.md`.
 
 **Build a new agent application:**
 
@@ -96,11 +102,11 @@ Run `create-agent-python` or `create-agent-dotnet` to scaffold a durable agent a
 
 **Build a new pub/sub application:**
 
-Run `create-pubsub-dotnet`, `create-pubsub-python` or `create-pubsub-java` to scaffold a publisher and subscriber app (`dapr run`, or Aspire for .NET; Python uses FastAPI; Java uses Spring Boot 4). The role (publisher, subscriber or both) and the subscription type are asked once; declarative is the default, followed by programmatic and streaming.
+Run `create-pubsub-dotnet`, `create-pubsub-python` or `create-pubsub-java` to scaffold a publisher and subscriber app (`dapr run`, or Aspire for .NET; Python uses FastAPI; Java uses Spring Boot 4.0). The role (publisher, subscriber or both) and the subscription type are asked once; declarative is the default, followed by programmatic and streaming.
 
 **Add pub/sub to an existing project:**
 
-Run `add-pubsub-dotnet` or `add-pubsub-python` on an existing project (.NET: ASP.NET Core, plain or Aspire; Python: FastAPI only). They inspect it, show a plan for approval, and then apply targeted edits, keeping the subscription type the project already uses. They never change git state and write a `DAPR-PUBSUB.md` instead of editing the README.
+Run `add-pubsub-dotnet`, `add-pubsub-python` or `add-pubsub-java` on an existing project (.NET: ASP.NET Core, plain or Aspire; Python: FastAPI only; Java: Spring Boot 4.0 with Maven and Spring MVC, single-module or multi-module). They inspect it, show a plan for approval, and then apply targeted edits, keeping the subscription type the project already uses. They never change git state and write a `DAPR-PUBSUB.md` instead of editing the README.
 
 **Review an existing workflow application** (run any combination, in any order):
 
@@ -155,7 +161,7 @@ All skills require:
 
 - JDK 17+ — [download a JDK](https://adoptium.net/)
 - [Maven 3.9+](https://maven.apache.org/download.cgi)
-- Spring Boot 4 (Dapr Java SDK 1.19); the Spring Boot integration is alpha in the SDK
+- Spring Boot 4.0 (Dapr Java SDK 1.19); the Spring Boot integration is alpha in the SDK
 
 ### TypeScript skills
 
@@ -209,11 +215,11 @@ The skills install into Claude Code, Codex CLI and Copilot CLI. `scripts/lib/fro
 - **frontmatter keys** — only `name`, `description`, `allowed-tools`. Support skills (`SUPPORT_SKILLS`, today `dapr-shared`) may also set `disable-model-invocation: true` and `user-invocable: false`, which Claude Code and Copilot CLI honour.
 - **support skills are hidden** — `dapr-shared` also ships `agents/openai.yaml` with `policy.allow_implicit_invocation: false`, the only way to stop Codex CLI selecting it. The check fails if any of the three settings is missing.
 - **allowed-tools** — no wildcard shell tools and no MCP tools.
-- **description budget** — descriptions are always in context, and Codex budgets its whole skill list at about 8,000 characters and shortens descriptions first. Keep each description to 400 characters (hard limit `MAX_DESCRIPTION_CHARS`) and the total under 7,000 (`MAX_TOTAL_DESCRIPTION_CHARS`, which only ratchets down). Lead with the verb ("Creates ...", "Reviews ...") instead of "This skill ...".
+- **description budget** — descriptions are always in context, and Codex budgets its whole skill list at about 8,000 characters and shortens descriptions first. Keep each description to 400 characters (hard limit `MAX_DESCRIPTION_CHARS`) and the total at most `MAX_TOTAL_DESCRIPTION_CHARS`, which sits 100 characters above the current total (the headroom test in `scripts/test/frontmatter-validation.test.mjs` checks that) and below the 8,000 target. It was raised from 7,000 for the Java add skills (`add-workflow-java`, `add-pubsub-java`) instead of trimming other descriptions, because trimming existing descriptions for the Java create skills caused routing regressions in the triggering check. Lead with the verb ("Creates ...", "Reviews ...") instead of "This skill ...".
 - **description YAML** — a description is an unquoted YAML value, so it must not contain `: `. Rephrase it.
 - **description similarity** — two descriptions that read alike compete for the same trigger. The hard limit (`MAX_DESCRIPTION_SIMILARITY`) sits just above the language twins; other pairs above the 50% target print a `WARN`. After changing a description, re-run the triggering check in `evals/README.md`.
 
-Lower the `MAX_*` constants whenever descriptions get shorter, never raise them.
+Lower the `MAX_*` constants whenever descriptions get shorter. Raise `MAX_TOTAL_DESCRIPTION_CHARS` only when a new skill cannot fit without trimming trigger phrases from others: set it to the new total plus 100, keep it under the 8,000 target, and say why in the commit message.
 
 Placeholder vocabularies are per family (`scripts/lib/family-validation.mjs`, `FAMILIES`): pub/sub uses `dapr-shared/pubsub-placeholders.md`, workflow uses `dapr-shared/workflow-placeholders.md`. Adding a family means adding a row there, not a second copy of the checks.
 

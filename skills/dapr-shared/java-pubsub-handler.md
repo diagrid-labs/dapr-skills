@@ -2,8 +2,8 @@
 
 The business logic for every subscription type, plus the response record and the idempotency store.
 Resolve every placeholder from the specification interview before copying this file; the vocabulary is in
-[pubsub-placeholders.md](pubsub-placeholders.md). All files go in
-`subscriber/src/main/java/<javaPackage>/subscriber/`, each type in a file of its own.
+[pubsub-placeholders.md](pubsub-placeholders.md). In a new project (create-pubsub-java) all files go in
+`subscriber/src/main/java/<javaPackage>/subscriber/`, each type in a file of its own. In an existing app (add-pubsub-java) the files go in that app's base package instead, and `package <javaPackage>.subscriber;` becomes `package <javaPackage>;` (see add-pubsub-java's REFERENCE.md → **Resolving the placeholders**).
 
 ## Message record
 

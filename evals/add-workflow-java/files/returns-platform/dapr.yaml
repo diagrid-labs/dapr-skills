@@ -1,0 +1,9 @@
+version: 1
+common:
+  resourcesPath: ./components
+apps:
+  - appID: label-printer
+    appDirPath: label-printer
+    appPort: 8090
+    daprHTTPPort: 3510
+    command: ["npm", "start"]
